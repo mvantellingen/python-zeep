@@ -205,7 +205,7 @@ class CompoundValueMeta(type):
         if not parents:
             return super_new(cls, name, bases, attrs)
 
-        new_class = super_new(cls, name, bases, {'__module__': 'sopje'})
+        new_class = super_new(cls, name, bases, {'__module__': 'zeep.types'})
         for key, value in attrs.items():
             setattr(new_class, key, value)
         return new_class
