@@ -1,0 +1,17 @@
+sudo: false
+language: python
+
+python:
+    - '2.7'
+
+before_install:
+    - pip install codecov
+
+install:
+    - pip install -e .[test]
+
+script:
+    - py.test --cov=zeep --cov-report=term-missing
+
+after_success: 
+    - codecov
