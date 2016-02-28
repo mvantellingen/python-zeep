@@ -57,7 +57,9 @@ class ComplexType(Type):
             element.render(parent, sub_value)
 
     def __call__(self, *args, **kwargs):
-        cls = type(self.__class__.__name__, (CompoundValue,), {'type': self})
+        cls = type(
+            self.__class__.__name__, (CompoundValue,),
+            {'type': self, '__module__': 'zeep.types'})
         return cls(**kwargs)
 
     def parse_xmlelement(self, xmlelement):
@@ -195,23 +197,7 @@ class ListElement(Element):
             self.type.render(node, val)
 
 
-class CompoundValueMeta(type):
-    def __new__(cls, name, bases, attrs):
-        super_new = super(CompoundValueMeta, cls).__new__
-
-        # Also ensure initialization is only performed for subclasses of Model
-        # (excluding Model class itself).
-        parents = [b for b in bases if isinstance(b, CompoundValueMeta)]
-        if not parents:
-            return super_new(cls, name, bases, attrs)
-
-        new_class = super_new(cls, name, bases, {'__module__': 'zeep.types'})
-        for key, value in attrs.items():
-            setattr(new_class, key, value)
-        return new_class
-
-
-class CompoundValue(six.with_metaclass(CompoundValueMeta)):
+class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
         properties = {
