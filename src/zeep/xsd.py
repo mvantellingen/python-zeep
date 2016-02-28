@@ -214,6 +214,11 @@ class CompoundValue(object):
                     "__init__() got an unexpected keyword argument %r" % key)
             setattr(self, key, value)
 
+    def __repr__(self):
+        signature = ', '.join(
+            '%s=%r' % (k, v) for k, v in self.__dict__.items()[:10])
+        return '<%s(%s)>' % (self.__class__.__name__, signature)
+
 
 default_types = {
     '{http://www.w3.org/2001/XMLSchema}string': String,
