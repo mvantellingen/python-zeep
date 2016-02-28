@@ -1,4 +1,5 @@
 import six
+from decimal import Decimal as _Decimal
 from lxml import etree
 
 
@@ -96,8 +97,36 @@ class String(SimpleType):
         return unicode(value)
 
 
+class Boolean(SimpleType):
+    def xmlvalue(self, value):
+        return 'true' if value else 'false'
+
+    def pythonvalue(self, value):
+        return value in ('true', '1')
+
+
+class Double(SimpleType):
+    def xmlvalue(self, value):
+        return str(value)
+
+    def pythonvalue(self, value):
+        return float(value)
+
+
+class Float(SimpleType):
+    def xmlvalue(self, value):
+        return str(value)
+
+    def pythonvalue(self, value):
+        return float(value)
+
+
 class Decimal(SimpleType):
-    pass
+    def xmlvalue(self, value):
+        return str(value)
+
+    def pythonvalue(self, value):
+        return _Decimal(value)
 
 
 class Integer(Decimal):
@@ -107,6 +136,10 @@ class Integer(Decimal):
 
     def pythonvalue(self, value):
         return int(value)
+
+
+class Long(Integer):
+    pass
 
 
 class Element(object):
@@ -189,12 +222,12 @@ class CompoundValue(six.with_metaclass(CompoundValueMeta)):
 
 default_types = {
     '{http://www.w3.org/2001/XMLSchema}string': String,
-    '{http://www.w3.org/2001/XMLSchema}float': String,
-    '{http://www.w3.org/2001/XMLSchema}int': String,
-    '{http://www.w3.org/2001/XMLSchema}long': String,
+    '{http://www.w3.org/2001/XMLSchema}float': Float,
+    '{http://www.w3.org/2001/XMLSchema}int': Integer,
+    '{http://www.w3.org/2001/XMLSchema}long': Long,
     '{http://www.w3.org/2001/XMLSchema}base64Binary': String,
-    '{http://www.w3.org/2001/XMLSchema}boolean': String,
-    '{http://www.w3.org/2001/XMLSchema}decimal': String,
+    '{http://www.w3.org/2001/XMLSchema}boolean': Boolean,
+    '{http://www.w3.org/2001/XMLSchema}decimal': Decimal,
     '{http://www.w3.org/2001/XMLSchema}dateTime': String,
-    '{http://www.w3.org/2001/XMLSchema}double': String,
+    '{http://www.w3.org/2001/XMLSchema}double': Double,
 }
