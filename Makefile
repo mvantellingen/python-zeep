@@ -1,5 +1,7 @@
 .PHONY: test retest
 
+clean:
+	find . -name '*.pyc' -delete
 
 test:
 	py.test
