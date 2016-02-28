@@ -23,6 +23,18 @@ class Client(object):
         self.wsdl = WSDL(wsdl)
 
     def call(self, name, **kwargs):
+        message = self.create_message(name, kwargs)
+
+        response = requests.post(
+            message['url'], data=message['body'], headers=message['headers'])
+
+        if response.status_code != 200:
+            print response.content
+            raise NotImplementedError("No error handling yet!")
+
+        return self.process_response(name, response.content)
+
+    def get_binding(self, name):
         service = self.wsdl.services.values()[0]
         name = parse_qname(name, self.wsdl.nsmap, self.wsdl.target_namespace)
         name = name.text
@@ -37,32 +49,38 @@ class Client(object):
 
         if not port:
             raise TypeError("No such function for service: %r" % name)
+        return port, address
+
+    def create_message(self, name, params):
+        port, address = self.get_binding(name)
 
         envelope = create_soap_message()
         body = envelope.find('soap-env:Body', namespaces=envelope.nsmap)
 
         if port['style'] == 'rpc':
             method = etree.SubElement(body, name)
-            for key, value in kwargs.iteritems():
+            for key, value in params.iteritems():
                 key = parse_qname(key, self.wsdl.nsmap, self.wsdl.target_namespace)
                 obj = port['input']['port']['parts'][key]
                 obj.render(method, value)
         else:
             obj = port['input']['port']['parts'].values()[0]
-            value = obj(**kwargs)
+            value = obj(**params)
             obj.render(body, value)
 
-        logger.debug("Sending XML:\n%s", etree.tostring(envelope, pretty_print=True))
-        headers = {
-            'Content-Type': 'text/xml; charset=utf-8',
-            'SOAPAction': port['action'],
+        return {
+            'url': address,
+            'headers': {
+                'Content-Type': 'text/xml; charset=utf-8',
+                'SOAPAction': port['action'],
+            },
+            'body': etree.tostring(envelope, pretty_print=True)
         }
-        response = requests.post(address, data=etree.tostring(envelope), headers=headers)
 
-        if response.status_code != 200:
-            raise NotImplementedError("No error handling yet!")
-
-        response_node = etree.fromstring(response.content)
+    def process_response(self, name, response):
+        port, address = self.get_binding(name)
+        response_node = etree.fromstring(response)
+        print "DONE PARSING LXML"
         node = response_node.find('soap-env:Body', namespaces=NSMAP)
 
         if port['style'] == 'rpc':
