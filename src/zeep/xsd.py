@@ -57,10 +57,11 @@ class ComplexType(Type):
             element.render(parent, sub_value)
 
     def __call__(self, *args, **kwargs):
-        cls = type(
-            self.__class__.__name__, (CompoundValue,),
-            {'type': self, '__module__': 'zeep.types'})
-        return cls(**kwargs)
+        if not hasattr(self, '_value_class'):
+            self._value_class = type(
+                self.__class__.__name__, (CompoundValue,),
+                {'type': self, '__module__': 'zeep.types'})
+        return self._value_class(**kwargs)
 
     def parse_xmlelement(self, xmlelement):
         instance = self()
