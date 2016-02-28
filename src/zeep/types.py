@@ -41,13 +41,16 @@ class Schema(object):
     def __init__(self, node=None, references=None):
 
         self.schema_references = references or {}
-
+        self.xml_schema = None
         self.types = {}
         self.elements = {}
         self.elm_instances = []
+        self.target_namespace = None
 
-        if node:
-            self.xml_schema = etree.XMLSchema(node)
+        if node is not None:
+            if len(node) > 0:
+                self.xml_schema = etree.XMLSchema(node)
+
             self.target_namespace = node.get('targetNamespace')
             self.visit_schema(node)
             for element in self.elm_instances:

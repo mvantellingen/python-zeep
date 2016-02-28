@@ -1,11 +1,12 @@
 import pprint
 
 import requests
+from lxml.etree import QName
 
 from zeep import xsd
 from zeep.parser import parse_xml
 from zeep.types import Schema
-from zeep.utils import get_qname
+from zeep.utils import get_qname, findall_multiple_ns
 
 NSMAP = {
     'xsd': 'http://www.w3.org/2001/XMLSchema',
@@ -27,9 +28,8 @@ class WSDL(object):
             with open(filename) as fh:
                 doc = parse_xml(fh.read(), self.schema_references)
 
-        self.target_namespace = doc.get('targetNamespace')
         self.nsmap = doc.nsmap
-
+        self.target_namespace = doc.get('targetNamespace')
         self.types = self.parse_types(doc)
         self.messages = self.parse_messages(doc)
         self.ports = self.parse_ports(doc)
@@ -49,15 +49,23 @@ class WSDL(object):
         pprint.pprint(self.services)
 
     def parse_types(self, doc):
-        schema_nodes = doc.findall("wsdl:types/xsd:schema", namespaces=NSMAP)
+        namespace_sets = [
+            {'xsd': 'http://www.w3.org/2001/XMLSchema'},
+            {'xsd': 'http://www.w3.org/1999/XMLSchema'},
+        ]
+
+        types = doc.find('wsdl:types', namespaces=NSMAP)
+
+        schema_nodes = findall_multiple_ns(types, 'xsd:schema', namespace_sets)
         if not schema_nodes:
             return Schema()
 
-        import_tag = '{http://www.w3.org/2001/XMLSchema}import'
         for schema_node in schema_nodes:
             tns = schema_node.get('targetNamespace')
             self.schema_references['intschema+%s' % tns] = schema_node
 
+        # Only handle the import statements from the 2001 xsd's for now
+        import_tag = QName('http://www.w3.org/2001/XMLSchema', 'import').text
         for schema_node in schema_nodes:
             for import_node in schema_node.findall(import_tag):
                 if import_node.get('schemaLocation'):
@@ -85,7 +93,8 @@ class WSDL(object):
                 else:
                     part_type = get_qname(part, 'type', tns)
                     part_type = self.types.get_type(part_type)
-                    part_type = xsd.Element(part_name, type_=part_type())
+                    part_type = xsd.Element(
+                        QName(part_name), type_=part_type())
 
                 result[name][part_name] = part_type
 
@@ -108,7 +117,10 @@ class WSDL(object):
                     msg_node = op_node.find('wsdl:%s' % type_, namespaces=NSMAP)
                     if msg_node is not None:
                         message_name = get_qname(msg_node, 'message', tns)
-                        port_info[operation_name][type_] = self.messages[message_name]
+                        port_info[operation_name][type_] = {
+                            'name': message_name,
+                            'parts': self.messages[message_name]
+                        }
                     else:
                         port_info[operation_name][type_] = None
         return result
@@ -149,15 +161,26 @@ class WSDL(object):
                 binding_info[operation_name] = {
                     'action': action,
                     'style': style,
-                    'input': port_info['input'],
-                    'output': port_info['output'],
                 }
+
+                for type_ in 'input', 'output', 'fault':
+
+                    type_node = operation_node.find(QName(NSMAP['wsdl'], type_))
+                    if type_node is None:
+                        continue
+                    soap_node = get_soap_node(type_node, 'body')
+                    binding_info[operation_name][type_] = {
+                        'port': port_info[type_],
+                        'namespace': soap_node.get('namespace'),
+                    }
+
 
         return bindings
 
     def parse_service(self, doc):
         findall = lambda node, name: node.findall(name, namespaces=NSMAP)
         tns = doc.get('targetNamespace')
+
         result = {}
         for service_node in findall(doc, 'wsdl:service'):
             name = service_node.get('name')

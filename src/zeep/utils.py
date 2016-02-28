@@ -22,3 +22,10 @@ def get_qname(node, name, target_namespace=None):
     value = node.get(name)
     if value is not None:
         return parse_qname(value, node.nsmap, target_namespace).text
+
+
+def findall_multiple_ns(node, name, namespace_sets):
+    result = []
+    for nsmap in namespace_sets:
+        result.extend(node.findall(name, namespaces=nsmap))
+    return result

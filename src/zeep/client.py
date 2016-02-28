@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -10,6 +12,9 @@ NSMAP = {
     'soap': 'http://schemas.xmlsoap.org/wsdl/soap/',
     'soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
 }
+
+
+logger = logging.getLogger(__name__)
 
 
 class Client(object):
@@ -40,21 +45,47 @@ class Client(object):
             method = etree.SubElement(body, name)
             for key, value in kwargs.iteritems():
                 key = parse_qname(key, self.wsdl.nsmap, self.wsdl.target_namespace)
-                obj = port['input'][key]
+                obj = port['input']['port']['parts'][key]
                 obj.render(method, value)
         else:
-            obj = port['input'].values()[0]
+            obj = port['input']['port']['parts'].values()[0]
             value = obj(**kwargs)
             obj.render(body, value)
 
-        print etree.tostring(envelope, pretty_print=True)
+        logger.debug("Sending XML:\n%s", etree.tostring(envelope, pretty_print=True))
         headers = {
             'Content-Type': 'text/xml; charset=utf-8',
             'SOAPAction': port['action'],
         }
         response = requests.post(address, data=etree.tostring(envelope), headers=headers)
-        print response.status_code
-        print response.content
+
+        if response.status_code != 200:
+            raise NotImplementedError("No error handling yet!")
+
+        response_node = etree.fromstring(response.content)
+        node = response_node.find('soap-env:Body', namespaces=NSMAP)
+
+        if port['style'] == 'rpc':
+            tag_name = etree.QName(
+                port['output']['namespace'],
+                etree.QName(port['output']['port']['name']).localname)
+
+            value = node.find(tag_name)
+            result = []
+            for element in port['output']['port']['parts'].values():
+                elm = value.find(element.name)
+                result.append(element.parse(elm))
+
+        else:
+            result = []
+            for element in port['output']['port']['parts'].values():
+                elm = node.find(element.qname)
+                assert elm is not None
+                result.append(element.parse(elm))
+
+        if len(result) > 1:
+            return tuple(result)
+        return result[0]
 
 
 def create_soap_message():
