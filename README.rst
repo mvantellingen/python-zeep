@@ -6,7 +6,7 @@ ZEEP
 SOAP client for Python using the lxml and requests packages
 
 Status
-======
+------
 .. image:: https://travis-ci.org/mvantellingen/python-zeep.svg?branch=master
     :target: https://travis-ci.org/mvantellingen/python-zeep
 
