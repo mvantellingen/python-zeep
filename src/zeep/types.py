@@ -167,7 +167,7 @@ class Schema(object):
             nsmap = {None: namespace}
         else:
             nsmap = {}
-        element = cls(name=name, type_=xsd_type, nsmap=nsmap)
+        element = cls(name=qname, type_=xsd_type, nsmap=nsmap)
         self.elm_instances.append(element)
 
         self.register_element(qname, element)
@@ -290,7 +290,7 @@ class Schema(object):
         else:
             assert NotImplementedError()
 
-        name = node.get('name')
+        name = parse_qname(node.get('name'), node.nsmap, namespace)
         try:
             xsd_type = self.get_type(node_type)()
         except KeyError:

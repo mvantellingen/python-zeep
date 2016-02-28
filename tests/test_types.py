@@ -86,7 +86,7 @@ def test_complex_type_parsexml():
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     input_node = etree.fromstring("""
-        <Address>
+        <Address xmlns="http://tests.python-zeep.org/">
           <foo>bar</foo>
         </Address>
     """)
@@ -117,7 +117,7 @@ def test_complex_type_array_parsexml():
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     input_node = etree.fromstring("""
-        <Address>
+        <Address xmlns="http://tests.python-zeep.org/">
           <foo>bar</foo>
           <foo>zoo</foo>
         </Address>

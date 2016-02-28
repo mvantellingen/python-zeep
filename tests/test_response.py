@@ -26,7 +26,7 @@ def test_parse_response():
               <complexType name="ZeepExampleResult">
                 <sequence>
                   <element minOccurs="1" maxOccurs="1" name="SomeValue" type="int" />
-                  <element minOccurs="0" maxOccurs="1" name="Result" type="tns:ArrayOfItems" />
+                  <element minOccurs="0" maxOccurs="1" name="Results" type="tns:ArrayOfItems" />
                 </sequence>
               </complexType>
               <element name="ZeepExampleResponse">
@@ -48,7 +48,7 @@ def test_parse_response():
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
           <soap:Body>
-            <ZeepExampleResponse xmlns="http://somefunction.nl/">
+            <ZeepExampleResponse xmlns="http://tests.python-zeep.org/">
               <ZeepExampleResult>
                 <SomeValue>45313</SomeValue>
                 <Results>
@@ -69,3 +69,17 @@ def test_parse_response():
     schema = Schema(schema_node.find('*/{http://www.w3.org/2001/XMLSchema}schema'))
     assert schema
     response_type = schema.get_element('{http://tests.python-zeep.org/}ZeepExampleResponse')
+
+    nsmap = {
+        'soap': 'http://schemas.xmlsoap.org/soap/envelope/',
+        'tns': 'http://tests.python-zeep.org/',
+    }
+    node = response_node.find('soap:Body/tns:ZeepExampleResponse', namespaces=nsmap)
+    assert node is not None
+    obj = response_type.parse(node)
+    assert obj.ZeepExampleResult.SomeValue == '45313'
+    assert len(obj.ZeepExampleResult.Results.Item) == 2
+    assert obj.ZeepExampleResult.Results.Item[0].Key == 'ABC100'
+    assert obj.ZeepExampleResult.Results.Item[0].Value == '10'
+    assert obj.ZeepExampleResult.Results.Item[1].Key == 'ABC200'
+    assert obj.ZeepExampleResult.Results.Item[1].Value == '20'

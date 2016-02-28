@@ -68,12 +68,15 @@ class ComplexType(Type):
         field = next(fields, None)
 
         for element in elements:
-            if field.name != element.tag:
+            if field.qname != element.tag:
                 field = next(fields, None)
 
-            if field.name != element.tag:
+            if not field:
+                break
+
+            if field.qname != element.tag:
                 # XXX Element might be optional
-                raise ValueError("Unexpected element")
+                raise ValueError("Unexpected element: %r" % element.tag)
 
             result = field.parse(element)
             if isinstance(field, ListElement):
@@ -108,7 +111,8 @@ class Integer(Decimal):
 
 class Element(object):
     def __init__(self, name, type_=None, nsmap=None):
-        self.name = name
+        self.name = name.localname
+        self.qname = name
         self.type = type_
         self.nsmap = nsmap or {}
 
