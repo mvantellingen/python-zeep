@@ -65,12 +65,12 @@ class ComplexType(Type):
 
     def parse_xmlelement(self, xmlelement):
         instance = self()
+        if not self.__metadata__['fields']:
+            return instance
 
         elements = xmlelement.getchildren()
-
         fields = iter(self.__metadata__['fields'])
-        field = next(fields, None)
-
+        field = next(fields)
         for element in elements:
             if field.qname != element.tag:
                 field = next(fields, None)
