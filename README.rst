@@ -1,6 +1,13 @@
+ZEEP
+====
 
+**!!In development!!**
 
-Usage::
+SOAP client for Python using the lxml and requests packages
+
+Usage
+-----
+.. code-block:: python
 
     from zeep import Client
 
