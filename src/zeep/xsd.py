@@ -105,6 +105,14 @@ class Boolean(SimpleType):
         return value in ('true', '1')
 
 
+class DateTime(SimpleType):
+    def xmlvalue(self, value):
+        return value.strftime('%Y-%m-%dT%H:%M:%S')
+
+    def pythonvalue(self, value):
+        return value
+
+
 class Double(SimpleType):
     def xmlvalue(self, value):
         return str(value)
@@ -228,6 +236,6 @@ default_types = {
     '{http://www.w3.org/2001/XMLSchema}base64Binary': String,
     '{http://www.w3.org/2001/XMLSchema}boolean': Boolean,
     '{http://www.w3.org/2001/XMLSchema}decimal': Decimal,
-    '{http://www.w3.org/2001/XMLSchema}dateTime': String,
+    '{http://www.w3.org/2001/XMLSchema}dateTime': DateTime,
     '{http://www.w3.org/2001/XMLSchema}double': Double,
 }
