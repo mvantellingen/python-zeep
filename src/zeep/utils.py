@@ -18,10 +18,13 @@ def parse_qname(value, nsmap, target_namespace=None):
     return etree.QName(value)
 
 
-def get_qname(node, name, target_namespace=None):
+def get_qname(node, name, target_namespace=None, as_text=True):
     value = node.get(name)
     if value is not None:
-        return parse_qname(value, node.nsmap, target_namespace).text
+        qname = parse_qname(value, node.nsmap, target_namespace)
+        if as_text:
+            return qname.text
+        return qname
 
 
 def findall_multiple_ns(node, name, namespace_sets):

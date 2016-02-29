@@ -52,19 +52,20 @@ class Client(object):
         return port, address
 
     def create_message(self, name, params):
-        port, address = self.get_binding(name)
+        operation, address = self.get_binding(name)
 
         envelope = create_soap_message()
         body = envelope.find('soap-env:Body', namespaces=envelope.nsmap)
 
-        if port['style'] == 'rpc':
+        if operation.style == 'rpc':
             method = etree.SubElement(body, name)
             for key, value in params.iteritems():
                 key = parse_qname(key, self.wsdl.nsmap, self.wsdl.target_namespace)
-                obj = port['input']['port']['parts'][key]
+                print operation.input
+                obj = operation.input.get_part(key)
                 obj.render(method, value)
         else:
-            obj = port['input']['port']['parts'].values()[0]
+            obj = operation.input.parts.values()[0]
             value = obj(**params)
             obj.render(body, value)
 
@@ -72,31 +73,30 @@ class Client(object):
             'url': address,
             'headers': {
                 'Content-Type': 'text/xml; charset=utf-8',
-                'SOAPAction': port['action'],
+                'SOAPAction': operation.soapaction,
             },
             'body': etree.tostring(envelope, pretty_print=True)
         }
 
     def process_response(self, name, response):
-        port, address = self.get_binding(name)
+        operation, address = self.get_binding(name)
         response_node = etree.fromstring(response)
-        print "DONE PARSING LXML"
         node = response_node.find('soap-env:Body', namespaces=NSMAP)
 
-        if port['style'] == 'rpc':
+        if operation.style == 'rpc':
             tag_name = etree.QName(
-                port['output']['namespace'],
-                etree.QName(port['output']['port']['name']).localname)
+                operation.protocol['output']['namespace'],
+                operation.output.name.localname)
 
             value = node.find(tag_name)
             result = []
-            for element in port['output']['port']['parts'].values():
+            for element in operation.output.parts.values():
                 elm = value.find(element.name)
                 result.append(element.parse(elm))
 
         else:
             result = []
-            for element in port['output']['port']['parts'].values():
+            for element in operation.output.parts.values():
                 elm = node.find(element.qname)
                 assert elm is not None
                 result.append(element.parse(elm))
