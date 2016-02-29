@@ -31,19 +31,73 @@ class Message(object):
     def get_part(self, name):
         return self.parts[name]
 
+    @classmethod
+    def parse(cls, wsdl, xmlelement):
+        """
+            <definitions .... >
+                <message name="nmtoken"> *
+                    <part name="nmtoken" element="qname"? type="qname"?/> *
+                </message>
+            </definitions>
+        """
+        msg = cls(name=get_qname(
+            xmlelement, 'name', wsdl.target_namespace, as_text=False))
 
-class Port(object):
+        for part in xmlelement.findall('wsdl:part', namespaces=NSMAP):
+            part_name = get_qname(
+                part, 'name', wsdl.target_namespace, as_text=False)
+            part_element = get_qname(part, 'element', wsdl.target_namespace)
+
+            if part_element is not None:
+                part_type = wsdl.types.get_element(part_element)
+            else:
+                part_type = get_qname(part, 'type', wsdl.target_namespace)
+                part_type = wsdl.types.get_type(part_type)
+                part_type = xsd.Element(part_name, type_=part_type())
+            msg.add_part(part_name, part_type)
+        return msg
+
+
+class PortType(object):
     def __init__(self, name):
         self.name = name
         self.operations = {}
 
+    @classmethod
+    def parse(cls, wsdl, xmlelement):
+        """
+            <wsdl:definitions .... >
+                <wsdl:portType name="nmtoken">
+                    <wsdl:operation name="nmtoken" .... /> *
+                </wsdl:portType>
+            </wsdl:definitions>
+
+        """
+        name = get_qname(
+            xmlelement, 'name', wsdl.target_namespace, as_text=False)
+        obj = cls(name)
+
+        for elm in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
+            name = get_qname(elm, 'name', wsdl.target_namespace, as_text=False)
+            messages = {}
+
+            for type_ in 'input', 'output', 'fault':
+                msg_node = elm.find('wsdl:%s' % type_, namespaces=NSMAP)
+                if msg_node is None:
+                    continue
+                key = '%s_message' % type_
+                message_name = get_qname(
+                    msg_node, 'message', wsdl.target_namespace)
+                messages[key] = wsdl.messages[message_name]
+            obj.add_operation(name, **messages)
+        return obj
+
     def add_operation(self, name, input_message=None, output_message=None,
                       fault_message=None):
-
         self.operations[name] = PortOperation(
             input_message, output_message, fault_message)
 
-    def get(self, name):
+    def get_operation(self, name):
         return self.operations[name]
 
 
@@ -66,7 +120,7 @@ class BindingOperation(object):
 
     def __init__(self, binding, name, soapaction, style):
         self.name = name
-        self.port_type = binding.port_type.get(name)
+        self.messages = binding.port_type.get_operation(name)
         self.soapaction = soapaction
         self.style = style
         self.protocol = {}
@@ -79,15 +133,15 @@ class BindingOperation(object):
 
     @property
     def input(self):
-        return self.port_type.input
+        return self.messages.input
 
     @property
     def output(self):
-        return self.port_type.output
+        return self.messages.output
 
     @property
     def fault(self):
-        return self.port_type.fault
+        return self.messages.fault
 
 
 
@@ -152,50 +206,16 @@ class WSDL(object):
 
     def parse_messages(self, doc):
         result = {}
-        tns = doc.get('targetNamespace')
-
-        messages = doc.findall("wsdl:message", namespaces=NSMAP)
-        for message in messages:
-            msg = Message(name=get_qname(message, 'name', tns, as_text=False))
-
-            for part in message.findall('wsdl:part', namespaces=NSMAP):
-                part_name = get_qname(part, 'name', tns, as_text=False)
-
-                part_element = get_qname(part, 'element', tns)
-                if part_element is not None:
-                    part_type = self.types.get_element(part_element)
-                else:
-                    part_type = get_qname(part, 'type', tns)
-                    part_type = self.types.get_type(part_type)
-                    part_type = xsd.Element(part_name, type_=part_type())
-
-                msg.add_part(part_name, part_type)
+        for msg_node in doc.findall("wsdl:message", namespaces=NSMAP):
+            msg = Message.parse(self, msg_node)
             result[msg.name.text] = msg
-
         return result
 
     def parse_ports(self, doc):
-        findall = lambda node, name: node.findall(name, namespaces=NSMAP)
-        tns = doc.get('targetNamespace')
-
         result = {}
-        for port_node in findall(doc, 'wsdl:portType'):
-            port_name = get_qname(port_node, 'name', tns, as_text=False)
-            port = Port(port_name)
-
-            for op_node in findall(port_node, 'wsdl:operation'):
-                operation_name = get_qname(op_node, 'name', tns, as_text=False)
-                messages = {}
-
-                for type_ in 'input', 'output', 'fault':
-                    msg_node = op_node.find('wsdl:%s' % type_, namespaces=NSMAP)
-                    if msg_node is None:
-                        continue
-                    key = '%s_message' % type_
-                    message_name = get_qname(msg_node, 'message', tns)
-                    messages[key] = self.messages[message_name]
-                port.add_operation(operation_name, **messages)
-            result[port.name.text] = port
+        for port_node in doc.findall('wsdl:portType', namespaces=NSMAP):
+            port_type = PortType.parse(self, port_node)
+            result[port_type.name.text] = port_type
 
         return result
 
