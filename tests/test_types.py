@@ -245,7 +245,7 @@ def test_complex_type_array_to_other_complex_object():
     """.strip())
 
 
-def test_decimal():
+def test_complex_type_init_kwargs():
     node = etree.fromstring("""
         <?xml version="1.0"?>
         <types>
@@ -269,6 +269,37 @@ def test_decimal():
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type(
         NameFirst='John', NameLast='Doe', Email='j.doe@example.com')
+    assert obj.NameFirst == 'John'
+    assert obj.NameLast == 'Doe'
+    assert obj.Email == 'j.doe@example.com'
+
+
+def test_complex_type_init_args():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <types>
+          <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                  xmlns:tns="http://tests.python-zeep.org/"
+                  targetNamespace="http://tests.python-zeep.org/">
+            <element name="Address">
+              <complexType>
+                <sequence>
+                  <element minOccurs="0" maxOccurs="1" name="NameFirst" type="string"/>
+                  <element minOccurs="0" maxOccurs="1" name="NameLast" type="string"/>
+                  <element minOccurs="0" maxOccurs="1" name="Email" type="string"/>
+                </sequence>
+              </complexType>
+            </element>
+          </schema>
+        </types>
+    """.strip())
+
+    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    obj = address_type('John', 'Doe', 'j.doe@example.com')
+    assert obj.NameFirst == 'John'
+    assert obj.NameLast == 'Doe'
+    assert obj.Email == 'j.doe@example.com'
 
 
 def test_complex_type_with_attributes():

@@ -61,7 +61,8 @@ class ComplexType(Type):
             self._value_class = type(
                 self.__class__.__name__, (CompoundValue,),
                 {'type': self, '__module__': 'zeep.types'})
-        return self._value_class(**kwargs)
+
+        return self._value_class(*args, **kwargs)
 
     def parse_xmlelement(self, xmlelement):
         instance = self()
@@ -204,8 +205,22 @@ class CompoundValue(object):
         properties = {
             prop.name: prop() for prop in self.type.properties()
         }
+        property_names = [prop.name for prop in self.type.properties()]
 
+        # Set default values
         for key, value in properties.iteritems():
+            setattr(self, key, value)
+
+        if len(args) > len(property_names):
+            raise TypeError(
+                '__init__() takes exactly %d arguments (%d given)' % (
+                    len(property_names), len(args)))
+
+        for key, value in zip(property_names, args):
+            if key in kwargs:
+                raise TypeError(
+                    "__init__() got multiple values for keyword argument '%s'"
+                    % key)
             setattr(self, key, value)
 
         for key, value in kwargs.items():
