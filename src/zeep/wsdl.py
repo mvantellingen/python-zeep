@@ -17,13 +17,18 @@ NSMAP = {
 }
 
 
-PortOperation = namedtuple('PortOperation', ['input', 'output', 'fault'])
+AbstractOperation = namedtuple(
+    'AbstractOperation', ['input', 'output', 'fault'])
 
 
 class Message(object):
     def __init__(self, name):
         self.name = name
         self.parts = {}
+
+    def __repr__(self):
+        return '<%s(name=%r)>' % (
+            self.__class__.__name__, self.name.text)
 
     def add_part(self, name, element):
         self.parts[name] = element
@@ -98,7 +103,7 @@ class PortType(object):
 
     def add_operation(self, name, input_message=None, output_message=None,
                       fault_message=None):
-        self.operations[name] = PortOperation(
+        self.operations[name] = AbstractOperation(
             input_message, output_message, fault_message)
 
     def get_operation(self, name):
@@ -116,7 +121,8 @@ class Binding(object):
             self.__class__.__name__, self.name.text, self.port_type)
 
     def add_operation(self, name, soapaction, style):
-        operation = BindingOperation(self, name, soapaction, style)
+        port_type_operation = self.port_type.get_operation(name)
+        operation = Operation(name, port_type_operation, soapaction, style)
         self.operations[name.text] = operation
         return operation
 
@@ -124,11 +130,11 @@ class Binding(object):
         return self.operations[name]
 
 
-class BindingOperation(object):
+class Operation(object):
 
-    def __init__(self, binding, name, soapaction, style):
+    def __init__(self, name, port_type_operation, soapaction, style):
         self.name = name
-        self.messages = binding.port_type.get_operation(name)
+        self.messages = port_type_operation
         self.soapaction = soapaction
         self.style = style
         self.protocol = {}
@@ -156,6 +162,26 @@ class BindingOperation(object):
         return self.messages.fault
 
 
+class Port(object):
+    def __init__(self, name, binding, location):
+        self.name = name
+        self.binding = binding
+        self.location = location
+
+    def get_operation(self, name):
+        return self.binding.get(name)
+
+    @classmethod
+    def parse(cls, wsdl, xmlelement):
+        name = get_qname(xmlelement, 'name', wsdl.target_namespace)
+        binding = get_qname(xmlelement, 'binding', wsdl.target_namespace)
+
+        soap_node = get_soap_node(xmlelement, 'address')
+        location = soap_node.get('location')
+        obj = cls(name, wsdl.bindings[binding], location=location)
+        return obj
+
+
 class Service(object):
 
     def __init__(self, name):
@@ -166,22 +192,29 @@ class Service(object):
         return '<%s(name=%r, ports=%r)>' % (
             self.__class__.__name__, self.name.text, self.ports)
 
+    def add_port(self, port):
+        self.ports[port.name] = port
+
     @classmethod
     def parse(cls, wsdl, xmlelement):
+        """
 
+        Example::
+
+              <service name="StockQuoteService">
+                <documentation>My first service</documentation>
+                <port name="StockQuotePort" binding="tns:StockQuoteBinding">
+                  <soap:address location="http://example.com/stockquote"/>
+                </port>
+              </service>
+
+        """
         tns = wsdl.target_namespace
         name = get_qname(xmlelement, 'name', tns, as_text=False)
         obj = cls(name)
         for port_node in xmlelement.findall('wsdl:port', namespaces=NSMAP):
-            soap_node = get_soap_node(port_node, 'address')
-            binding_name = get_qname(port_node, 'binding', tns)
-            port_name = get_qname(port_node, 'name', tns)
-
-            binding = wsdl.bindings[binding_name]
-            obj.ports[port_name] = {
-                'binding': binding,
-                'address': soap_node.get('location'),
-            }
+            port = Port.parse(wsdl, port_node)
+            obj.add_port(port)
 
         return obj
 

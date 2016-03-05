@@ -42,15 +42,16 @@ class Client(object):
 
         operation = None
         for port in service.ports.values():
-            operation = port['binding'].get(name)
-            address = port['address']
+            operation = port.binding.get(name)
+            if operation:
+                break
 
         if not operation:
             raise TypeError("No such function for service: %r" % name)
-        return operation, address
+        return port, operation
 
     def create_message(self, name, params):
-        operation, address = self.get_binding(name)
+        port, operation = self.get_binding(name)
 
         envelope = create_soap_message()
         body = envelope.find('soap-env:Body', namespaces=envelope.nsmap)
@@ -67,7 +68,7 @@ class Client(object):
             obj.render(body, value)
 
         return {
-            'url': address,
+            'url': port.location,
             'headers': {
                 'Content-Type': 'text/xml; charset=utf-8',
                 'SOAPAction': operation.soapaction,
@@ -76,7 +77,7 @@ class Client(object):
         }
 
     def process_response(self, name, response):
-        operation, address = self.get_binding(name)
+        port, operation = self.get_binding(name)
         response_node = etree.fromstring(response)
         node = response_node.find('soap-env:Body', namespaces=NSMAP)
 

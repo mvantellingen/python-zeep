@@ -1,7 +1,15 @@
 <?xml version="1.0"?>
-<definitions xmlns:tns="http://example.com/stockquote.wsdl" xmlns:xsd1="http://example.com/stockquote.xsd" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns="http://schemas.xmlsoap.org/wsdl/" name="StockQuote" targetNamespace="http://example.com/stockquote.wsdl">
+<definitions 
+    xmlns:tns="http://example.com/stockquote.wsdl" 
+    xmlns:xsd1="http://example.com/stockquote.xsd" 
+    xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" 
+    xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" 
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    name="StockQuote" 
+    targetNamespace="http://example.com/stockquote.wsdl">
   <types>
-    <schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/stockquote.xsd">
+    <schema xmlns="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://example.com/stockquote.xsd">
       <complexType name="Address">
         <sequence>
           <element minOccurs="0" maxOccurs="1" name="NameFirst" type="string"/>
@@ -38,21 +46,21 @@
     </operation>
   </portType>
   <binding name="StockQuoteBinding" type="tns:StockQuotePortType">
-    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <http:binding verb="POST"/>
     <operation name="GetLastTradePrice">
-      <soap:operation soapAction="http://example.com/GetLastTradePrice"/>
+      <http:operation location="GetLastTradePrice"/>
       <input>
-        <soap:body use="literal"/>
+        <mime:content type="application/x-www-form-urlencoded"/>
       </input>
       <output>
-        <soap:body use="literal"/>
+        <mime:mimeXml/>
       </output>
     </operation>
   </binding>
   <service name="StockQuoteService">
     <documentation>My first service</documentation>
     <port name="StockQuotePort" binding="tns:StockQuoteBinding">
-      <soap:address location="http://example.com/stockquote"/>
+      <http:address location="http://example.com/stockquote"/>
     </port>
   </service>
 </definitions>
