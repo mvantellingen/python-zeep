@@ -63,6 +63,10 @@ class PortType(object):
         self.name = name
         self.operations = {}
 
+    def __repr__(self):
+        return '<%s(name=%r)>' % (
+            self.__class__.__name__, self.name.text)
+
     @classmethod
     def parse(cls, wsdl, xmlelement):
         """
@@ -107,6 +111,10 @@ class Binding(object):
         self.port_type = port_type
         self.operations = {}
 
+    def __repr__(self):
+        return '<%s(name=%r, port_type=%r)>' % (
+            self.__class__.__name__, self.name.text, self.port_type)
+
     def add_operation(self, name, soapaction, style):
         operation = BindingOperation(self, name, soapaction, style)
         self.operations[name.text] = operation
@@ -124,6 +132,10 @@ class BindingOperation(object):
         self.soapaction = soapaction
         self.style = style
         self.protocol = {}
+
+    def __repr__(self):
+        return '<%s(name=%r, style=%r)>' % (
+            self.__class__.__name__, self.name.text, self.style)
 
     def protocol_info(self, type_, use, namespace):
         self.protocol[type_] = {
@@ -143,6 +155,35 @@ class BindingOperation(object):
     def fault(self):
         return self.messages.fault
 
+
+class Service(object):
+
+    def __init__(self, name):
+        self.ports = {}
+        self.name = name
+
+    def __repr__(self):
+        return '<%s(name=%r, ports=%r)>' % (
+            self.__class__.__name__, self.name.text, self.ports)
+
+    @classmethod
+    def parse(cls, wsdl, xmlelement):
+
+        tns = wsdl.target_namespace
+        name = get_qname(xmlelement, 'name', tns, as_text=False)
+        obj = cls(name)
+        for port_node in xmlelement.findall('wsdl:port', namespaces=NSMAP):
+            soap_node = get_soap_node(port_node, 'address')
+            binding_name = get_qname(port_node, 'binding', tns)
+            port_name = get_qname(port_node, 'name', tns)
+
+            binding = wsdl.bindings[binding_name]
+            obj.ports[port_name] = {
+                'binding': binding,
+                'address': soap_node.get('location'),
+            }
+
+        return obj
 
 
 class WSDL(object):
@@ -166,6 +207,8 @@ class WSDL(object):
         self.services = self.parse_service(doc)
 
     def dump(self):
+        print self.services
+        return
         print "Types: "
         pprint.pprint(self.types)
         print "Messages: "
@@ -276,18 +319,9 @@ class WSDL(object):
 
         result = {}
         for service_node in findall(doc, 'wsdl:service'):
-            name = service_node.get('name')
-            result[name] = {}
+            service = Service.parse(self, service_node)
+            result[service.name.text] = service
 
-            for port_node in findall(service_node, 'wsdl:port'):
-                soap_node = get_soap_node(port_node, 'address')
-                binding = get_qname(port_node, 'binding', tns)
-                port_name = get_qname(port_node, 'name', tns)
-
-                result[name][port_name] = {
-                    'binding': self.bindings[binding],
-                    'address': soap_node.get('location'),
-                }
         return result
 
 

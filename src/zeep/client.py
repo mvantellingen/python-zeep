@@ -36,20 +36,18 @@ class Client(object):
 
     def get_binding(self, name):
         service = self.wsdl.services.values()[0]
+
         name = parse_qname(name, self.wsdl.nsmap, self.wsdl.target_namespace)
         name = name.text
 
-        port = None
-        address = None
-        for binding in service.values():
-            port = binding['binding'].get(name)
-            address = binding['address']
-            if port:
-                break
+        operation = None
+        for port in service.ports.values():
+            operation = port['binding'].get(name)
+            address = port['address']
 
-        if not port:
+        if not operation:
             raise TypeError("No such function for service: %r" % name)
-        return port, address
+        return operation, address
 
     def create_message(self, name, params):
         operation, address = self.get_binding(name)
@@ -61,7 +59,6 @@ class Client(object):
             method = etree.SubElement(body, name)
             for key, value in params.iteritems():
                 key = parse_qname(key, self.wsdl.nsmap, self.wsdl.target_namespace)
-                print operation.input
                 obj = operation.input.get_part(key)
                 obj.render(method, value)
         else:
