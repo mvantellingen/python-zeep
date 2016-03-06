@@ -56,10 +56,10 @@ class AbstractMessage(object):
             part_element = get_qname(part, 'element', wsdl.target_namespace)
 
             if part_element is not None:
-                part_type = wsdl.types.get_element(part_element)
+                part_type = wsdl.schema.get_element(part_element)
             else:
                 part_type = get_qname(part, 'type', wsdl.target_namespace)
-                part_type = wsdl.types.get_type(part_type)
+                part_type = wsdl.schema.get_type(part_type)
                 part_type = xsd.Element(part_name, type_=part_type())
             msg.add_part(part_name, part_type)
         return msg
@@ -120,9 +120,6 @@ class PortType(object):
             operation = AbstractOperation.parse(wsdl, elm)
             obj.operations[operation.name.text] = operation
         return obj
-
-    def get_operation(self, name):
-        return self.operations[name.text]
 
 
 class Binding(object):
@@ -254,7 +251,7 @@ class ConcreteMessage(object):
         headerfault = get_soap_node(xmlelement, 'headerfault')
 
         obj.namespace = {
-            'body': body.get('namespace'),
+            'body': body.get('namespace') if body is not None else None,
             'header': header.get('namespace') if header is not None else None,
             'headerfault': (
                 headerfault.get('namespace')
@@ -385,9 +382,15 @@ class Operation(object):
             </operation>
 
         """
-        name = get_qname(
-            xmlelement, 'name', wsdl.target_namespace, as_text=False)
-        abstract_operation = binding.port_type.get_operation(name)
+        localname = xmlelement.get('name')
+
+        for namespace in wsdl.namespaces:
+            name = etree.QName(namespace, localname)
+            if name in binding.port_type.operations:
+                abstract_operation = binding.port_type.operations[name]
+                break
+        else:
+            raise ValueError("Operation not found")
 
         # The soap:operation element is required for soap/http bindings
         # and may be omitted for other bindings.
@@ -432,9 +435,6 @@ class Port(object):
 
     def __unicode__(self):
         return 'Port: %s' % self.name
-
-    def get_operation(self, name):
-        return self.binding.get(name)
 
     def send(self, transport, operation, args, kwargs):
         return self.binding.send(
@@ -493,7 +493,12 @@ class Service(object):
 
 class WSDL(object):
     def __init__(self, filename):
-        self.types = {}
+        self.schema = None
+        self.ports = {}
+        self.messages = {}
+        self.bindings = {}
+        self.services = {}
+        self.namespaces = []
         self.schema_references = {}
 
         if filename.startswith(('http://', 'https://')):
@@ -505,14 +510,16 @@ class WSDL(object):
 
         self.nsmap = doc.nsmap
         self.target_namespace = doc.get('targetNamespace')
-        self.types = self.parse_types(doc)
-        self.messages = self.parse_messages(doc)
-        self.ports = self.parse_ports(doc)
-        self.bindings = self.parse_binding(doc)
-        self.services = self.parse_service(doc)
+        self.namespaces.append(self.target_namespace)
+        self.parse_imports(doc)
+        self.parse_types(doc)
+        self.messages.update(self.parse_messages(doc))
+        self.ports.update(self.parse_ports(doc))
+        self.bindings.update(self.parse_binding(doc))
+        self.services.update(self.parse_service(doc))
 
     def dump(self):
-        type_instances = [type_cls() for type_cls in self.types.types.values()]
+        type_instances = [type_cls() for type_cls in self.schema.types.values()]
         print 'Types:'
         for type_obj in sorted(type_instances):
             print '%s%s' % (' ' * 4, unicode(type_obj))
@@ -527,6 +534,21 @@ class WSDL(object):
                 for operation in port.binding.operations.values():
                     print '%s%s' % (' ' * 12, unicode(operation))
 
+    def parse_imports(self, doc):
+        result = {}
+        for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
+            location = import_node.get('location')
+            namespace = import_node.get('namespace')
+            wsdl = WSDL(location)
+            self.ports.update(wsdl.ports)
+            self.schema = wsdl.schema
+            self.messages.update(wsdl.messages)
+            self.bindings.update(wsdl.bindings)
+            self.services.update(wsdl.services)
+            self.namespaces.append(namespace)
+
+        return result
+
     def parse_types(self, doc):
         namespace_sets = [
             {'xsd': 'http://www.w3.org/2001/XMLSchema'},
@@ -537,7 +559,7 @@ class WSDL(object):
 
         schema_nodes = findall_multiple_ns(types, 'xsd:schema', namespace_sets)
         if not schema_nodes:
-            return Schema()
+            return None
 
         for schema_node in schema_nodes:
             tns = schema_node.get('targetNamespace')
@@ -552,7 +574,7 @@ class WSDL(object):
                 namespace = import_node.get('namespace')
                 import_node.set('schemaLocation', 'intschema+%s' % namespace)
 
-        return Schema(schema_nodes[0], self.schema_references)
+        self.schema = Schema(schema_nodes[0], self.schema_references)
 
     def parse_messages(self, doc):
         result = {}

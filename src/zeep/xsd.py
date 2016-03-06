@@ -231,6 +231,17 @@ class CompoundValue(object):
 
 
 default_types = {
+    '{http://www.w3.org/2001/XMLSchema}anyType': String,
+    '{http://www.w3.org/2001/XMLSchema}anyURI': String,
+    '{http://www.w3.org/2001/XMLSchema}ID': String,
+    '{http://www.w3.org/2001/XMLSchema}IDREF': String,
+    '{http://www.w3.org/2001/XMLSchema}byte': String,
+    '{http://www.w3.org/2001/XMLSchema}short': Integer,
+    '{http://www.w3.org/2001/XMLSchema}unsignedByte': String,
+    '{http://www.w3.org/2001/XMLSchema}unsignedInt': Integer,
+    '{http://www.w3.org/2001/XMLSchema}unsignedLong': Long,
+    '{http://www.w3.org/2001/XMLSchema}unsignedShort': Integer,
+    '{http://www.w3.org/2001/XMLSchema}QName': String,
     '{http://www.w3.org/2001/XMLSchema}string': String,
     '{http://www.w3.org/2001/XMLSchema}float': Float,
     '{http://www.w3.org/2001/XMLSchema}int': Integer,
