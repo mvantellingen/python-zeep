@@ -1,15 +1,16 @@
 import pprint
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
-from lxml.builder import ElementMaker
 import requests
-from lxml.etree import QName
 from lxml import etree
+from lxml.builder import ElementMaker
+from lxml.etree import QName
 
 from zeep import xsd
 from zeep.parser import parse_xml
 from zeep.types import Schema
-from zeep.utils import findall_multiple_ns, get_qname, parse_qname
+from zeep.utils import (
+    findall_multiple_ns, get_qname, parse_qname, process_signature)
 
 NSMAP = {
     'xsd': 'http://www.w3.org/2001/XMLSchema',
@@ -17,24 +18,22 @@ NSMAP = {
     'soap': 'http://schemas.xmlsoap.org/wsdl/soap/',
     'soap12': 'http://schemas.xmlsoap.org/wsdl/soap12/',
     'soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
+    'http': 'http://schemas.xmlsoap.org/wsdl/http/',
+    'mime': 'http://schemas.xmlsoap.org/wsdl/mime/',
 }
-
-
-AbstractOperation = namedtuple(
-    'AbstractOperation', ['input', 'output', 'fault'])
 
 
 class AbstractMessage(object):
     def __init__(self, name):
         self.name = name
-        self.parts = {}
+        self.parts = OrderedDict()
 
     def __repr__(self):
         return '<%s(name=%r)>' % (
             self.__class__.__name__, self.name.text)
 
     def add_part(self, name, element):
-        self.parts[name] = element
+        self.parts[name.text] = element
 
     def get_part(self, name):
         return self.parts[name]
@@ -66,6 +65,34 @@ class AbstractMessage(object):
         return msg
 
 
+class AbstractOperation(object):
+    def __init__(self, name, input=None, output=None, fault=None,
+                 parameter_order=None):
+        self.name = name
+        self.input = input
+        self.output = output
+        self.fault = fault
+        self.parameter_order = parameter_order
+
+    @classmethod
+    def parse(cls, wsdl, xmlelement):
+        name = get_qname(
+            xmlelement, 'name', wsdl.target_namespace, as_text=False)
+
+        kwargs = {}
+        for type_ in 'input', 'output', 'fault':
+            msg_node = xmlelement.find('wsdl:%s' % type_, namespaces=NSMAP)
+            if msg_node is None:
+                continue
+            message_name = get_qname(
+                msg_node, 'message', wsdl.target_namespace)
+            kwargs[type_] = wsdl.messages[message_name]
+
+        kwargs['name'] = name
+        kwargs['parameter_order'] = xmlelement.get('parameterOrder')
+        return cls(**kwargs)
+
+
 class PortType(object):
     def __init__(self, name):
         self.name = name
@@ -90,24 +117,9 @@ class PortType(object):
         obj = cls(name)
 
         for elm in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
-            name = get_qname(elm, 'name', wsdl.target_namespace, as_text=False)
-            messages = {}
-
-            for type_ in 'input', 'output', 'fault':
-                msg_node = elm.find('wsdl:%s' % type_, namespaces=NSMAP)
-                if msg_node is None:
-                    continue
-                key = '%s_message' % type_
-                message_name = get_qname(
-                    msg_node, 'message', wsdl.target_namespace)
-                messages[key] = wsdl.messages[message_name]
-            obj.add_operation(name, **messages)
+            operation = AbstractOperation.parse(wsdl, elm)
+            obj.operations[operation.name.text] = operation
         return obj
-
-    def add_operation(self, name, input_message=None, output_message=None,
-                      fault_message=None):
-        self.operations[name.text] = AbstractOperation(
-            input_message, output_message, fault_message)
 
     def get_operation(self, name):
         return self.operations[name.text]
@@ -133,6 +145,21 @@ class Binding(object):
         return '<%s(name=%r, port_type=%r)>' % (
             self.__class__.__name__, self.name.text, self.port_type)
 
+    def get(self, name):
+        return self.operations[name]
+
+    @classmethod
+    def match(cls, node):
+        raise NotImplementedError()
+
+
+class SoapBinding(Binding):
+
+    @classmethod
+    def match(cls, node):
+        soap_node = get_soap_node(node, 'binding')
+        return soap_node is not None
+
     def send(self, transport, address, operation, args, kwargs):
         """Called from the service"""
         operation = self.get(operation)
@@ -152,14 +179,17 @@ class Binding(object):
             'Content-Type': 'text/xml; charset=utf-8',
             'SOAPAction': operation.soapaction,
         }
-        print etree.tostring(envelope, pretty_print=True)
-        response = transport.send(
+        response = transport.post(
             address, etree.tostring(envelope), http_headers)
-        return
+        return self.process_reply(operation, response)
 
+    def process_reply(self, operation, response):
+        if response.status_code != 200:
+            print response.content
+            raise NotImplementedError("No error handling yet!")
 
-    def get(self, name):
-        return self.operations[name]
+        envelope = etree.fromstring(response.content)
+        return operation.process_reply(envelope)
 
     @classmethod
     def parse(cls, wsdl, xmlelement):
@@ -189,17 +219,26 @@ class Binding(object):
         return obj
 
 
+class HttpBinding(Binding):
+
+    @classmethod
+    def match(cls, node):
+        http_node = node.find(etree.QName(NSMAP['http'], 'binding'))
+        return http_node is not None
+
+
 class ConcreteMessage(object):
-    def __init__(self, wsdl, abstract):
+    def __init__(self, wsdl, abstract, operation):
         self.abstract = abstract
         self.wsdl = wsdl
         self.namespace = {}
+        self.operation = operation
 
     def create(self, *args, **kwargs):
         raise NotImplementedError()
 
     @classmethod
-    def parse(cls, wsdl, xmlelement, abstract):
+    def parse(cls, wsdl, xmlelement, abstract_message, operation):
         """
         Example::
 
@@ -208,7 +247,7 @@ class ConcreteMessage(object):
               </output>
 
         """
-        obj = cls(wsdl, abstract)
+        obj = cls(wsdl, abstract_message, operation)
 
         body = get_soap_node(xmlelement, 'body')
         header = get_soap_node(xmlelement, 'header')
@@ -216,34 +255,64 @@ class ConcreteMessage(object):
 
         obj.namespace = {
             'body': body.get('namespace'),
-            'header': body.get('header'),
-            'headerfault': body.get('headerfault'),
+            'header': header.get('namespace') if header is not None else None,
+            'headerfault': (
+                headerfault.get('namespace')
+                if headerfault is not None else None
+            ),
         }
 
-        obj.body = abstract.parts.values()[0]
+        obj.body = abstract_message.parts.values()[0]
         obj.header = None
         obj.headerfault = None
         return obj
 
+    def signature(self):
+        # if self.operation.abstract.parameter_order:
+        #     self.operation.abstract.parameter_order.split()
+        return self.abstract.parts.values()[0].type.signature()
+
+
 class RpcMessage(ConcreteMessage):
-    def create(self, *args, **kwargs):
+    def serialize(self, *args, **kwargs):
         soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
+        tag_name = etree.QName(
+            self.namespace['body'], self.abstract.name.localname)
 
         body = soap.Body()
-        method = etree.SubElement(
-            body,
-            etree.QName(self.namespace['body'], self.abstract.name.localname))
-        for key, value in kwargs.iteritems():
+        method = etree.SubElement(body, tag_name)
+
+        param_order = self.signature()
+        items = process_signature(param_order, args, kwargs)
+        for key, value in items.iteritems():
             key = parse_qname(key, self.wsdl.nsmap, self.wsdl.target_namespace)
             obj = self.abstract.get_part(key)
             obj.render(method, value)
         return body, None, None
 
+    def deserialize(self, node):
+        tag_name = etree.QName(
+            self.namespace['body'], self.abstract.name.localname)
+
+        value = node.find(tag_name)
+        result = []
+        for element in self.abstract.parts.values():
+            elm = value.find(element.name)
+            result.append(element.parse(elm))
+
+        if len(result) > 1:
+            return tuple(result)
+        return result[0]
+
+    def signature(self):
+        # if self.operation.abstract.parameter_order:
+        #     self.operation.abstract.parameter_order.split()
+        return self.abstract.parts.keys()
 
 
 class DocumentMessage(ConcreteMessage):
 
-    def create(self, *args, **kwargs):
+    def serialize(self, *args, **kwargs):
         soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
         body = header = headerfault = None
 
@@ -257,18 +326,30 @@ class DocumentMessage(ConcreteMessage):
             header = self.header
 
         headerfault = None
-
         return body, header, headerfault
+
+    def deserialize(self, node):
+        result = []
+        for element in self.abstract.parts.values():
+            elm = node.find(element.qname)
+            assert elm is not None
+            result.append(element.parse(elm))
+        if len(result) > 1:
+            return tuple(result)
+        return result[0]
 
 
 class Operation(object):
+    """Concrete operation
 
+    Contains references to the concrete messages
+
+    """
     def __init__(self, name, abstract_operation):
         self.name = name
         self.abstract = abstract_operation
         self.soapaction = None
         self.style = None
-        self.protocol = {}
         self.input = None
         self.output = None
         self.fault = None
@@ -277,17 +358,15 @@ class Operation(object):
         return '<%s(name=%r, style=%r)>' % (
             self.__class__.__name__, self.name.text, self.style)
 
+    def __unicode__(self):
+        return '%s(%s)' % (self.name, self.input.signature())
+
     def create(self, *args, **kwargs):
-        body = header = headerfault = None
-        soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
-        return self.input.create(*args, **kwargs)
+        return self.input.serialize(*args, **kwargs)
 
-
-    def protocol_info(self, type_, use, namespace):
-        self.protocol[type_] = {
-            'namespace': namespace,
-            'use': use
-        }
+    def process_reply(self, envelope):
+        node = envelope.find('soap-env:Body', namespaces=NSMAP)
+        return self.output.deserialize(node)
 
     @classmethod
     def parse(cls, wsdl, xmlelement, binding):
@@ -335,7 +414,7 @@ class Operation(object):
                 message_class = DocumentMessage
 
             abstract = getattr(abstract_operation, type_)
-            msg = message_class.parse(wsdl, type_node, abstract)
+            msg = message_class.parse(wsdl, type_node, abstract, obj)
             setattr(obj, type_, msg)
 
         return obj
@@ -346,6 +425,13 @@ class Port(object):
         self.name = name
         self.binding = binding
         self.location = location
+
+    def __repr__(self):
+        return '<%s(name=%r, binding=%r, location=%r)>' % (
+            self.__class__.__name__, self.name, self.binding, self.location)
+
+    def __unicode__(self):
+        return 'Port: %s' % self.name
 
     def get_operation(self, name):
         return self.binding.get(name)
@@ -370,6 +456,9 @@ class Service(object):
     def __init__(self, name):
         self.ports = {}
         self.name = name
+
+    def __unicode__(self):
+        return 'Service: %s' % self.name.text
 
     def __repr__(self):
         return '<%s(name=%r, ports=%r)>' % (
@@ -423,18 +512,20 @@ class WSDL(object):
         self.services = self.parse_service(doc)
 
     def dump(self):
-        print self.services
-        return
-        print "Types: "
-        pprint.pprint(self.types)
-        print "Messages: "
-        pprint.pprint(self.messages)
-        print "Ports: "
-        pprint.pprint(self.ports)
-        print "Bindings: "
-        pprint.pprint(self.bindings)
-        print "Services: "
-        pprint.pprint(self.services)
+        type_instances = [type_cls() for type_cls in self.types.types.values()]
+        print 'Types:'
+        for type_obj in sorted(type_instances):
+            print '%s%s' % (' ' * 4, unicode(type_obj))
+
+        print ''
+
+        for service in self.services.values():
+            print unicode(service)
+            for port in service.ports.values():
+                print ' ' * 4, unicode(port)
+                print ' ' * 8, 'Operations:'
+                for operation in port.binding.operations.values():
+                    print '%s%s' % (' ' * 12, unicode(operation))
 
     def parse_types(self, doc):
         namespace_sets = [
@@ -475,29 +566,24 @@ class WSDL(object):
         for port_node in doc.findall('wsdl:portType', namespaces=NSMAP):
             port_type = PortType.parse(self, port_node)
             result[port_type.name.text] = port_type
-
         return result
 
     def parse_binding(self, doc):
-        findall = lambda node, name: node.findall(name, namespaces=NSMAP)
-        tns = doc.get('targetNamespace')
-        bindings = {}
-
-        for binding_node in findall(doc, 'wsdl:binding'):
-            binding = Binding.parse(self, binding_node)
-            bindings[binding.name.text] = binding
-
-        return bindings
+        result = {}
+        for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
+            # Detect the binding type
+            if SoapBinding.match(binding_node):
+                binding = SoapBinding.parse(self, binding_node)
+            elif HttpBinding.match(binding_node):
+                binding = SoapBinding.parse(self, binding_node)
+            result[binding.name.text] = binding
+        return result
 
     def parse_service(self, doc):
-        findall = lambda node, name: node.findall(name, namespaces=NSMAP)
-        tns = doc.get('targetNamespace')
-
         result = {}
-        for service_node in findall(doc, 'wsdl:service'):
+        for service_node in doc.findall('wsdl:service', namespaces=NSMAP):
             service = Service.parse(self, service_node)
             result[service.name.text] = service
-
         return result
 
 

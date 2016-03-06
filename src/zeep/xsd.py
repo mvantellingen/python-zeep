@@ -1,6 +1,8 @@
-import six
 from decimal import Decimal as _Decimal
+
 from lxml import etree
+
+from zeep.utils import process_signature
 
 
 class Type(object):
@@ -15,6 +17,13 @@ class Type(object):
 
     def render(self, parent, value):
         raise NotImplementedError
+
+    def __unicode__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.signature())
+
+    @classmethod
+    def signature(cls):
+        return ''
 
 
 class UnresolvedType(Type):
@@ -63,6 +72,10 @@ class ComplexType(Type):
                 {'type': self, '__module__': 'zeep.types'})
 
         return self._value_class(*args, **kwargs)
+
+    @classmethod
+    def signature(cls):
+        return ', '.join([prop.name for prop in cls.properties()])
 
     def parse_xmlelement(self, xmlelement):
         instance = self()
@@ -162,7 +175,8 @@ class Element(object):
         self.nsmap = nsmap or {}
 
     def __repr__(self):
-        return '<%s(name=%r, type=%r)>' % (self.__class__.__name__, self.name, self.type)
+        return '<%s(name=%r, type=%r)>' % (
+            self.__class__.__name__, self.name, self.type)
 
     def resolve_type(self, schema):
         if isinstance(self.type, UnresolvedType):
@@ -211,28 +225,9 @@ class CompoundValue(object):
         for key, value in properties.iteritems():
             setattr(self, key, value)
 
-        if len(args) > len(property_names):
-            raise TypeError(
-                '__init__() takes exactly %d arguments (%d given)' % (
-                    len(property_names), len(args)))
-
-        for key, value in zip(property_names, args):
-            if key in kwargs:
-                raise TypeError(
-                    "__init__() got multiple values for keyword argument '%s'"
-                    % key)
+        items = process_signature(property_names, args, kwargs)
+        for key, value in items.iteritems():
             setattr(self, key, value)
-
-        for key, value in kwargs.items():
-            if key not in properties:
-                raise TypeError(
-                    "__init__() got an unexpected keyword argument %r" % key)
-            setattr(self, key, value)
-
-    def __repr__(self):
-        signature = ', '.join(
-            '%s=%r' % (k, v) for k, v in self.__dict__.items()[:10])
-        return '<%s(%s)>' % (self.__class__.__name__, signature)
 
 
 default_types = {
