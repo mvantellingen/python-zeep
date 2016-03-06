@@ -1,5 +1,6 @@
 import logging
 
+from zeep.transports import Transport
 import requests
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -22,20 +23,15 @@ class Client(object):
     def __init__(self, wsdl):
         self.wsdl = WSDL(wsdl)
 
-    def call(self, name, **kwargs):
-        message = self.create_message(name, kwargs)
+    def call(self, name, *args, **kwargs):
+        transport = Transport()
+        port = self.get_port()
+        print port.send(transport, name, args, kwargs)
 
-        response = requests.post(
-            message['url'], data=message['body'], headers=message['headers'])
 
-        if response.status_code != 200:
-            print response.content
-            raise NotImplementedError("No error handling yet!")
-
-        return self.process_response(name, response.content)
-
-    def get_binding(self, name):
+    def get_port(self, service=None, port=None):
         service = self.wsdl.services.values()[0]
+        return service.ports.values()[0]
 
         name = parse_qname(name, self.wsdl.nsmap, self.wsdl.target_namespace)
         name = name.text
@@ -49,32 +45,6 @@ class Client(object):
         if not operation:
             raise TypeError("No such function for service: %r" % name)
         return port, operation
-
-    def create_message(self, name, params):
-        port, operation = self.get_binding(name)
-
-        envelope = create_soap_message()
-        body = envelope.find('soap-env:Body', namespaces=envelope.nsmap)
-
-        if operation.style == 'rpc':
-            method = etree.SubElement(body, name)
-            for key, value in params.iteritems():
-                key = parse_qname(key, self.wsdl.nsmap, self.wsdl.target_namespace)
-                obj = operation.input.get_part(key)
-                obj.render(method, value)
-        else:
-            obj = operation.input.parts.values()[0]
-            value = obj(**params)
-            obj.render(body, value)
-
-        return {
-            'url': port.location,
-            'headers': {
-                'Content-Type': 'text/xml; charset=utf-8',
-                'SOAPAction': operation.soapaction,
-            },
-            'body': etree.tostring(envelope, pretty_print=True)
-        }
 
     def process_response(self, name, response):
         port, operation = self.get_binding(name)

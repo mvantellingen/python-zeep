@@ -1,4 +1,5 @@
 from zeep import wsdl
+from zeep.transports import Transport
 
 
 def test_parse_wsdl():
@@ -12,7 +13,13 @@ def test_parse_wsdl():
     port = service.ports['{http://example.com/stockquote.wsdl}StockQuotePort']
     assert port
 
-    operation = port.get_operation('{http://example.com/stockquote.wsdl}GetLastTradePrice')
-    assert operation
-    assert operation.input
-    assert operation.output
+    transport = Transport()
+
+    port.send(
+        transport=transport,
+        operation='{http://example.com/stockquote.wsdl}GetLastTradePrice',
+        args=[],
+        kwargs={'tickerSymbol': 'foobar'})
+
+
+    # print operation.input('John', 'Doe', 'j.doe@example.com')

@@ -1,8 +1,10 @@
 import pprint
 from collections import namedtuple
 
+from lxml.builder import ElementMaker
 import requests
 from lxml.etree import QName
+from lxml import etree
 
 from zeep import xsd
 from zeep.parser import parse_xml
@@ -14,6 +16,7 @@ NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
     'soap': 'http://schemas.xmlsoap.org/wsdl/soap/',
     'soap12': 'http://schemas.xmlsoap.org/wsdl/soap12/',
+    'soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
 }
 
 
@@ -21,7 +24,7 @@ AbstractOperation = namedtuple(
     'AbstractOperation', ['input', 'output', 'fault'])
 
 
-class Message(object):
+class AbstractMessage(object):
     def __init__(self, name):
         self.name = name
         self.parts = {}
@@ -103,14 +106,24 @@ class PortType(object):
 
     def add_operation(self, name, input_message=None, output_message=None,
                       fault_message=None):
-        self.operations[name] = AbstractOperation(
+        self.operations[name.text] = AbstractOperation(
             input_message, output_message, fault_message)
 
     def get_operation(self, name):
-        return self.operations[name]
+        return self.operations[name.text]
 
 
 class Binding(object):
+    """
+        Binding
+           |
+           +-> Operation
+                   |
+                   +-> ConcreteMessage
+                             |
+                             +-> AbstractMessage
+
+    """
     def __init__(self, name, port_type):
         self.name = name
         self.port_type = port_type
@@ -120,28 +133,155 @@ class Binding(object):
         return '<%s(name=%r, port_type=%r)>' % (
             self.__class__.__name__, self.name.text, self.port_type)
 
-    def add_operation(self, name, soapaction, style):
-        port_type_operation = self.port_type.get_operation(name)
-        operation = Operation(name, port_type_operation, soapaction, style)
-        self.operations[name.text] = operation
-        return operation
+    def send(self, transport, address, operation, args, kwargs):
+        """Called from the service"""
+        operation = self.get(operation)
+        if not operation:
+            raise ValueError("Operation not found")
+        body, header, headerfault = operation.create(*args, **kwargs)
+
+        soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
+
+        envelope = soap.Envelope()
+        if header is not None:
+            envelope.append(header)
+        if body is not None:
+            envelope.append(body)
+
+        http_headers = {
+            'Content-Type': 'text/xml; charset=utf-8',
+            'SOAPAction': operation.soapaction,
+        }
+        print etree.tostring(envelope, pretty_print=True)
+        response = transport.send(
+            address, etree.tostring(envelope), http_headers)
+        return
+
 
     def get(self, name):
         return self.operations[name]
 
+    @classmethod
+    def parse(cls, wsdl, xmlelement):
+        name = get_qname(xmlelement, 'name', wsdl.target_namespace, as_text=False)
+        port_name = get_qname(xmlelement, 'type', wsdl.target_namespace)
+        port_type = wsdl.ports[port_name]
+
+        obj = cls(name, port_type)
+
+        # The soap:binding element contains the transport method and
+        # default style attribute for the operations.
+        soap_node = get_soap_node(xmlelement, 'binding')
+        transport = soap_node.get('transport')
+        if transport != 'http://schemas.xmlsoap.org/soap/http':
+            raise NotImplementedError("Only soap/http is supported for now")
+        default_style = soap_node.get('style', 'document')
+
+        obj.transport = transport
+        obj.default_style = default_style
+
+        for node in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
+            operation = Operation.parse(wsdl, node, obj)
+
+            # XXX: operation name is not unique
+            obj.operations[operation.name.text] = operation
+
+        return obj
+
+
+class ConcreteMessage(object):
+    def __init__(self, wsdl, abstract):
+        self.abstract = abstract
+        self.wsdl = wsdl
+        self.namespace = {}
+
+    def create(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    @classmethod
+    def parse(cls, wsdl, xmlelement, abstract):
+        """
+        Example::
+
+              <output>
+                <soap:body use="literal"/>
+              </output>
+
+        """
+        obj = cls(wsdl, abstract)
+
+        body = get_soap_node(xmlelement, 'body')
+        header = get_soap_node(xmlelement, 'header')
+        headerfault = get_soap_node(xmlelement, 'headerfault')
+
+        obj.namespace = {
+            'body': body.get('namespace'),
+            'header': body.get('header'),
+            'headerfault': body.get('headerfault'),
+        }
+
+        obj.body = abstract.parts.values()[0]
+        obj.header = None
+        obj.headerfault = None
+        return obj
+
+class RpcMessage(ConcreteMessage):
+    def create(self, *args, **kwargs):
+        soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
+
+        body = soap.Body()
+        method = etree.SubElement(
+            body,
+            etree.QName(self.namespace['body'], self.abstract.name.localname))
+        for key, value in kwargs.iteritems():
+            key = parse_qname(key, self.wsdl.nsmap, self.wsdl.target_namespace)
+            obj = self.abstract.get_part(key)
+            obj.render(method, value)
+        return body, None, None
+
+
+
+class DocumentMessage(ConcreteMessage):
+
+    def create(self, *args, **kwargs):
+        soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
+        body = header = headerfault = None
+
+        if self.body:
+            body_obj = self.body
+            body_value = body_obj(*args, **kwargs)
+            body = soap.Body()
+            body_obj.render(body, body_value)
+
+        if self.header:
+            header = self.header
+
+        headerfault = None
+
+        return body, header, headerfault
+
 
 class Operation(object):
 
-    def __init__(self, name, port_type_operation, soapaction, style):
+    def __init__(self, name, abstract_operation):
         self.name = name
-        self.messages = port_type_operation
-        self.soapaction = soapaction
-        self.style = style
+        self.abstract = abstract_operation
+        self.soapaction = None
+        self.style = None
         self.protocol = {}
+        self.input = None
+        self.output = None
+        self.fault = None
 
     def __repr__(self):
         return '<%s(name=%r, style=%r)>' % (
             self.__class__.__name__, self.name.text, self.style)
+
+    def create(self, *args, **kwargs):
+        body = header = headerfault = None
+        soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
+        return self.input.create(*args, **kwargs)
+
 
     def protocol_info(self, type_, use, namespace):
         self.protocol[type_] = {
@@ -149,17 +289,56 @@ class Operation(object):
             'use': use
         }
 
-    @property
-    def input(self):
-        return self.messages.input
+    @classmethod
+    def parse(cls, wsdl, xmlelement, binding):
+        """
 
-    @property
-    def output(self):
-        return self.messages.output
+        Example::
 
-    @property
-    def fault(self):
-        return self.messages.fault
+            <operation name="GetLastTradePrice">
+              <soap:operation soapAction="http://example.com/GetLastTradePrice"/>
+              <input>
+                <soap:body use="literal"/>
+              </input>
+              <output>
+                <soap:body use="literal"/>
+              </output>
+            </operation>
+
+        """
+        name = get_qname(
+            xmlelement, 'name', wsdl.target_namespace, as_text=False)
+        abstract_operation = binding.port_type.get_operation(name)
+
+        # The soap:operation element is required for soap/http bindings
+        # and may be omitted for other bindings.
+        soap_node = get_soap_node(xmlelement, 'operation')
+        action = None
+        if soap_node is not None:
+            action = soap_node.get('soapAction')
+            style = soap_node.get('style', binding.default_style)
+        else:
+            style = binding.default_style
+
+        obj = cls(name, abstract_operation)
+        obj.soapaction = action
+        obj.style = style
+
+        for type_ in 'input', 'output', 'fault':
+            type_node = xmlelement.find(QName(NSMAP['wsdl'], type_))
+            if type_node is None:
+                continue
+
+            if style == 'rpc':
+                message_class = RpcMessage
+            else:
+                message_class = DocumentMessage
+
+            abstract = getattr(abstract_operation, type_)
+            msg = message_class.parse(wsdl, type_node, abstract)
+            setattr(obj, type_, msg)
+
+        return obj
 
 
 class Port(object):
@@ -170,6 +349,10 @@ class Port(object):
 
     def get_operation(self, name):
         return self.binding.get(name)
+
+    def send(self, transport, operation, args, kwargs):
+        return self.binding.send(
+            transport, self.location, operation, args, kwargs)
 
     @classmethod
     def parse(cls, wsdl, xmlelement):
@@ -283,7 +466,7 @@ class WSDL(object):
     def parse_messages(self, doc):
         result = {}
         for msg_node in doc.findall("wsdl:message", namespaces=NSMAP):
-            msg = Message.parse(self, msg_node)
+            msg = AbstractMessage.parse(self, msg_node)
             result[msg.name.text] = msg
         return result
 
@@ -301,47 +484,7 @@ class WSDL(object):
         bindings = {}
 
         for binding_node in findall(doc, 'wsdl:binding'):
-
-            name = get_qname(binding_node, 'name', tns, as_text=False)
-            port_name = get_qname(binding_node, 'type', tns)
-            port_type = self.ports[port_name]
-
-            binding = Binding(name, port_type)
-
-            # The soap:binding element contains the transport method and
-            # default style attribute for the operations.
-            soap_node = get_soap_node(binding_node, 'binding')
-            transport = soap_node.get('transport')
-            if transport != 'http://schemas.xmlsoap.org/soap/http':
-                raise NotImplementedError("Only soap/http is supported for now")
-            default_style = soap_node.get('style', 'document')
-
-            for operation_node in findall(binding_node, 'wsdl:operation'):
-                operation_name = get_qname(
-                    operation_node, 'name', tns, as_text=False)
-
-                # The soap:operation element is required for soap/http bindings
-                # and may be omitted for other bindings.
-                soap_node = get_soap_node(operation_node, 'operation')
-                action = None
-                if soap_node is not None:
-                    action = soap_node.get('soapAction')
-                    style = soap_node.get('style', default_style)
-                else:
-                    style = default_style
-
-                operation = binding.add_operation(operation_name, action, style)
-
-                for type_ in 'input', 'output', 'fault':
-                    type_node = operation_node.find(QName(NSMAP['wsdl'], type_))
-                    if type_node is None:
-                        continue
-                    soap_node = get_soap_node(type_node, 'body')
-                    operation.protocol_info(
-                        type_,
-                        use=soap_node.get('use'),
-                        namespace=soap_node.get('namespace'))
-
+            binding = Binding.parse(self, binding_node)
             bindings[binding.name.text] = binding
 
         return bindings
