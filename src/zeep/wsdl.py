@@ -181,11 +181,22 @@ class SoapBinding(Binding):
 
     def process_reply(self, operation, response):
         if response.status_code != 200:
-            print response.content
+            return self.process_error(response.content)
             raise NotImplementedError("No error handling yet!")
 
         envelope = etree.fromstring(response.content)
         return operation.process_reply(envelope)
+
+    def process_error(self, response):
+        doc = etree.fromstring(response)
+        fault_node = doc.find('soap-env:Body/soap-env:Fault', namespaces=NSMAP)
+        message = 'unknown'
+        if fault_node is not None:
+            string_node = fault_node.find('faultstring')
+            if string_node is not None:
+                message = string_node.text
+
+        raise IOError(message.strip())
 
     @classmethod
     def parse(cls, wsdl, xmlelement):

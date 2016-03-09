@@ -37,5 +37,3 @@ def test_parse_wsdl():
             args=[],
             kwargs={'tickerSymbol': 'foobar'})
         assert result.price == 120.123
-
-
