@@ -1,5 +1,4 @@
-import pprint
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict
 
 import requests
 from lxml import etree
@@ -540,14 +539,23 @@ class WSDL(object):
             location = import_node.get('location')
             namespace = import_node.get('namespace')
             wsdl = WSDL(location)
-            self.ports.update(wsdl.ports)
-            self.schema = wsdl.schema
-            self.messages.update(wsdl.messages)
-            self.bindings.update(wsdl.bindings)
-            self.services.update(wsdl.services)
-            self.namespaces.append(namespace)
-
+            self.merge(wsdl, namespace)
         return result
+
+    def merge(self, other, namespace):
+        """Merge other wsdl document into this document."""
+        def filter_namespace(source, namespace):
+            return {
+                k: v for k, v in source.items()
+                if k.startswith('{%s}' % namespace)
+            }
+
+        self.schema = other.schema
+        self.ports.update(filter_namespace(other.ports, namespace))
+        self.messages.update(filter_namespace(other.messages, namespace))
+        self.bindings.update(filter_namespace(other.bindings, namespace))
+        self.services.update(filter_namespace(other.services, namespace))
+        self.namespaces.append(namespace)
 
     def parse_types(self, doc):
         namespace_sets = [
