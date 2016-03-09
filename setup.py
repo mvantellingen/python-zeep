@@ -9,6 +9,7 @@ install_requires = [
 tests_require = [
     'pytest>=2.8.3',
     'pytest-cov>=2.2.0',
+    'requests_mock>=0.7.0',
 ]
 
 setup(
