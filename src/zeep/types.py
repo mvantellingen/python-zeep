@@ -207,7 +207,8 @@ class Schema(object):
             elif child.tag == tags.union:
                 break
 
-        xsd_type = xsd.String
+        base_type = xsd.String
+        xsd_type = type(name, (base_type,), {})
         if not is_anonymous:
             qname = parse_qname(name, node.nsmap, namespace)
             self.register_type(qname, xsd_type)
