@@ -58,10 +58,10 @@ class ComplexType(Type):
 
     @classmethod
     def properties(cls):
-        return cls.__metadata__['fields']
+        return list(cls.__metadata__['elements']) + list(cls.__metadata__['attributes'])
 
     def render(self, parent, value):
-        for element in self.__metadata__['fields']:
+        for element in self.properties():
             sub_value = getattr(value, element.name)
             element.render(parent, sub_value)
 
@@ -79,11 +79,12 @@ class ComplexType(Type):
 
     def parse_xmlelement(self, xmlelement):
         instance = self()
-        if not self.__metadata__['fields']:
+        fields = self.properties()
+        if not fields:
             return instance
 
         elements = xmlelement.getchildren()
-        fields = iter(self.__metadata__['fields'])
+        fields = iter(fields)
         field = next(fields)
         for element in elements:
             if field.qname != element.tag:
@@ -213,6 +214,15 @@ class ListElement(Element):
             self.type.render(node, val)
 
 
+class GroupElement(Element):
+    def __init__(self, *args, **kwargs):
+        self.children = kwargs.pop('children', [])
+        super(GroupElement, self).__init__(*args, **kwargs)
+
+    def properties(self):
+        return self.children
+
+
 class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
@@ -228,6 +238,31 @@ class CompoundValue(object):
         items = process_signature(property_names, args, kwargs)
         for key, value in items.iteritems():
             setattr(self, key, value)
+
+
+class RefElement(object):
+
+    def __init__(self, tag, ref, wsdl):
+        self._ref = ref
+        self._wsdl = wsdl
+
+    @property
+    def _elm(self):
+        return self._wsdl.get_element(self._ref)
+
+    def __iter__(self, *args, **kwargs):
+        elm = self._elm
+        for item in elm.properties():
+            yield item
+
+    def __call__(self, *args, **kwargs):
+        return self._elm(*args, **kwargs)
+
+    def __getattr__(self, name):
+        if not name.startswith('_'):
+            return getattr(self._elm, name)
+        return getattr(self, name)
+
 
 
 default_types = {

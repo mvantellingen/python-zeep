@@ -1,6 +1,7 @@
 from lxml import etree
 
 from tests.utils import assert_nodes_equal
+from zeep import xsd
 from zeep.wsdl import Schema
 
 
@@ -370,6 +371,88 @@ def test_custom_simple_type():
     expected = """
         <document>
             <something xmlns="http://tests.python-zeep.org/">75</something>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+def test_group():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <types>
+          <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                     xmlns:tns="http://tests.python-zeep.org/"
+                     targetNamespace="http://tests.python-zeep.org/">
+
+            <xs:element name="Address">
+              <xs:complexType>
+                <xs:group ref="tns:Name" />
+              </xs:complexType>
+            </xs:element>
+
+            <xs:group name="Name">
+              <xs:sequence>
+                <xs:element name="first_name" type="xs:string" />
+                <xs:element name="last_name" type="xs:string" />
+              </xs:sequence>
+            </xs:group>
+
+          </xs:schema>
+        </types>
+    """.strip())
+    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+
+    obj = address_type(first_name='foo', last_name='bar')
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    expected = """
+        <document>
+            <Address xmlns="http://tests.python-zeep.org/">
+                <first_name>foo</first_name>
+                <last_name>bar</last_name>
+            </Address>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+
+def test_element_ref():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <types>
+          <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                  xmlns:tns="http://tests.python-zeep.org/"
+                  targetNamespace="http://tests.python-zeep.org/">
+            <element name="foo" type="string"/>
+            <element name="bar">
+              <complexType>
+                <sequence>
+                  <element ref="tns:foo"/>
+                </sequence>
+              </complexType>
+            </element>
+          </schema>
+        </types>
+    """.strip())
+
+    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+
+    foo_type = schema.get_element('{http://tests.python-zeep.org/}foo')
+    assert isinstance(foo_type.type, xsd.String)
+
+    custom_type = schema.get_element('{http://tests.python-zeep.org/}bar')
+    obj = custom_type(foo='bar')
+
+    node = etree.Element('document')
+    custom_type.render(node, obj)
+    expected = """
+        <document>
+            <bar xmlns="http://tests.python-zeep.org/">
+                <foo>bar</foo>
+            </bar>
         </document>
     """
     assert_nodes_equal(expected, node)

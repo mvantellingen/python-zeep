@@ -5,7 +5,7 @@ from lxml import etree
 
 from zeep import xsd
 from zeep.parser import load_external
-from zeep.utils import parse_qname
+from zeep.utils import parse_qname, get_qname
 
 NSMAP = {
     'xsd': 'http://www.w3.org/2001/XMLSchema',
@@ -107,6 +107,11 @@ class Schema(object):
             raise ValueError("No visitor defined for %r", node.tag)
         return visit_func(self, node, parent, namespace)
 
+    def process_ref_attribute(self, node):
+        ref = get_qname(node, 'ref', self.target_namespace, as_text=False)
+        if ref:
+            return xsd.RefElement(node.tag, ref, self)
+
     def visit_element(self, node, parent, namespace=None):
         """
             <element
@@ -129,6 +134,10 @@ class Schema(object):
             keyref)*))
             </element>
         """
+        result = self.process_ref_attribute(node)
+        if result:
+            return result
+
         name = node.get('name')
         qname = parse_qname(name, node.nsmap, namespace)
 
@@ -247,6 +256,7 @@ class Schema(object):
 
                 if child.tag == tags.group:
                     assert not children
+                    children = item
 
                 elif child.tag in (tags.choice, tags.sequence, tags.all):
                     assert not children
@@ -267,7 +277,8 @@ class Schema(object):
         qname = parse_qname(name, node.nsmap, namespace)
         cls = type(name, (xsd.ComplexType,), {})
         cls.__metadata__ = {
-            'fields': children + attributes
+            'elements': children,
+            'attributes': attributes,
         }
         xsd_type = cls
         if not is_anonymous:
@@ -275,6 +286,16 @@ class Schema(object):
         return xsd_type
 
     def visit_sequence(self, node, parent, namespace):
+        """
+            <sequence
+              id = ID
+              maxOccurs = (nonNegativeInteger | unbounded) : 1
+              minOccurs = nonNegativeInteger : 1
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (element | group | choice | sequence | any)*)
+            </sequence>
+        """
+
         sub_types = [
             tags.annotation, tags.any, tags.choice, tags.element,
             tags.group, tags.sequence
@@ -304,6 +325,16 @@ class Schema(object):
         return attr
 
     def visit_import(self, node, parent, namespace=None):
+        """
+            <import
+              id = ID
+              namespace = anyURI
+              schemaLocation = anyURI
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?)
+            </import>
+        """
+
         if not node.get('schemaLocation'):
             raise NotImplementedError("schemaLocation is required")
         namespace = 'intschema+%s' % node.get('namespace')
@@ -323,6 +354,64 @@ class Schema(object):
         pass
 
     def visit_group(self, node, parent, namespace=None):
+        """
+            <group
+              name= NCName
+              id = ID
+              maxOccurs = (nonNegativeInteger | unbounded) : 1
+              minOccurs = nonNegativeInteger : 1
+              name = NCName
+              ref = QName
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (all | choice | sequence))
+            </group>
+        """
+
+        result = self.process_ref_attribute(node)
+        if result:
+            return result
+
+        qname = get_qname(node, 'name', self.target_namespace, as_text=False)
+
+        child = node.getchildren()[0]
+        children = self.process(child, parent, namespace)
+
+        elm = xsd.GroupElement(name=qname, children=children)
+        self.register_element(qname, elm)
+        return elm
+
+    def visit_list(self, node, parent, namespace=None):
+        """
+            <list
+              id = ID
+              itemType = QName
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (simpleType?))
+            </list>
+
+        """
+        pass
+
+    def visit_union(self, node, parent, namespace=None):
+        """
+            <union
+              id = ID
+              memberTypes = List of QNames
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (simpleType*))
+            </union>
+        """
+        pass
+
+    def visit_unique(self, node, parent, namespace=None):
+        """
+            <unique
+              id = ID
+              name = NCName
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (selector, field+))
+            </unique>
+        """
         pass
 
     visitors = {
