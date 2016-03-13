@@ -21,12 +21,12 @@ logger = logging.getLogger(__name__)
 class Client(object):
 
     def __init__(self, wsdl):
-        self.wsdl = WSDL(wsdl)
+        self.transport = Transport()
+        self.wsdl = WSDL(wsdl, self.transport)
 
     def call(self, name, *args, **kwargs):
-        transport = Transport()
         port = self.get_port()
-        return port.send(transport, name, args, kwargs)
+        return port.send(self.transport, name, args, kwargs)
 
     def get_port(self, service=None, port=None):
         service = self.wsdl.services.values()[0]

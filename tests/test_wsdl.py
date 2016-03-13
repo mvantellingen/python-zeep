@@ -4,7 +4,9 @@ import requests_mock
 
 
 def test_parse_wsdl():
-    obj = wsdl.WSDL('tests/wsdl_files/soap.wsdl')
+    transport = Transport()
+
+    obj = wsdl.WSDL('tests/wsdl_files/soap.wsdl', transport=transport)
     assert len(obj.services) == 1
 
     service = obj.services['{http://example.com/stockquote.wsdl}StockQuoteService']
@@ -13,8 +15,6 @@ def test_parse_wsdl():
 
     port = service.ports['{http://example.com/stockquote.wsdl}StockQuotePort']
     assert port
-
-    transport = Transport()
 
     response = """
     <?xml version="1.0"?>

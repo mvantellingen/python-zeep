@@ -502,7 +502,8 @@ class Service(object):
 
 
 class WSDL(object):
-    def __init__(self, filename):
+    def __init__(self, filename, transport):
+        self.transport = transport
         self.schema = None
         self.ports = {}
         self.messages = {}
@@ -513,10 +514,10 @@ class WSDL(object):
 
         if filename.startswith(('http://', 'https://')):
             response = requests.get(filename)
-            doc = parse_xml(response.content, self.schema_references)
+            doc = parse_xml(response.content, self.schema_references, transport)
         else:
             with open(filename) as fh:
-                doc = parse_xml(fh.read(), self.schema_references)
+                doc = parse_xml(fh.read(), self.schema_references, transport)
 
         self.nsmap = doc.nsmap
         self.target_namespace = doc.get('targetNamespace')
@@ -549,7 +550,7 @@ class WSDL(object):
         for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
             location = import_node.get('location')
             namespace = import_node.get('namespace')
-            wsdl = WSDL(location)
+            wsdl = WSDL(location, self.transport)
             self.merge(wsdl, namespace)
         return result
 
@@ -593,7 +594,8 @@ class WSDL(object):
                 namespace = import_node.get('namespace')
                 import_node.set('schemaLocation', 'intschema+%s' % namespace)
 
-        self.schema = Schema(schema_nodes[0], self.schema_references)
+        self.schema = Schema(
+            schema_nodes[0], self.schema_references, self.transport)
 
     def parse_messages(self, doc):
         result = {}

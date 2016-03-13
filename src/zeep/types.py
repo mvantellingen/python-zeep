@@ -38,8 +38,8 @@ for name in [
 
 class Schema(object):
 
-    def __init__(self, node=None, references=None):
-
+    def __init__(self, node=None, references=None, transport=None):
+        self.transport = transport
         self.schema_references = references or {}
         self.xml_schema = None
         self.types = {}
@@ -105,7 +105,9 @@ class Schema(object):
         visit_func = self.visitors.get(node.tag)
         if not visit_func:
             raise ValueError("No visitor defined for %r", node.tag)
-        return visit_func(self, node, parent, namespace)
+        result = visit_func(self, node, parent, namespace)
+        return result
+
 
     def process_ref_attribute(self, node):
         ref = get_qname(node, 'ref', self.target_namespace, as_text=False)
@@ -306,6 +308,8 @@ class Schema(object):
             assert child.tag in sub_types, child
             item = self.process(child, node, namespace)
             result.append(item)
+
+        assert not None in result
         return result
 
     def visit_attribute(self, node, parent, namespace):
@@ -344,7 +348,7 @@ class Schema(object):
             schema_node = self.schema_references[namespace]
             return self.visit_schema(schema_node)
 
-        schema_node = load_external(location, self.schema_references)
+        schema_node = load_external(location, self.schema_references, self.transport)
         return self.visit_schema(schema_node)
 
     def visit_restriction(self, node, namespace=None):
@@ -371,7 +375,7 @@ class Schema(object):
         if result:
             return result
 
-        qname = get_qname(node, 'name', self.target_namespace, as_text=False)
+        qname = get_qname(node, 'name', namespace, as_text=False)
 
         child = node.getchildren()[0]
         children = self.process(child, parent, namespace)
