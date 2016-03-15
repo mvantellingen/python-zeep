@@ -31,7 +31,7 @@ class UnresolvedType(Type):
         self.qname = qname
 
     def resolve(self, schema):
-        return schema.get_type(self.qname)()
+        return schema.get_type(self.qname)
 
 
 class SimpleType(Type):
@@ -56,9 +56,12 @@ class SimpleType(Type):
 
 class ComplexType(Type):
 
-    @classmethod
-    def properties(cls):
-        return list(cls.__metadata__['elements']) + list(cls.__metadata__['attributes'])
+    def __init__(self, elements=None, attributes=None):
+        self._elements = elements or []
+        self._attributes = attributes or []
+
+    def properties(self):
+        return list(self._elements) + list(self._attributes)
 
     def render(self, parent, value):
         for element in self.properties():
@@ -68,14 +71,13 @@ class ComplexType(Type):
     def __call__(self, *args, **kwargs):
         if not hasattr(self, '_value_class'):
             self._value_class = type(
-                self.__class__.__name__, (CompoundValue,),
-                {'type': self, '__module__': 'zeep.types'})
+                self.__class__.__name__ + 'Object', (CompoundValue,),
+                {'type': self, '__module__': 'zeep.objects'})
 
         return self._value_class(*args, **kwargs)
 
-    @classmethod
-    def signature(cls):
-        return ', '.join([prop.name for prop in cls.properties()])
+    def signature(self):
+        return ', '.join([prop.name for prop in self.properties()])
 
     def parse_xmlelement(self, xmlelement):
         instance = self()
@@ -188,7 +190,7 @@ class Element(object):
         assert self.name is not None
         assert self.nsmap is not None
 
-        node = etree.SubElement(parent, self.name, nsmap=self.nsmap)
+        node = etree.SubElement(parent, self.qname, nsmap=self.nsmap)
         return self.type.render(node, value)
 
     def parse(self, value):
@@ -266,24 +268,24 @@ class RefElement(object):
 
 
 default_types = {
-    '{http://www.w3.org/2001/XMLSchema}anyType': String,
-    '{http://www.w3.org/2001/XMLSchema}anyURI': String,
-    '{http://www.w3.org/2001/XMLSchema}ID': String,
-    '{http://www.w3.org/2001/XMLSchema}IDREF': String,
-    '{http://www.w3.org/2001/XMLSchema}byte': String,
-    '{http://www.w3.org/2001/XMLSchema}short': Integer,
-    '{http://www.w3.org/2001/XMLSchema}unsignedByte': String,
-    '{http://www.w3.org/2001/XMLSchema}unsignedInt': Integer,
-    '{http://www.w3.org/2001/XMLSchema}unsignedLong': Long,
-    '{http://www.w3.org/2001/XMLSchema}unsignedShort': Integer,
-    '{http://www.w3.org/2001/XMLSchema}QName': String,
-    '{http://www.w3.org/2001/XMLSchema}string': String,
-    '{http://www.w3.org/2001/XMLSchema}float': Float,
-    '{http://www.w3.org/2001/XMLSchema}int': Integer,
-    '{http://www.w3.org/2001/XMLSchema}long': Long,
-    '{http://www.w3.org/2001/XMLSchema}base64Binary': String,
-    '{http://www.w3.org/2001/XMLSchema}boolean': Boolean,
-    '{http://www.w3.org/2001/XMLSchema}decimal': Decimal,
-    '{http://www.w3.org/2001/XMLSchema}dateTime': DateTime,
-    '{http://www.w3.org/2001/XMLSchema}double': Double,
+    '{http://www.w3.org/2001/XMLSchema}anyType': String(),
+    '{http://www.w3.org/2001/XMLSchema}anyURI': String(),
+    '{http://www.w3.org/2001/XMLSchema}ID': String(),
+    '{http://www.w3.org/2001/XMLSchema}IDREF': String(),
+    '{http://www.w3.org/2001/XMLSchema}byte': String(),
+    '{http://www.w3.org/2001/XMLSchema}short': Integer(),
+    '{http://www.w3.org/2001/XMLSchema}unsignedByte': String(),
+    '{http://www.w3.org/2001/XMLSchema}unsignedInt': Integer(),
+    '{http://www.w3.org/2001/XMLSchema}unsignedLong': Long(),
+    '{http://www.w3.org/2001/XMLSchema}unsignedShort': Integer(),
+    '{http://www.w3.org/2001/XMLSchema}QName': String(),
+    '{http://www.w3.org/2001/XMLSchema}string': String(),
+    '{http://www.w3.org/2001/XMLSchema}float': Float(),
+    '{http://www.w3.org/2001/XMLSchema}int': Integer(),
+    '{http://www.w3.org/2001/XMLSchema}long': Long(),
+    '{http://www.w3.org/2001/XMLSchema}base64Binary': String(),
+    '{http://www.w3.org/2001/XMLSchema}boolean': Boolean(),
+    '{http://www.w3.org/2001/XMLSchema}decimal': Decimal(),
+    '{http://www.w3.org/2001/XMLSchema}dateTime': DateTime(),
+    '{http://www.w3.org/2001/XMLSchema}double': Double(),
 }

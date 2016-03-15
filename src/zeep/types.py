@@ -46,6 +46,7 @@ class Schema(object):
         self.elements = {}
         self.elm_instances = []
         self.target_namespace = None
+        self.imports = {}
 
         if node is not None:
             if len(node) > 0:
@@ -69,27 +70,35 @@ class Schema(object):
         self.elements[name] = value
 
     def get_type(self, name):
-        if isinstance(name, etree.QName):
-            name = name.text
+        if not isinstance(name, etree.QName):
+            name = etree.QName(name)
 
-        if name in xsd.default_types:
+        if name.text in xsd.default_types:
             return xsd.default_types[name]
 
-        if name not in self.types:
-            raise KeyError(
-                "No such type: %r (Only have %s)" % (
-                    name, ', '.join(self.elements)))
-        return self.types[name]
+        if name.text in self.types:
+            return self.types[name]
+
+        if name.namespace in self.imports:
+            return self.imports[name.namespace].get_type(name)
+
+        raise KeyError(
+            "No such type: %r (Only have %s)" % (
+                name, ', '.join(self.elements)))
 
     def get_element(self, name):
-        if isinstance(name, etree.QName):
-            name = name.text
+        if not isinstance(name, etree.QName):
+            name = etree.QName(name)
 
-        if name not in self.elements:
-            raise KeyError(
-                "No such element: %r (Only have %s)" % (
-                    name, ', '.join(self.elements)))
-        return self.elements[name]
+        if name in self.elements:
+            return self.elements[name]
+
+        if name.namespace in self.imports:
+            return self.imports[name.namespace].get_element(name)
+
+        raise KeyError(
+            "No such element: %r (Only have %s)" % (
+                name, ', '.join(self.elements)))
 
     def custom_type(self, name):
         return self.get_type(name)
@@ -164,14 +173,13 @@ class Schema(object):
                     assert not value
 
                     xsd_type = self.process(child, node, namespace)
-                    xsd_type = xsd_type()
 
         if not xsd_type:
             node_type = node.get('type')
             if node_type:
                 type_qname = parse_qname(node_type, node.nsmap)
                 try:
-                    xsd_type = self.get_type(type_qname)()
+                    xsd_type = self.get_type(type_qname)
                 except KeyError:
                     xsd_type = xsd.UnresolvedType(type_qname)
             else:
@@ -223,7 +231,7 @@ class Schema(object):
         if not is_anonymous:
             qname = parse_qname(name, node.nsmap, namespace)
             self.register_type(qname, xsd_type)
-        return xsd_type
+        return xsd_type()
 
     def visit_complex_type(self, node, parent, namespace=None):
         """
@@ -277,12 +285,9 @@ class Schema(object):
             is_anonymous = True
 
         qname = parse_qname(name, node.nsmap, namespace)
+
         cls = type(name, (xsd.ComplexType,), {})
-        cls.__metadata__ = {
-            'elements': children,
-            'attributes': attributes,
-        }
-        xsd_type = cls
+        xsd_type = cls(elements=children, attributes=attributes)
         if not is_anonymous:
             self.register_type(qname, xsd_type)
         return xsd_type
@@ -313,15 +318,13 @@ class Schema(object):
         return result
 
     def visit_attribute(self, node, parent, namespace):
-        node_type = node.get('type')
-        if node_type:
-            xml_type = parse_qname(node_type, node.nsmap)
-        else:
+        node_type = get_qname(node, 'type', namespace, as_text=False)
+        if not node_type:
             assert NotImplementedError()
 
         name = parse_qname(node.get('name'), node.nsmap, namespace)
         try:
-            xsd_type = self.get_type(node_type)()
+            xsd_type = self.get_type(node_type)
         except KeyError:
             xsd_type = xsd.UnresolvedType(xml_type)
         attr = xsd.Attribute(name, type_=xsd_type)
@@ -349,7 +352,9 @@ class Schema(object):
             return self.visit_schema(schema_node)
 
         schema_node = load_external(location, self.schema_references, self.transport)
-        return self.visit_schema(schema_node)
+        schema = self.__class__(schema_node, self.schema_references, self.transport)
+        self.imports[node.get('namespace')] = schema
+        return schema
 
     def visit_restriction(self, node, namespace=None):
         pass
