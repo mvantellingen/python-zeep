@@ -260,24 +260,68 @@ class ConcreteMessage(object):
         header = get_soap_node(xmlelement, 'header')
         headerfault = get_soap_node(xmlelement, 'headerfault')
 
+        body_info = {}
+        header_info = {}
+        headerfault_info = {}
+
+        if body is not None:
+            body_info = {
+                'part': get_qname(body, 'part', wsdl.target_namespace),
+                'use': body.get('use', 'literal'),
+                'encodingStyle': body.get('encodingStyle'),
+                'namespace': body.get('namespace'),
+            }
+
+        if header is not None:
+            header_info = {
+                'message': get_qname(header, 'message', wsdl.target_namespace),
+                'part': get_qname(header, 'part', wsdl.target_namespace),
+                'use': header.get('use', 'literal'),
+                'encodingStyle': header.get('encodingStyle'),
+                'namespace': header.get('namespace'),
+            }
+
+        if headerfault is not None:
+            headerfault_info = {
+                'message': get_qname(headerfault, 'message', wsdl.target_namespace),
+                'part': get_qname(headerfault, 'part', wsdl.target_namespace),
+                'use': headerfault.get('use', 'literal'),
+                'encodingStyle': headerfault.get('encodingStyle'),
+                'namespace': headerfault.get('namespace'),
+            }
+
         obj.namespace = {
-            'body': body.get('namespace') if body is not None else None,
-            'header': header.get('namespace') if header is not None else None,
-            'headerfault': (
-                headerfault.get('namespace')
-                if headerfault is not None else None
-            ),
+            'body': body_info.get('namespace'),
+            'header': header_info.get('namespace'),
+            'headerfault': headerfault_info.get('namespace'),
         }
 
-        obj.body = abstract_message.parts.values()[0]
-        obj.header = None
-        obj.headerfault = None
+        part_names = abstract_message.parts.keys()
+        if header_info:
+            part_name = header_info['part']
+            part_names.remove(part_name)
+            obj.header = abstract_message.parts[part_name]
+        else:
+            obj.header = None
+
+        if headerfault_info:
+            part_name = headerfault_info['part']
+            part_names.remove(part_name)
+            obj.headerfault = abstract_message.parts[part_name]
+        else:
+            obj.headerfault = None
+
+        if body_info:
+            part_name = body_info['part'] or part_names[0]
+            part_names.remove(part_name)
+            obj.body = abstract_message.parts[part_name]
+
         return obj
 
     def signature(self):
         # if self.operation.abstract.parameter_order:
         #     self.operation.abstract.parameter_order.split()
-        return self.abstract.parts.values()[0].type.signature()
+        return self.body.type.signature()
 
 
 class RpcMessage(ConcreteMessage):
@@ -323,6 +367,8 @@ class DocumentMessage(ConcreteMessage):
         soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
         body = header = headerfault = None
 
+        header_value = kwargs.pop('_soapheader', None)
+
         if self.body:
             body_obj = self.body
             body_value = body_obj(*args, **kwargs)
@@ -330,7 +376,10 @@ class DocumentMessage(ConcreteMessage):
             body_obj.render(body, body_value)
 
         if self.header:
-            header = self.header
+            header_obj = self.header
+            header_value = header_obj(**header_value)
+            header = soap.Header()
+            header_obj.render(header, header_value)
 
         headerfault = None
         return body, header, headerfault
