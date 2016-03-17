@@ -562,8 +562,8 @@ class WSDL(object):
         self.schema_references = {}
 
         if filename.startswith(('http://', 'https://')):
-            response = requests.get(filename)
-            doc = parse_xml(response.content, self.schema_references, transport)
+            response = transport.load(filename)
+            doc = parse_xml(response, self.schema_references, transport)
         else:
             with open(filename) as fh:
                 doc = parse_xml(fh.read(), self.schema_references, transport)

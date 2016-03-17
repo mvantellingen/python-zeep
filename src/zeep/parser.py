@@ -1,4 +1,3 @@
-import requests
 from lxml import etree
 
 
@@ -24,5 +23,5 @@ def parse_xml(content, schema_references, transport):
 
 
 def load_external(url, schema_references, transport):
-    response = requests.get(url)
-    return parse_xml(response.content, schema_references, transport)
+    response = transport.load(url)
+    return parse_xml(response, schema_references, transport)
