@@ -7,6 +7,7 @@ install_requires = [
 ]
 
 tests_require = [
+    'freezegun==0.3.6',
     'pytest>=2.8.3',
     'pytest-cov>=2.2.0',
     'requests_mock>=0.7.0',

@@ -9,7 +9,5 @@ class Transport(object):
         return response.content
 
     def post(self, address, message, headers):
-        print message
         response = requests.post(address, data=message, headers=headers)
-        print response
         return response
