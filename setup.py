@@ -31,6 +31,6 @@ setup(
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'License :: OSI Approved :: MIT License',
-
+    ],
     zip_safe=False,
 )
