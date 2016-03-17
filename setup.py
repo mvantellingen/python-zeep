@@ -8,14 +8,14 @@ install_requires = [
 
 tests_require = [
     'freezegun==0.3.6',
-    'pytest>=2.8.3',
     'pytest-cov>=2.2.0',
+    'pytest>=2.8.3',
     'requests_mock>=0.7.0',
 ]
 
 setup(
     name='zeep',
-    version='0.0.1',
+    version='0.1.0',
     description='SOAP Client',
     url='http://www.python-zeep.org',
     author="Michael van Tellingen",
@@ -28,6 +28,9 @@ setup(
     packages=find_packages('src'),
     include_package_data=True,
     license='MIT',
-    classifiers=[],
+    classifiers=[
+        'Development Status :: 2 - Pre-Alpha',
+        'License :: OSI Approved :: MIT License',
+
     zip_safe=False,
 )
