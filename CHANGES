@@ -1,3 +1,11 @@
+0.1.1 (2016-03-20)
+==================
+ - Various fixes to make the HttpBinding not throw errors during parsing
+ - More built-in xsd types
+ - Add support for `python -mzeep <wsdl>`
+ - Various other fixes
+
+
 0.1.0 (2016-03-20)
 ==================
 
