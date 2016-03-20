@@ -27,7 +27,8 @@ class SoapBinding(Binding):
         operation = self.get(operation)
         if not operation:
             raise ValueError("Operation not found")
-        body, header, headerfault = operation.create(*args, **kwargs)
+        body, header, headerfault = operation.create(
+            *args, **kwargs)
         soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
 
         envelope = soap.Envelope()
@@ -222,6 +223,8 @@ class SoapMessage(ConcreteMessage):
             if header_info['message']:
                 msg = wsdl.messages[header_info['message']]
                 obj.header = msg.parts[part_name]
+                if msg == abstract_message:
+                    part_names.remove(part_name)
             else:
                 part_names.remove(part_name)
                 obj.header = abstract_message.parts[part_name]
@@ -296,7 +299,10 @@ class DocumentMessage(SoapMessage):
 
         if self.header:
             header_obj = self.header
-            header_value = header_obj(**header_value)
+            if header_value is None:
+                header_value = header_obj()
+            else:
+                header_value = header_obj(**header_value)
             header = soap.Header()
             header_obj.render(header, header_value)
 

@@ -65,8 +65,6 @@ def test_parse_soap_header_wsdl():
     transport = Transport()
 
     obj = wsdl.WSDL('tests/wsdl_files/soap_header.wsdl', transport=transport)
-    obj.dump()
-    return
     assert len(obj.services) == 1
 
     service = obj.services['{http://example.com/stockquote.wsdl}StockQuoteService']
@@ -95,7 +93,14 @@ def test_parse_soap_header_wsdl():
             transport=transport,
             operation='{http://example.com/stockquote.wsdl}GetLastTradePrice',
             args=[],
-            kwargs={'tickerSymbol': 'foobar'})
+            kwargs={
+                'tickerSymbol': 'foobar',
+                '_soapheader': {
+                    'username': 'ikke',
+                    'password': 'oeh-is-geheim!',
+                }
+            })
+
         assert result.price == 120.123
 
         request = m.request_history[0]
@@ -103,14 +108,19 @@ def test_parse_soap_header_wsdl():
         # Compare request body
         expected = b"""
             <soap-env:Envelope
-                xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
-                xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/"
                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
                 xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
                 xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
                 xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             >
+             <soap-env:Header>
+               <Authentication xmlns="http://example.com/stockquote.xsd">
+                 <username>ikke</username>
+                 <password>oeh-is-geheim!</password>
+               </Authentication>
+             </soap-env:Header>
+
               <soap-env:Body>
                 <TradePriceRequest xmlns="http://example.com/stockquote.xsd">
                   <tickerSymbol>foobar</tickerSymbol>
