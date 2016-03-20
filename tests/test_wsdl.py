@@ -45,8 +45,6 @@ def test_parse_soap_wsdl():
         # Compare request body
         expected = """
             <soap-env:Envelope
-                xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
-                xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/"
                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
                 xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
                 xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"

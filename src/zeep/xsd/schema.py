@@ -2,7 +2,7 @@ import logging
 
 from lxml import etree
 
-from zeep import xsd
+from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd.visitor import SchemaVisitor
 
 logger = logging.getLogger(__name__)
@@ -46,8 +46,8 @@ class Schema(object):
         if not isinstance(name, etree.QName):
             name = etree.QName(name)
 
-        if name.text in xsd.default_types:
-            return xsd.default_types[name]
+        if name.text in xsd_builtins.default_types:
+            return xsd_builtins.default_types[name]
 
         if name.text in self._types:
             return self._types[name]

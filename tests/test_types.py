@@ -2,7 +2,6 @@ from lxml import etree
 
 from tests.utils import assert_nodes_equal
 from zeep import xsd
-from zeep.wsdl import Schema
 
 
 def test_complex_type_alt():
@@ -23,7 +22,7 @@ def test_complex_type_alt():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type(foo='bar')
 
@@ -60,7 +59,7 @@ def test_element_with_annotation():
           </schema>
         </types>
     """.strip())
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type(foo='bar')
 
@@ -83,7 +82,7 @@ def test_complex_type_parsexml():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     input_node = etree.fromstring("""
@@ -114,7 +113,7 @@ def test_complex_type_array_parsexml():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     input_node = etree.fromstring("""
@@ -146,7 +145,7 @@ def test_array():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type()
     assert obj.foo == []
@@ -184,7 +183,7 @@ def test_array_resolve_lazy():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type()
     assert obj.foo == []
@@ -225,7 +224,7 @@ def test_complex_type_array_to_other_complex_object():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_array = schema.get_element('ArrayOfAddress')
     obj = address_array()
     assert obj.Address == []
@@ -266,7 +265,7 @@ def test_complex_type_init_kwargs():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type(
         NameFirst='John', NameLast='Doe', Email='j.doe@example.com')
@@ -295,7 +294,7 @@ def test_complex_type_init_args():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type('John', 'Doe', 'j.doe@example.com')
     assert obj.NameFirst == 'John'
@@ -321,7 +320,7 @@ def test_complex_type_with_attributes():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
 
     address_type = schema.get_element('Address')
     obj = address_type(
@@ -361,7 +360,7 @@ def test_custom_simple_type():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
 
     custom_type = schema.get_element('{http://tests.python-zeep.org/}something')
     obj = custom_type(75)
@@ -400,7 +399,7 @@ def test_group():
           </xs:schema>
         </types>
     """.strip())
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     obj = address_type(first_name='foo', last_name='bar')
@@ -454,7 +453,7 @@ def test_group_for_type():
           </xs:schema>
         </types>
     """.strip())
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     obj = address_type(
@@ -495,7 +494,7 @@ def test_element_ref():
         </types>
     """.strip())
 
-    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
 
     foo_type = schema.get_element('{http://tests.python-zeep.org/}foo')
     assert isinstance(foo_type.type, xsd.String)
