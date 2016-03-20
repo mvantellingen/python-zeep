@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from lxml import etree
+
 from zeep import xsd
 from zeep.utils import get_qname
 
@@ -108,7 +110,8 @@ class PortType(object):
 
 
 class Binding(object):
-    """
+    """Base class for the various bindings (SoapBinding / HttpBinding)
+
         Binding
            |
            +-> Operation
@@ -128,6 +131,9 @@ class Binding(object):
             self.__class__.__name__, self.name.text, self.port_type)
 
     def get(self, name):
+        name = etree.QName(name)
+        if not name.namespace:
+            name = etree.QName(self.name.namespace, name.localname)
         return self.operations[name]
 
     @classmethod

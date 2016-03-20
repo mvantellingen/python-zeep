@@ -14,12 +14,39 @@ NSMAP = {
 logger = logging.getLogger(__name__)
 
 
+class OperationProxy(object):
+    def __init__(self, service_proxy, operation_name):
+        self._proxy = service_proxy
+        self._op_name = operation_name
+
+    def __call__(self, *args, **kwargs):
+        return self._proxy._port.send(
+            self._proxy._client.transport, self._op_name, args, kwargs)
+
+
+class ServiceProxy(object):
+    def __init__(self, client, port):
+        self._client = client
+        self._port = port
+        self._binding = port.binding
+
+    def __getattr__(self, key):
+        try:
+            self._binding.get(key)
+        except KeyError:
+            raise AttributeError('Service has no operation %r' % key)
+        return OperationProxy(self, key)
+
+
 class Client(object):
 
     def __init__(self, wsdl, cache=None):
         self.cache = cache or SqliteCache()
         self.transport = Transport(self.cache)
         self.wsdl = WSDL(wsdl, self.transport)
+
+        port = self.get_port()
+        self.service = ServiceProxy(self, port)
 
     def call(self, name, *args, **kwargs):
         port = self.get_port()
