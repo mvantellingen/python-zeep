@@ -1,9 +1,8 @@
 ZEEP
 ====
 
-**!!In development!!**
-
-SOAP client for Python using the lxml and requests packages
+SOAP client for Python using the lxml and requests packages. This package is
+still in development. Current releases should be considered proof of concepts.
 
 Status
 ------
@@ -22,3 +21,11 @@ Usage
 
     client = Client(wsdl='tests/wsdl_files/example.rst')
     client.service.ping()
+
+
+Bugs
+----
+
+If you encounter bugs then please `report a bug`_.
+
+.. _report a bug: https://github.com/mvantellingen/python-zeep/issues
