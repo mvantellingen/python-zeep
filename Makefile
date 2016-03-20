@@ -18,3 +18,8 @@ retest:
 
 coverage:
 	py.test --cov=zeep --cov-report=term-missing
+
+release:
+	rm -rf dist/*
+	python setup.py sdist bdist_wheel
+	twine upload dist/*
