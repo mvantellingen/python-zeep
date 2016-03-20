@@ -16,10 +16,6 @@ NSMAP = {
 logger = logging.getLogger(__name__)
 
 
-def element_maker(name):
-    return etree.QName('{%s}%s' % (NSMAP['xsd'], name))
-
-
 class tags(object):
     pass
 
@@ -32,8 +28,8 @@ for name in [
     'restriction',
 
 ]:
-    kwname = name if name not in keyword.kwlist else name + '_'
-    setattr(tags, kwname, element_maker(name))
+    attr = name if name not in keyword.kwlist else name + '_'
+    setattr(tags, attr, etree.QName('http://www.w3.org/2001/XMLSchema', name))
 
 
 class Schema(object):
@@ -165,8 +161,8 @@ class Visitor(object):
               substitutionGroup = QName
               type = QName
               {any attributes with non-schema Namespace}...>
-            Content: (annotation?, ((simpleType | complexType)?, (unique | key |
-            keyref)*))
+            Content: (annotation?, (
+                      (simpleType | complexType)?, (unique | key | keyref)*))
             </element>
         """
         result = self.process_ref_attribute(node)
