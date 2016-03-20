@@ -34,7 +34,11 @@ To quickly inspect a WSDL file use::
 Bugs
 ----
 
+**Yes there will be bugs! :-)**
+
 If you encounter bugs then please `let me know`_ . A copy of the WSDL file if
-possible would be most helpful.
+possible would be most helpful. If you are really cool then please open a PR
+with the fix... :P
+
 
 .. _let me know: https://github.com/mvantellingen/python-zeep/issues
