@@ -19,21 +19,30 @@ tests_require = [
     'flake8-debugger==1.4.0',
 ]
 
+setup_requires = [
+    'setuptools_scm==1.10.1'
+]
+
+
 setup(
     name='zeep',
-    version='0.1.0',
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=open('README.rst').read(),
-    url='http://www.python-zeep.org',
     author="Michael van Tellingen",
     author_email="michaelvantellingen@gmail.com",
+    url='http://www.python-zeep.org',
+
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require={'test': tests_require},
+    setup_requires=setup_requires,
+    use_scm_version=True,
+
     entry_points={},
     package_dir={'': 'src'},
     packages=find_packages('src'),
     include_package_data=True,
+
     license='MIT',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
