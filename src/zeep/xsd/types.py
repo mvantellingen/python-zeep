@@ -1,3 +1,5 @@
+import pprint
+
 import six
 
 from zeep.utils import process_signature
@@ -154,3 +156,6 @@ class CompoundValue(object):
         items = process_signature(property_names, args, kwargs)
         for key, value in items.items():
             setattr(self, key, value)
+
+    def __repr__(self):
+        return pprint.pformat(self.__dict__, indent=4)
