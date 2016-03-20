@@ -26,6 +26,11 @@ Usage
     client.service.ping()
 
 
+To quickly inspect a WSDL file use::
+
+    python -mzeep <url-to-wsdl>
+
+
 Bugs
 ----
 
