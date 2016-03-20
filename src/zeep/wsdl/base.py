@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import six
 from lxml.etree import QName
 
@@ -54,7 +56,7 @@ class WSDL(object):
         type_instances = self.schema.types
         print('Types:')
         for type_obj in sorted(type_instances):
-            print('%s%s' % (' ' * 4, six.text_type(type_obj)))
+            print(' ' * 4, six.text_type(type_obj))
 
         print('')
 
