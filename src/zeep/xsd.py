@@ -6,6 +6,7 @@ from zeep.utils import process_signature
 
 
 class Type(object):
+
     def accept(self, value):
         raise NotImplementedError
 
@@ -18,8 +19,8 @@ class Type(object):
     def render(self, parent, value):
         raise NotImplementedError
 
-    def __unicode__(self):
-        return '%s(%s)' % (self.__class__.__name__, self.signature())
+    def resolve(self):
+        raise NotImplementedError
 
     @classmethod
     def signature(cls):
@@ -48,10 +49,19 @@ class SimpleType(Type):
     def pythonvalue(self, xmlvalue):
         raise NotImplementedError
 
+    def resolve(self):
+        pass
+
     def __call__(self, *args, **kwargs):
         if args:
             return unicode(args[0])
         return u''
+
+    def __str__(self):
+        return self.name
+
+    def __unicode__(self):
+        return unicode(self.name)
 
 
 class ComplexType(Type):
@@ -76,8 +86,22 @@ class ComplexType(Type):
 
         return self._value_class(*args, **kwargs)
 
+    def resolve(self):
+        elements = []
+        for elm in self._elements:
+            if isinstance(elm, RefElement):
+                elm = elm._elm
+
+            if isinstance(elm, GroupElement):
+                elements.extend(list(elm))
+            else:
+                elements.append(elm)
+        self._elements = elements
+
     def signature(self):
-        return ', '.join([prop.name for prop in self.properties()])
+        return ', '.join(
+            ['%s %s' % (prop.type.name, prop.name) for prop in self.properties()
+        ])
 
     def parse_xmlelement(self, xmlelement):
         instance = self()
@@ -106,6 +130,14 @@ class ComplexType(Type):
                 setattr(instance, field.name, result)
 
         return instance
+
+    @property
+    def name(self):
+        return self.__class__.__name__
+
+    def __str__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.signature())
+
 
 class AnyType(SimpleType):
     name = 'xsd:anyType'
@@ -240,6 +272,7 @@ class Element(object):
         self.qname = name
         self.type = type_
         self.nsmap = nsmap or {}
+        # assert type_
 
     def __repr__(self):
         return '<%s(name=%r, type=%r)>' % (
@@ -283,7 +316,12 @@ class ListElement(Element):
 class GroupElement(Element):
     def __init__(self, *args, **kwargs):
         self.children = kwargs.pop('children', [])
+        assert self.children
         super(GroupElement, self).__init__(*args, **kwargs)
+
+    def __iter__(self, *args, **kwargs):
+        for item in self.properties():
+            yield item
 
     def properties(self):
         return self.children

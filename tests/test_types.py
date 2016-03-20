@@ -418,6 +418,63 @@ def test_group():
     assert_nodes_equal(expected, node)
 
 
+def test_group_for_type():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <types>
+          <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                     xmlns:tns="http://tests.python-zeep.org/"
+                     targetNamespace="http://tests.python-zeep.org/">
+
+            <xs:element name="Address" type="tns:AddressType" />
+
+            <xs:complexType name="AddressType">
+              <xs:sequence>
+                <xs:group ref="tns:NameGroup"/>
+                <xs:group ref="tns:AddressGroup"/>
+              </xs:sequence>
+            </xs:complexType>
+
+            <xs:group name="NameGroup">
+              <xs:sequence>
+                <xs:element name="first_name" type="xs:string" />
+                <xs:element name="last_name" type="xs:string" />
+              </xs:sequence>
+            </xs:group>
+
+            <xs:group name="AddressGroup">
+              <xs:annotation>
+                <xs:documentation>blub</xs:documentation>
+              </xs:annotation>
+              <xs:sequence>
+                <xs:element name="city" type="xs:string" />
+                <xs:element name="country" type="xs:string" />
+              </xs:sequence>
+            </xs:group>
+          </xs:schema>
+        </types>
+    """.strip())
+    schema = Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+
+    obj = address_type(
+        first_name='foo', last_name='bar',
+        city='Utrecht', country='The Netherlands')
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    expected = """
+        <document>
+            <Address xmlns="http://tests.python-zeep.org/">
+                <first_name>foo</first_name>
+                <last_name>bar</last_name>
+                <city>Utrecht</city>
+                <country>The Netherlands</country>
+            </Address>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
 
 def test_element_ref():
     node = etree.fromstring("""

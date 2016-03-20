@@ -54,6 +54,9 @@ class Schema(object):
 
             self.target_namespace = node.get('targetNamespace')
             self.visit_schema(node)
+
+            for type_ in self._types.values():
+                type_.resolve()
             for element in self.elm_instances:
                 element.resolve_type(self)
 
@@ -393,7 +396,9 @@ class Schema(object):
 
         qname = get_qname(node, 'name', namespace, as_text=False)
 
-        child = node.getchildren()[0]
+        # There should be only max nodes, first node (annotation) is irrelevant
+        subnodes = node.getchildren()
+        child = subnodes[-1]
         children = self.process(child, parent, namespace)
 
         elm = xsd.GroupElement(name=qname, children=children)
@@ -410,7 +415,7 @@ class Schema(object):
             </list>
 
         """
-        pass
+        raise NotImplementedError()
 
     def visit_union(self, node, parent, namespace=None):
         """
@@ -421,7 +426,7 @@ class Schema(object):
             Content: (annotation?, (simpleType*))
             </union>
         """
-        pass
+        raise NotImplementedError()
 
     def visit_unique(self, node, parent, namespace=None):
         """
@@ -432,7 +437,7 @@ class Schema(object):
             Content: (annotation?, (selector, field+))
             </unique>
         """
-        pass
+        raise NotImplementedError()
 
     visitors = {
         tags.element: visit_element,
