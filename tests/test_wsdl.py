@@ -1,4 +1,5 @@
 import requests_mock
+from lxml import etree
 
 from tests.utils import assert_nodes_equal
 from zeep import wsdl
@@ -129,3 +130,46 @@ def test_parse_soap_header_wsdl():
             </soap-env:Envelope>
         """
         assert_nodes_equal(expected, request.body)
+
+
+def test_parse_types_nsmap_issues():
+    node = etree.fromstring(b"""
+    <?xml version="1.0" encoding="UTF-8"?>
+    <wsdl:definitions targetNamespace="urn:ec.europa.eu:taxud:vies:services:checkVat"
+      xmlns:tns1="urn:ec.europa.eu:taxud:vies:services:checkVat:types"
+      xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+      xmlns:impl="urn:ec.europa.eu:taxud:vies:services:checkVat"
+      xmlns:apachesoap="http://xml.apache.org/xml-soap"
+      xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+      xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+      xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/">
+      <wsdl:types>
+        <xsd:schema attributeFormDefault="qualified"
+            elementFormDefault="qualified"
+            targetNamespace="urn:ec.europa.eu:taxud:vies:services:checkVat:types"
+            xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+                <xsd:element name="checkVatApprox">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element maxOccurs="1" minOccurs="0"
+                                name="traderCompanyType"
+                                type="tns1:companyTypeCode"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:simpleType name="companyTypeCode">
+                    <xsd:restriction base="xsd:string">
+                        <xsd:pattern value="[A-Z]{2}\-[1-9][0-9]?"/>
+                    </xsd:restriction>
+                </xsd:simpleType>
+            </xsd:schema>
+      </wsdl:types>
+    </wsdl:definitions>
+    """.strip())
+
+    class DummyWSDL(wsdl.WSDL):
+        def __init__(self):
+            self.schema_references = {}
+            self.transport = None
+
+    assert DummyWSDL().parse_types(node)

@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import six
+from lxml import etree
 from lxml.etree import QName
 
 from zeep.parser import parse_xml
@@ -134,8 +135,13 @@ class WSDL(object):
                 namespace = import_node.get('namespace')
                 import_node.set('schemaLocation', 'intschema+%s' % namespace)
 
+        schema_node = schema_nodes[0]
+
+        # FIXME: This fixes `test_parse_types_nsmap_issues`, lame solution...
+        schema_node = etree.fromstring(etree.tostring(schema_node))
+
         return Schema(
-            schema_nodes[0], self.transport, self.schema_references)
+            schema_node, self.transport, self.schema_references)
 
     def parse_messages(self, doc):
         """
