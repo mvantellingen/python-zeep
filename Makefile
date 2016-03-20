@@ -1,4 +1,7 @@
-.PHONY: test retest
+.PHONY: install clean test retest coverage
+
+install:
+	pip install -e .[test]
 
 clean:
 	find . -name '*.pyc' -delete
