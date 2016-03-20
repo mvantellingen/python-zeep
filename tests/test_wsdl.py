@@ -146,7 +146,7 @@ def test_parse_soap_header_wsdl():
 
 def test_parse_types_multiple_schemas(wsdl_obj):
 
-    node = wsdl_obj._parse_content("""
+    node = wsdl_obj._parse_content(b"""
     <?xml version="1.0" encoding="utf-8"?>
     <wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:s1="http://microsoft.com/wsdl/types/"
