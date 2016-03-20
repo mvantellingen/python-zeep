@@ -8,7 +8,7 @@ known_first_party = zeep,tests
 use_parentheses = true
 
 [*.yml]
-indent_size = 2
+indent_size = 4
 
 [Makefile]
 indent_style = tab
