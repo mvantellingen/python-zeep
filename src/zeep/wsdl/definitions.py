@@ -53,27 +53,42 @@ class AbstractMessage(object):
 
 
 class AbstractOperation(object):
-    def __init__(self, name, input=None, output=None, fault=None,
+    def __init__(self, name, input=None, output=None, faults=None,
                  parameter_order=None):
         self.name = name
         self.input = input
         self.output = output
-        self.fault = fault
+        self.faults = faults
         self.parameter_order = parameter_order
+
+    def get(self, type_, name=None):
+        if type_ in ('input', 'output'):
+            return getattr(self, type_)
+        return self.faults[name]
 
     @classmethod
     def parse(cls, wsdl, xmlelement):
         name = get_qname(
             xmlelement, 'name', wsdl.target_namespace, as_text=False)
 
-        kwargs = {}
-        for type_ in 'input', 'output', 'fault':
-            msg_node = xmlelement.find('wsdl:%s' % type_, namespaces=NSMAP)
-            if msg_node is None:
+        kwargs = {
+            'faults': {}
+        }
+
+        for msg_node in xmlelement.getchildren():
+            tag_name = etree.QName(msg_node.tag).localname
+            if tag_name not in ('input', 'output', 'fault'):
                 continue
-            message_name = get_qname(
+
+            param_msg = get_qname(
                 msg_node, 'message', wsdl.target_namespace)
-            kwargs[type_] = wsdl.messages[message_name]
+            param_name = get_qname(
+                msg_node, 'name', wsdl.target_namespace)
+
+            if tag_name in ('input', 'output'):
+                kwargs[tag_name] = wsdl.messages[param_msg]
+            else:
+                kwargs['faults'][param_name] = wsdl.messages[param_msg]
 
         kwargs['name'] = name
         kwargs['parameter_order'] = xmlelement.get('parameterOrder')
@@ -147,6 +162,7 @@ class ConcreteMessage(object):
         self.wsdl = wsdl
         self.namespace = {}
         self.operation = operation
+        self.name = None
 
     def create(self, *args, **kwargs):
         raise NotImplementedError()
@@ -173,7 +189,7 @@ class Operation(object):
         self.style = None
         self.input = None
         self.output = None
-        self.fault = None
+        self.faults = {}
 
     def __repr__(self):
         return '<%s(name=%r, style=%r)>' % (

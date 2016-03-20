@@ -16,6 +16,20 @@
           <element minOccurs="0" maxOccurs="1" name="Email" type="string"/>
         </sequence>
       </complexType>
+      <element name="Fault1">
+        <complexType>
+          <sequence>
+            <element name="message" type="string"/>
+          </sequence>
+        </complexType>
+      </element>
+      <element name="Fault2">
+        <complexType>
+          <sequence>
+            <element name="message" type="string"/>
+          </sequence>
+        </complexType>
+      </element>
       <element name="TradePriceRequest">
         <complexType>
           <all>
@@ -38,10 +52,18 @@
   <message name="GetLastTradePriceOutput">
     <part name="body" element="xsd1:TradePrice"/>
   </message>
+  <message name="FaultMessageMsg1">
+    <part name="fault1" element="xsd1:Fault1"/>
+  </message>
+  <message name="FaultMessageMsg2">
+    <part name="fault2" element="xsd1:Fault2"/>
+  </message>
   <portType name="StockQuotePortType">
     <operation name="GetLastTradePrice">
       <input message="tns:GetLastTradePriceInput"/>
       <output message="tns:GetLastTradePriceOutput"/>
+      <fault message="tns:FaultMessageMsg1" name="fault1"/>
+      <fault message="tns:FaultMessageMsg2" name="fault2"/>
     </operation>
   </portType>
   <binding name="StockQuoteBinding" type="tns:StockQuotePortType">
@@ -54,6 +76,12 @@
       <output>
         <soap:body use="literal"/>
       </output>
+      <fault name="fault1">
+        <soap:fault name="fault1" use="literal"/>
+      </fault>
+      <fault name="fault2">
+        <soap:fault name="fault2" use="literal"/>
+      </fault>
     </operation>
   </binding>
   <service name="StockQuoteService">

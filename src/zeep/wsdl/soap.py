@@ -118,6 +118,9 @@ class SoapOperation(Operation):
               <output>
                 <soap:body use="literal"/>
               </output>
+              <fault name="dataFault">
+                <soap:fault name="dataFault" use="literal"/>
+              </fault>
             </operation>
 
         """
@@ -145,19 +148,26 @@ class SoapOperation(Operation):
         obj.soapaction = action
         obj.style = style
 
-        for type_ in 'input', 'output', 'fault':
-            type_node = xmlelement.find(etree.QName(NSMAP['wsdl'], type_))
-            if type_node is None:
+        if style == 'rpc':
+            message_class = RpcMessage
+        else:
+            message_class = DocumentMessage
+
+        for node in xmlelement.getchildren():
+            tag_name = etree.QName(node.tag).localname
+            if tag_name not in ('input', 'output', 'fault'):
                 continue
 
-            if style == 'rpc':
-                message_class = RpcMessage
-            else:
-                message_class = DocumentMessage
+            if tag_name == 'fault':
+                fault_name = get_qname(node, 'name', wsdl.target_namespace)
+                abstract = abstract_operation.get(tag_name, fault_name)
+                msg = message_class.parse(wsdl, node, abstract, obj)
+                obj.faults[msg.name] = msg
 
-            abstract = getattr(abstract_operation, type_)
-            msg = message_class.parse(wsdl, type_node, abstract, obj)
-            setattr(obj, type_, msg)
+            else:
+                abstract = getattr(abstract_operation, tag_name)
+                msg = message_class.parse(wsdl, node, abstract, obj)
+                setattr(obj, tag_name, msg)
 
         return obj
 
