@@ -63,11 +63,31 @@ class Boolean(SimpleType):
         return value in ('true', '1')
 
 
+class Date(SimpleType):
+    name = 'xsd:date'
+
+    def xmlvalue(self, value):
+        return value.strftime('%Y-%m-%d')
+
+    def pythonvalue(self, value):
+        return value
+
+
 class DateTime(SimpleType):
     name = 'xsd:dateTime'
 
     def xmlvalue(self, value):
         return value.strftime('%Y-%m-%dT%H:%M:%S')
+
+    def pythonvalue(self, value):
+        return value
+
+
+class Time(SimpleType):
+    name = 'xsd:time'
+
+    def xmlvalue(self, value):
+        return value.strftime('H:%M:%S')
 
     def pythonvalue(self, value):
         return value
@@ -146,6 +166,8 @@ default_types = {
     '{http://www.w3.org/2001/XMLSchema}base64Binary': Base64Binary(),
     '{http://www.w3.org/2001/XMLSchema}boolean': Boolean(),
     '{http://www.w3.org/2001/XMLSchema}byte': Byte(),
+    '{http://www.w3.org/2001/XMLSchema}date': Date(),
+    '{http://www.w3.org/2001/XMLSchema}time': Time(),
     '{http://www.w3.org/2001/XMLSchema}dateTime': DateTime(),
     '{http://www.w3.org/2001/XMLSchema}decimal': Decimal(),
     '{http://www.w3.org/2001/XMLSchema}double': Double(),
