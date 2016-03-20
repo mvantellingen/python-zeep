@@ -280,18 +280,13 @@ class SchemaVisitor(object):
 
         if not node.get('schemaLocation'):
             raise NotImplementedError("schemaLocation is required")
-        namespace = 'intschema+%s' % node.get('namespace')
-
+        namespace = node.get('namespace')
         location = node.get('schemaLocation')
-        if location.startswith('intschema+'):
-            schema_node = self.schema.schema_references[namespace]
-            return self.visit_schema(schema_node)
 
         schema_node = load_external(
-            location, self.schema.schema_references, self.schema.transport)
-        schema = self.schema.__class__(
-            schema_node, self.schema.schema_references, self.schema.transport)
-        self.schema.imports[node.get('namespace')] = schema
+            location, self.schema.transport, self.schema.schema_references)
+        schema = self.schema.__class__(schema_node, self.schema.transport)
+        self.schema.imports[namespace] = schema
         return schema
 
     def visit_restriction(self, node, namespace=None):

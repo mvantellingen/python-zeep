@@ -567,10 +567,10 @@ class WSDL(object):
 
         if filename.startswith(('http://', 'https://')):
             response = transport.load(filename)
-            doc = parse_xml(response, self.schema_references, transport)
+            doc = parse_xml(response, transport, self.schema_references)
         else:
             with open(filename) as fh:
-                doc = parse_xml(fh.read(), self.schema_references, transport)
+                doc = parse_xml(fh.read(), transport, self.schema_references)
 
         self.nsmap = doc.nsmap
         self.target_namespace = doc.get('targetNamespace')
@@ -633,7 +633,18 @@ class WSDL(object):
             self.merge(wsdl, namespace)
 
     def parse_types(self, doc):
-        """Return a `types.Schema` instance."""
+        """Return a `types.Schema` instance.
+
+        Note that a WSDL can contain multiple XSD schema's. The schemas can
+        reference import each other using xsd:import statements.
+
+            <definitions .... >
+                <types>
+                    <xsd:schema .... />*
+                </types>
+            </definitions>
+
+        """
         namespace_sets = [
             {'xsd': 'http://www.w3.org/2001/XMLSchema'},
             {'xsd': 'http://www.w3.org/1999/XMLSchema'},
@@ -659,9 +670,16 @@ class WSDL(object):
                 import_node.set('schemaLocation', 'intschema+%s' % namespace)
 
         return Schema(
-            schema_nodes[0], self.schema_references, self.transport)
+            schema_nodes[0], self.transport, self.schema_references)
 
     def parse_messages(self, doc):
+        """
+            <definitions .... >
+                <message name="nmtoken"> *
+                    <part name="nmtoken" element="qname"? type="qname"?/> *
+                </message>
+            </definitions>
+        """
         result = {}
         for msg_node in doc.findall("wsdl:message", namespaces=NSMAP):
             msg = AbstractMessage.parse(self, msg_node)
@@ -669,6 +687,14 @@ class WSDL(object):
         return result
 
     def parse_ports(self, doc):
+        """Return dict with `PortType` instances as values
+
+            <wsdl:definitions .... >
+                <wsdl:portType name="nmtoken">
+                    <wsdl:operation name="nmtoken" .... /> *
+                </wsdl:portType>
+            </wsdl:definitions>
+        """
         result = {}
         for port_node in doc.findall('wsdl:portType', namespaces=NSMAP):
             port_type = PortType.parse(self, port_node)
@@ -676,6 +702,25 @@ class WSDL(object):
         return result
 
     def parse_binding(self, doc):
+        """
+            <wsdl:definitions .... >
+                <wsdl:binding name="nmtoken" type="qname"> *
+                    <-- extensibility element (1) --> *
+                    <wsdl:operation name="nmtoken"> *
+                       <-- extensibility element (2) --> *
+                       <wsdl:input name="nmtoken"? > ?
+                           <-- extensibility element (3) -->
+                       </wsdl:input>
+                       <wsdl:output name="nmtoken"? > ?
+                           <-- extensibility element (4) --> *
+                       </wsdl:output>
+                       <wsdl:fault name="nmtoken"> *
+                           <-- extensibility element (5) --> *
+                       </wsdl:fault>
+                    </wsdl:operation>
+                </wsdl:binding>
+            </wsdl:definitions>
+        """
         result = {}
         for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
             # Detect the binding type
@@ -687,6 +732,15 @@ class WSDL(object):
         return result
 
     def parse_service(self, doc):
+        """
+            <wsdl:definitions .... >
+                <wsdl:service .... > *
+                    <wsdl:port name="nmtoken" binding="qname"> *
+                       <-- extensibility element (1) -->
+                    </wsdl:port>
+                </wsdl:service>
+            </wsdl:definitions>
+        """
         result = {}
         for service_node in doc.findall('wsdl:service', namespaces=NSMAP):
             service = Service.parse(self, service_node)

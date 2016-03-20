@@ -2,7 +2,7 @@ from lxml import etree
 
 
 class ImportResolver(etree.Resolver):
-    def __init__(self, schema_references, transport):
+    def __init__(self, transport, schema_references):
         self.schema_references = schema_references
         self.transport = transport
         assert self.transport
@@ -16,12 +16,16 @@ class ImportResolver(etree.Resolver):
             return self.resolve_string(content, context)
 
 
-def parse_xml(content, schema_references, transport):
+def parse_xml(content, transport, schema_references=None):
     parser = etree.XMLParser(remove_comments=True)
-    parser.resolvers.add(ImportResolver(schema_references, transport))
+    parser.resolvers.add(ImportResolver(transport, schema_references))
     return etree.fromstring(content, parser=parser)
 
 
-def load_external(url, schema_references, transport):
+def load_external(url, transport, schema_references=None):
+    if url.startswith('intschema'):
+        assert schema_references
+        return schema_references[url]
+
     response = transport.load(url)
-    return parse_xml(response, schema_references, transport)
+    return parse_xml(response, transport, schema_references)
