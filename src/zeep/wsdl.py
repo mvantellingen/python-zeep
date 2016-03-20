@@ -299,8 +299,13 @@ class ConcreteMessage(object):
         part_names = abstract_message.parts.keys()
         if header_info:
             part_name = header_info['part']
-            part_names.remove(part_name)
-            obj.header = abstract_message.parts[part_name]
+
+            if header_info['message']:
+                msg = wsdl.messages[header_info['message']]
+                obj.header = msg.parts[part_name]
+            else:
+                part_names.remove(part_name)
+                obj.header = abstract_message.parts[part_name]
         else:
             obj.header = None
 
