@@ -26,6 +26,7 @@ Usage
 Bugs
 ----
 
-If you encounter bugs then please `report a bug`_.
+If you encounter bugs then please `let me know`_. A copy of the WSDL file if
+possible would be most helpful.
 
 .. _report a bug: https://github.com/mvantellingen/python-zeep/issues
