@@ -33,10 +33,10 @@ class WSDL(object):
 
         if filename.startswith(('http://', 'https://')):
             response = transport.load(filename)
-            doc = parse_xml(response, transport, self.schema_references)
+            doc = self._parse_content(response)
         else:
-            with open(filename) as fh:
-                doc = parse_xml(fh.read(), transport, self.schema_references)
+            with open(filename, mode='rb') as fh:
+                doc = self._parse_content(fh.read())
 
         self.nsmap = doc.nsmap
         self.target_namespace = doc.get('targetNamespace')
@@ -53,10 +53,13 @@ class WSDL(object):
         self.bindings.update(self.parse_binding(doc))
         self.services.update(self.parse_service(doc))
 
+    def _parse_content(self, content):
+        return parse_xml(content, self.transport, self.schema_references)
+
     def dump(self):
         type_instances = self.schema.types
         print('Types:')
-        for type_obj in sorted(type_instances):
+        for type_obj in sorted(type_instances, key=lambda k: six.text_type(k)):
             print(' ' * 4, six.text_type(type_obj))
 
         print('')
@@ -122,6 +125,12 @@ class WSDL(object):
         if not schema_nodes:
             return None
 
+        # FIXME: This fixes `test_parse_types_nsmap_issues`, lame solution...
+        schema_nodes = [
+            self._parse_content(etree.tostring(schema_node))
+            for schema_node in schema_nodes
+        ]
+
         for schema_node in schema_nodes:
             tns = schema_node.get('targetNamespace')
             self.schema_references['intschema+%s' % tns] = schema_node
@@ -136,9 +145,6 @@ class WSDL(object):
                 import_node.set('schemaLocation', 'intschema+%s' % namespace)
 
         schema_node = schema_nodes[0]
-
-        # FIXME: This fixes `test_parse_types_nsmap_issues`, lame solution...
-        schema_node = etree.fromstring(etree.tostring(schema_node))
 
         return Schema(
             schema_node, self.transport, self.schema_references)

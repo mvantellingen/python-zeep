@@ -5,7 +5,6 @@ class ImportResolver(etree.Resolver):
     def __init__(self, transport, schema_references):
         self.schema_references = schema_references
         self.transport = transport
-        assert self.transport
 
     def resolve(self, url, pubid, context):
         if url.startswith('intschema'):

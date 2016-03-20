@@ -1,9 +1,20 @@
+import pytest
 import requests_mock
-from lxml import etree
 
 from tests.utils import assert_nodes_equal
 from zeep import wsdl
 from zeep.transports import Transport
+
+
+@pytest.fixture()
+def wsdl_obj():
+
+    class DummyWSDL(wsdl.WSDL):
+        def __init__(self):
+            self.schema_references = {}
+            self.transport = None
+
+    return DummyWSDL()
 
 
 def test_parse_soap_wsdl():
@@ -132,8 +143,43 @@ def test_parse_soap_header_wsdl():
         assert_nodes_equal(expected, request.body)
 
 
-def test_parse_types_nsmap_issues():
-    node = etree.fromstring(b"""
+
+def test_parse_types_multiple_schemas(wsdl_obj):
+
+    node = wsdl_obj._parse_content("""
+    <?xml version="1.0" encoding="utf-8"?>
+    <wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:s1="http://microsoft.com/wsdl/types/"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:tns="http://tests.python-zeep.org/"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        targetNamespace="http://tests.python-zeep.org/">
+      <wsdl:types>
+        <xsd:schema elementFormDefault="qualified"
+            xmlns:s1="http://microsoft.com/wsdl/types/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:tns="http://tests.python-zeep.org//"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/">
+          <xsd:import namespace="http://microsoft.com/wsdl/types/" />
+          <xsd:element name="foobardiedar" type="s1:guid"/>
+        </xsd:schema>
+        <xsd:schema elementFormDefault="qualified"
+           targetNamespace="http://microsoft.com/wsdl/types/">
+          <xsd:simpleType name="guid">
+            <xsd:restriction base="xsd:string"/>
+          </xsd:simpleType>
+        </xsd:schema>
+      </wsdl:types>
+    </wsdl:definitions>
+    """.strip())
+
+    assert wsdl_obj.parse_types(node)
+
+
+def test_parse_types_nsmap_issues(wsdl_obj):
+    node = wsdl_obj._parse_content(b"""
     <?xml version="1.0" encoding="UTF-8"?>
     <wsdl:definitions targetNamespace="urn:ec.europa.eu:taxud:vies:services:checkVat"
       xmlns:tns1="urn:ec.europa.eu:taxud:vies:services:checkVat:types"
@@ -167,9 +213,4 @@ def test_parse_types_nsmap_issues():
     </wsdl:definitions>
     """.strip())
 
-    class DummyWSDL(wsdl.WSDL):
-        def __init__(self):
-            self.schema_references = {}
-            self.transport = None
-
-    assert DummyWSDL().parse_types(node)
+    assert wsdl_obj.parse_types(node)
