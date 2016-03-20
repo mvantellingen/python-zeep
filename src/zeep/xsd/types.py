@@ -146,9 +146,9 @@ class CompoundValue(object):
         property_names = [prop.name for prop in self.type.properties()]
 
         # Set default values
-        for key, value in properties.iteritems():
+        for key, value in properties.items():
             setattr(self, key, value)
 
         items = process_signature(property_names, args, kwargs)
-        for key, value in items.iteritems():
+        for key, value in items.items():
             setattr(self, key, value)

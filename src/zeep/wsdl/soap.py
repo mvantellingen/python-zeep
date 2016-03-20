@@ -253,7 +253,7 @@ class RpcMessage(SoapMessage):
 
         param_order = self.signature()
         items = process_signature(param_order, args, kwargs)
-        for key, value in items.iteritems():
+        for key, value in items.items():
             key = parse_qname(key, self.wsdl.nsmap, self.wsdl.target_namespace)
             obj = self.abstract.get_part(key)
             obj.render(method, value)

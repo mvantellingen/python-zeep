@@ -51,19 +51,19 @@ class WSDL(object):
 
     def dump(self):
         type_instances = self.schema.types
-        print 'Types:'
+        print('Types:')
         for type_obj in sorted(type_instances):
-            print '%s%s' % (' ' * 4, unicode(type_obj))
+            print('%s%s' % (' ' * 4, unicode(type_obj)))
 
-        print ''
+        print('')
 
         for service in self.services.values():
-            print unicode(service)
+            print(unicode(service))
             for port in service.ports.values():
-                print ' ' * 4, unicode(port)
-                print ' ' * 8, 'Operations:'
+                print(' ' * 4, unicode(port))
+                print(' ' * 8, 'Operations:')
                 for operation in port.binding.operations.values():
-                    print '%s%s' % (' ' * 12, unicode(operation))
+                    print('%s%s' % (' ' * 12, unicode(operation)))
 
     def merge(self, other, namespace, transitive=False):
         """Merge another `WSDL` instance in this object."""
