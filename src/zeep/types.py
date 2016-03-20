@@ -56,7 +56,7 @@ class Schema(object):
             self.visit_schema(node)
 
             for type_ in self._types.values():
-                type_.resolve()
+                type_.resolve(self)
             for element in self.elm_instances:
                 element.resolve_type(self)
 
