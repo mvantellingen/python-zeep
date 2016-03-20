@@ -3,6 +3,10 @@
 install:
 	pip install -e .[test]
 
+lint:
+	flake8 src/ tests/
+	isort --recursive --check-only --diff src tests
+
 clean:
 	find . -name '*.pyc' -delete
 
@@ -11,7 +15,6 @@ test:
 
 retest:
 	py.test --lf
-
 
 coverage:
 	py.test --cov=zeep --cov-report=term-missing

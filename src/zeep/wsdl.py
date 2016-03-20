@@ -1,6 +1,5 @@
 from collections import OrderedDict
 
-import requests
 from lxml import etree
 from lxml.builder import ElementMaker
 from lxml.etree import QName

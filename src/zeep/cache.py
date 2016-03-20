@@ -1,7 +1,6 @@
 import datetime
 import os
 import sqlite3
-import tempfile
 
 
 class SqliteCache(object):

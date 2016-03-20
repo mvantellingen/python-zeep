@@ -1,8 +1,8 @@
-from zeep import wsdl
-from lxml import etree
-from zeep.transports import Transport
-from tests.utils import assert_nodes_equal
 import requests_mock
+
+from tests.utils import assert_nodes_equal
+from zeep import wsdl
+from zeep.transports import Transport
 
 
 def test_parse_soap_wsdl():
@@ -121,4 +121,3 @@ def test_parse_soap_header_wsdl():
             </soap-env:Envelope>
         """
         assert_nodes_equal(expected, request.body)
-

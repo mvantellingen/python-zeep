@@ -5,7 +5,7 @@ from lxml import etree
 
 from zeep import xsd
 from zeep.parser import load_external
-from zeep.utils import parse_qname, get_qname
+from zeep.utils import get_qname, parse_qname
 
 NSMAP = {
     'xsd': 'http://www.w3.org/2001/XMLSchema',
@@ -130,7 +130,6 @@ class Schema(object):
             raise ValueError("No visitor defined for %r", node.tag)
         result = visit_func(self, node, parent, namespace)
         return result
-
 
     def process_ref_attribute(self, node):
         ref = get_qname(node, 'ref', self.target_namespace, as_text=False)
@@ -328,7 +327,7 @@ class Schema(object):
             item = self.process(child, node, namespace)
             result.append(item)
 
-        assert not None in result
+        assert None not in result
         return result
 
     def visit_attribute(self, node, parent, namespace):
@@ -340,7 +339,7 @@ class Schema(object):
         try:
             xsd_type = self.get_type(node_type)
         except KeyError:
-            xsd_type = xsd.UnresolvedType(xml_type)
+            xsd_type = xsd.UnresolvedType(xsd_type)
         attr = xsd.Attribute(name, type_=xsd_type)
         self.elm_instances.append(attr)
         return attr

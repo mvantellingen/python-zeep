@@ -1,12 +1,7 @@
 import logging
 
-from zeep.transports import Transport
-import requests
-from lxml import etree
-from lxml.builder import ElementMaker
-
-from zeep.utils import parse_qname
 from zeep.cache import SqliteCache
+from zeep.transports import Transport
 from zeep.wsdl import WSDL
 
 NSMAP = {

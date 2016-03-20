@@ -11,6 +11,12 @@ tests_require = [
     'pytest-cov>=2.2.0',
     'pytest>=2.8.3',
     'requests_mock>=0.7.0',
+
+    # Linting
+    'isort==4.2.2',
+    'flake8==2.5.4',
+    'flake8-blind-except==0.1.0',
+    'flake8-debugger==1.4.0',
 ]
 
 setup(
