@@ -2,6 +2,7 @@
 from lxml import etree
 from lxml.builder import ElementMaker
 
+from zeep.exceptions import Fault
 from zeep.utils import get_qname, parse_qname, process_signature
 from zeep.wsdl.definitions import Binding, ConcreteMessage, Operation
 
@@ -60,7 +61,7 @@ class SoapBinding(Binding):
             if string_node is not None:
                 message = string_node.text
 
-        raise IOError(message.strip())
+        raise Fault(message.strip())
 
     def process_service_port(self, xmlelement):
         return {
