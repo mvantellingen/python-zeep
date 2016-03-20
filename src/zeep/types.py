@@ -44,7 +44,6 @@ class Schema(object):
         self.xml_schema = None
         self._types = {}
         self.elements = {}
-        self.elm_instances = []
         self.target_namespace = None
         self.imports = {}
 
@@ -53,12 +52,9 @@ class Schema(object):
                 self.xml_schema = etree.XMLSchema(node)
 
             self.target_namespace = node.get('targetNamespace')
-            self.visit_schema(node)
-
-            for type_ in self._types.values():
-                type_.resolve(self)
-            for element in self.elm_instances:
-                element.resolve_type(self)
+            visitor = Visitor(schema=self)
+            visitor.visit_schema(node)
+            visitor.resolve()
 
     def register_type(self, name, value):
         assert not isinstance(value, type)
@@ -117,12 +113,19 @@ class Schema(object):
     def custom_type(self, name):
         return self.get_type(name)
 
-    def visit_schema(self, node):
-        assert node is not None
 
-        target_namespace = node.get('targetNamespace')
-        for node in node.iterchildren():
-            self.process(node, parent=None, namespace=target_namespace)
+class Visitor(object):
+    def __init__(self, schema):
+        self.schema = schema
+        self.elm_instances = []
+
+    def resolve(self):
+        for type_ in self.schema._types.values():
+            type_.resolve(self.schema)
+
+        for element in self.elm_instances:
+            element.resolve_type(self.schema)
+        self.elm_instances = []
 
     def process(self, node, parent, namespace):
         visit_func = self.visitors.get(node.tag)
@@ -132,9 +135,17 @@ class Schema(object):
         return result
 
     def process_ref_attribute(self, node):
-        ref = get_qname(node, 'ref', self.target_namespace, as_text=False)
+        ref = get_qname(
+            node, 'ref', self.schema.target_namespace, as_text=False)
         if ref:
-            return xsd.RefElement(node.tag, ref, self)
+            return xsd.RefElement(node.tag, ref, self.schema)
+
+    def visit_schema(self, node):
+        assert node is not None
+
+        target_namespace = node.get('targetNamespace')
+        for node in node.iterchildren():
+            self.process(node, parent=None, namespace=target_namespace)
 
     def visit_element(self, node, parent, namespace=None):
         """
@@ -192,7 +203,7 @@ class Schema(object):
             if node_type:
                 type_qname = parse_qname(node_type, node.nsmap)
                 try:
-                    xsd_type = self.get_type(type_qname)
+                    xsd_type = self.schema.get_type(type_qname)
                 except KeyError:
                     xsd_type = xsd.UnresolvedType(type_qname)
             else:
@@ -204,8 +215,7 @@ class Schema(object):
             nsmap = {}
         element = cls(name=qname, type_=xsd_type, nsmap=nsmap)
         self.elm_instances.append(element)
-
-        self.register_element(qname, element)
+        self.schema.register_element(qname, element)
         return element
 
     def visit_simple_type(self, node, parent, namespace=None):
@@ -243,7 +253,7 @@ class Schema(object):
         xsd_type = type(name, (base_type,), {})()
         if not is_anonymous:
             qname = parse_qname(name, node.nsmap, namespace)
-            self.register_type(qname, xsd_type)
+            self.schema.register_type(qname, xsd_type)
         return xsd_type()
 
     def visit_complex_type(self, node, parent, namespace=None):
@@ -256,8 +266,9 @@ class Schema(object):
           mixed = Boolean : false
           name = NCName
           {any attributes with non-schema Namespace...}>
-        Content: (annotation?, (simpleContent | complexContent | ((group | all |
-        choice | sequence)?, ((attribute | attributeGroup)*, anyAttribute?))))
+        Content: (annotation?, (simpleContent | complexContent |
+                  ((group | all | choice | sequence)?,
+                  ((attribute | attributeGroup)*, anyAttribute?))))
         </complexType>
 
         """
@@ -302,7 +313,7 @@ class Schema(object):
         cls = type(name, (xsd.ComplexType,), {})
         xsd_type = cls(elements=children, attributes=attributes)
         if not is_anonymous:
-            self.register_type(qname, xsd_type)
+            self.schema.register_type(qname, xsd_type)
         return xsd_type
 
     def visit_sequence(self, node, parent, namespace):
@@ -312,7 +323,8 @@ class Schema(object):
               maxOccurs = (nonNegativeInteger | unbounded) : 1
               minOccurs = nonNegativeInteger : 1
               {any attributes with non-schema Namespace}...>
-            Content: (annotation?, (element | group | choice | sequence | any)*)
+            Content: (annotation?,
+                      (element | group | choice | sequence | any)*)
             </sequence>
         """
 
@@ -337,7 +349,7 @@ class Schema(object):
 
         name = parse_qname(node.get('name'), node.nsmap, namespace)
         try:
-            xsd_type = self.get_type(node_type)
+            xsd_type = self.schema.get_type(node_type)
         except KeyError:
             xsd_type = xsd.UnresolvedType(xsd_type)
         attr = xsd.Attribute(name, type_=xsd_type)
@@ -361,12 +373,14 @@ class Schema(object):
 
         location = node.get('schemaLocation')
         if location.startswith('intschema+'):
-            schema_node = self.schema_references[namespace]
+            schema_node = self.schema.schema_references[namespace]
             return self.visit_schema(schema_node)
 
-        schema_node = load_external(location, self.schema_references, self.transport)
-        schema = self.__class__(schema_node, self.schema_references, self.transport)
-        self.imports[node.get('namespace')] = schema
+        schema_node = load_external(
+            location, self.schema.schema_references, self.schema.transport)
+        schema = self.schema.__class__(
+            schema_node, self.schema.schema_references, self.schema.transport)
+        self.schema.imports[node.get('namespace')] = schema
         return schema
 
     def visit_restriction(self, node, namespace=None):
@@ -401,7 +415,7 @@ class Schema(object):
         children = self.process(child, parent, namespace)
 
         elm = xsd.GroupElement(name=qname, children=children)
-        self.register_element(qname, elm)
+        self.schema.register_element(qname, elm)
         return elm
 
     def visit_list(self, node, parent, namespace=None):
