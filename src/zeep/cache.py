@@ -5,12 +5,17 @@ import tempfile
 
 
 class SqliteCache(object):
-    def __init__(self, path=':memory:', timeout=3600):
+    def __init__(self, persistent=True, path=None, timeout=3600):
         self._timeout = timeout
 
         # Create db
-        self._db = sqlite3.connect(
-            path or ':memory:', detect_types=sqlite3.PARSE_DECLTYPES)
+        if persistent:
+            if not path:
+                path = os.path.expanduser('~/.pyzeep.cache.db')
+        else:
+            path = ':memory:'
+
+        self._db = sqlite3.connect(path, detect_types=sqlite3.PARSE_DECLTYPES)
 
         cursor = self._db.cursor()
         cursor.execute(
