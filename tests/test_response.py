@@ -4,7 +4,7 @@ from zeep.xsd import Schema
 
 
 def test_parse_response():
-    schema_node = etree.fromstring("""
+    schema_node = etree.fromstring(b"""
         <?xml version="1.0"?>
         <wsdl:definitions
             xmlns="http://www.w3.org/2001/XMLSchema"
@@ -41,7 +41,7 @@ def test_parse_response():
         </wsdl:definitions>
     """.strip())
 
-    response_node = etree.fromstring("""
+    response_node = etree.fromstring(b"""
         <?xml version="1.0" encoding="utf-8"?>
         <soap:Envelope
             xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"

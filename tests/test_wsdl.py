@@ -76,7 +76,7 @@ def test_parse_soap_header_wsdl():
     port = service.ports['{http://example.com/stockquote.wsdl}StockQuotePort']
     assert port
 
-    response = """
+    response = b"""
     <?xml version="1.0"?>
     <SOAP-ENV:Envelope
       xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
@@ -101,7 +101,7 @@ def test_parse_soap_header_wsdl():
         request = m.request_history[0]
 
         # Compare request body
-        expected = """
+        expected = b"""
             <soap-env:Envelope
                 xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
                 xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/"
