@@ -571,8 +571,13 @@ class WSDL(object):
         self.nsmap = doc.nsmap
         self.target_namespace = doc.get('targetNamespace')
         self.namespaces.append(self.target_namespace)
+
+        # Process the definitions
         self.parse_imports(doc)
-        self.parse_types(doc)
+        schema = self.parse_types(doc)
+        if schema and self.schema:
+            raise ValueError("Multiple XSD schema's defined")
+        self.schema = self.schema or schema
         self.messages.update(self.parse_messages(doc))
         self.ports.update(self.parse_ports(doc))
         self.bindings.update(self.parse_binding(doc))
@@ -594,17 +599,8 @@ class WSDL(object):
                 for operation in port.binding.operations.values():
                     print '%s%s' % (' ' * 12, unicode(operation))
 
-    def parse_imports(self, doc):
-        result = {}
-        for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
-            location = import_node.get('location')
-            namespace = import_node.get('namespace')
-            wsdl = WSDL(location, self.transport)
-            self.merge(wsdl, namespace)
-        return result
-
-    def merge(self, other, namespace):
-        """Merge other wsdl document into this document."""
+    def merge(self, other, namespace, transitive=False):
+        """Merge another `WSDL` instance in this object."""
         def filter_namespace(source, namespace):
             return {
                 k: v for k, v in source.items()
@@ -618,7 +614,22 @@ class WSDL(object):
         self.services.update(filter_namespace(other.services, namespace))
         self.namespaces.append(namespace)
 
+    def parse_imports(self, doc):
+        """Import other WSDL documents in this document.
+
+        Note that imports are non-transitive, so only import definitions
+        which are defined in the imported document and ignore definitions
+        imported in that document.
+
+        """
+        for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
+            location = import_node.get('location')
+            namespace = import_node.get('namespace')
+            wsdl = WSDL(location, self.transport)
+            self.merge(wsdl, namespace)
+
     def parse_types(self, doc):
+        """Return a `types.Schema` instance."""
         namespace_sets = [
             {'xsd': 'http://www.w3.org/2001/XMLSchema'},
             {'xsd': 'http://www.w3.org/1999/XMLSchema'},
@@ -643,7 +654,7 @@ class WSDL(object):
                 namespace = import_node.get('namespace')
                 import_node.set('schemaLocation', 'intschema+%s' % namespace)
 
-        self.schema = Schema(
+        return Schema(
             schema_nodes[0], self.schema_references, self.transport)
 
     def parse_messages(self, doc):
