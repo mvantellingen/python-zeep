@@ -21,7 +21,7 @@ class SoapBinding(Binding):
         soap_node = get_soap_node(node, 'binding')
         return soap_node is not None
 
-    def send(self, transport, address, operation, args, kwargs):
+    def send(self, transport, options, operation, args, kwargs):
         """Called from the service"""
         operation = self.get(operation)
         if not operation:
@@ -40,7 +40,7 @@ class SoapBinding(Binding):
             'SOAPAction': operation.soapaction,
         }
         response = transport.post(
-            address, etree.tostring(envelope), http_headers)
+            options['address'], etree.tostring(envelope), http_headers)
         return self.process_reply(operation, response)
 
     def process_reply(self, operation, response):
@@ -61,6 +61,11 @@ class SoapBinding(Binding):
                 message = string_node.text
 
         raise IOError(message.strip())
+
+    def process_service_port(self, xmlelement):
+        return {
+            'address': get_soap_node(xmlelement, 'address').get('location')
+        }
 
     @classmethod
     def parse(cls, wsdl, xmlelement):
@@ -155,7 +160,89 @@ class SoapOperation(Operation):
         return obj
 
 
-class RpcMessage(ConcreteMessage):
+class SoapMessage(ConcreteMessage):
+
+    @classmethod
+    def parse(cls, wsdl, xmlelement, abstract_message, operation):
+        """
+        Example::
+
+              <output>
+                <soap:body use="literal"/>
+              </output>
+
+        """
+        obj = cls(wsdl, abstract_message, operation)
+
+        body = get_soap_node(xmlelement, 'body')
+        header = get_soap_node(xmlelement, 'header')
+        headerfault = get_soap_node(xmlelement, 'headerfault')
+
+        body_info = {}
+        header_info = {}
+        headerfault_info = {}
+
+        if body is not None:
+            body_info = {
+                'part': get_qname(body, 'part', wsdl.target_namespace),
+                'use': body.get('use', 'literal'),
+                'encodingStyle': body.get('encodingStyle'),
+                'namespace': body.get('namespace'),
+            }
+
+        if header is not None:
+            header_info = {
+                'message': get_qname(header, 'message', wsdl.target_namespace),
+                'part': get_qname(header, 'part', wsdl.target_namespace),
+                'use': header.get('use', 'literal'),
+                'encodingStyle': header.get('encodingStyle'),
+                'namespace': header.get('namespace'),
+            }
+
+        if headerfault is not None:
+            headerfault_info = {
+                'message': get_qname(headerfault, 'message', wsdl.target_namespace),
+                'part': get_qname(headerfault, 'part', wsdl.target_namespace),
+                'use': headerfault.get('use', 'literal'),
+                'encodingStyle': headerfault.get('encodingStyle'),
+                'namespace': headerfault.get('namespace'),
+            }
+
+        obj.namespace = {
+            'body': body_info.get('namespace'),
+            'header': header_info.get('namespace'),
+            'headerfault': headerfault_info.get('namespace'),
+        }
+
+        part_names = abstract_message.parts.keys()
+        if header_info:
+            part_name = header_info['part']
+
+            if header_info['message']:
+                msg = wsdl.messages[header_info['message']]
+                obj.header = msg.parts[part_name]
+            else:
+                part_names.remove(part_name)
+                obj.header = abstract_message.parts[part_name]
+        else:
+            obj.header = None
+
+        if headerfault_info:
+            part_name = headerfault_info['part']
+            part_names.remove(part_name)
+            obj.headerfault = abstract_message.parts[part_name]
+        else:
+            obj.headerfault = None
+
+        if body_info:
+            part_name = body_info['part'] or part_names[0]
+            part_names.remove(part_name)
+            obj.body = abstract_message.parts[part_name]
+
+        return obj
+
+
+class RpcMessage(SoapMessage):
     def serialize(self, *args, **kwargs):
         soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
         tag_name = etree.QName(
@@ -192,7 +279,7 @@ class RpcMessage(ConcreteMessage):
         return self.abstract.parts.keys()
 
 
-class DocumentMessage(ConcreteMessage):
+class DocumentMessage(SoapMessage):
 
     def serialize(self, *args, **kwargs):
         soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)

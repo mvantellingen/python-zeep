@@ -5,8 +5,6 @@ from zeep.utils import get_qname
 
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
-    'soap': 'http://schemas.xmlsoap.org/wsdl/soap/',
-    'soap12': 'http://schemas.xmlsoap.org/wsdl/soap12/',
 }
 
 
@@ -149,82 +147,7 @@ class ConcreteMessage(object):
 
     @classmethod
     def parse(cls, wsdl, xmlelement, abstract_message, operation):
-        """
-        Example::
-
-              <output>
-                <soap:body use="literal"/>
-              </output>
-
-        """
-        obj = cls(wsdl, abstract_message, operation)
-
-        body = get_soap_node(xmlelement, 'body')
-        header = get_soap_node(xmlelement, 'header')
-        headerfault = get_soap_node(xmlelement, 'headerfault')
-
-        body_info = {}
-        header_info = {}
-        headerfault_info = {}
-
-        if body is not None:
-            body_info = {
-                'part': get_qname(body, 'part', wsdl.target_namespace),
-                'use': body.get('use', 'literal'),
-                'encodingStyle': body.get('encodingStyle'),
-                'namespace': body.get('namespace'),
-            }
-
-        if header is not None:
-            header_info = {
-                'message': get_qname(header, 'message', wsdl.target_namespace),
-                'part': get_qname(header, 'part', wsdl.target_namespace),
-                'use': header.get('use', 'literal'),
-                'encodingStyle': header.get('encodingStyle'),
-                'namespace': header.get('namespace'),
-            }
-
-        if headerfault is not None:
-            headerfault_info = {
-                'message': get_qname(headerfault, 'message', wsdl.target_namespace),
-                'part': get_qname(headerfault, 'part', wsdl.target_namespace),
-                'use': headerfault.get('use', 'literal'),
-                'encodingStyle': headerfault.get('encodingStyle'),
-                'namespace': headerfault.get('namespace'),
-            }
-
-        obj.namespace = {
-            'body': body_info.get('namespace'),
-            'header': header_info.get('namespace'),
-            'headerfault': headerfault_info.get('namespace'),
-        }
-
-        part_names = abstract_message.parts.keys()
-        if header_info:
-            part_name = header_info['part']
-
-            if header_info['message']:
-                msg = wsdl.messages[header_info['message']]
-                obj.header = msg.parts[part_name]
-            else:
-                part_names.remove(part_name)
-                obj.header = abstract_message.parts[part_name]
-        else:
-            obj.header = None
-
-        if headerfault_info:
-            part_name = headerfault_info['part']
-            part_names.remove(part_name)
-            obj.headerfault = abstract_message.parts[part_name]
-        else:
-            obj.headerfault = None
-
-        if body_info:
-            part_name = body_info['part'] or part_names[0]
-            part_names.remove(part_name)
-            obj.body = abstract_message.parts[part_name]
-
-        return obj
+        raise NotImplementedError()
 
     def signature(self):
         # if self.operation.abstract.parameter_order:
@@ -265,10 +188,10 @@ class Operation(object):
 
 
 class Port(object):
-    def __init__(self, name, binding, location):
+    def __init__(self, name, binding, binding_options):
         self.name = name
         self.binding = binding
-        self.location = location
+        self.binding_options = binding_options
 
     def __repr__(self):
         return '<%s(name=%r, binding=%r, location=%r)>' % (
@@ -279,17 +202,16 @@ class Port(object):
 
     def send(self, transport, operation, args, kwargs):
         return self.binding.send(
-            transport, self.location, operation, args, kwargs)
+            transport, self.binding_options, operation, args, kwargs)
 
     @classmethod
     def parse(cls, wsdl, xmlelement):
         name = get_qname(xmlelement, 'name', wsdl.target_namespace)
-        binding = get_qname(xmlelement, 'binding', wsdl.target_namespace)
+        binding_name = get_qname(xmlelement, 'binding', wsdl.target_namespace)
+        binding = wsdl.bindings[binding_name]
 
-        soap_node = get_soap_node(xmlelement, 'address')
-        location = soap_node.get('location')
-        obj = cls(name, wsdl.bindings[binding], location=location)
-        return obj
+        binding_options = binding.process_service_port(xmlelement)
+        return cls(name, binding, binding_options=binding_options)
 
 
 class Service(object):
@@ -330,10 +252,3 @@ class Service(object):
             obj.add_port(port)
 
         return obj
-
-
-def get_soap_node(parent, name):
-    for ns in ['soap', 'soap12']:
-        node = parent.find('%s:%s' % (ns, name), namespaces=NSMAP)
-        if node is not None:
-            return node

@@ -8,7 +8,6 @@ NSMAP = {
 }
 
 
-
 class HttpBinding(Binding):
 
     @classmethod
