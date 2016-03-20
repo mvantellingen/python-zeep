@@ -64,6 +64,8 @@ class Boolean(SimpleType):
 
 
 class DateTime(SimpleType):
+    name = 'xsd:dateTime'
+
     def xmlvalue(self, value):
         return value.strftime('%Y-%m-%dT%H:%M:%S')
 
