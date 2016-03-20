@@ -113,45 +113,49 @@ class Integer(Decimal):
         return int(value)
 
 
-class Short(Integer):
-    name = 'xsd:short'
-
-
 class Long(Integer):
     name = 'xsd:long'
 
+    def pythonvalue(self, value):
+        return long(value)
 
-class UnsignedShort(Short):
-    name = 'xsd:UnsignedShort'
 
-
-class UnsignedLong(Integer):
-    name = 'xsd:UnsignedLong'
+class Short(Integer):
+    name = 'xsd:short'
 
 
 class UnsignedInt(Integer):
     name = 'xsd:UnsignedInt'
 
 
+class UnsignedLong(Long):
+    name = 'xsd:UnsignedLong'
+
+
+class UnsignedShort(Short):
+    name = 'xsd:UnsignedShort'
+
+
+
 default_types = {
-    '{http://www.w3.org/2001/XMLSchema}anyType': AnyType(),
-    '{http://www.w3.org/2001/XMLSchema}anyURI': AnyURI(),
     '{http://www.w3.org/2001/XMLSchema}ID': ID(),
     '{http://www.w3.org/2001/XMLSchema}IDREF': IDREF(),
+    '{http://www.w3.org/2001/XMLSchema}QName': QName(),
+    '{http://www.w3.org/2001/XMLSchema}anyType': AnyType(),
+    '{http://www.w3.org/2001/XMLSchema}anyURI': AnyURI(),
+    '{http://www.w3.org/2001/XMLSchema}base64Binary': Base64Binary(),
+    '{http://www.w3.org/2001/XMLSchema}boolean': Boolean(),
     '{http://www.w3.org/2001/XMLSchema}byte': Byte(),
+    '{http://www.w3.org/2001/XMLSchema}dateTime': DateTime(),
+    '{http://www.w3.org/2001/XMLSchema}decimal': Decimal(),
+    '{http://www.w3.org/2001/XMLSchema}double': Double(),
+    '{http://www.w3.org/2001/XMLSchema}float': Float(),
+    '{http://www.w3.org/2001/XMLSchema}int': Integer(),
+    '{http://www.w3.org/2001/XMLSchema}long': Long(),
     '{http://www.w3.org/2001/XMLSchema}short': Short(),
+    '{http://www.w3.org/2001/XMLSchema}string': String(),
     '{http://www.w3.org/2001/XMLSchema}unsignedByte': String(),
     '{http://www.w3.org/2001/XMLSchema}unsignedInt': UnsignedInt(),
     '{http://www.w3.org/2001/XMLSchema}unsignedLong': UnsignedLong(),
     '{http://www.w3.org/2001/XMLSchema}unsignedShort': UnsignedShort(),
-    '{http://www.w3.org/2001/XMLSchema}QName': QName(),
-    '{http://www.w3.org/2001/XMLSchema}string': String(),
-    '{http://www.w3.org/2001/XMLSchema}float': Float(),
-    '{http://www.w3.org/2001/XMLSchema}int': Integer(),
-    '{http://www.w3.org/2001/XMLSchema}long': Long(),
-    '{http://www.w3.org/2001/XMLSchema}base64Binary': Base64Binary(),
-    '{http://www.w3.org/2001/XMLSchema}boolean': Boolean(),
-    '{http://www.w3.org/2001/XMLSchema}decimal': Decimal(),
-    '{http://www.w3.org/2001/XMLSchema}dateTime': DateTime(),
-    '{http://www.w3.org/2001/XMLSchema}double': Double(),
 }
