@@ -26,5 +26,5 @@ class Client(object):
         return port.send(self.transport, name, args, kwargs)
 
     def get_port(self, service=None, port=None):
-        service = self.wsdl.services.values()[0]
-        return service.ports.values()[0]
+        service = list(self.wsdl.services.values())[0]
+        return list(service.ports.values())[0]

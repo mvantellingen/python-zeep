@@ -194,8 +194,9 @@ class Port(object):
         self.binding_options = binding_options
 
     def __repr__(self):
-        return '<%s(name=%r, binding=%r, location=%r)>' % (
-            self.__class__.__name__, self.name, self.binding, self.location)
+        return '<%s(name=%r, binding=%r, %r)>' % (
+            self.__class__.__name__, self.name, self.binding,
+            self.binding_options)
 
     def __unicode__(self):
         return 'Port: %s' % self.name

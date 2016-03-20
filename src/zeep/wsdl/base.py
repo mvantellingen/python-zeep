@@ -1,3 +1,4 @@
+import six
 from lxml.etree import QName
 
 from zeep.parser import parse_xml
@@ -53,17 +54,17 @@ class WSDL(object):
         type_instances = self.schema.types
         print('Types:')
         for type_obj in sorted(type_instances):
-            print('%s%s' % (' ' * 4, unicode(type_obj)))
+            print('%s%s' % (' ' * 4, six.text_type(type_obj)))
 
         print('')
 
         for service in self.services.values():
-            print(unicode(service))
+            print(six.text_type(service))
             for port in service.ports.values():
-                print(' ' * 4, unicode(port))
+                print(' ' * 4, six.text_type(port))
                 print(' ' * 8, 'Operations:')
                 for operation in port.binding.operations.values():
-                    print('%s%s' % (' ' * 12, unicode(operation)))
+                    print('%s%s' % (' ' * 12, six.text_type(operation)))
 
     def merge(self, other, namespace, transitive=False):
         """Merge another `WSDL` instance in this object."""

@@ -7,30 +7,30 @@ class AnyType(SimpleType):
     name = 'xsd:anyType'
 
     def xmlvalue(self, value):
-        return unicode(value)
+        return value
 
     def pythonvalue(self, value):
-        return unicode(value)
+        return value
 
 
 class AnyURI(SimpleType):
     name = 'xsd:anyURI'
 
     def xmlvalue(self, value):
-        return unicode(value)
+        return value
 
     def pythonvalue(self, value):
-        return unicode(value)
+        return value
 
 
 class String(SimpleType):
     name = 'xsd:string'
 
     def xmlvalue(self, value):
-        return unicode(value)
+        return value
 
     def pythonvalue(self, value):
-        return unicode(value)
+        return value
 
 
 class ID(String):

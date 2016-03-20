@@ -214,7 +214,7 @@ class SoapMessage(ConcreteMessage):
             'headerfault': headerfault_info.get('namespace'),
         }
 
-        part_names = abstract_message.parts.keys()
+        part_names = list(abstract_message.parts.keys())
         if header_info:
             part_name = header_info['part']
 

@@ -1,3 +1,5 @@
+import six
+
 from zeep.utils import process_signature
 from zeep.xsd.elements import GroupElement, ListElement, RefElement
 
@@ -51,14 +53,14 @@ class SimpleType(Type):
 
     def __call__(self, *args, **kwargs):
         if args:
-            return unicode(args[0])
+            return six.text_type(args[0])
         return u''
 
     def __str__(self):
         return self.name
 
     def __unicode__(self):
-        return unicode(self.name)
+        return six.text_type(self.name)
 
 
 class ComplexType(Type):
