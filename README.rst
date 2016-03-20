@@ -12,6 +12,9 @@ Status
 .. image:: http://codecov.io/github/mvantellingen/python-zeep/coverage.svg?branch=master 
     :target: http://codecov.io/github/mvantellingen/python-zeep?branch=master
 
+.. image:: https://img.shields.io/pypi/v/zeep.svg
+    :target: https://pypi.python.org/pypi/zeep/
+
 
 Usage
 -----
@@ -26,7 +29,7 @@ Usage
 Bugs
 ----
 
-If you encounter bugs then please `let me know`_. A copy of the WSDL file if
+If you encounter bugs then please `let me know`_ . A copy of the WSDL file if
 possible would be most helpful.
 
-.. _report a bug: https://github.com/mvantellingen/python-zeep/issues
+.. _let me know: https://github.com/mvantellingen/python-zeep/issues
