@@ -584,7 +584,7 @@ class WSDL(object):
         self.services.update(self.parse_service(doc))
 
     def dump(self):
-        type_instances = [type_cls() for type_cls in self.schema.types.values()]
+        type_instances = self.schema.types
         print 'Types:'
         for type_obj in sorted(type_instances):
             print '%s%s' % (' ' * 4, unicode(type_obj))
