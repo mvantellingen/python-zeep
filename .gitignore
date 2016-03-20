@@ -1,7 +1,10 @@
 *.egg-info
 *.pyc
 .tox
+.coverage
+.eggs
 .cache
+.python-version
 /build/
 /dist/
 /test_clients/
