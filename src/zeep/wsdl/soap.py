@@ -71,6 +71,23 @@ class SoapBinding(Binding):
 
     @classmethod
     def parse(cls, wsdl, xmlelement):
+        """
+            <wsdl:binding name="nmtoken" type="qname"> *
+                <-- extensibility element (1) --> *
+                <wsdl:operation name="nmtoken"> *
+                   <-- extensibility element (2) --> *
+                   <wsdl:input name="nmtoken"? > ?
+                       <-- extensibility element (3) -->
+                   </wsdl:input>
+                   <wsdl:output name="nmtoken"? > ?
+                       <-- extensibility element (4) --> *
+                   </wsdl:output>
+                   <wsdl:fault name="nmtoken"> *
+                       <-- extensibility element (5) --> *
+                   </wsdl:fault>
+                </wsdl:operation>
+            </wsdl:binding>
+        """
         name = get_qname(
             xmlelement, 'name', wsdl.target_namespace, as_text=False)
         port_name = get_qname(xmlelement, 'type', wsdl.target_namespace)
@@ -108,19 +125,31 @@ class SoapOperation(Operation):
     def parse(cls, wsdl, xmlelement, binding):
         """
 
+            <wsdl:operation name="nmtoken"> *
+                <soap:operation soapAction="uri"? style="rpc|document"?>?
+                <wsdl:input name="nmtoken"? > ?
+                    <soap:body use="literal"/>
+               </wsdl:input>
+               <wsdl:output name="nmtoken"? > ?
+                    <-- extensibility element (4) --> *
+               </wsdl:output>
+               <wsdl:fault name="nmtoken"> *
+                    <-- extensibility element (5) --> *
+               </wsdl:fault>
+            </wsdl:operation>
+
         Example::
 
-            <operation name="GetLastTradePrice">
+            <wsdl:operation name="GetLastTradePrice">
               <soap:operation soapAction="http://example.com/GetLastTradePrice"/>
-              <input>
+              <wsdl:input>
                 <soap:body use="literal"/>
-              </input>
-              <output>
-                <soap:body use="literal"/>
-              </output>
-              <fault name="dataFault">
+              </wsdl:input>
+              <wsdl:output>
+              </wsdl:output>
+              <wsdl:fault name="dataFault">
                 <soap:fault name="dataFault" use="literal"/>
-              </fault>
+              </wsdl:fault>
             </operation>
 
         """

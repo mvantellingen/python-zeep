@@ -53,6 +53,8 @@ class AbstractMessage(object):
 
 
 class AbstractOperation(object):
+    """Abstract operations are defined in the wsdl's portType elements."""
+
     def __init__(self, name, input=None, output=None, faults=None,
                  parameter_order=None):
         self.name = name
@@ -68,6 +70,20 @@ class AbstractOperation(object):
 
     @classmethod
     def parse(cls, wsdl, xmlelement):
+        """
+            <wsdl:operation name="nmtoken">*
+               <wsdl:documentation .... /> ?
+               <wsdl:input name="nmtoken"? message="qname">?
+                   <wsdl:documentation .... /> ?
+               </wsdl:input>
+               <wsdl:output name="nmtoken"? message="qname">?
+                   <wsdl:documentation .... /> ?
+               </wsdl:output>
+               <wsdl:fault name="nmtoken" message="qname"> *
+                   <wsdl:documentation .... /> ?
+               </wsdl:fault>
+            </wsdl:operation>
+        """
         name = get_qname(
             xmlelement, 'name', wsdl.target_namespace, as_text=False)
 
@@ -206,6 +222,20 @@ class Operation(object):
 
     @classmethod
     def parse(cls, wsdl, xmlelement, binding):
+        """
+            <wsdl:operation name="nmtoken"> *
+               <-- extensibility element (2) --> *
+               <wsdl:input name="nmtoken"? > ?
+                   <-- extensibility element (3) -->
+               </wsdl:input>
+               <wsdl:output name="nmtoken"? > ?
+                   <-- extensibility element (4) --> *
+               </wsdl:output>
+               <wsdl:fault name="nmtoken"> *
+                   <-- extensibility element (5) --> *
+               </wsdl:fault>
+            </wsdl:operation>
+        """
         raise NotImplementedError()
 
 
@@ -229,6 +259,13 @@ class Port(object):
 
     @classmethod
     def parse(cls, wsdl, xmlelement):
+        """
+            <wsdl:port name="nmtoken" binding="qname"> *
+               <wsdl:documentation .... /> ?
+               <-- extensibility element -->
+            </wsdl:port>
+
+        """
         name = get_qname(xmlelement, 'name', wsdl.target_namespace)
         binding_name = get_qname(xmlelement, 'binding', wsdl.target_namespace)
         binding = wsdl.bindings[binding_name]
@@ -256,6 +293,17 @@ class Service(object):
     @classmethod
     def parse(cls, wsdl, xmlelement):
         """
+
+        Syntax::
+
+            <wsdl:service name="nmtoken"> *
+                <wsdl:documentation .... />?
+                <wsdl:port name="nmtoken" binding="qname"> *
+                   <wsdl:documentation .... /> ?
+                   <-- extensibility element -->
+                </wsdl:port>
+                <-- extensibility element -->
+            </wsdl:service>
 
         Example::
 
