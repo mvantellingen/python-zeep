@@ -47,7 +47,8 @@ class AbstractMessage(object):
             else:
                 part_type = get_qname(part, 'type', wsdl.target_namespace)
                 part_type = wsdl.schema.get_type(part_type)
-                part_type = xsd.Element(part_name, type_=part_type())
+                part_type = xsd.Element(part_name, type_=part_type)
+
             msg.add_part(part_name, part_type)
         return msg
 
@@ -212,6 +213,8 @@ class Operation(object):
             self.__class__.__name__, self.name.text, self.style)
 
     def __unicode__(self):
+        if not self.input:
+            return '%s(missing input message)' % (self.name)
         return '%s(%s)' % (self.name, self.input.signature())
 
     def create(self, *args, **kwargs):

@@ -71,6 +71,7 @@ class WSDL(object):
                 print(' ' * 8, 'Operations:')
                 for operation in port.binding.operations.values():
                     print('%s%s' % (' ' * 12, six.text_type(operation)))
+                print('')
 
     def merge(self, other, namespace, transitive=False):
         """Merge another `WSDL` instance in this object."""

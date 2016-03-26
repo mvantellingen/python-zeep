@@ -3,7 +3,7 @@ from lxml import etree
 
 class Element(object):
     def __init__(self, name, type_=None, nsmap=None):
-        self.name = name.localname
+        self.name = name.localname if name else None
         self.qname = name
         self.type = type_
         self.nsmap = nsmap or {}
