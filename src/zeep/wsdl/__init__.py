@@ -1,2 +1,2 @@
-from zeep.wsdl.base import WSDL  # noqa
+from zeep.wsdl.wsdl import WSDL  # noqa
 
