@@ -58,6 +58,28 @@ class SchemaVisitor(object):
         for node in node.iterchildren():
             self.process(node, parent=None, namespace=target_namespace)
 
+    def visit_import(self, node, parent, namespace=None):
+        """
+            <import
+              id = ID
+              namespace = anyURI
+              schemaLocation = anyURI
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?)
+            </import>
+        """
+
+        if not node.get('schemaLocation'):
+            raise NotImplementedError("schemaLocation is required")
+        namespace = node.get('namespace')
+        location = node.get('schemaLocation')
+
+        schema_node = load_external(
+            location, self.schema.transport, self.schema.schema_references)
+        schema = self.schema.__class__(schema_node, self.schema.transport)
+        self.schema.imports[namespace] = schema
+        return schema
+
     def visit_element(self, node, parent, namespace=None):
         """
             <element
@@ -91,7 +113,6 @@ class SchemaVisitor(object):
         node_ref = node.get('ref')
         if node_ref:
             raise NotImplementedError()
-
 
         children = node.getchildren()
         xsd_type = None
@@ -130,6 +151,20 @@ class SchemaVisitor(object):
         self.elm_instances.append(element)
         self.schema.register_element(qname, element)
         return element
+
+    def visit_attribute(self, node, parent, namespace):
+        node_type = get_qname(node, 'type', namespace, as_text=False)
+        if not node_type:
+            assert NotImplementedError()
+
+        name = parse_qname(node.get('name'), node.nsmap, namespace)
+        try:
+            xsd_type = self.schema.get_type(node_type)
+        except KeyError:
+            xsd_type = xsd_types.UnresolvedType(xsd_type)
+        attr = xsd_elements.Attribute(name, type_=xsd_type)
+        self.elm_instances.append(attr)
+        return attr
 
     def visit_simple_type(self, node, parent, namespace=None):
         """
@@ -230,81 +265,53 @@ class SchemaVisitor(object):
             self.schema.register_type(qname, xsd_type)
         return xsd_type
 
-    def visit_sequence(self, node, parent, namespace):
-        """
-            <sequence
-              id = ID
-              maxOccurs = (nonNegativeInteger | unbounded) : 1
-              minOccurs = nonNegativeInteger : 1
-              {any attributes with non-schema Namespace}...>
-            Content: (annotation?,
-                      (element | group | choice | sequence | any)*)
-            </sequence>
-        """
-
-        sub_types = [
-            tags.annotation, tags.any, tags.choice, tags.element,
-            tags.group, tags.sequence
-        ]
-        result = []
-
-        for child in node.iterchildren():
-            assert child.tag in sub_types, child
-            item = self.process(child, node, namespace)
-            result.append(item)
-
-        assert None not in result
-        return result
-
-    def visit_attribute(self, node, parent, namespace):
-        node_type = get_qname(node, 'type', namespace, as_text=False)
-        if not node_type:
-            assert NotImplementedError()
-
-        name = parse_qname(node.get('name'), node.nsmap, namespace)
-        try:
-            xsd_type = self.schema.get_type(node_type)
-        except KeyError:
-            xsd_type = xsd_types.UnresolvedType(xsd_type)
-        attr = xsd_elements.Attribute(name, type_=xsd_type)
-        self.elm_instances.append(attr)
-        return attr
-
     def visit_complex_content(self, node, parent, namespace=None):
+        """The complexContent element defines extensions or restrictions on a
+        complex type that contains mixed content or elements only.
+
+            <complexContent
+              id = ID
+              mixed = Boolean
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?,  (restriction | extension))
+            </complexContent>
+        """
+
         child = node.getchildren()[-1]
 
         if child.tag == tags.restriction:
-            return self.visit_restriction(child, node, namespace)
+            return self.visit_restriction_complex_content(child, node, namespace)
 
         if child.tag == tags.extension:
-            return self.visit_extension_complex(child, node, namespace)
+            return self.visit_extension_complex_content(child, node, namespace)
 
-    def visit_import(self, node, parent, namespace=None):
-        """
-            <import
+    def visit_simple_content(self, node, parent, namespace=None):
+        """Contains extensions or restrictions on a complexType element with
+        character data or a simpleType element as content and contains no
+        elements.
+
+            <simpleContent
               id = ID
-              namespace = anyURI
-              schemaLocation = anyURI
               {any attributes with non-schema Namespace}...>
-            Content: (annotation?)
-            </import>
+            Content: (annotation?, (restriction | extension))
+            </simpleContent>
         """
 
-        if not node.get('schemaLocation'):
-            raise NotImplementedError("schemaLocation is required")
-        namespace = node.get('namespace')
-        location = node.get('schemaLocation')
+        child = node.getchildren()[-1]
 
-        schema_node = load_external(
-            location, self.schema.transport, self.schema.schema_references)
-        schema = self.schema.__class__(schema_node, self.schema.transport)
-        self.schema.imports[namespace] = schema
-        return schema
+        if child.tag == tags.restriction:
+            return self.visit_restriction_simple_content(child, node, namespace)
 
-    def visit_restriction(self, node, namespace=None):
+        if child.tag == tags.extension:
+            return self.visit_extension_simple_content(child, node, namespace)
+
+    def visit_restriction_complex_content(self, node, parent, namespace=None):
         pass
 
-    def visit_extension_complex(self, node, parent, namespace=None):
+    def visit_restriction_simple_content(self, node, parent, namespace=None):
+        pass
+
+    def visit_extension_complex_content(self, node, parent, namespace=None):
         """
             <extension
               base = QName
@@ -339,11 +346,37 @@ class SchemaVisitor(object):
 
         return children
 
-    def visit_extension_simple(self, node, parent, namespace=None):
-        pass
+    def visit_extension_simple_content(self, node, parent, namespace=None):
+        raise NotImplementedError()
 
     def visit_annotation(self, node, parent, namespace=None):
         pass
+
+    def visit_sequence(self, node, parent, namespace):
+        """
+            <sequence
+              id = ID
+              maxOccurs = (nonNegativeInteger | unbounded) : 1
+              minOccurs = nonNegativeInteger : 1
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?,
+                      (element | group | choice | sequence | any)*)
+            </sequence>
+        """
+
+        sub_types = [
+            tags.annotation, tags.any, tags.choice, tags.element,
+            tags.group, tags.sequence
+        ]
+        result = []
+
+        for child in node.iterchildren():
+            assert child.tag in sub_types, child
+            item = self.process(child, node, namespace)
+            result.append(item)
+
+        assert None not in result
+        return result
 
     def visit_group(self, node, parent, namespace=None):
         """
@@ -419,6 +452,5 @@ class SchemaVisitor(object):
         tags.group: visit_group,
         tags.attribute: visit_attribute,
         tags.import_: visit_import,
-        tags.restriction: visit_restriction,
         tags.annotation: visit_annotation,
     }
