@@ -75,8 +75,9 @@ class ComplexType(Type):
 
     def render(self, parent, value):
         for element in self.properties():
-            sub_value = getattr(value, element.name)
-            element.render(parent, sub_value)
+            sub_value = getattr(value, element.name, None)
+            if sub_value is not None:
+                element.render(parent, sub_value)
 
     def __call__(self, *args, **kwargs):
         if not hasattr(self, '_value_class'):
