@@ -97,11 +97,8 @@ class AbstractOperation(object):
             if tag_name not in ('input', 'output', 'fault'):
                 continue
 
-            param_msg = get_qname(
-                msg_node, 'message', wsdl.target_namespace)
-            param_name = get_qname(
-                msg_node, 'name', wsdl.target_namespace)
-
+            param_msg = get_qname(msg_node, 'message', wsdl.target_namespace)
+            param_name = msg_node.get('name')
             if tag_name in ('input', 'output'):
                 kwargs[tag_name] = wsdl.messages[param_msg]
             else:

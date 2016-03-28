@@ -188,7 +188,7 @@ class SoapOperation(Operation):
                 continue
 
             if tag_name == 'fault':
-                fault_name = get_qname(node, 'name', wsdl.target_namespace)
+                fault_name = node.get('name')
                 abstract = abstract_operation.get(tag_name, fault_name)
                 msg = message_class.parse(wsdl, node, abstract, obj)
                 obj.faults[msg.name] = msg
