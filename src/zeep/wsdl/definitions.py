@@ -161,9 +161,9 @@ class Binding(object):
 
     def get(self, name):
         name = etree.QName(name)
-        if not name.namespace:
-            name = etree.QName(self.name.namespace, name.localname)
-        return self.operations[name]
+        for operation_name, operation in self.operations.items():
+            if etree.QName(operation_name).localname == name.localname:
+                return operation
 
     @classmethod
     def match(cls, node):
