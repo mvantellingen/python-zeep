@@ -56,13 +56,20 @@ class SoapBinding(Binding):
     def process_error(self, response):
         doc = etree.fromstring(response)
         fault_node = doc.find('soap-env:Body/soap-env:Fault', namespaces=NSMAP)
-        message = 'unknown'
-        if fault_node is not None:
-            string_node = fault_node.find('faultstring')
-            if string_node is not None:
-                message = string_node.text
 
-        raise Fault(message.strip())
+        if fault_node is None:
+            raise Fault('Unknown fault occured')
+
+        def get_text(name):
+            child = fault_node.find(name)
+            if child is not None:
+                return child.text
+
+        raise Fault(
+            message=get_text('faultstring'),
+            code=get_text('faultcode'),
+            actor=get_text('faultactor'),
+            detail=fault_node.find('detail'))
 
     def process_service_port(self, xmlelement):
         return {
