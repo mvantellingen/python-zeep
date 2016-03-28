@@ -49,8 +49,9 @@
 
 
 """
-
 from decimal import Decimal as _Decimal
+
+import six
 
 from zeep.xsd.types import SimpleType
 
@@ -271,7 +272,7 @@ class Long(Integer):
     name = 'xsd:long'
 
     def pythonvalue(self, value):
-        return long(value)
+        return long(value) if six.PY2 else int(value)
 
 
 class Int(Long):
