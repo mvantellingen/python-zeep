@@ -67,12 +67,11 @@ class SimpleType(Type):
 
 class ComplexType(Type):
 
-    def __init__(self, elements=None, attributes=None):
-        self._elements = elements or []
-        self._attributes = attributes or []
+    def __init__(self, children=None):
+        self._children = children or []
 
     def properties(self):
-        return list(self._elements) + list(self._attributes)
+        return list(self._children)
 
     def render(self, parent, value):
         for element in self.properties():
@@ -88,16 +87,19 @@ class ComplexType(Type):
         return self._value_class(*args, **kwargs)
 
     def resolve(self, schema):
-        elements = []
-        for elm in self._elements:
+        children = []
+        for elm in self._children:
             if isinstance(elm, RefElement):
                 elm = elm._elm
 
-            if isinstance(elm, GroupElement):
-                elements.extend(list(elm))
+            if isinstance(elm, UnresolvedType):
+                elm = elm.resolve(schema)
+                children.extend(list(elm._children))
+            elif isinstance(elm, GroupElement):
+                children.extend(list(elm))
             else:
-                elements.append(elm)
-        self._elements = elements
+                children.append(elm)
+        self._children = children
         return self
 
     def signature(self):

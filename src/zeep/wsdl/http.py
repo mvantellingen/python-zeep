@@ -92,7 +92,7 @@ class UrlEncoded(ConcreteMessage):
         obj = cls(wsdl, abstract_message, operation)
         obj.params = xsd.Element(
             None,
-            xsd.ComplexType(elements=abstract_message.parts.values()))
+            xsd.ComplexType(children=abstract_message.parts.values()))
         return obj
 
     def signature(self):
@@ -106,7 +106,7 @@ class MimeContent(ConcreteMessage):
         obj = cls(wsdl, abstract_message, operation)
         obj.params = xsd.Element(
             None,
-            xsd.ComplexType(elements=abstract_message.parts.values()))
+            xsd.ComplexType(children=abstract_message.parts.values()))
         return obj
 
     def signature(self):

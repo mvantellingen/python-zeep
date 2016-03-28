@@ -18,7 +18,7 @@ for name in [
     'annotation', 'element', 'simpleType', 'complexType',
     'simpleContent', 'complexContent',
     'sequence', 'group', 'choice', 'all', 'attribute', 'any',
-    'restriction',
+    'restriction', 'extension',
 
 ]:
     attr = name if name not in keyword.kwlist else name + '_'
@@ -183,7 +183,6 @@ class SchemaVisitor(object):
         </complexType>
 
         """
-        attributes = []
         children = []
 
         for child in node.iterchildren():
@@ -194,7 +193,7 @@ class SchemaVisitor(object):
                 break
 
             elif child.tag == tags.complexContent:
-                break
+                children = self.visit_complex_content(child, node, namespace)
 
             else:
                 item = self.process(child, node, namespace)
@@ -208,7 +207,7 @@ class SchemaVisitor(object):
                     children = item
 
                 elif child.tag in (tags.attribute,):
-                    attributes.append(item)
+                    children.append(item)
 
         # If the complexType's parent is an element then this type is
         # anonymous and should have no name defined.
@@ -221,8 +220,10 @@ class SchemaVisitor(object):
 
         qname = parse_qname(name, node.nsmap, namespace)
 
-        cls = type(name, (xsd_types.ComplexType,), {})
-        xsd_type = cls(elements=children, attributes=attributes)
+        cls = type(
+            name, (xsd_types.ComplexType,), {'__module__': 'zeep.xsd.types'})
+        xsd_type = cls(children)
+
         if not is_anonymous:
             self.schema.register_type(qname, xsd_type)
         return xsd_type
@@ -267,6 +268,15 @@ class SchemaVisitor(object):
         self.elm_instances.append(attr)
         return attr
 
+    def visit_complex_content(self, node, parent, namespace=None):
+        child = node.getchildren()[-1]
+
+        if child.tag == tags.restriction:
+            return self.visit_restriction(child, node, namespace)
+
+        if child.tag == tags.extension:
+            return self.visit_extension_complex(child, node, namespace)
+
     def visit_import(self, node, parent, namespace=None):
         """
             <import
@@ -290,6 +300,44 @@ class SchemaVisitor(object):
         return schema
 
     def visit_restriction(self, node, namespace=None):
+        pass
+
+    def visit_extension_complex(self, node, parent, namespace=None):
+        """
+            <extension
+              base = QName
+              id = ID
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (
+                        (group | all | choice | sequence)?,
+                        ((attribute | attributeGroup)*, anyAttribute?)))
+            </extension>
+        """
+        base_name = get_qname(node, 'base', self.schema.target_namespace)
+        try:
+            base = self.schema.get_type(base_name)
+            children = base._children
+        except KeyError:
+            children = [xsd_types.UnresolvedType(base_name)]
+
+        for child in node.iterchildren():
+            if child.tag == tags.annotation:
+                continue
+
+            item = self.process(child, node, namespace)
+
+            if child.tag == tags.group:
+                children.extend(item)
+
+            elif child.tag in (tags.choice, tags.sequence, tags.all):
+                children.extend(item)
+
+            elif child.tag in (tags.attribute,):
+                children.append(item)
+
+        return children
+
+    def visit_extension_simple(self, node, parent, namespace=None):
         pass
 
     def visit_annotation(self, node, parent, namespace=None):

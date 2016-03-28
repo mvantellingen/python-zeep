@@ -341,6 +341,55 @@ def test_complex_type_with_attributes():
     assert_nodes_equal(expected, node)
 
 
+def test_complex_type_with_extension():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <types>
+          <xs:schema
+              xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:tns="http://tests.python-zeep.org/"
+              targetNamespace="http://tests.python-zeep.org/">
+
+              <xs:complexType name="Address">
+                <xs:complexContent>
+                  <xs:extension base="tns:Name">
+                    <xs:sequence>
+                      <xs:element name="country" type="xs:string"/>
+                    </xs:sequence>
+                  </xs:extension>
+                </xs:complexContent>
+              </xs:complexType>
+            <xs:element name="Address" type="tns:Address"/>
+
+            <xs:complexType name="Name">
+              <xs:sequence>
+                <xs:element name="first_name" type="xs:string"/>
+                <xs:element name="last_name" type="xs:string"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:schema>
+        </types>
+    """.strip())
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+
+    obj = address_type(
+        first_name='foo', last_name='bar', country='The Netherlands')
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    expected = """
+        <document>
+            <Address xmlns="http://tests.python-zeep.org/">
+                <first_name>foo</first_name>
+                <last_name>bar</last_name>
+                <country>The Netherlands</country>
+            </Address>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
 def test_custom_simple_type():
     node = etree.fromstring("""
         <?xml version="1.0"?>

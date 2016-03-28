@@ -8,7 +8,7 @@ def test_create_node():
     custom_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'authentication'),
         xsd.ComplexType(
-            elements=[
+            children=[
                 xsd.Element(
                     etree.QName('http://tests.python-zeep.org/', 'username'),
                     xsd.String()),
