@@ -92,8 +92,6 @@ class SchemaVisitor(object):
         if node_ref:
             raise NotImplementedError()
 
-        is_list = max_occurs == 'unbounded' or int(max_occurs) > 1
-        cls = xsd_elements.Element if not is_list else xsd_elements.ListElement
 
         children = node.getchildren()
         xsd_type = None
@@ -124,7 +122,11 @@ class SchemaVisitor(object):
             nsmap = {None: namespace}
         else:
             nsmap = {}
+
+        is_list = max_occurs == 'unbounded' or int(max_occurs) > 1
+        cls = xsd_elements.Element if not is_list else xsd_elements.ListElement
         element = cls(name=qname, type_=xsd_type, nsmap=nsmap)
+
         self.elm_instances.append(element)
         self.schema.register_element(qname, element)
         return element
