@@ -52,6 +52,25 @@ class SchemaVisitor(object):
             return xsd_elements.RefElement(node.tag, ref, self.schema)
 
     def visit_schema(self, node):
+        """
+            <schema
+              attributeFormDefault = (qualified | unqualified): unqualified
+              blockDefault = (#all | List of (extension | restriction | substitution) : ''
+              elementFormDefault = (qualified | unqualified): unqualified
+              finalDefault = (#all | List of (extension | restriction | list | union): ''
+              id = ID
+              targetNamespace = anyURI
+              version = token
+              xml:lang = language
+              {any attributes with non-schema Namespace}...>
+            Content: (
+                (include | import | redefine | annotation)*,
+                (((simpleType | complexType | group | attributeGroup) |
+                  element | attribute | notation),
+                 annotation*)*)
+            </schema>
+
+        """
         assert node is not None
 
         target_namespace = node.get('targetNamespace')
@@ -153,6 +172,21 @@ class SchemaVisitor(object):
         return element
 
     def visit_attribute(self, node, parent, namespace):
+        """Declares an attribute.
+
+            <attribute
+              default = string
+              fixed = string
+              form = (qualified | unqualified)
+              id = ID
+              name = NCName
+              ref = QName
+              type = QName
+              use = (optional | prohibited | required): optional
+              {any attributes with non-schema Namespace...}>
+            Content: (annotation?, (simpleType?))
+            </attribute>
+        """
         node_type = get_qname(node, 'type', namespace, as_text=False)
         if not node_type:
             assert NotImplementedError()
@@ -192,10 +226,10 @@ class SchemaVisitor(object):
                 break
 
             elif child.tag == tags.list:
-                break
+                self.visit_list(child, node, namespace=namespace)
 
             elif child.tag == tags.union:
-                break
+                self.visit_list(child, node, namespace=namespace)
 
         base_type = xsd_builtins.String
         xsd_type = type(name, (base_type,), {})()
@@ -306,9 +340,32 @@ class SchemaVisitor(object):
             return self.visit_extension_simple_content(child, node, namespace)
 
     def visit_restriction_complex_content(self, node, parent, namespace=None):
+        """
+
+            <restriction
+              base = QName
+              id = ID
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (group | all | choice | sequence)?,
+                    ((attribute | attributeGroup)*, anyAttribute?))
+            </restriction>
+        """
         pass
 
     def visit_restriction_simple_content(self, node, parent, namespace=None):
+        """
+            <restriction
+              base = QName
+              id = ID
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?,
+                (simpleType?, (
+                    minExclusive | minInclusive | maxExclusive | maxInclusive |
+                    totalDigits |fractionDigits | length | minLength |
+                    maxLength | enumeration | whiteSpace | pattern)*
+                )?, ((attribute | attributeGroup)*, anyAttribute?))
+            </restriction>
+        """
         pass
 
     def visit_extension_complex_content(self, node, parent, namespace=None):
@@ -347,9 +404,25 @@ class SchemaVisitor(object):
         return children
 
     def visit_extension_simple_content(self, node, parent, namespace=None):
+        """
+            <extension
+              base = QName
+              id = ID
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, ((attribute | attributeGroup)*, anyAttribute?))
+            </extension>
+        """
         raise NotImplementedError()
 
     def visit_annotation(self, node, parent, namespace=None):
+        """Defines an annotation.
+
+            <annotation
+              id = ID
+              {any attributes with non-schema Namespace}...>
+            Content: (appinfo | documentation)*
+            </annotation>
+        """
         pass
 
     def visit_sequence(self, node, parent, namespace):
@@ -440,6 +513,19 @@ class SchemaVisitor(object):
             </unique>
         """
         raise NotImplementedError()
+
+    def visit_attribute_group(self, node, parent, namespace=None):
+        """
+            <attributeGroup
+              id = ID
+              name = NCName
+              ref = QName
+              {any attributes with non-schema Namespace...}>
+            Content: (annotation?),
+                     ((attribute | attributeGroup)*, anyAttribute?))
+            </attributeGroup>
+        """
+        pass
 
     visitors = {
         tags.element: visit_element,
