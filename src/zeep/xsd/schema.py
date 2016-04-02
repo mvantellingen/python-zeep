@@ -57,7 +57,7 @@ class Schema(object):
 
         raise KeyError(
             "No such type: %r (Only have %s)" % (
-                name.text, ', '.join(self.elements)))
+                name.text, ', '.join(self._types)))
 
     @property
     def types(self):
