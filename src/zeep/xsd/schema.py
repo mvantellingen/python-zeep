@@ -80,7 +80,7 @@ class Schema(object):
 
         raise KeyError(
             "No such element: %r (Only have %s)" % (
-                name, ', '.join(self.elements)))
+                name.text, ', '.join(self.elements)))
 
     def custom_type(self, name):
         return self.get_type(name)
