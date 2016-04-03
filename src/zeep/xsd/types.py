@@ -45,10 +45,12 @@ class SimpleType(Type):
         return self.pythonvalue(xmlelement.text)
 
     def xmlvalue(self, value):
-        raise NotImplementedError
+        raise NotImplementedError(
+            '%s.xmlvalue() not implemented' % self.__class__.__name__)
 
     def pythonvalue(self, xmlvalue):
-        raise NotImplementedError
+        raise NotImplementedError(
+            '%s.pytonvalue() not implemented' % self.__class__.__name__)
 
     def resolve(self, schema):
         return self
