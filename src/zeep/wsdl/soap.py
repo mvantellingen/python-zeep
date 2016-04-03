@@ -6,20 +6,12 @@ from zeep.exceptions import Fault
 from zeep.utils import get_qname, parse_qname, process_signature
 from zeep.wsdl.definitions import Binding, ConcreteMessage, Operation
 
-NSMAP = {
-    'xsd': 'http://www.w3.org/2001/XMLSchema',
-    'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
-    'soap': 'http://schemas.xmlsoap.org/wsdl/soap/',
-    'soap12': 'http://schemas.xmlsoap.org/wsdl/soap12/',
-    'soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
-}
-
 
 class SoapBinding(Binding):
 
     @classmethod
     def match(cls, node):
-        soap_node = get_soap_node(node, 'binding')
+        soap_node = node.find('soap:binding', namespaces=cls.nsmap)
         return soap_node is not None
 
     def create_message(self, operation, *args, **kwargs):
@@ -28,11 +20,11 @@ class SoapBinding(Binding):
             if not operation:
                 raise ValueError("Operation not found")
 
-        nsmap = NSMAP.copy()
+        nsmap = self.nsmap.copy()
         nsmap['ns0'] = self.wsdl.schema.target_namespace
 
         body, header, headerfault = operation.create(*args, **kwargs)
-        soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=nsmap)
+        soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=nsmap)
 
         envelope = soap.Envelope()
         if header is not None:
@@ -66,7 +58,8 @@ class SoapBinding(Binding):
 
     def process_error(self, response):
         doc = etree.fromstring(response)
-        fault_node = doc.find('soap-env:Body/soap-env:Fault', namespaces=NSMAP)
+        fault_node = doc.find(
+            'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
 
         if fault_node is None:
             raise Fault('Unknown fault occured')
@@ -83,8 +76,9 @@ class SoapBinding(Binding):
             detail=fault_node.find('detail'))
 
     def process_service_port(self, xmlelement):
+        address_node = xmlelement.find('soap:address', namespaces=self.nsmap)
         return {
-            'address': get_soap_node(xmlelement, 'address').get('location')
+            'address': address_node.get('location')
         }
 
     @classmethod
@@ -115,7 +109,7 @@ class SoapBinding(Binding):
 
         # The soap:binding element contains the transport method and
         # default style attribute for the operations.
-        soap_node = get_soap_node(xmlelement, 'binding')
+        soap_node = xmlelement.find('soap:binding', namespaces=cls.nsmap)
         transport = soap_node.get('transport')
         if transport != 'http://schemas.xmlsoap.org/soap/http':
             raise NotImplementedError("Only soap/http is supported for now")
@@ -124,8 +118,8 @@ class SoapBinding(Binding):
         obj.transport = transport
         obj.default_style = default_style
 
-        for node in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
-            operation = SoapOperation.parse(wsdl, node, obj)
+        for node in xmlelement.findall('wsdl:operation', namespaces=cls.nsmap):
+            operation = SoapOperation.parse(wsdl, node, obj, nsmap=cls.nsmap)
 
             # XXX: operation name is not unique
             obj.operations[operation.name.text] = operation
@@ -133,14 +127,36 @@ class SoapBinding(Binding):
         return obj
 
 
+class Soap11Binding(SoapBinding):
+    nsmap = {
+        'soap': 'http://schemas.xmlsoap.org/wsdl/soap/',
+        'soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
+        'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
+        'xsd': 'http://www.w3.org/2001/XMLSchema',
+    }
+
+
+class Soap12Binding(SoapBinding):
+    nsmap = {
+        'soap': 'http://schemas.xmlsoap.org/wsdl/soap12/',
+        'soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
+        'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
+        'xsd': 'http://www.w3.org/2001/XMLSchema',
+    }
+
+
 class SoapOperation(Operation):
 
+    def __init__(self, *args, **kwargs):
+        self.nsmap = kwargs.pop('nsmap')
+        super(SoapOperation, self).__init__(*args, **kwargs)
+
     def process_reply(self, envelope):
-        node = envelope.find('soap-env:Body', namespaces=NSMAP)
+        node = envelope.find('soap-env:Body', namespaces=self.nsmap)
         return self.output.deserialize(node)
 
     @classmethod
-    def parse(cls, wsdl, xmlelement, binding):
+    def parse(cls, wsdl, xmlelement, binding, nsmap):
         """
 
             <wsdl:operation name="nmtoken"> *
@@ -183,7 +199,7 @@ class SoapOperation(Operation):
 
         # The soap:operation element is required for soap/http bindings
         # and may be omitted for other bindings.
-        soap_node = get_soap_node(xmlelement, 'operation')
+        soap_node = xmlelement.find('soap:operation', namespaces=nsmap)
         action = None
         if soap_node is not None:
             action = soap_node.get('soapAction')
@@ -191,7 +207,7 @@ class SoapOperation(Operation):
         else:
             style = binding.default_style
 
-        obj = cls(name, abstract_operation)
+        obj = cls(name, abstract_operation, nsmap=nsmap)
         obj.soapaction = action
         obj.style = style
 
@@ -208,12 +224,12 @@ class SoapOperation(Operation):
             if tag_name == 'fault':
                 fault_name = node.get('name')
                 abstract = abstract_operation.get(tag_name, fault_name)
-                msg = message_class.parse(wsdl, node, abstract, obj)
+                msg = message_class.parse(wsdl, node, abstract, obj, nsmap)
                 obj.faults[msg.name] = msg
 
             else:
                 abstract = getattr(abstract_operation, tag_name)
-                msg = message_class.parse(wsdl, node, abstract, obj)
+                msg = message_class.parse(wsdl, node, abstract, obj, nsmap)
                 setattr(obj, tag_name, msg)
 
         return obj
@@ -221,8 +237,12 @@ class SoapOperation(Operation):
 
 class SoapMessage(ConcreteMessage):
 
+    def __init__(self, *args, **kwargs):
+        self.nsmap = kwargs.pop('nsmap')
+        super(SoapMessage, self).__init__(*args, **kwargs)
+
     @classmethod
-    def parse(cls, wsdl, xmlelement, abstract_message, operation):
+    def parse(cls, wsdl, xmlelement, abstract_message, operation, nsmap):
         """
         Example::
 
@@ -231,11 +251,11 @@ class SoapMessage(ConcreteMessage):
               </output>
 
         """
-        obj = cls(wsdl, abstract_message, operation)
+        obj = cls(wsdl, abstract_message, operation, nsmap=nsmap)
 
-        body = get_soap_node(xmlelement, 'body')
-        header = get_soap_node(xmlelement, 'header')
-        headerfault = get_soap_node(xmlelement, 'headerfault')
+        body = xmlelement.find('soap:body', namespaces=nsmap)
+        header = xmlelement.find('soap:header', namespaces=nsmap)
+        headerfault = xmlelement.find('soap:headerfault', namespaces=nsmap)
 
         body_info = {}
         header_info = {}
@@ -305,7 +325,7 @@ class SoapMessage(ConcreteMessage):
 
 class RpcMessage(SoapMessage):
     def serialize(self, *args, **kwargs):
-        soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
+        soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=self.nsmap)
         tag_name = etree.QName(
             self.namespace['body'], self.abstract.name.localname)
 
@@ -343,7 +363,7 @@ class RpcMessage(SoapMessage):
 class DocumentMessage(SoapMessage):
 
     def serialize(self, *args, **kwargs):
-        soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
+        soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=self.nsmap)
         body = header = headerfault = None
 
         header_value = kwargs.pop('_soapheader', None)
@@ -375,10 +395,3 @@ class DocumentMessage(SoapMessage):
         if len(result) > 1:
             return tuple(result)
         return result[0]
-
-
-def get_soap_node(parent, name):
-    for ns in ['soap', 'soap12']:
-        node = parent.find('%s:%s' % (ns, name), namespaces=NSMAP)
-        if node is not None:
-            return node

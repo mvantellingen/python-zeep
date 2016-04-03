@@ -61,7 +61,6 @@ def test_parse_soap_wsdl():
                 xmlns:ns0="http://example.com/stockquote.xsd"
                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
                 xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-                xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
                 xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema">
            <soap-env:Body>
@@ -125,7 +124,6 @@ def test_parse_soap_header_wsdl():
                 xmlns:ns0="http://example.com/stockquote.xsd"
                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
                 xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-                xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
                 xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema">
            <soap-env:Header>

@@ -202,8 +202,10 @@ class WSDL(object):
         result = {}
         for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
             # Detect the binding type
-            if soap.SoapBinding.match(binding_node):
-                binding = soap.SoapBinding.parse(self, binding_node)
+            if soap.Soap11Binding.match(binding_node):
+                binding = soap.Soap11Binding.parse(self, binding_node)
+            elif soap.Soap12Binding.match(binding_node):
+                binding = soap.Soap12Binding.parse(self, binding_node)
             elif http.HttpBinding.match(binding_node):
                 binding = http.HttpBinding.parse(self, binding_node)
 
