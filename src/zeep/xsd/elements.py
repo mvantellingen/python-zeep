@@ -13,6 +13,9 @@ class Element(object):
         return '<%s(name=%r, type=%r)>' % (
             self.__class__.__name__, self.name, self.type)
 
+    def serialize(self, value):
+        return self.type.serialize(value)
+
     def resolve_type(self, schema):
         self.type = self.type.resolve(schema)
 
@@ -41,6 +44,11 @@ class Attribute(Element):
 
 class ListElement(Element):
     def __call__(self, *args, **kwargs):
+        return [self.type(*args, **kwargs)]
+
+    def serialize(self, value):
+        if value:
+            return [self.type.serialize(val) for val in value]
         return []
 
     def render(self, parent, value):

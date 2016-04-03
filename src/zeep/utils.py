@@ -1,6 +1,15 @@
 from lxml import etree
 
 
+def serialize_object(obj):
+    if obj is None:
+        return obj
+
+    if isinstance(obj, list):
+        return [sub.type.serialize(sub) for sub in obj]
+    return obj.type.serialize(obj)
+
+
 def parse_qname(value, nsmap, target_namespace=None):
     if value.startswith('{'):
         return etree.QName(value)

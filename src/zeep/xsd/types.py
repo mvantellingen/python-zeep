@@ -56,6 +56,9 @@ class SimpleType(Type):
     def resolve(self, schema):
         return self
 
+    def serialize(self, value):
+        return value
+
     def __call__(self, *args, **kwargs):
         if args:
             return six.text_type(args[0])
@@ -75,6 +78,12 @@ class ComplexType(Type):
 
     def properties(self):
         return list(self._children)
+
+    def serialize(self, value):
+        return {
+            field.name: field.serialize(getattr(value, field.name, None))
+            for field in self.properties()
+        }
 
     def render(self, parent, value):
         for element in self.properties():

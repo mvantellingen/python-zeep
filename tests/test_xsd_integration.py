@@ -171,6 +171,42 @@ def test_array():
     assert_nodes_equal(expected, node)
 
 
+def test_array_single_init():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <types>
+          <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                  xmlns:tns="http://tests.python-zeep.org/"
+                  targetNamespace="http://tests.python-zeep.org/"
+                  elementFormDefault="qualified">
+            <element name="Address">
+              <complexType>
+                <sequence>
+                  <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
+                </sequence>
+              </complexType>
+            </element>
+          </schema>
+        </types>
+    """.strip())
+
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    obj = address_type(foo=['foo'])
+
+    expected = """
+        <document>
+          <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
+            <ns0:foo>foo</ns0:foo>
+          </ns0:Address>
+        </document>
+    """
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+
 def test_array_resolve_lazy():
     node = etree.fromstring("""
         <?xml version="1.0"?>
