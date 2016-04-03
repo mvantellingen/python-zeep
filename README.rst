@@ -1,8 +1,7 @@
 ZEEP
 ====
 
-SOAP client for Python using the lxml and requests packages. This package is
-still in development. Current releases should be considered proof of concepts.
+SOAP client for Python using the lxml and requests packages. 
 
 Status
 ------
