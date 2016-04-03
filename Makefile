@@ -1,4 +1,4 @@
-.PHONY: install clean test retest coverage
+.PHONY: install clean test retest coverage docs
 
 install:
 	pip install -e .[test]
@@ -18,6 +18,9 @@ retest:
 
 coverage:
 	py.test --cov=zeep --cov-report=term-missing
+
+docs:
+	cd docs && make html
 
 release:
 	pip install twine wheel

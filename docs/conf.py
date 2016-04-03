@@ -49,6 +49,7 @@ project = u'Zeep'
 copyright = u'2016, Michael van Tellingen'
 author = u'Michael van Tellingen'
 
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
@@ -112,7 +113,13 @@ html_theme = 'alabaster'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+html_theme_options = {
+    'github_user': 'mvantellingen',
+    'github_banner': True,
+    'github_repo': 'python-zeep',
+    'travis_button': True,
+    'codecov_button': True
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []

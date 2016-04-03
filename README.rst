@@ -1,7 +1,7 @@
 ZEEP
 ====
 
-SOAP client for Python using the lxml and requests packages. 
+A fast and hip Python SOAP client ;-)
 
 Status
 ------
@@ -24,13 +24,16 @@ Usage
 
     from zeep import Client
 
-    client = Client(wsdl='tests/wsdl_files/example.rst')
+    client = Client('tests/wsdl_files/example.rst')
     client.service.ping()
 
 
 To quickly inspect a WSDL file use::
 
     python -mzeep <url-to-wsdl>
+
+
+Please see the documentation at http://docs.python-zeep.org for more information.
 
 
 Bugs
