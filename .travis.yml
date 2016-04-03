@@ -25,7 +25,7 @@ install:
             else
                 rm -rf "$PYENV_ROOT" && git clone --depth 1 https://github.com/yyuu/pyenv.git "$PYENV_ROOT"
             fi
-            export PYPY_VERSION="4.0.1"
+            export PYPY_VERSION="5.0.1"
             "$PYENV_ROOT/bin/pyenv" install --skip-existing "pypy-$PYPY_VERSION"
             virtualenv --python="$PYENV_ROOT/versions/pypy-$PYPY_VERSION/bin/python" "$HOME/virtualenvs/pypy-$PYPY_VERSION"
             source "$HOME/virtualenvs/pypy-$PYPY_VERSION/bin/activate"
