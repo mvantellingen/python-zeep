@@ -6,8 +6,8 @@ def serialize_object(obj):
         return obj
 
     if isinstance(obj, list):
-        return [sub.type.serialize(sub) for sub in obj]
-    return obj.type.serialize(obj)
+        return [sub._xsd_type.serialize(sub) for sub in obj]
+    return obj._xsd_type.serialize(obj)
 
 
 def parse_qname(value, nsmap, target_namespace=None):

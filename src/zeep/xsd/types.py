@@ -94,8 +94,8 @@ class ComplexType(Type):
     def __call__(self, *args, **kwargs):
         if not hasattr(self, '_value_class'):
             self._value_class = type(
-                self.__class__.__name__ + 'Object', (CompoundValue,),
-                {'type': self, '__module__': 'zeep.objects'})
+                self.__class__.__name__, (CompoundValue,),
+                {'_xsd_type': self, '__module__': 'zeep.objects'})
 
         return self._value_class(*args, **kwargs)
 
@@ -161,7 +161,7 @@ class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
         fields = OrderedDict([
-            (prop.name, prop) for prop in self.type.properties()
+            (prop.name, prop) for prop in self._xsd_type.properties()
         ])
 
         # Set default values

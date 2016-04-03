@@ -400,6 +400,6 @@ class DocumentMessage(SoapMessage):
         # FIXME (not so sure about this): If the response object has only one
         # property then return that property
         item = result[0]
-        if len(item.type.properties()) == 1:
-            return getattr(item, item.type.properties()[0].name)
+        if len(item._xsd_type.properties()) == 1:
+            return getattr(item, item._xsd_type.properties()[0].name)
         return item
