@@ -111,7 +111,7 @@ class Double(SimpleType):
         return str(value)
 
     def pythonvalue(self, value):
-        return _Decimal(value)
+        return float(value)
 
 
 class Duration(SimpleType):
