@@ -50,6 +50,7 @@
 
 """
 import base64
+import datetime
 from decimal import Decimal as _Decimal
 
 import six
@@ -131,17 +132,17 @@ class DateTime(SimpleType):
         return value.strftime('%Y-%m-%dT%H:%M:%S')
 
     def pythonvalue(self, value):
-        return value
+        return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S')
 
 
 class Time(SimpleType):
     name = 'xsd:time'
 
     def xmlvalue(self, value):
-        return value.strftime('H:%M:%S')
+        return value.strftime('%H:%M:%S')
 
     def pythonvalue(self, value):
-        return value
+        return datetime.datetime.strptime(value, '%H:%M:%S').time()
 
 
 class Date(SimpleType):
@@ -151,7 +152,7 @@ class Date(SimpleType):
         return value.strftime('%Y-%m-%d')
 
     def pythonvalue(self, value):
-        return value
+        return datetime.datetime.strptime(value, '%Y-%m-%d').date()
 
 
 class gYearMonth(SimpleType):

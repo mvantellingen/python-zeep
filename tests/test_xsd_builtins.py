@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal as D
 
 import six
@@ -76,3 +77,42 @@ class TestFloat:
         assert instance.pythonvalue('-0') == float(0)
         assert instance.pythonvalue('0') == float(0)
         assert instance.pythonvalue('INF') == float('inf')
+
+
+class TestDateTime:
+
+    def test_xmlvalue(self):
+        instance = builtins.DateTime()
+        value = datetime.datetime(2016, 03, 04, 21, 14, 42)
+        assert instance.xmlvalue(value) == '2016-03-04T21:14:42'
+
+    def test_pythonvalue(self):
+        instance = builtins.DateTime()
+        value = datetime.datetime(2016, 03, 04, 21, 14, 42)
+        assert instance.pythonvalue('2016-03-04T21:14:42') == value
+
+
+class TestDate:
+
+    def test_xmlvalue(self):
+        instance = builtins.Date()
+        value = datetime.datetime(2016, 03, 04)
+        assert instance.xmlvalue(value) == '2016-03-04'
+
+    def test_pythonvalue(self):
+        instance = builtins.Date()
+        value = datetime.date(2016, 03, 04)
+        assert instance.pythonvalue('2016-03-04') == value
+
+
+class TestTime:
+
+    def test_xmlvalue(self):
+        instance = builtins.Time()
+        value = datetime.time(21, 14, 42)
+        assert instance.xmlvalue(value) == '21:14:42'
+
+    def test_pythonvalue(self):
+        instance = builtins.Time()
+        value = datetime.time(21, 14, 42)
+        assert instance.pythonvalue('21:14:42') == value
