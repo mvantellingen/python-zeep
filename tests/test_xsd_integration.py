@@ -687,3 +687,60 @@ def test_qualified_attribute():
     node = etree.Element('document')
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
+
+
+def test_init_with_dicts():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <wsdl:types xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+          <xsd:schema
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:tns="http://tests.python-zeep.org/"
+                  attributeFormDefault="qualified"
+                  elementFormDefault="qualified"
+                  targetNamespace="http://tests.python-zeep.org/">
+            <xsd:element name="Address">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="name" type="xsd:string"/>
+                  <xsd:element minOccurs="0" name="optional" type="xsd:string"/>
+                  <xsd:element name="container" nillable="true" type="tns:Container"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+
+            <xsd:complexType name="Container">
+              <xsd:sequence>
+                <xsd:element maxOccurs="unbounded" minOccurs="0" name="service" nillable="true" type="tns:ServiceRequestType"/>
+              </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="ServiceRequestType">
+              <xsd:sequence>
+                <xsd:element name="name" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:schema>
+        </wsdl:types>
+    """.strip())
+
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    obj = address_type(name='foo', container={'service': [{'name': 'foo'}]})
+
+    expected = """
+      <document>
+        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:name>foo</ns0:name>
+          <ns0:container>
+            <ns0:service>
+              <ns0:name>foo</ns0:name>
+            </ns0:service>
+          </ns0:container>
+        </ns0:Address>
+      </document>
+    """
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    assert_nodes_equal(expected, node)

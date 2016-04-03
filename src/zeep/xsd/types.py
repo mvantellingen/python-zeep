@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import pprint
 
 import six
@@ -126,9 +127,10 @@ class ComplexType(Type):
             if not field:
                 break
 
+            # Element can be optional, so if this doesn't match then assume it
+            # was.
             if field.qname != element.tag:
-                # XXX Element might be optional
-                raise ValueError("Unexpected element: %r" % element.tag)
+                continue
 
             result = field.parse(element)
             if isinstance(field, ListElement):
@@ -149,17 +151,27 @@ class ComplexType(Type):
 class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
-        properties = {
-            prop.name: prop() for prop in self.type.properties()
-        }
-        property_names = [prop.name for prop in self.type.properties()]
+        fields = OrderedDict([
+            (prop.name, prop) for prop in self.type.properties()
+        ])
 
         # Set default values
-        for key, value in properties.items():
+        for key, value in fields.items():
+            if isinstance(value, ListElement):
+                value = []
+            else:
+                value = None
             setattr(self, key, value)
 
-        items = process_signature(property_names, args, kwargs)
+        items = process_signature(fields.keys(), args, kwargs)
         for key, value in items.items():
+
+            if isinstance(value, dict):
+                value = fields[key](**value)
+
+            elif isinstance(value, list):
+                value = [fields[key].type(**v) for v in value]
+
             setattr(self, key, value)
 
     def __repr__(self):
