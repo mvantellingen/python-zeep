@@ -69,6 +69,12 @@ Changing the SqliteCache settings can be done via::
     ...     cache=SqliteCache(persistent=True, timeout=60))
 
 
+Helpers
+=======
+In the `zeep.helper` module the following helpers functions are available:
+
+   - `serialize_object()` - Convert zeep value objects to native python 
+     datastructures.
 
 Bugs
 ====
