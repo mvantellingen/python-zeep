@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+========================
 Zeep: Python SOAP client 
 ========================
 
@@ -20,14 +21,14 @@ A quick example::
 
 
 Complex requests
-----------------
+================
 
 Most of the times you need to pass nested data to the soap client. These 
-Complex types can be created using the `client.get_type()` method::
+Complex types can be created using the `client.get_element()` method::
 
     >>> from zeep import Client
     >>> client = zeep.Client('http://my-entrprisy-endpoint.com')
-    >>> order_type = client.get_type(
+    >>> order_type = client.get_element(
     ...     '{http://tests.python-zeep.org}Order')
     >>> order = order_type(
     ...     number='1234', billing_address=billing_address)
@@ -35,18 +36,18 @@ Complex types can be created using the `client.get_type()` method::
 
 
 Plugins
--------
+=======
 Not yet supported, coming soon
 
 
 WSSE
-----
+====
 Not yet supported, coming soon
 
 
 
 Caching
--------
+=======
 The default cache backed is SqliteCache. It caches the WSDL and XSD files for 
 1 hour by default. You can disable caching by passing `None` as value to the
 `cache` attribute when initializing the client::
@@ -70,7 +71,7 @@ Changing the SqliteCache settings can be done via::
 
 
 Bugs
-----
+====
 
 **Yes there will be bugs! :-)**
 
@@ -83,6 +84,12 @@ with the fix... :P
 
 
 Contributing
-------------
+============
 
 Contributions are welcome!
+
+
+Changelog
+=========
+
+.. include:: ../CHANGES

@@ -1,5 +1,5 @@
 0.2.1 (2016-04-03)
-==================
+------------------
  - Support minOccurs 0 (optional elements)
  - Automatically convert python datastructures to zeep objects for requests.
  - Set default values for new zeep objects to None / [] (Element, ListElement)
@@ -7,7 +7,7 @@
 
 
 0.2.0 (2016-04-03)
-==================
+------------------
  - Proper support for XSD element and attribute forms (qualified/unqualified)
  - Improved XSD handling
  - Separate bindings for Soap 1.1 and Soap 1.2
@@ -15,7 +15,7 @@
 
 
 0.1.1 (2016-03-20)
-==================
+------------------
  - Various fixes to make the HttpBinding not throw errors during parsing
  - More built-in xsd types
  - Add support for `python -mzeep <wsdl>`
@@ -23,6 +23,6 @@
 
 
 0.1.0 (2016-03-20)
-==================
+------------------
 
 Preview / Proof-of-concept release. Probably not suitable for production use :)
