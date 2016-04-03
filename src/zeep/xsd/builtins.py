@@ -50,7 +50,7 @@
 
 """
 from decimal import Decimal as _Decimal
-
+import base64
 import six
 
 from zeep.xsd.types import SimpleType
@@ -156,29 +156,71 @@ class Date(SimpleType):
 class gYearMonth(SimpleType):
     name = 'xsd:gYearMonth'
 
+    def xmlvalue(self, value):
+        return str(value)
+
+    def pythonvalue(self, value):
+        return str(value)
+
 
 class gYear(SimpleType):
     name = 'xsd:gYear'
+
+    def xmlvalue(self, value):
+        return str(value)
+
+    def pythonvalue(self, value):
+        return int(value)
 
 
 class gMonthDay(SimpleType):
     name = 'xsd:gMonthDay'
 
+    def xmlvalue(self, value):
+        return str(value)
+
+    def pythonvalue(self, value):
+        return str(value)
+
 
 class gDay(SimpleType):
     name = 'xsd:gDay'
+
+    def xmlvalue(self, value):
+        return str(value)
+
+    def pythonvalue(self, value):
+        return int(value)
 
 
 class gMonth(SimpleType):
     name = 'xsd:gMonth'
 
+    def xmlvalue(self, value):
+        return str(value)
+
+    def pythonvalue(self, value):
+        return int(value)
+
 
 class HexBinary(SimpleType):
     name = 'xsd:hexBinary'
 
+    def xmlvalue(self, value):
+        return str(value)
+
+    def pythonvalue(self, value):
+        return str(value)
+
 
 class Base64Binary(SimpleType):
     name = 'xsd:base64Binary'
+
+    def xmlvalue(self, value):
+        return base64.b64encode(value)
+
+    def pythonvalue(self, value):
+        return base64.b64decode(value)
 
 
 class AnyURI(SimpleType):
