@@ -1,4 +1,4 @@
-
+import six
 from lxml import etree
 from lxml.builder import ElementMaker
 
@@ -23,7 +23,7 @@ class SoapBinding(Binding):
         return soap_node is not None
 
     def create_message(self, operation, *args, **kwargs):
-        if isinstance(operation, basestring):
+        if isinstance(operation, six.string_types):
             operation = self.get(operation)
             if not operation:
                 raise ValueError("Operation not found")
