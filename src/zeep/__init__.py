@@ -1,1 +1,1 @@
-from client import Client  # noqa
+from zeep.client import Client  # noqa
