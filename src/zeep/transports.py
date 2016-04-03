@@ -3,8 +3,9 @@ import requests
 
 class Transport(object):
 
-    def __init__(self, cache=None):
+    def __init__(self, cache=None, timeout=300):
         self.cache = cache
+        self.timeout = timeout
 
     def load(self, url):
         if self.cache:
@@ -12,7 +13,7 @@ class Transport(object):
             if response:
                 return bytes(response)
 
-        response = requests.get(url)
+        response = requests.get(url, timeout=self.timeout)
 
         if self.cache:
             self.cache.add(url, response.content)
