@@ -199,14 +199,18 @@ class SchemaVisitor(object):
             Content: (annotation?, (simpleType?))
             </attribute>
         """
-        attribute_form = node.get('form', self.schema.attribute_form)
         node_type = get_qname(
             node, 'type', self.schema.target_namespace, as_text=False)
         if not node_type:
             assert NotImplementedError()
 
-        name = parse_qname(
-            node.get('name'), node.nsmap,  self.schema.target_namespace)
+        attribute_form = node.get('form', self.schema.attribute_form)
+        if attribute_form == 'qualified':
+            name = parse_qname(
+                node.get('name'), node.nsmap,  self.schema.target_namespace)
+        else:
+            name = etree.QName(node.get('name'))
+
         try:
             xsd_type = self.schema.get_type(node_type)
         except KeyError:

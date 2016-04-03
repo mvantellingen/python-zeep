@@ -34,7 +34,7 @@ class Element(object):
 class Attribute(Element):
     def render(self, parent, value):
         value = self.type.xmlvalue(value)
-        parent.set(self.name, value)
+        parent.set(self.qname, value)
 
 
 class ListElement(Element):

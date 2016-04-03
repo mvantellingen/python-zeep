@@ -596,7 +596,6 @@ def test_unqualified():
     """.strip())
 
     schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
-    print schema.elements
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type(foo='bar')
 
@@ -612,3 +611,42 @@ def test_unqualified():
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
+
+def test_qualified_attribute():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <wsdl:types xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+          <xsd:schema
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:tns="http://tests.python-zeep.org/"
+                  attributeFormDefault="qualified"
+                  elementFormDefault="qualified"
+                  targetNamespace="http://tests.python-zeep.org/">
+            <xsd:element name="Address">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="foo" type="xsd:string" form="unqualified" />
+                </xsd:sequence>
+                <xsd:attribute name="id" type="xsd:string" use="required" form="unqualified" />
+                <xsd:attribute name="pos" type="xsd:string" use="required" />
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:schema>
+        </wsdl:types>
+    """.strip())
+
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    obj = address_type(foo='bar', id="20", pos="30")
+
+    expected = """
+      <document>
+        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/" id="20" ns0:pos="30">
+          <foo>bar</foo>
+        </ns0:Address>
+      </document>
+    """
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    assert_nodes_equal(expected, node)
