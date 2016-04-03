@@ -63,13 +63,13 @@ class GroupElement(Element):
 
 class RefElement(object):
 
-    def __init__(self, tag, ref, wsdl):
+    def __init__(self, tag, ref, schema):
         self._ref = ref
-        self._wsdl = wsdl
+        self._schema = schema
 
     @property
     def _elm(self):
-        return self._wsdl.get_element(self._ref)
+        return self._schema.get_element(self._ref)
 
     def __iter__(self, *args, **kwargs):
         elm = self._elm
