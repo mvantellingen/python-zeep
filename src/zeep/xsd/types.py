@@ -1,5 +1,5 @@
-from collections import OrderedDict
 import pprint
+from collections import OrderedDict
 
 import six
 

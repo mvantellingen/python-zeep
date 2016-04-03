@@ -747,7 +747,8 @@ def test_init_with_dicts():
 
             <xsd:complexType name="Container">
               <xsd:sequence>
-                <xsd:element maxOccurs="unbounded" minOccurs="0" name="service" nillable="true" type="tns:ServiceRequestType"/>
+                <xsd:element maxOccurs="unbounded" minOccurs="0" name="service"
+                             nillable="true" type="tns:ServiceRequestType"/>
               </xsd:sequence>
             </xsd:complexType>
 

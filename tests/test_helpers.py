@@ -1,6 +1,6 @@
-from zeep import xsd
 from lxml import etree
 
+from zeep import xsd
 from zeep.helpers import serialize_object
 
 
