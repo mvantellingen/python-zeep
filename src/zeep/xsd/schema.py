@@ -18,6 +18,8 @@ class Schema(object):
         self.elements = {}
         self.target_namespace = None
         self.imports = {}
+        self.element_form = 'unqualified'
+        self.attribute_form = 'unqualified'
 
         if node is not None:
             if len(node) > 0:
