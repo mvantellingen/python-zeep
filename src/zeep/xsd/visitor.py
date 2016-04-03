@@ -169,13 +169,15 @@ class SchemaVisitor(object):
         # minOccurs / maxOccurs are not allowed on global elements
         if not is_global:
             max_occurs = node.get('maxOccurs', '1')
+            min_occurs = node.get('minOccurs', '1')
             is_list = max_occurs == 'unbounded' or int(max_occurs) > 1
         else:
             max_occurs = 1
+            min_occurs = 1
             is_list = False
 
         cls = xsd_elements.Element if not is_list else xsd_elements.ListElement
-        element = cls(name=qname, type_=xsd_type)
+        element = cls(name=qname, type_=xsd_type, min_occurs=min_occurs)
 
         self.elm_instances.append(element)
 
