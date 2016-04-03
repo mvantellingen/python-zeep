@@ -49,8 +49,9 @@
 
 
 """
-from decimal import Decimal as _Decimal
 import base64
+from decimal import Decimal as _Decimal
+
 import six
 
 from zeep.xsd.types import SimpleType

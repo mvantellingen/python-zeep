@@ -1,6 +1,5 @@
 import pytest
 import requests_mock
-from lxml import etree
 
 from zeep import client
 
@@ -76,4 +75,4 @@ def test_call_method_fault():
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response, status_code=500)
         with pytest.raises(IOError):
-            result = obj.service.GetLastTradePrice(tickerSymbol='foobar')
+            obj.service.GetLastTradePrice(tickerSymbol='foobar')

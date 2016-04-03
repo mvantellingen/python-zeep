@@ -1,10 +1,9 @@
 import pytest
 from lxml import etree
 
-from zeep.xsd import visitor, Element, ListElement
-from zeep.xsd.types import UnresolvedType
+from zeep.xsd import ListElement, builtins, visitor
 from zeep.xsd.schema import Schema
-from zeep.xsd import builtins
+from zeep.xsd.types import UnresolvedType
 
 
 @pytest.fixture

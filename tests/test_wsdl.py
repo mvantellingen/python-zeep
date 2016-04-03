@@ -142,7 +142,6 @@ def test_parse_soap_header_wsdl():
         assert_nodes_equal(expected, request.body)
 
 
-
 def test_parse_types_multiple_schemas(wsdl_obj):
 
     node = wsdl_obj._parse_content(b"""

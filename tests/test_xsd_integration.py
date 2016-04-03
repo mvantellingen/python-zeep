@@ -63,7 +63,7 @@ def test_element_with_annotation():
     """.strip())
     schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-    obj = address_type(foo='bar')
+    address_type(foo='bar')
 
 
 def test_complex_type_parsexml():
@@ -228,7 +228,7 @@ def test_complex_type_array_to_other_complex_object():
             <xs:element name="ArrayOfAddress" type="ArrayOfAddress"/>
           </xs:schema>
         </types>
-    """.strip())
+    """.strip())  # noqa
 
     schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
     address_array = schema.get_element('ArrayOfAddress')

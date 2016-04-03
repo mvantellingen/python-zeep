@@ -28,7 +28,8 @@ def test_parse_response():
               <complexType name="ZeepExampleResult">
                 <sequence>
                   <element minOccurs="1" maxOccurs="1" name="SomeValue" type="int" />
-                  <element minOccurs="0" maxOccurs="1" name="Results" type="tns:ArrayOfItems" />
+                  <element minOccurs="0" maxOccurs="1" name="Results"
+                    type="tns:ArrayOfItems" />
                 </sequence>
               </complexType>
               <element name="ZeepExampleResponse">
@@ -41,7 +42,7 @@ def test_parse_response():
             </schema>
           </wsdl:types>
         </wsdl:definitions>
-    """.strip())
+    """.strip())  # noqa
 
     response_node = etree.fromstring(b"""
         <?xml version="1.0" encoding="utf-8"?>
@@ -70,7 +71,8 @@ def test_parse_response():
     """.strip())
     schema = Schema(schema_node.find('*/{http://www.w3.org/2001/XMLSchema}schema'))
     assert schema
-    response_type = schema.get_element('{http://tests.python-zeep.org/}ZeepExampleResponse')
+    response_type = schema.get_element(
+        '{http://tests.python-zeep.org/}ZeepExampleResponse')
 
     nsmap = {
         'soap': 'http://schemas.xmlsoap.org/soap/envelope/',
