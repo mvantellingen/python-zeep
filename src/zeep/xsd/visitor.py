@@ -14,7 +14,7 @@ class tags(object):
 
 
 for name in [
-    'import',
+    'schema', 'import',
     'annotation', 'element', 'simpleType', 'complexType',
     'simpleContent', 'complexContent',
     'sequence', 'group', 'choice', 'all', 'attribute', 'any',
@@ -74,8 +74,9 @@ class SchemaVisitor(object):
         assert node is not None
 
         target_namespace = node.get('targetNamespace')
+        parent = node
         for node in node.iterchildren():
-            self.process(node, parent=None, namespace=target_namespace)
+            self.process(node, parent=parent, namespace=target_namespace)
 
     def visit_import(self, node, parent, namespace=None):
         """
@@ -168,7 +169,10 @@ class SchemaVisitor(object):
         element = cls(name=qname, type_=xsd_type, nsmap=nsmap)
 
         self.elm_instances.append(element)
-        self.schema.register_element(qname, element)
+
+        # Only register global elements
+        if parent.tag == tags.schema:
+            self.schema.register_element(qname, element)
         return element
 
     def visit_attribute(self, node, parent, namespace):
@@ -211,7 +215,7 @@ class SchemaVisitor(object):
             </simpleType>
         """
 
-        if parent is None:
+        if parent.tag == tags.schema:
             name = node.get('name')
             is_anonymous = False
         else:
@@ -282,7 +286,7 @@ class SchemaVisitor(object):
 
         # If the complexType's parent is an element then this type is
         # anonymous and should have no name defined.
-        if parent is None:
+        if parent.tag == tags.schema:
             name = node.get('name')
             is_anonymous = False
         else:
@@ -477,7 +481,9 @@ class SchemaVisitor(object):
         children = self.process(child, parent, namespace)
 
         elm = xsd_elements.GroupElement(name=qname, children=children)
-        self.schema.register_element(qname, elm)
+
+        if parent.tag == tags.schema:
+            self.schema.register_element(qname, elm)
         return elm
 
     def visit_list(self, node, parent, namespace=None):
@@ -528,6 +534,7 @@ class SchemaVisitor(object):
         pass
 
     visitors = {
+        tags.schema: visit_schema,
         tags.element: visit_element,
         tags.simpleType: visit_simple_type,
         tags.complexType: visit_complex_type,

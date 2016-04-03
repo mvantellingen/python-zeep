@@ -229,8 +229,8 @@ def test_complex_type_array_to_other_complex_object():
     obj = address_array()
     assert obj.Address == []
 
-    obj.Address.append(schema.get_element('Address')(foo='foo'))
-    obj.Address.append(schema.get_element('Address')(foo='bar'))
+    obj.Address.append(schema.get_type('Address')(foo='foo'))
+    obj.Address.append(schema.get_type('Address')(foo='bar'))
 
     node = etree.fromstring("""
         <?xml version="1.0"?>
