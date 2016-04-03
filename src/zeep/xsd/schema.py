@@ -23,7 +23,6 @@ class Schema(object):
             if len(node) > 0:
                 self.xml_schema = etree.XMLSchema(node)
 
-            self.target_namespace = node.get('targetNamespace')
             visitor = SchemaVisitor(schema=self)
             visitor.visit_schema(node)
             visitor.resolve()

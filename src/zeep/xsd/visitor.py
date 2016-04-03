@@ -38,11 +38,11 @@ class SchemaVisitor(object):
             element.resolve_type(self.schema)
         self.elm_instances = []
 
-    def process(self, node, parent, namespace):
+    def process(self, node, parent):
         visit_func = self.visitors.get(node.tag)
         if not visit_func:
             raise ValueError("No visitor defined for %r", node.tag)
-        result = visit_func(self, node, parent, namespace)
+        result = visit_func(self, node, parent)
         return result
 
     def process_ref_attribute(self, node):
@@ -73,12 +73,12 @@ class SchemaVisitor(object):
         """
         assert node is not None
 
-        target_namespace = node.get('targetNamespace')
+        self.schema.target_namespace = node.get('targetNamespace')
         parent = node
         for node in node.iterchildren():
-            self.process(node, parent=parent, namespace=target_namespace)
+            self.process(node, parent=parent)
 
-    def visit_import(self, node, parent, namespace=None):
+    def visit_import(self, node, parent):
         """
             <import
               id = ID
@@ -100,7 +100,7 @@ class SchemaVisitor(object):
         self.schema.imports[namespace] = schema
         return schema
 
-    def visit_element(self, node, parent, namespace=None):
+    def visit_element(self, node, parent):
         """
             <element
               abstract = Boolean : false
@@ -127,7 +127,7 @@ class SchemaVisitor(object):
             return result
 
         name = node.get('name')
-        qname = parse_qname(name, node.nsmap, namespace)
+        qname = parse_qname(name, node.nsmap, self.schema.target_namespace)
 
         max_occurs = node.get('maxOccurs', '1')
         node_ref = node.get('ref')
@@ -146,7 +146,7 @@ class SchemaVisitor(object):
                 elif child.tag in (tags.simpleType, tags.complexType):
                     assert not value
 
-                    xsd_type = self.process(child, node, namespace)
+                    xsd_type = self.process(child, node)
 
         if not xsd_type:
             node_type = node.get('type')
@@ -159,8 +159,8 @@ class SchemaVisitor(object):
             else:
                 xsd_type = xsd_builtins.String()
 
-        if namespace:
-            nsmap = {None: namespace}
+        if self.schema.target_namespace:
+            nsmap = {None: self.schema.target_namespace}
         else:
             nsmap = {}
 
@@ -175,7 +175,7 @@ class SchemaVisitor(object):
             self.schema.register_element(qname, element)
         return element
 
-    def visit_attribute(self, node, parent, namespace):
+    def visit_attribute(self, node, parent):
         """Declares an attribute.
 
             <attribute
@@ -191,11 +191,13 @@ class SchemaVisitor(object):
             Content: (annotation?, (simpleType?))
             </attribute>
         """
-        node_type = get_qname(node, 'type', namespace, as_text=False)
+        node_type = get_qname(
+            node, 'type', self.schema.target_namespace, as_text=False)
         if not node_type:
             assert NotImplementedError()
 
-        name = parse_qname(node.get('name'), node.nsmap, namespace)
+        name = parse_qname(
+            node.get('name'), node.nsmap,  self.schema.target_namespace)
         try:
             xsd_type = self.schema.get_type(node_type)
         except KeyError:
@@ -204,7 +206,7 @@ class SchemaVisitor(object):
         self.elm_instances.append(attr)
         return attr
 
-    def visit_simple_type(self, node, parent, namespace=None):
+    def visit_simple_type(self, node, parent):
         """
             <simpleType
               final = (#all | (list | union | restriction))
@@ -230,19 +232,19 @@ class SchemaVisitor(object):
                 break
 
             elif child.tag == tags.list:
-                self.visit_list(child, node, namespace=namespace)
+                self.visit_list(child, node)
 
             elif child.tag == tags.union:
-                self.visit_list(child, node, namespace=namespace)
+                self.visit_list(child, node)
 
         base_type = xsd_builtins.String
         xsd_type = type(name, (base_type,), {})()
         if not is_anonymous:
-            qname = parse_qname(name, node.nsmap, namespace)
+            qname = parse_qname(name, node.nsmap, self.schema.target_namespace)
             self.schema.register_type(qname, xsd_type)
         return xsd_type()
 
-    def visit_complex_type(self, node, parent, namespace=None):
+    def visit_complex_type(self, node, parent):
         """
         <complexType
           abstract = Boolean : false
@@ -268,10 +270,10 @@ class SchemaVisitor(object):
                 break
 
             elif child.tag == tags.complexContent:
-                children = self.visit_complex_content(child, node, namespace)
+                children = self.visit_complex_content(child, node)
 
             else:
-                item = self.process(child, node, namespace)
+                item = self.process(child, node)
 
                 if child.tag == tags.group:
                     assert not children
@@ -293,7 +295,7 @@ class SchemaVisitor(object):
             name = parent.get('name')
             is_anonymous = True
 
-        qname = parse_qname(name, node.nsmap, namespace)
+        qname = parse_qname(name, node.nsmap, self.schema.target_namespace)
 
         cls = type(
             name, (xsd_types.ComplexType,), {'__module__': 'zeep.xsd.types'})
@@ -318,10 +320,10 @@ class SchemaVisitor(object):
         child = node.getchildren()[-1]
 
         if child.tag == tags.restriction:
-            return self.visit_restriction_complex_content(child, node, namespace)
+            return self.visit_restriction_complex_content(child, node)
 
         if child.tag == tags.extension:
-            return self.visit_extension_complex_content(child, node, namespace)
+            return self.visit_extension_complex_content(child, node)
 
     def visit_simple_content(self, node, parent, namespace=None):
         """Contains extensions or restrictions on a complexType element with
@@ -338,10 +340,10 @@ class SchemaVisitor(object):
         child = node.getchildren()[-1]
 
         if child.tag == tags.restriction:
-            return self.visit_restriction_simple_content(child, node, namespace)
+            return self.visit_restriction_simple_content(child, node)
 
         if child.tag == tags.extension:
-            return self.visit_extension_simple_content(child, node, namespace)
+            return self.visit_extension_simple_content(child, node)
 
     def visit_restriction_complex_content(self, node, parent, namespace=None):
         """
@@ -372,7 +374,7 @@ class SchemaVisitor(object):
         """
         pass
 
-    def visit_extension_complex_content(self, node, parent, namespace=None):
+    def visit_extension_complex_content(self, node, parent):
         """
             <extension
               base = QName
@@ -394,7 +396,7 @@ class SchemaVisitor(object):
             if child.tag == tags.annotation:
                 continue
 
-            item = self.process(child, node, namespace)
+            item = self.process(child, node)
 
             if child.tag == tags.group:
                 children.extend(item)
@@ -407,7 +409,7 @@ class SchemaVisitor(object):
 
         return children
 
-    def visit_extension_simple_content(self, node, parent, namespace=None):
+    def visit_extension_simple_content(self, node, parent):
         """
             <extension
               base = QName
@@ -418,7 +420,7 @@ class SchemaVisitor(object):
         """
         raise NotImplementedError()
 
-    def visit_annotation(self, node, parent, namespace=None):
+    def visit_annotation(self, node, parent):
         """Defines an annotation.
 
             <annotation
@@ -429,7 +431,7 @@ class SchemaVisitor(object):
         """
         pass
 
-    def visit_sequence(self, node, parent, namespace):
+    def visit_sequence(self, node, parent):
         """
             <sequence
               id = ID
@@ -449,13 +451,13 @@ class SchemaVisitor(object):
 
         for child in node.iterchildren():
             assert child.tag in sub_types, child
-            item = self.process(child, node, namespace)
+            item = self.process(child, node)
             result.append(item)
 
         assert None not in result
         return result
 
-    def visit_group(self, node, parent, namespace=None):
+    def visit_group(self, node, parent):
         """
             <group
               name= NCName
@@ -473,12 +475,13 @@ class SchemaVisitor(object):
         if result:
             return result
 
-        qname = get_qname(node, 'name', namespace, as_text=False)
+        qname = get_qname(
+            node, 'name', self.schema.target_namespace, as_text=False)
 
         # There should be only max nodes, first node (annotation) is irrelevant
         subnodes = node.getchildren()
         child = subnodes[-1]
-        children = self.process(child, parent, namespace)
+        children = self.process(child, parent)
 
         elm = xsd_elements.GroupElement(name=qname, children=children)
 
@@ -486,7 +489,7 @@ class SchemaVisitor(object):
             self.schema.register_element(qname, elm)
         return elm
 
-    def visit_list(self, node, parent, namespace=None):
+    def visit_list(self, node, parent):
         """
             <list
               id = ID
@@ -498,7 +501,7 @@ class SchemaVisitor(object):
         """
         raise NotImplementedError()
 
-    def visit_union(self, node, parent, namespace=None):
+    def visit_union(self, node, parent):
         """
             <union
               id = ID
@@ -509,7 +512,7 @@ class SchemaVisitor(object):
         """
         raise NotImplementedError()
 
-    def visit_unique(self, node, parent, namespace=None):
+    def visit_unique(self, node, parent):
         """
             <unique
               id = ID
@@ -520,7 +523,7 @@ class SchemaVisitor(object):
         """
         raise NotImplementedError()
 
-    def visit_attribute_group(self, node, parent, namespace=None):
+    def visit_attribute_group(self, node, parent):
         """
             <attributeGroup
               id = ID
@@ -534,7 +537,6 @@ class SchemaVisitor(object):
         pass
 
     visitors = {
-        tags.schema: visit_schema,
         tags.element: visit_element,
         tags.simpleType: visit_simple_type,
         tags.complexType: visit_complex_type,
