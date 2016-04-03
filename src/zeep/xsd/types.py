@@ -43,6 +43,8 @@ class SimpleType(Type):
         parent.text = self.xmlvalue(value)
 
     def parse_xmlelement(self, xmlelement):
+        if xmlelement.text is None:
+            return
         return self.pythonvalue(xmlelement.text)
 
     def xmlvalue(self, value):

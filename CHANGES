@@ -1,6 +1,7 @@
 0.2.3 (2016-04-03)
 ------------------
  - Fix xsd.DateTime, xsd.Date and xsd.Time implementations
+ - Handle NIL values correctly for simpletypes
 
 
 0.2.2 (2016-04-03)
