@@ -179,7 +179,10 @@ class CompoundValue(object):
                 value = fields[key](**value)
 
             elif isinstance(value, list):
-                value = [fields[key].type(**v) for v in value]
+                if isinstance(fields[key].type, ComplexType):
+                    value = [fields[key].type(**v) for v in value]
+                else:
+                    value = [fields[key].type(v) for v in value]
 
             setattr(self, key, value)
 
