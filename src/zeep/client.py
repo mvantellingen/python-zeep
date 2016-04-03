@@ -54,3 +54,6 @@ class Client(object):
 
     def get_type(self, name):
         return self.wsdl.schema.get_type(name)
+
+    def get_element(self, name):
+        return self.wsdl.schema.get_element(name)
