@@ -13,7 +13,7 @@ tests_require = [
     'requests_mock>=0.7.0',
 
     # Linting
-    'isort==4.2.2',
+    'isort==4.2.5',
     'flake8==2.5.4',
     'flake8-blind-except==0.1.0',
     'flake8-debugger==1.4.0',
