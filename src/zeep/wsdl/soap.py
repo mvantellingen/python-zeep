@@ -23,9 +23,6 @@ class SoapBinding(Binding):
         return soap_node is not None
 
     def create_message(self, operation, *args, **kwargs):
-        operation = self.get(operation)
-        if not operation:
-            raise ValueError("Operation not found")
         body, header, headerfault = operation.create(*args, **kwargs)
         soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
 
@@ -38,8 +35,11 @@ class SoapBinding(Binding):
 
     def send(self, transport, options, operation, args, kwargs):
         """Called from the service"""
+        operation = self.get(operation)
+        if not operation:
+            raise ValueError("Operation not found")
 
-        envelope = self.create_message(operation, args, kwargs)
+        envelope = self.create_message(operation, *args, **kwargs)
         http_headers = {
             'Content-Type': 'text/xml; charset=utf-8',
             'SOAPAction': operation.soapaction,
