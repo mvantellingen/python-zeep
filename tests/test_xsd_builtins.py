@@ -83,12 +83,12 @@ class TestDateTime:
 
     def test_xmlvalue(self):
         instance = builtins.DateTime()
-        value = datetime.datetime(2016, 03, 04, 21, 14, 42)
+        value = datetime.datetime(2016, 3, 4, 21, 14, 42)
         assert instance.xmlvalue(value) == '2016-03-04T21:14:42'
 
     def test_pythonvalue(self):
         instance = builtins.DateTime()
-        value = datetime.datetime(2016, 03, 04, 21, 14, 42)
+        value = datetime.datetime(2016, 3, 4, 21, 14, 42)
         assert instance.pythonvalue('2016-03-04T21:14:42') == value
 
 
@@ -96,12 +96,12 @@ class TestDate:
 
     def test_xmlvalue(self):
         instance = builtins.Date()
-        value = datetime.datetime(2016, 03, 04)
+        value = datetime.datetime(2016, 3, 4)
         assert instance.xmlvalue(value) == '2016-03-04'
 
     def test_pythonvalue(self):
         instance = builtins.Date()
-        value = datetime.date(2016, 03, 04)
+        value = datetime.date(2016, 3, 4)
         assert instance.pythonvalue('2016-03-04') == value
 
 
