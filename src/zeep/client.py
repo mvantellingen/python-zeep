@@ -48,10 +48,6 @@ class Client(object):
         port = self.get_port()
         self.service = ServiceProxy(self, port)
 
-    def call(self, name, *args, **kwargs):
-        port = self.get_port()
-        return port.send(self.transport, name, args, kwargs)
-
     def get_port(self, service=None, port=None):
         service = list(self.wsdl.services.values())[0]
         return list(service.ports.values())[0]

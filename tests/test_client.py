@@ -46,32 +46,6 @@ def test_service_proxy():
         assert result.price == 120.123
 
 
-def test_call_method():
-    obj = client.Client('tests/wsdl_files/soap.wsdl')
-
-    response = """
-    <?xml version="1.0"?>
-    <soapenv:Envelope
-        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-        xmlns:stoc="http://example.com/stockquote.xsd">
-       <soapenv:Header/>
-       <soapenv:Body>
-          <stoc:TradePrice>
-             <price>120.123</price>
-          </stoc:TradePrice>
-       </soapenv:Body>
-    </soapenv:Envelope>
-    """.strip()
-
-    with requests_mock.mock() as m:
-        m.post('http://example.com/stockquote', text=response)
-        result = obj.call(
-            '{http://example.com/stockquote.wsdl}GetLastTradePrice',
-            tickerSymbol='foobar'
-        )
-        assert result.price == 120.123
-
-
 def test_call_method_fault():
     obj = client.Client('tests/wsdl_files/soap.wsdl')
 
@@ -102,7 +76,4 @@ def test_call_method_fault():
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response, status_code=500)
         with pytest.raises(IOError):
-            result = obj.call(
-                '{http://example.com/stockquote.wsdl}GetLastTradePrice',
-                tickerSymbol='foobar'
-            )
+            result = obj.service.GetLastTradePrice(tickerSymbol='foobar')
