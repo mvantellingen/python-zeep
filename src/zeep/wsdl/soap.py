@@ -5,6 +5,7 @@ from lxml.builder import ElementMaker
 from zeep.exceptions import Fault
 from zeep.utils import get_qname, parse_qname, process_signature
 from zeep.wsdl.definitions import Binding, ConcreteMessage, Operation
+from zeep.xsd import Element
 
 
 class SoapBinding(Binding):
@@ -378,7 +379,7 @@ class DocumentMessage(SoapMessage):
             header_obj = self.header
             if header_value is None:
                 header_value = header_obj()
-            else:
+            elif not isinstance(header_value, Element):
                 header_value = header_obj(**header_value)
             header = soap.Header()
             header_obj.render(header, header_value)
