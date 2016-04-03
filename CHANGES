@@ -1,3 +1,10 @@
+0.2.4 (2016-04-03)
+------------------
+ - Improve xsd.DateTime, xsd.Date and xsd.Time implementations by using the
+   isodate module.
+ - Implement xsd.Duration 
+
+
 0.2.3 (2016-04-03)
 ------------------
  - Fix xsd.DateTime, xsd.Date and xsd.Time implementations
@@ -10,6 +17,7 @@
  - Add new `zeep.helpers.serialize_object()` method
  - Rename type attribute on value objects to `_xsd_type` to remove potential
    attribute conflicts
+
 
 0.2.1 (2016-04-03)
 ------------------

@@ -2,6 +2,7 @@ from setuptools import find_packages, setup
 
 install_requires = [
     'lxml>=3.0.0',
+    'isodate>=0.5.4',
     'requests>=2.7.0',
     'six>=1.0.0',
 ]

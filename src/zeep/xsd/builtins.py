@@ -53,6 +53,7 @@ import base64
 import datetime
 from decimal import Decimal as _Decimal
 
+import isodate
 import six
 
 from zeep.xsd.types import SimpleType
@@ -119,10 +120,10 @@ class Duration(SimpleType):
     name = 'xsd:duration'
 
     def xmlvalue(self, value):
-        return value
+        return isodate.duration_isoformat(value)
 
     def pythonvalue(self, value):
-        return value
+        return isodate.parse_duration(value)
 
 
 class DateTime(SimpleType):
@@ -132,7 +133,7 @@ class DateTime(SimpleType):
         return value.strftime('%Y-%m-%dT%H:%M:%S')
 
     def pythonvalue(self, value):
-        return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S')
+        return isodate.parse_datetime(value)
 
 
 class Time(SimpleType):
@@ -142,7 +143,7 @@ class Time(SimpleType):
         return value.strftime('%H:%M:%S')
 
     def pythonvalue(self, value):
-        return datetime.datetime.strptime(value, '%H:%M:%S').time()
+        return isodate.parse_time(value)
 
 
 class Date(SimpleType):
@@ -152,7 +153,7 @@ class Date(SimpleType):
         return value.strftime('%Y-%m-%d')
 
     def pythonvalue(self, value):
-        return datetime.datetime.strptime(value, '%Y-%m-%d').date()
+        return isodate.parse_date(value)
 
 
 class gYearMonth(SimpleType):

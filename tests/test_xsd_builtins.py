@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal as D
 
+import isodate
 import six
 
 from zeep.xsd import builtins
@@ -116,3 +117,23 @@ class TestTime:
         instance = builtins.Time()
         value = datetime.time(21, 14, 42)
         assert instance.pythonvalue('21:14:42') == value
+
+        value = datetime.time(21, 14, 42, 120000)
+        assert instance.pythonvalue('21:14:42.120') == value
+
+        value = isodate.parse_time('21:14:42.120+0200')
+        assert instance.pythonvalue('21:14:42.120+0200') == value
+
+
+class TestDuration:
+
+    def test_xmlvalue(self):
+        instance = builtins.Duration()
+        value = isodate.parse_duration('P0Y1347M0D')
+        assert instance.xmlvalue(value) == 'P1347M'
+
+    def test_pythonvalue(self):
+        instance = builtins.Duration()
+        expected = isodate.parse_duration('P0Y1347M0D')
+        value = 'P0Y1347M0D'
+        assert instance.pythonvalue(value) == expected
