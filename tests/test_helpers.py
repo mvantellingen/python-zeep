@@ -1,7 +1,7 @@
 from zeep import xsd
 from lxml import etree
 
-from zeep.utils import serialize_object
+from zeep.helpers import serialize_object
 
 
 def test_serialize():
