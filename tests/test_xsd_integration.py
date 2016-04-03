@@ -397,6 +397,43 @@ def test_complex_type_with_extension():
     assert_nodes_equal(expected, node)
 
 
+def test_complex_type_simple_content():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <types>
+          <xs:schema
+              xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:tns="http://tests.python-zeep.org/"
+              targetNamespace="http://tests.python-zeep.org/"
+              elementFormDefault="qualified">
+
+            <xs:element name="ShoeSize">
+              <xs:complexType>
+                <xs:simpleContent>
+                  <xs:extension base="xs:integer">
+                    <xs:attribute name="sizing" type="xs:string" />
+                  </xs:extension>
+                </xs:simpleContent>
+              </xs:complexType>
+            </xs:element>
+          </xs:schema>
+        </types>
+    """.strip())
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    shoe_type = schema.get_element('{http://tests.python-zeep.org/}ShoeSize')
+
+    obj = shoe_type(20, sizing='EUR')
+
+    node = etree.Element('document')
+    shoe_type.render(node, obj)
+    expected = """
+        <document>
+            <ns0:ShoeSize xmlns:ns0="http://tests.python-zeep.org/" sizing="EUR">20</ns0:ShoeSize>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
 def test_custom_simple_type():
     node = etree.fromstring("""
         <?xml version="1.0"?>

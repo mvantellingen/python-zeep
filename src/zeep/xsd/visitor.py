@@ -214,7 +214,7 @@ class SchemaVisitor(object):
         try:
             xsd_type = self.schema.get_type(node_type)
         except KeyError:
-            xsd_type = xsd_types.UnresolvedType(xsd_type)
+            xsd_type = xsd_types.UnresolvedType(node_type)
         attr = xsd_elements.Attribute(name, type_=xsd_type)
         self.elm_instances.append(attr)
         return attr
@@ -280,7 +280,7 @@ class SchemaVisitor(object):
                 continue
 
             elif child.tag == tags.simpleContent:
-                break
+                children = self.visit_simple_content(child, node)
 
             elif child.tag == tags.complexContent:
                 children = self.visit_complex_content(child, node)
@@ -354,9 +354,9 @@ class SchemaVisitor(object):
 
         if child.tag == tags.restriction:
             return self.visit_restriction_simple_content(child, node)
-
-        if child.tag == tags.extension:
+        elif child.tag == tags.extension:
             return self.visit_extension_simple_content(child, node)
+        raise AssertionError("Expected restriction or extension")
 
     def visit_restriction_complex_content(self, node, parent, namespace=None):
         """
@@ -431,7 +431,26 @@ class SchemaVisitor(object):
             Content: (annotation?, ((attribute | attributeGroup)*, anyAttribute?))
             </extension>
         """
-        raise NotImplementedError()
+        base_name = get_qname(node, 'base', self.schema.target_namespace)
+        try:
+            base = self.schema.get_type(base_name)
+            if isinstance(base, xsd_types.ComplexType):
+                children = base._children
+            else:
+                children = [base]
+        except KeyError:
+            raise
+            children = [xsd_types.UnresolvedType(base_name)]
+
+        for child in node.iterchildren():
+            if child.tag == tags.annotation:
+                continue
+
+            item = self.process(child, node)
+            if child.tag in (tags.attribute,):
+                children.append(item)
+
+        return children
 
     def visit_annotation(self, node, parent):
         """Defines an annotation.
