@@ -42,7 +42,7 @@ def test_service_proxy():
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response)
         result = client_obj.service.GetLastTradePrice('foobar')
-        assert result.price == 120.123
+        assert result == 120.123
 
 
 def test_call_method_fault():

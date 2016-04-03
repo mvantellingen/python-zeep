@@ -392,6 +392,13 @@ class DocumentMessage(SoapMessage):
             elm = node.find(element.qname)
             assert elm is not None
             result.append(element.parse(elm))
+
         if len(result) > 1:
             return tuple(result)
-        return result[0]
+
+        # FIXME (not so sure about this): If the response object has only one
+        # property then return that property
+        item = result[0]
+        if len(item.type.properties()) == 1:
+            return getattr(item, item.type.properties()[0].name)
+        return item

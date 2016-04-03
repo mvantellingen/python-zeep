@@ -51,7 +51,7 @@ def test_parse_soap_wsdl():
             operation='{http://example.com/stockquote.wsdl}GetLastTradePrice',
             args=[],
             kwargs={'tickerSymbol': 'foobar'})
-        assert result.price == 120.123
+        assert result == 120.123
 
         request = m.request_history[0]
 
@@ -114,7 +114,7 @@ def test_parse_soap_header_wsdl():
                 }
             })
 
-        assert result.price == 120.123
+        assert result == 120.123
 
         request = m.request_history[0]
 
