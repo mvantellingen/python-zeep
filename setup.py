@@ -30,7 +30,7 @@ setup(
     long_description=open('README.rst').read(),
     author="Michael van Tellingen",
     author_email="michaelvantellingen@gmail.com",
-    url='http://www.python-zeep.org',
+    url='http://docs.python-zeep.org',
 
     install_requires=install_requires,
     tests_require=tests_require,
@@ -45,7 +45,7 @@ setup(
 
     license='MIT',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
