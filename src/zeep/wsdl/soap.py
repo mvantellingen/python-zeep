@@ -23,8 +23,16 @@ class SoapBinding(Binding):
         return soap_node is not None
 
     def create_message(self, operation, *args, **kwargs):
+        if isinstance(operation, basestring):
+            operation = self.get(operation)
+            if not operation:
+                raise ValueError("Operation not found")
+
+        nsmap = NSMAP.copy()
+        nsmap['ns0'] = self.wsdl.schema.target_namespace
+
         body, header, headerfault = operation.create(*args, **kwargs)
-        soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=NSMAP)
+        soap = ElementMaker(namespace=NSMAP['soap-env'], nsmap=nsmap)
 
         envelope = soap.Envelope()
         if header is not None:

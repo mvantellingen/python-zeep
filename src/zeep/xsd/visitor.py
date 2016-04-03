@@ -74,6 +74,8 @@ class SchemaVisitor(object):
         assert node is not None
 
         self.schema.target_namespace = node.get('targetNamespace')
+        self.schema.element_form = node.get('elementFormDefault', 'unqualified')
+        self.schema.attribute_form = node.get('attributeFormDefault', 'unqualified')
         parent = node
         for node in node.iterchildren():
             self.process(node, parent=parent)
@@ -126,8 +128,14 @@ class SchemaVisitor(object):
         if result:
             return result
 
+        is_global = parent.tag == tags.schema
+
         name = node.get('name')
-        qname = parse_qname(name, node.nsmap, self.schema.target_namespace)
+        element_form = node.get('form', self.schema.element_form)
+        if element_form == 'qualified' or is_global:
+            qname = parse_qname(name, node.nsmap, self.schema.target_namespace)
+        else:
+            qname = etree.QName(name)
 
         max_occurs = node.get('maxOccurs', '1')
         node_ref = node.get('ref')
@@ -171,7 +179,7 @@ class SchemaVisitor(object):
         self.elm_instances.append(element)
 
         # Only register global elements
-        if parent.tag == tags.schema:
+        if is_global:
             self.schema.register_element(qname, element)
         return element
 
@@ -191,6 +199,7 @@ class SchemaVisitor(object):
             Content: (annotation?, (simpleType?))
             </attribute>
         """
+        attribute_form = node.get('form', self.schema.attribute_form)
         node_type = get_qname(
             node, 'type', self.schema.target_namespace, as_text=False)
         if not node_type:

@@ -32,15 +32,16 @@ def test_parse_soap_wsdl():
 
     response = """
     <?xml version="1.0"?>
-    <SOAP-ENV:Envelope
-      xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-      xmlns:s="http://example.com/stockquote.xsd">
-      <SOAP-ENV:Body>
-        <s:TradePrice>
-          <s:price>120.123</s:price>
-        </s:TradePrice>
-      </SOAP-ENV:Body>
-    </SOAP-ENV:Envelope>
+    <soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:stoc="http://example.com/stockquote.xsd">
+       <soapenv:Header/>
+       <soapenv:Body>
+          <stoc:TradePrice>
+             <price>120.123</price>
+          </stoc:TradePrice>
+       </soapenv:Body>
+    </soapenv:Envelope>
     """.strip()
 
     with requests_mock.mock() as m:
@@ -56,19 +57,19 @@ def test_parse_soap_wsdl():
 
         # Compare request body
         expected = """
-            <soap-env:Envelope
+        <soap-env:Envelope
+                xmlns:ns0="http://example.com/stockquote.xsd"
                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
                 xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
                 xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
                 xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            >
-              <soap-env:Body>
-                <TradePriceRequest xmlns="http://example.com/stockquote.xsd">
-                  <tickerSymbol>foobar</tickerSymbol>
-                </TradePriceRequest>
-              </soap-env:Body>
-            </soap-env:Envelope>
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+           <soap-env:Body>
+              <ns0:TradePriceRequest>
+                 <tickerSymbol>foobar</tickerSymbol>
+              </ns0:TradePriceRequest>
+           </soap-env:Body>
+        </soap-env:Envelope>
         """
         assert_nodes_equal(expected, request.body)
 
@@ -88,15 +89,16 @@ def test_parse_soap_header_wsdl():
 
     response = """
     <?xml version="1.0"?>
-    <SOAP-ENV:Envelope
-      xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-      xmlns:s="http://example.com/stockquote.xsd">
-      <SOAP-ENV:Body>
-        <s:TradePrice>
-          <s:price>120.123</s:price>
-        </s:TradePrice>
-      </SOAP-ENV:Body>
-    </SOAP-ENV:Envelope>
+    <soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:stoc="http://example.com/stockquote.xsd">
+       <soapenv:Header/>
+       <soapenv:Body>
+          <stoc:TradePrice>
+             <price>120.123</price>
+          </stoc:TradePrice>
+       </soapenv:Body>
+    </soapenv:Envelope>
     """.strip()
 
     with requests_mock.mock() as m:
@@ -119,26 +121,25 @@ def test_parse_soap_header_wsdl():
 
         # Compare request body
         expected = """
-            <soap-env:Envelope
+        <soap-env:Envelope
+                xmlns:ns0="http://example.com/stockquote.xsd"
                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
                 xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
                 xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
                 xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            >
-             <soap-env:Header>
-               <Authentication xmlns="http://example.com/stockquote.xsd">
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+           <soap-env:Header>
+              <ns0:Authentication>
                  <username>ikke</username>
                  <password>oeh-is-geheim!</password>
-               </Authentication>
-             </soap-env:Header>
-
-              <soap-env:Body>
-                <TradePriceRequest xmlns="http://example.com/stockquote.xsd">
-                  <tickerSymbol>foobar</tickerSymbol>
-                </TradePriceRequest>
-              </soap-env:Body>
-            </soap-env:Envelope>
+              </ns0:Authentication>
+           </soap-env:Header>
+           <soap-env:Body>
+              <ns0:TradePriceRequest>
+                 <tickerSymbol>foobar</tickerSymbol>
+              </ns0:TradePriceRequest>
+           </soap-env:Body>
+        </soap-env:Envelope>
         """
         assert_nodes_equal(expected, request.body)
 

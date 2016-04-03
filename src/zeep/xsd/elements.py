@@ -21,7 +21,7 @@ class Element(object):
         assert self.name is not None
         assert self.nsmap is not None
 
-        node = etree.SubElement(parent, self.qname, nsmap=self.nsmap)
+        node = etree.SubElement(parent, self.qname)
         return self.type.render(node, value)
 
     def parse(self, value):
@@ -43,7 +43,7 @@ class ListElement(Element):
 
     def render(self, parent, value):
         for val in value:
-            node = etree.SubElement(parent, self.name)
+            node = etree.SubElement(parent, self.qname)
             self.type.render(node, val)
 
 

@@ -10,7 +10,8 @@ def test_complex_type_alt():
         <types>
           <schema xmlns="http://www.w3.org/2001/XMLSchema"
                   xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/">
+                  targetNamespace="http://tests.python-zeep.org/"
+                  elementFormDefault="qualified">
             <element name="Address">
               <complexType>
                 <sequence>
@@ -28,9 +29,9 @@ def test_complex_type_alt():
 
     expected = """
       <document>
-        <Address xmlns="http://tests.python-zeep.org/">
-          <foo>bar</foo>
-        </Address>
+        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:foo>bar</ns0:foo>
+        </ns0:Address>
       </document>
     """
 
@@ -45,7 +46,8 @@ def test_element_with_annotation():
         <types>
           <schema xmlns="http://www.w3.org/2001/XMLSchema"
                   xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/">
+                  targetNamespace="http://tests.python-zeep.org/"
+                  elementFormDefault="qualified">
             <element name="Address" type="tns:AddressType">
                 <annotation>
                     <documentation>HOI!</documentation>
@@ -70,7 +72,8 @@ def test_complex_type_parsexml():
         <types>
           <schema xmlns="http://www.w3.org/2001/XMLSchema"
                   xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/">
+                  targetNamespace="http://tests.python-zeep.org/"
+                  elementFormDefault="qualified">
             <element name="Address">
               <complexType>
                 <sequence>
@@ -101,7 +104,8 @@ def test_complex_type_array_parsexml():
         <types>
           <schema xmlns="http://www.w3.org/2001/XMLSchema"
                   xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/">
+                  targetNamespace="http://tests.python-zeep.org/"
+                  elementFormDefault="qualified">
             <element name="Address">
               <complexType>
                 <sequence>
@@ -133,7 +137,8 @@ def test_array():
         <types>
           <schema xmlns="http://www.w3.org/2001/XMLSchema"
                   xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/">
+                  targetNamespace="http://tests.python-zeep.org/"
+                  elementFormDefault="qualified">
             <element name="Address">
               <complexType>
                 <sequence>
@@ -154,10 +159,10 @@ def test_array():
 
     expected = """
         <document>
-          <Address xmlns="http://tests.python-zeep.org/">
-            <foo>foo</foo>
-            <foo>bar</foo>
-          </Address>
+          <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
+            <ns0:foo>foo</ns0:foo>
+            <ns0:foo>bar</ns0:foo>
+          </ns0:Address>
         </document>
     """
 
@@ -172,7 +177,8 @@ def test_array_resolve_lazy():
         <types>
           <schema xmlns="http://www.w3.org/2001/XMLSchema"
                   xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/">
+                  targetNamespace="http://tests.python-zeep.org/"
+                  elementFormDefault="qualified">
             <element name="Address" type="tns:AddressType" />
             <complexType name="AddressType">
               <sequence>
@@ -192,10 +198,10 @@ def test_array_resolve_lazy():
 
     expected = """
         <document>
-          <Address xmlns="http://tests.python-zeep.org/">
-            <foo>foo</foo>
-            <foo>bar</foo>
-          </Address>
+          <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
+            <ns0:foo>foo</ns0:foo>
+            <ns0:foo>bar</ns0:foo>
+          </ns0:Address>
         </document>
     """
 
@@ -348,7 +354,8 @@ def test_complex_type_with_extension():
           <xs:schema
               xmlns:xs="http://www.w3.org/2001/XMLSchema"
               xmlns:tns="http://tests.python-zeep.org/"
-              targetNamespace="http://tests.python-zeep.org/">
+              targetNamespace="http://tests.python-zeep.org/"
+              elementFormDefault="qualified">
 
               <xs:complexType name="Address">
                 <xs:complexContent>
@@ -380,11 +387,11 @@ def test_complex_type_with_extension():
     address_type.render(node, obj)
     expected = """
         <document>
-            <Address xmlns="http://tests.python-zeep.org/">
-                <first_name>foo</first_name>
-                <last_name>bar</last_name>
-                <country>The Netherlands</country>
-            </Address>
+            <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:first_name>foo</ns0:first_name>
+                <ns0:last_name>bar</ns0:last_name>
+                <ns0:country>The Netherlands</ns0:country>
+            </ns0:Address>
         </document>
     """
     assert_nodes_equal(expected, node)
@@ -396,7 +403,8 @@ def test_custom_simple_type():
         <types>
           <schema xmlns="http://www.w3.org/2001/XMLSchema"
                   xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/">
+                  targetNamespace="http://tests.python-zeep.org/"
+                  elementFormDefault="qualified">
             <element name="something">
               <simpleType>
                 <restriction base="integer">
@@ -418,7 +426,7 @@ def test_custom_simple_type():
     custom_type.render(node, obj)
     expected = """
         <document>
-            <something xmlns="http://tests.python-zeep.org/">75</something>
+            <ns0:something xmlns:ns0="http://tests.python-zeep.org/">75</ns0:something>
         </document>
     """
     assert_nodes_equal(expected, node)
@@ -430,7 +438,8 @@ def test_group():
         <types>
           <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                      xmlns:tns="http://tests.python-zeep.org/"
-                     targetNamespace="http://tests.python-zeep.org/">
+                     targetNamespace="http://tests.python-zeep.org/"
+                     elementFormDefault="qualified">
 
             <xs:element name="Address">
               <xs:complexType>
@@ -457,10 +466,10 @@ def test_group():
     address_type.render(node, obj)
     expected = """
         <document>
-            <Address xmlns="http://tests.python-zeep.org/">
-                <first_name>foo</first_name>
-                <last_name>bar</last_name>
-            </Address>
+            <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:first_name>foo</ns0:first_name>
+                <ns0:last_name>bar</ns0:last_name>
+            </ns0:Address>
         </document>
     """
     assert_nodes_equal(expected, node)
@@ -472,7 +481,8 @@ def test_group_for_type():
         <types>
           <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                      xmlns:tns="http://tests.python-zeep.org/"
-                     targetNamespace="http://tests.python-zeep.org/">
+                     targetNamespace="http://tests.python-zeep.org/"
+                     elementFormDefault="unqualified">
 
             <xs:element name="Address" type="tns:AddressType" />
 
@@ -513,12 +523,12 @@ def test_group_for_type():
     address_type.render(node, obj)
     expected = """
         <document>
-            <Address xmlns="http://tests.python-zeep.org/">
+            <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
                 <first_name>foo</first_name>
                 <last_name>bar</last_name>
                 <city>Utrecht</city>
                 <country>The Netherlands</country>
-            </Address>
+            </ns0:Address>
         </document>
     """
     assert_nodes_equal(expected, node)
@@ -530,7 +540,8 @@ def test_element_ref():
         <types>
           <schema xmlns="http://www.w3.org/2001/XMLSchema"
                   xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/">
+                  targetNamespace="http://tests.python-zeep.org/"
+                     elementFormDefault="qualified">
             <element name="foo" type="string"/>
             <element name="bar">
               <complexType>
@@ -555,9 +566,49 @@ def test_element_ref():
     custom_type.render(node, obj)
     expected = """
         <document>
-            <bar xmlns="http://tests.python-zeep.org/">
-                <foo>bar</foo>
-            </bar>
+            <ns0:bar xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:foo>bar</ns0:foo>
+            </ns0:bar>
         </document>
     """
     assert_nodes_equal(expected, node)
+
+
+def test_unqualified():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <types>
+          <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:tns="http://tests.python-zeep.org/"
+                  attributeFormDefault="qualified"
+                  elementFormDefault="qualified"
+                  targetNamespace="http://tests.python-zeep.org/">
+            <element name="Address">
+              <complexType>
+                <sequence>
+                  <element name="foo" type="xsd:string" form="unqualified" />
+                </sequence>
+              </complexType>
+            </element>
+          </schema>
+        </types>
+    """.strip())
+
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    print schema.elements
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    obj = address_type(foo='bar')
+
+    expected = """
+      <document>
+        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
+          <foo>bar</foo>
+        </ns0:Address>
+      </document>
+    """
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    assert_nodes_equal(expected, node)
+

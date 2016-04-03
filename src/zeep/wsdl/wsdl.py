@@ -206,6 +206,8 @@ class WSDL(object):
                 binding = soap.SoapBinding.parse(self, binding_node)
             elif http.HttpBinding.match(binding_node):
                 binding = http.HttpBinding.parse(self, binding_node)
+
+            binding.wsdl = self
             result[binding.name.text] = binding
         return result
 

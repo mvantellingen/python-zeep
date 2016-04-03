@@ -11,7 +11,9 @@ def test_parse_response():
             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
             xmlns:tns="http://tests.python-zeep.org/">
           <wsdl:types>
-            <schema targetNamespace="http://tests.python-zeep.org/" xmlns:tns="http://tests.python-zeep.org/">
+            <schema targetNamespace="http://tests.python-zeep.org/"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
               <complexType name="Item">
                 <sequence>
                   <element minOccurs="0" maxOccurs="1" name="Key" type="string" />

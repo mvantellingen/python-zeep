@@ -1,4 +1,5 @@
 import pytest
+from lxml import etree
 import requests_mock
 
 from zeep import client
@@ -27,15 +28,16 @@ def test_service_proxy():
 
     response = """
     <?xml version="1.0"?>
-    <SOAP-ENV:Envelope
-      xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-      xmlns:s="http://example.com/stockquote.xsd">
-      <SOAP-ENV:Body>
-        <s:TradePrice>
-          <s:price>120.123</s:price>
-        </s:TradePrice>
-      </SOAP-ENV:Body>
-    </SOAP-ENV:Envelope>
+    <soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:stoc="http://example.com/stockquote.xsd">
+       <soapenv:Header/>
+       <soapenv:Body>
+          <stoc:TradePrice>
+             <price>120.123</price>
+          </stoc:TradePrice>
+       </soapenv:Body>
+    </soapenv:Envelope>
     """.strip()
 
     with requests_mock.mock() as m:
@@ -49,15 +51,16 @@ def test_call_method():
 
     response = """
     <?xml version="1.0"?>
-    <SOAP-ENV:Envelope
-      xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-      xmlns:s="http://example.com/stockquote.xsd">
-      <SOAP-ENV:Body>
-        <s:TradePrice>
-          <s:price>120.123</s:price>
-        </s:TradePrice>
-      </SOAP-ENV:Body>
-    </SOAP-ENV:Envelope>
+    <soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:stoc="http://example.com/stockquote.xsd">
+       <soapenv:Header/>
+       <soapenv:Body>
+          <stoc:TradePrice>
+             <price>120.123</price>
+          </stoc:TradePrice>
+       </soapenv:Body>
+    </soapenv:Envelope>
     """.strip()
 
     with requests_mock.mock() as m:
