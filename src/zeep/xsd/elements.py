@@ -2,11 +2,10 @@ from lxml import etree
 
 
 class Element(object):
-    def __init__(self, name, type_=None, nsmap=None):
+    def __init__(self, name, type_=None):
         self.name = name.localname if name else None
         self.qname = name
         self.type = type_
-        self.nsmap = nsmap or {}
         # assert type_
 
     def __repr__(self):
@@ -19,7 +18,6 @@ class Element(object):
     def render(self, parent, value):
         assert parent is not None
         assert self.name is not None
-        assert self.nsmap is not None
 
         node = etree.SubElement(parent, self.qname)
         return self.type.render(node, value)

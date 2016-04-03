@@ -124,11 +124,15 @@ class SchemaVisitor(object):
                       (simpleType | complexType)?, (unique | key | keyref)*))
             </element>
         """
-        result = self.process_ref_attribute(node)
-        if result:
-            return result
-
         is_global = parent.tag == tags.schema
+
+        # If the elment has a ref attribute then all other attributes cannot
+        # be present. Short circuit that here.
+        # Ref is prohibited on global elements (parent = schema)
+        if not is_global:
+            result = self.process_ref_attribute(node)
+            if result:
+                return result
 
         name = node.get('name')
         element_form = node.get('form', self.schema.element_form)
@@ -136,11 +140,6 @@ class SchemaVisitor(object):
             qname = parse_qname(name, node.nsmap, self.schema.target_namespace)
         else:
             qname = etree.QName(name)
-
-        max_occurs = node.get('maxOccurs', '1')
-        node_ref = node.get('ref')
-        if node_ref:
-            raise NotImplementedError()
 
         children = node.getchildren()
         xsd_type = None
@@ -167,14 +166,16 @@ class SchemaVisitor(object):
             else:
                 xsd_type = xsd_builtins.String()
 
-        if self.schema.target_namespace:
-            nsmap = {None: self.schema.target_namespace}
+        # minOccurs / maxOccurs are not allowed on global elements
+        if not is_global:
+            max_occurs = node.get('maxOccurs', '1')
+            is_list = max_occurs == 'unbounded' or int(max_occurs) > 1
         else:
-            nsmap = {}
+            max_occurs = 1
+            is_list = False
 
-        is_list = max_occurs == 'unbounded' or int(max_occurs) > 1
         cls = xsd_elements.Element if not is_list else xsd_elements.ListElement
-        element = cls(name=qname, type_=xsd_type, nsmap=nsmap)
+        element = cls(name=qname, type_=xsd_type)
 
         self.elm_instances.append(element)
 
