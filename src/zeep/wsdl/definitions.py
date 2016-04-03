@@ -277,7 +277,7 @@ class Port(object):
 class Service(object):
 
     def __init__(self, name):
-        self.ports = {}
+        self.ports = OrderedDict()
         self.name = name
 
     def __unicode__(self):

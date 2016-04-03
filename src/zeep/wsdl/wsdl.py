@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+from collections import OrderedDict
+
 import six
 from lxml import etree
 from lxml.etree import QName
@@ -27,7 +29,7 @@ class WSDL(object):
         self.ports = {}
         self.messages = {}
         self.bindings = {}
-        self.services = {}
+        self.services = OrderedDict()
         self.namespaces = []
         self.schema_references = {}
 
@@ -223,7 +225,7 @@ class WSDL(object):
                 </wsdl:service>
             </wsdl:definitions>
         """
-        result = {}
+        result = OrderedDict()
         for service_node in doc.findall('wsdl:service', namespaces=NSMAP):
             service = definitions.Service.parse(self, service_node)
             result[service.name.text] = service
