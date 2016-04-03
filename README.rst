@@ -6,7 +6,7 @@ A fast and hip Python SOAP client ;-)
 Status
 ------
 
-.. image:: https://readthedocs.org/projects/python-zeep/badge/
+.. image:: https://readthedocs.org/projects/python-zeep/badge/?version=latest
     :target: https://readthedocs.org/projects/python-zeep/
    
 .. image:: https://travis-ci.org/mvantellingen/python-zeep.svg?branch=master
