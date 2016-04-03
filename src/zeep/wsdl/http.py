@@ -1,9 +1,8 @@
 from lxml import etree
-from zeep.utils import get_qname
 
-from zeep.wsdl.definitions import Binding, Operation, ConcreteMessage
 from zeep import xsd
-
+from zeep.utils import get_qname
+from zeep.wsdl.definitions import Binding, ConcreteMessage, Operation
 
 NSMAP = {
     'http': 'http://schemas.xmlsoap.org/wsdl/http/',

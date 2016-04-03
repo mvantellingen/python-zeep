@@ -1,6 +1,6 @@
 import pytest
-from lxml import etree
 import requests_mock
+from lxml import etree
 
 from zeep import client
 

@@ -1,5 +1,5 @@
 from lxml import etree
-from six import string_types, binary_type
+from six import binary_type, string_types
 
 
 def assert_nodes_equal(node_1, node_2):

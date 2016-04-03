@@ -5,4 +5,3 @@ class Fault(IOError):
         self.code = code
         self.actor = actor
         self.detail = detail
-

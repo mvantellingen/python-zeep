@@ -1,5 +1,7 @@
-import six
 from decimal import Decimal as D
+
+import six
+
 from zeep.xsd import builtins
 
 
