@@ -51,3 +51,6 @@ class Client(object):
     def get_port(self, service=None, port=None):
         service = list(self.wsdl.services.values())[0]
         return list(service.ports.values())[0]
+
+    def get_type(self, name):
+        return self.wsdl.schema.get_type(name)
