@@ -64,7 +64,7 @@ class String(SimpleType):
     name = 'xsd:string'
 
     def xmlvalue(self, value):
-        return value
+        return six.text_type(value)
 
     def pythonvalue(self, value):
         return value
