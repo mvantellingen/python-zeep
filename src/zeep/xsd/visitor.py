@@ -17,7 +17,7 @@ for name in [
     'schema', 'import',
     'annotation', 'element', 'simpleType', 'complexType',
     'simpleContent', 'complexContent',
-    'sequence', 'group', 'choice', 'all', 'attribute', 'any',
+    'sequence', 'group', 'choice', 'all', 'attribute', 'any', 'anyAttribute',
     'restriction', 'extension',
 
 ]:
@@ -571,9 +571,14 @@ class SchemaVisitor(object):
         """
         pass
 
+    def visit_any_attribute(self, node, parent):
+        pass
+
+
     visitors = {
         tags.element: visit_element,
         tags.simpleType: visit_simple_type,
+        tags.anyAttribute: visit_any_attribute,
         tags.complexType: visit_complex_type,
         tags.simpleContent: None,
         tags.complexContent: None,
