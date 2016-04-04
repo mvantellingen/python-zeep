@@ -12,13 +12,7 @@ from zeep.wsdl import definitions, http, soap
 from zeep.xsd import Schema
 
 NSMAP = {
-    'xsd': 'http://www.w3.org/2001/XMLSchema',
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
-    'soap': 'http://schemas.xmlsoap.org/wsdl/soap/',
-    'soap12': 'http://schemas.xmlsoap.org/wsdl/soap12/',
-    'soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
-    'http': 'http://schemas.xmlsoap.org/wsdl/http/',
-    'mime': 'http://schemas.xmlsoap.org/wsdl/mime/',
 }
 
 
