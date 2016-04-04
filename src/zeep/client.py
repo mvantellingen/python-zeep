@@ -40,12 +40,12 @@ class ServiceProxy(object):
 
 class Client(object):
 
-    def __init__(self, wsdl, wsse=None, transport=None):
+    def __init__(self, wsdl, wsse=None, transport=None,
+                 service_name=None, port_name=None):
         self.transport = transport or Transport()
         self.wsdl = WSDL(wsdl, self.transport)
         self.wsse = wsse
-
-        self.service = self.bind()
+        self.service = self.bind(service_name=service_name, port_name=port_name)
 
     def bind(self, service_name=None, port_name=None):
         """Create a new ServiceProxy for the given service_name and port_name

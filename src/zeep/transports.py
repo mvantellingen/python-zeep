@@ -28,3 +28,9 @@ class Transport(object):
             address, data=message, headers=headers, verify=self.verify
         )
         return response
+
+    def get(self, address, params, headers):
+        response = requests.get(
+            address, params=params, headers=headers, verify=self.verify
+        )
+        return response
