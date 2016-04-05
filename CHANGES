@@ -1,3 +1,8 @@
+0.2.5 (2016-04-05)
+------------------
+ - Temporarily disable the HTTP binding support until it works properly
+ - Fix an issue with parsing SOAP responses with optional elements
+
 0.2.4 (2016-04-03)
 ------------------
  - Improve xsd.DateTime, xsd.Date and xsd.Time implementations by using the
