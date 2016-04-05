@@ -22,6 +22,14 @@ Status
      :target: https://requires.io/github/mvantellingen/python-zeep/requirements/?branch=master
 
 
+Installation
+------------
+
+.. code-block:: bash
+
+    pip install zeep
+
+
 Usage
 -----
 .. code-block:: python
@@ -37,7 +45,8 @@ To quickly inspect a WSDL file use::
     python -mzeep <url-to-wsdl>
 
 
-Please see the documentation at http://docs.python-zeep.org for more information.
+Please see the documentation at http://docs.python-zeep.org for more
+information.
 
 
 Bugs
