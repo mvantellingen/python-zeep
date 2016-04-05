@@ -270,7 +270,9 @@ class Port(object):
         """
         name = get_qname(xmlelement, 'name', wsdl.target_namespace)
         binding_name = get_qname(xmlelement, 'binding', wsdl.target_namespace)
-        binding = wsdl.bindings[binding_name]
+        binding = wsdl.bindings.get(binding_name)
+        if not binding:
+            return
 
         binding_options = binding.process_service_port(xmlelement)
         return cls(name, binding, binding_options=binding_options)
@@ -322,6 +324,7 @@ class Service(object):
         obj = cls(name)
         for port_node in xmlelement.findall('wsdl:port', namespaces=NSMAP):
             port = Port.parse(wsdl, port_node)
-            obj.add_port(port)
+            if port:
+                obj.add_port(port)
 
         return obj

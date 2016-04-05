@@ -202,8 +202,11 @@ class WSDL(object):
                 binding = soap.Soap11Binding.parse(self, binding_node)
             elif soap.Soap12Binding.match(binding_node):
                 binding = soap.Soap12Binding.parse(self, binding_node)
-            elif http.HttpBinding.match(binding_node):
-                binding = http.HttpBinding.parse(self, binding_node)
+            # Still in development
+            # elif http.HttpBinding.match(binding_node):
+            #     binding = http.HttpBinding.parse(self, binding_node)
+            else:
+                continue
 
             binding.wsdl = self
             result[binding.name.text] = binding
