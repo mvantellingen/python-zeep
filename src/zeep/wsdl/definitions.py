@@ -1,13 +1,14 @@
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 from lxml import etree
 
-from zeep import xsd
 from zeep.utils import get_qname
 
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
 }
+
+MessagePart = namedtuple('MessagePart', ['element', 'type'])
 
 
 class AbstractMessage(object):
@@ -40,16 +41,17 @@ class AbstractMessage(object):
         for part in xmlelement.findall('wsdl:part', namespaces=NSMAP):
             part_name = get_qname(
                 part, 'name', wsdl.target_namespace, as_text=False)
+
             part_element = get_qname(part, 'element', wsdl.target_namespace)
+            part_type = get_qname(part, 'type', wsdl.target_namespace)
 
             if part_element is not None:
-                part_type = wsdl.schema.get_element(part_element)
-            else:
-                part_type = get_qname(part, 'type', wsdl.target_namespace)
-                part_type = wsdl.schema.get_type(part_type)
-                part_type = xsd.Element(part_name, type_=part_type)
+                part_element = wsdl.schema.get_element(part_element)
 
-            msg.add_part(part_name, part_type)
+            if part_type is not None:
+                part_type = wsdl.schema.get_type(part_type)
+
+            msg.add_part(part_name, MessagePart(part_element, part_type))
         return msg
 
 

@@ -2,8 +2,9 @@ import six
 from lxml import etree
 from lxml.builder import ElementMaker
 
+from zeep import xsd
 from zeep.exceptions import Fault
-from zeep.utils import get_qname, parse_qname, process_signature
+from zeep.utils import get_qname
 from zeep.wsdl.definitions import Binding, ConcreteMessage, Operation
 from zeep.xsd import Element
 
@@ -300,26 +301,26 @@ class SoapMessage(ConcreteMessage):
 
             if header_info['message']:
                 msg = wsdl.messages[header_info['message']]
-                obj.header = msg.parts[part_name]
+                obj.header = msg.parts[part_name].element
                 if msg == abstract_message:
                     part_names.remove(part_name)
             else:
                 part_names.remove(part_name)
-                obj.header = abstract_message.parts[part_name]
+                obj.header = abstract_message.parts[part_name].element
         else:
             obj.header = None
 
         if headerfault_info:
             part_name = headerfault_info['part']
             part_names.remove(part_name)
-            obj.headerfault = abstract_message.parts[part_name]
+            obj.headerfault = abstract_message.parts[part_name].element
         else:
             obj.headerfault = None
 
         if body_info:
             part_name = body_info['part'] or part_names[0]
             part_names.remove(part_name)
-            obj.body = abstract_message.parts[part_name]
+            obj.body = abstract_message.parts[part_name].element
 
         return obj
 
@@ -331,26 +332,31 @@ class RpcMessage(SoapMessage):
             self.namespace['body'], self.abstract.name.localname)
 
         body = soap.Body()
-        method = etree.SubElement(body, tag_name)
+        operation = xsd.Element(tag_name, xsd.ComplexType(children=[
+            xsd.Element(etree.QName(name), message.type)
+            for name, message in self.abstract.parts.items()
+        ]))
 
-        param_order = self.signature()
-        items = process_signature(param_order, args, kwargs)
-        for key, value in items.items():
-            key = parse_qname(key, self.wsdl.nsmap, self.wsdl.target_namespace)
-            obj = self.abstract.get_part(key)
-            obj.render(method, value)
+        operation_value = operation(*args, **kwargs)
+        operation.render(body, operation_value)
+
         return body, None, None
 
     def deserialize(self, node):
         tag_name = etree.QName(
             self.namespace['body'], self.abstract.name.localname)
 
-        value = node.find(tag_name)
-        result = []
-        for element in self.abstract.parts.values():
-            elm = value.find(element.name)
-            result.append(element.parse(elm))
+        result = xsd.Element(tag_name, xsd.ComplexType(children=[
+            xsd.Element(etree.QName(etree.QName(name).localname), message.type)
+            for name, message in self.abstract.parts.items()
+        ]))
 
+        value = node.find(result.qname)
+        result = result.parse(value)
+
+        result = [
+            getattr(result, field.name) for field in result._xsd_type._children
+        ]
         if len(result) > 1:
             return tuple(result)
         return result[0]
@@ -389,10 +395,10 @@ class DocumentMessage(SoapMessage):
 
     def deserialize(self, node):
         result = []
-        for element in self.abstract.parts.values():
-            elm = node.find(element.qname)
+        for part in self.abstract.parts.values():
+            elm = node.find(part.element.qname)
             assert elm is not None
-            result.append(element.parse(elm))
+            result.append(part.element.parse(elm))
 
         if len(result) > 1:
             return tuple(result)
