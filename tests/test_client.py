@@ -22,6 +22,7 @@ def test_get_port_service_port():
     assert port
 
 
+@pytest.mark.requests
 def test_service_proxy():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
 
@@ -45,6 +46,7 @@ def test_service_proxy():
         assert result == 120.123
 
 
+@pytest.mark.requests
 def test_call_method_fault():
     obj = client.Client('tests/wsdl_files/soap.wsdl')
 

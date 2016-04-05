@@ -17,6 +17,7 @@ def wsdl_obj():
     return DummyWSDL()
 
 
+@pytest.mark.requests
 def test_parse_soap_wsdl():
     transport = Transport()
 
@@ -73,6 +74,7 @@ def test_parse_soap_wsdl():
         assert_nodes_equal(expected, request.body)
 
 
+@pytest.mark.requests
 def test_parse_soap_header_wsdl():
     transport = Transport()
 
