@@ -1,7 +1,7 @@
 from lxml import etree
 
 from zeep import xsd
-from zeep.utils import get_qname
+from zeep.utils import qname_attr
 from zeep.wsdl.definitions import Binding, ConcreteMessage, Operation
 
 NSMAP = {
@@ -20,10 +20,9 @@ class HttpBinding(Binding):
 
     @classmethod
     def parse(cls, wsdl, xmlelement):
-        name = get_qname(
-            xmlelement, 'name', wsdl.target_namespace, as_text=False)
-        port_name = get_qname(xmlelement, 'type', wsdl.target_namespace)
-        port_type = wsdl.ports[port_name]
+        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
+        port_name = qname_attr(xmlelement, 'type', wsdl.target_namespace)
+        port_type = wsdl.ports[port_name.text]
 
         obj = cls(name, port_type)
 

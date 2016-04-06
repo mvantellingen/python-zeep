@@ -4,7 +4,7 @@ from lxml.builder import ElementMaker
 
 from zeep import xsd
 from zeep.exceptions import Fault
-from zeep.utils import get_qname
+from zeep.utils import qname_attr
 from zeep.wsdl.definitions import Binding, ConcreteMessage, Operation
 from zeep.xsd import Element
 
@@ -102,10 +102,9 @@ class SoapBinding(Binding):
                 </wsdl:operation>
             </wsdl:binding>
         """
-        name = get_qname(
-            xmlelement, 'name', wsdl.target_namespace, as_text=False)
-        port_name = get_qname(xmlelement, 'type', wsdl.target_namespace)
-        port_type = wsdl.ports[port_name]
+        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
+        port_name = qname_attr(xmlelement, 'type', wsdl.target_namespace)
+        port_type = wsdl.ports[port_name.text]
 
         obj = cls(name, port_type)
 
@@ -265,7 +264,7 @@ class SoapMessage(ConcreteMessage):
 
         if body is not None:
             body_info = {
-                'part': get_qname(body, 'part', wsdl.target_namespace),
+                'part': qname_attr(body, 'part', wsdl.target_namespace),
                 'use': body.get('use', 'literal'),
                 'encodingStyle': body.get('encodingStyle'),
                 'namespace': body.get('namespace'),
@@ -273,8 +272,8 @@ class SoapMessage(ConcreteMessage):
 
         if header is not None:
             header_info = {
-                'message': get_qname(header, 'message', wsdl.target_namespace),
-                'part': get_qname(header, 'part', wsdl.target_namespace),
+                'message': qname_attr(header, 'message', wsdl.target_namespace),
+                'part': qname_attr(header, 'part', wsdl.target_namespace),
                 'use': header.get('use', 'literal'),
                 'encodingStyle': header.get('encodingStyle'),
                 'namespace': header.get('namespace'),
@@ -282,8 +281,8 @@ class SoapMessage(ConcreteMessage):
 
         if headerfault is not None:
             headerfault_info = {
-                'message': get_qname(headerfault, 'message', wsdl.target_namespace),
-                'part': get_qname(headerfault, 'part', wsdl.target_namespace),
+                'message': qname_attr(headerfault, 'message', wsdl.target_namespace),
+                'part': qname_attr(headerfault, 'part', wsdl.target_namespace),
                 'use': headerfault.get('use', 'literal'),
                 'encodingStyle': headerfault.get('encodingStyle'),
                 'namespace': headerfault.get('namespace'),
@@ -297,10 +296,10 @@ class SoapMessage(ConcreteMessage):
 
         part_names = list(abstract_message.parts.keys())
         if header_info:
-            part_name = header_info['part']
+            part_name = header_info['part'].text
 
             if header_info['message']:
-                msg = wsdl.messages[header_info['message']]
+                msg = wsdl.messages[header_info['message'].text]
                 obj.header = msg.parts[part_name].element
                 if msg == abstract_message:
                     part_names.remove(part_name)
@@ -311,14 +310,15 @@ class SoapMessage(ConcreteMessage):
             obj.header = None
 
         if headerfault_info:
-            part_name = headerfault_info['part']
+            part_name = headerfault_info['part'].text
             part_names.remove(part_name)
             obj.headerfault = abstract_message.parts[part_name].element
         else:
             obj.headerfault = None
 
         if body_info:
-            part_name = body_info['part'] or part_names[0]
+            part_name = (
+                body_info['part'].text if body_info['part'] else part_names[0])
             part_names.remove(part_name)
             obj.body = abstract_message.parts[part_name].element
 

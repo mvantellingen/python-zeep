@@ -2,7 +2,7 @@ from collections import OrderedDict, namedtuple
 
 from lxml import etree
 
-from zeep.utils import get_qname
+from zeep.utils import qname_attr
 
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
@@ -35,15 +35,13 @@ class AbstractMessage(object):
                 </message>
             </definitions>
         """
-        msg = cls(name=get_qname(
-            xmlelement, 'name', wsdl.target_namespace, as_text=False))
+        msg = cls(name=qname_attr(xmlelement, 'name', wsdl.target_namespace))
 
         for part in xmlelement.findall('wsdl:part', namespaces=NSMAP):
-            part_name = get_qname(
-                part, 'name', wsdl.target_namespace, as_text=False)
+            part_name = qname_attr(part, 'name', wsdl.target_namespace)
 
-            part_element = get_qname(part, 'element', wsdl.target_namespace)
-            part_type = get_qname(part, 'type', wsdl.target_namespace)
+            part_element = qname_attr(part, 'element', wsdl.target_namespace)
+            part_type = qname_attr(part, 'type', wsdl.target_namespace)
 
             if part_element is not None:
                 part_element = wsdl.schema.get_element(part_element)
@@ -87,9 +85,7 @@ class AbstractOperation(object):
                </wsdl:fault>
             </wsdl:operation>
         """
-        name = get_qname(
-            xmlelement, 'name', wsdl.target_namespace, as_text=False)
-
+        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
         kwargs = {
             'faults': {}
         }
@@ -99,12 +95,12 @@ class AbstractOperation(object):
             if tag_name not in ('input', 'output', 'fault'):
                 continue
 
-            param_msg = get_qname(msg_node, 'message', wsdl.target_namespace)
+            param_msg = qname_attr(msg_node, 'message', wsdl.target_namespace)
             param_name = msg_node.get('name')
             if tag_name in ('input', 'output'):
-                kwargs[tag_name] = wsdl.messages[param_msg]
+                kwargs[tag_name] = wsdl.messages[param_msg.text]
             else:
-                kwargs['faults'][param_name] = wsdl.messages[param_msg]
+                kwargs['faults'][param_name] = wsdl.messages[param_msg.text]
 
         kwargs['name'] = name
         kwargs['parameter_order'] = xmlelement.get('parameterOrder')
@@ -130,8 +126,7 @@ class PortType(object):
             </wsdl:definitions>
 
         """
-        name = get_qname(
-            xmlelement, 'name', wsdl.target_namespace, as_text=False)
+        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
         obj = cls(name)
 
         for elm in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
@@ -268,14 +263,14 @@ class Port(object):
             </wsdl:port>
 
         """
-        name = get_qname(xmlelement, 'name', wsdl.target_namespace)
-        binding_name = get_qname(xmlelement, 'binding', wsdl.target_namespace)
-        binding = wsdl.bindings.get(binding_name)
+        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
+        binding_name = qname_attr(xmlelement, 'binding', wsdl.target_namespace)
+        binding = wsdl.bindings.get(binding_name.text)
         if not binding:
             return
 
         binding_options = binding.process_service_port(xmlelement)
-        return cls(name, binding, binding_options=binding_options)
+        return cls(name.text, binding, binding_options=binding_options)
 
 
 class Service(object):
@@ -319,8 +314,7 @@ class Service(object):
               </service>
 
         """
-        tns = wsdl.target_namespace
-        name = get_qname(xmlelement, 'name', tns, as_text=False)
+        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
         obj = cls(name)
         for port_node in xmlelement.findall('wsdl:port', namespaces=NSMAP):
             port = Port.parse(wsdl, port_node)
