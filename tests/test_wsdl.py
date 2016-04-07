@@ -3,8 +3,8 @@ import requests_mock
 
 from tests.utils import assert_nodes_equal
 from zeep import wsdl
-from zeep.wsdl.wsdl import Definitions
 from zeep.transports import Transport
+from zeep.wsdl.wsdl import Definitions
 
 
 @pytest.fixture()
