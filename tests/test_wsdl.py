@@ -12,7 +12,7 @@ def wsdl_obj():
 
     class DummyWSDL(wsdl.WSDL):
         def __init__(self):
-            self.schema_references = {}
+            self._schema_references = {}
             self.transport = None
 
     class DummyDefinitions(Definitions):

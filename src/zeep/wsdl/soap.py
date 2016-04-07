@@ -222,16 +222,15 @@ class SoapOperation(Operation):
 
         return obj
 
-    def resolve(self, wsdl):
-        super(SoapOperation, self).resolve(wsdl)
+    def resolve(self, definitions):
+        super(SoapOperation, self).resolve(definitions)
         for name, fault in self.faults.items():
-            fault.resolve(wsdl, self.abstract.faults[name])
+            fault.resolve(definitions, self.abstract.faults[name])
 
         if self.output:
-            self.output.resolve(wsdl, self.abstract.output)
+            self.output.resolve(definitions, self.abstract.output)
         if self.input:
-            self.input.resolve(wsdl, self.abstract.input)
-
+            self.input.resolve(definitions, self.abstract.input)
 
 
 class SoapMessage(ConcreteMessage):
@@ -293,7 +292,7 @@ class SoapMessage(ConcreteMessage):
         }
         return obj
 
-    def resolve(self, wsdl, abstract_message):
+    def resolve(self, definitions, abstract_message):
         self.abstract = abstract_message
 
         header_info = self._info['header']
@@ -304,7 +303,7 @@ class SoapMessage(ConcreteMessage):
         if header_info:
             part_name = header_info['part'].text
             if header_info['message']:
-                msg = wsdl.messages[header_info['message'].text]
+                msg = definitions.messages[header_info['message'].text]
                 self.header = msg.parts[part_name].element
                 if msg == abstract_message:
                     part_names.remove(part_name)

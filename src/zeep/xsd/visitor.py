@@ -568,7 +568,6 @@ class SchemaVisitor(object):
     def visit_any_attribute(self, node, parent):
         pass
 
-
     visitors = {
         tags.element: visit_element,
         tags.simpleType: visit_simple_type,

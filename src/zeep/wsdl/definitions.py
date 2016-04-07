@@ -17,10 +17,9 @@ class AbstractMessage(object):
         self.parts = OrderedDict()
 
     def __repr__(self):
-        return '<%s(name=%r)>' % (
-            self.__class__.__name__, self.name.text)
+        return '<%s(name=%r)>' % (self.__class__.__name__, self.name.text)
 
-    def resolve(self, wsdl):
+    def resolve(self, definitions):
         pass
 
     def add_part(self, name, element):
@@ -119,7 +118,7 @@ class PortType(object):
         return '<%s(name=%r)>' % (
             self.__class__.__name__, self.name.text)
 
-    def resolve(self, wsdl):
+    def resolve(self, definitions):
         pass
 
     @classmethod
@@ -158,10 +157,10 @@ class Binding(object):
         self.port_type = None
         self._operations = {}
 
-    def resolve(self, wsdl):
-        self.port_type = wsdl.port_types[self.port_name.text]
+    def resolve(self, definitions):
+        self.port_type = definitions.port_types[self.port_name.text]
         for operation in self._operations.values():
-            operation.resolve(wsdl)
+            operation.resolve(definitions)
 
     def _operation_add(self, operation):
         # XXX: operation name is not unique
@@ -218,7 +217,7 @@ class Operation(object):
         self.output = None
         self.faults = {}
 
-    def resolve(self, wsdl):
+    def resolve(self, definitions):
         self.abstract = self.binding.port_type.operations[self.name]
 
     def __repr__(self):
@@ -292,11 +291,12 @@ class Port(object):
         binding_name = qname_attr(xmlelement, 'binding', wsdl.target_namespace)
         return cls(name.text, binding_name=binding_name, xmlelement=xmlelement)
 
-    def resolve(self, wsdl):
+    def resolve(self, definitions):
         if self._resolve_context is None:
             return
 
-        binding = wsdl.bindings.get(self._resolve_context['binding_name'].text)
+        binding = definitions.bindings.get(
+            self._resolve_context['binding_name'].text)
         if not binding:
             return False
 
@@ -305,6 +305,7 @@ class Port(object):
             self._resolve_context['xmlelement'])
         self._resolve_context = None
         return True
+
 
 class Service(object):
 
@@ -320,13 +321,13 @@ class Service(object):
         return '<%s(name=%r, ports=%r)>' % (
             self.__class__.__name__, self.name.text, self.ports)
 
-    def resolve(self, wsdl):
+    def resolve(self, definitions):
         if self._is_resolved:
             return
 
         unresolved = []
         for name, port in self.ports.items():
-            is_resolved = port.resolve(wsdl)
+            is_resolved = port.resolve(definitions)
             if not is_resolved:
                 unresolved.append(name)
 

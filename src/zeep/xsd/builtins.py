@@ -50,7 +50,6 @@
 
 """
 import base64
-import datetime
 from decimal import Decimal as _Decimal
 
 import isodate

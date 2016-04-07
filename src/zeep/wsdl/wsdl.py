@@ -9,7 +9,7 @@ from lxml.etree import QName
 
 from zeep.parser import parse_xml
 from zeep.utils import findall_multiple_ns
-from zeep.wsdl import definitions, http, soap
+from zeep.wsdl import definitions, soap
 from zeep.xsd import Schema
 
 NSMAP = {
@@ -17,27 +17,26 @@ NSMAP = {
 }
 
 
-
 class WSDL(object):
-    def __init__(self, location, transport, namespaces=None):
+    def __init__(self, location, transport):
         self.location = location
         self.transport = transport
-        self.schema = None
-        self.namespaces = namespaces or {}
-        self.schema_references = {}
 
-        self.definitions = Definitions(self, location)
-        self.definitions.resolve_imports()
-        self.schema = self.definitions.schema
+        # Dict with all definition objects within this WSDL
+        self._definitions = {}
 
+        # Dict with internal schema objects, used for lxml.ImportResolver
+        self._schema_references = {}
 
-    @property
-    def services(self):
-        return self.definitions.services
+        root_definitions = Definitions(self, location)
+        root_definitions.resolve_imports()
 
-    @property
-    def ports(self):
-        return self.definitions.port_types
+        # Make the wsdl definitions public
+        self.schema = root_definitions.schema
+        self.messages = root_definitions.messages
+        self.port_types = root_definitions.port_types
+        self.bindings = root_definitions.bindings
+        self.services = root_definitions.services
 
     def __repr__(self):
         return '<WSDL(location=%r)>' % self.location
@@ -64,6 +63,7 @@ class Definitions(object):
     def __init__(self, wsdl, location):
         self.wsdl = wsdl
         self.location = location
+
         self.schema = None
         self.port_types = {}
         self.messages = {}
@@ -80,14 +80,13 @@ class Definitions(object):
                 doc = self._parse_content(fh.read())
 
         self.target_namespace = doc.get('targetNamespace')
-        self.namespaces[self.target_namespace] = self
+        self.wsdl._definitions[self.target_namespace] = self
         self.nsmap = doc.nsmap
 
         # Process the definitions
         self.parse_imports(doc)
 
         self.schema = self.parse_types(doc)
-
         self.messages = self.parse_messages(doc)
         self.port_types = self.parse_ports(doc)
         self.bindings = self.parse_binding(doc)
@@ -95,19 +94,6 @@ class Definitions(object):
 
     def __repr__(self):
         return '<Definitions(location=%r)>' % self.location
-
-    @property
-    def transport(self):
-        return self.wsdl.transport
-
-    @property
-    def schema_references(self):
-        return self.wsdl.schema_references
-
-    @property
-    def namespaces(self):
-        return self.wsdl.namespaces
-
 
     def resolve_imports(self):
         """
@@ -125,10 +111,6 @@ class Definitions(object):
         for definition in imports.values():
             definition.resolve_imports()
 
-
-        for definition in self.imports:
-            pass
-
         for message in self.messages.values():
             message.resolve(self)
 
@@ -142,7 +124,8 @@ class Definitions(object):
             service.resolve(self)
 
     def _parse_content(self, content):
-        return parse_xml(content, self.transport, self.schema_references)
+        return parse_xml(
+            content, self.wsdl.transport, self.wsdl._schema_references)
 
     def merge(self, other, namespace):
         """Merge another `WSDL` instance in this object."""
@@ -160,8 +143,8 @@ class Definitions(object):
         self.bindings.update(filter_namespace(other.bindings, namespace))
         self.services.update(filter_namespace(other.services, namespace))
 
-        if namespace not in self.namespaces:
-            self.namespaces[namespace] = other
+        if namespace not in self.wsdl._definitions:
+            self._definitions[namespace] = other
 
     def parse_imports(self, doc):
         """Import other WSDL documents in this document.
@@ -183,12 +166,11 @@ class Definitions(object):
             if '://' not in location and not os.path.isabs(location):
                 location = os.path.join(os.path.dirname(self.location), location)
 
-            if namespace in self.namespaces:
-                self.imports[namespace] = self.namespaces[namespace]
+            if namespace in self.wsdl._definitions:
+                self.imports[namespace] = self.wsdl._definitions[namespace]
             else:
                 wsdl = Definitions(self.wsdl, location)
                 self.imports[namespace] = wsdl
-
 
     def parse_types(self, doc):
         """Return a `types.Schema` instance.
@@ -224,7 +206,7 @@ class Definitions(object):
 
         for schema_node in schema_nodes:
             tns = schema_node.get('targetNamespace')
-            self.schema_references['intschema+%s' % tns] = schema_node
+            self.wsdl._schema_references['intschema+%s' % tns] = schema_node
 
         # Only handle the import statements from the 2001 xsd's for now
         import_tag = QName('http://www.w3.org/2001/XMLSchema', 'import').text
@@ -238,7 +220,7 @@ class Definitions(object):
         schema_node = schema_nodes[0]
 
         return Schema(
-            schema_node, self.transport, self.schema_references)
+            schema_node, self.wsdl.transport, self.wsdl._schema_references)
 
     def parse_messages(self, doc):
         """
