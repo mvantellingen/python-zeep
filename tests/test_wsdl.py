@@ -3,6 +3,7 @@ import requests_mock
 
 from tests.utils import assert_nodes_equal
 from zeep import wsdl
+from zeep.wsdl.wsdl import Definitions
 from zeep.transports import Transport
 
 
@@ -14,7 +15,11 @@ def wsdl_obj():
             self.schema_references = {}
             self.transport = None
 
-    return DummyWSDL()
+    class DummyDefinitions(Definitions):
+        def __init__(self, wsdl):
+            self.wsdl = wsdl
+
+    return DummyDefinitions(DummyWSDL())
 
 
 @pytest.mark.requests
@@ -49,7 +54,7 @@ def test_parse_soap_wsdl():
         m.post('http://example.com/stockquote', text=response)
         result = port.send(
             transport=transport,
-            operation='{http://example.com/stockquote.wsdl}GetLastTradePrice',
+            operation='GetLastTradePrice',
             args=[],
             kwargs={'tickerSymbol': 'foobar'})
         assert result == 120.123
@@ -106,7 +111,7 @@ def test_parse_soap_header_wsdl():
         m.post('http://example.com/stockquote', text=response)
         result = port.send(
             transport=transport,
-            operation='{http://example.com/stockquote.wsdl}GetLastTradePrice',
+            operation='GetLastTradePrice',
             args=[],
             kwargs={
                 'tickerSymbol': 'foobar',

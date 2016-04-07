@@ -199,7 +199,7 @@ class SchemaVisitor(object):
             Content: (annotation?, (simpleType?))
             </attribute>
         """
-        node_type = qname_attr(node, 'type', self.schema.target_namespace)
+        node_type = qname_attr(node, 'type')
         if not node_type:
             assert NotImplementedError()
 

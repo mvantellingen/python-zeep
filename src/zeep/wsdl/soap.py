@@ -42,18 +42,18 @@ class SoapBinding(Binding):
 
     def send(self, transport, options, operation, args, kwargs):
         """Called from the service"""
-        operation = self.get(operation)
-        if not operation:
-            raise ValueError("Operation not found")
+        operation_obj = self.get(operation)
+        if not operation_obj:
+            raise ValueError("Operation %r not found" % operation)
 
-        envelope = self.create_message(operation, *args, **kwargs)
+        envelope = self.create_message(operation_obj, *args, **kwargs)
         http_headers = {
             'Content-Type': 'text/xml; charset=utf-8',
-            'SOAPAction': operation.soapaction,
+            'SOAPAction': operation_obj.soapaction,
         }
         response = transport.post(
             options['address'], etree.tostring(envelope), http_headers)
-        return self.process_reply(operation, response)
+        return self.process_reply(operation_obj, response)
 
     def process_reply(self, operation, response):
         if response.status_code != 200:
@@ -145,9 +145,11 @@ class Soap12Binding(SoapBinding):
 
 class SoapOperation(Operation):
 
-    def __init__(self, *args, **kwargs):
-        self.nsmap = kwargs.pop('nsmap')
-        super(SoapOperation, self).__init__(*args, **kwargs)
+    def __init__(self, name, binding, nsmap, soapaction, style):
+        super(SoapOperation, self).__init__(name, binding)
+        self.nsmap = nsmap
+        self.soapaction = soapaction
+        self.style = style
 
     def process_reply(self, envelope):
         node = envelope.find('soap-env:Body', namespaces=self.nsmap)
@@ -185,15 +187,7 @@ class SoapOperation(Operation):
             </operation>
 
         """
-        localname = xmlelement.get('name')
-
-        for namespace in wsdl.namespaces:
-            name = etree.QName(namespace, localname)
-            if name in binding.port_type.operations:
-                abstract_operation = binding.port_type.operations[name]
-                break
-        else:
-            raise ValueError("Operation not found")
+        name = xmlelement.get('name')
 
         # The soap:operation element is required for soap/http bindings
         # and may be omitted for other bindings.
@@ -205,9 +199,7 @@ class SoapOperation(Operation):
         else:
             style = binding.default_style
 
-        obj = cls(name, abstract_operation, nsmap=nsmap)
-        obj.soapaction = action
-        obj.style = style
+        obj = cls(name, binding, nsmap, action, style)
 
         if style == 'rpc':
             message_class = RpcMessage
@@ -218,29 +210,38 @@ class SoapOperation(Operation):
             tag_name = etree.QName(node.tag).localname
             if tag_name not in ('input', 'output', 'fault'):
                 continue
+            name = node.get('name')
 
             if tag_name == 'fault':
-                fault_name = node.get('name')
-                abstract = abstract_operation.get(tag_name, fault_name)
-                msg = message_class.parse(wsdl, node, abstract, obj, nsmap)
+                msg = message_class.parse(wsdl, node, name, tag_name, obj, nsmap)
                 obj.faults[msg.name] = msg
 
             else:
-                abstract = getattr(abstract_operation, tag_name)
-                msg = message_class.parse(wsdl, node, abstract, obj, nsmap)
+                msg = message_class.parse(wsdl, node, name, tag_name, obj, nsmap)
                 setattr(obj, tag_name, msg)
 
         return obj
 
+    def resolve(self, wsdl):
+        super(SoapOperation, self).resolve(wsdl)
+        for name, fault in self.faults.items():
+            fault.resolve(wsdl, self.abstract.faults[name])
+
+        if self.output:
+            self.output.resolve(wsdl, self.abstract.output)
+        if self.input:
+            self.input.resolve(wsdl, self.abstract.input)
+
+
 
 class SoapMessage(ConcreteMessage):
 
-    def __init__(self, *args, **kwargs):
-        self.nsmap = kwargs.pop('nsmap')
-        super(SoapMessage, self).__init__(*args, **kwargs)
+    def __init__(self, wsdl, name, operation, nsmap):
+        super(SoapMessage, self).__init__(wsdl, name, operation)
+        self.nsmap = nsmap
 
     @classmethod
-    def parse(cls, wsdl, xmlelement, abstract_message, operation, nsmap):
+    def parse(cls, wsdl, xmlelement, name, tag_name, operation, nsmap):
         """
         Example::
 
@@ -249,18 +250,18 @@ class SoapMessage(ConcreteMessage):
               </output>
 
         """
-        obj = cls(wsdl, abstract_message, operation, nsmap=nsmap)
+        obj = cls(wsdl, name, operation, nsmap=nsmap)
 
         body = xmlelement.find('soap:body', namespaces=nsmap)
         header = xmlelement.find('soap:header', namespaces=nsmap)
         headerfault = xmlelement.find('soap:headerfault', namespaces=nsmap)
 
-        body_info = {}
-        header_info = {}
-        headerfault_info = {}
+        obj._info = {
+            'body': {}, 'header': {}, 'headerfault': {}
+        }
 
         if body is not None:
-            body_info = {
+            obj._info['body'] = {
                 'part': qname_attr(body, 'part', wsdl.target_namespace),
                 'use': body.get('use', 'literal'),
                 'encodingStyle': body.get('encodingStyle'),
@@ -268,7 +269,7 @@ class SoapMessage(ConcreteMessage):
             }
 
         if header is not None:
-            header_info = {
+            obj._info['header'] = {
                 'message': qname_attr(header, 'message', wsdl.target_namespace),
                 'part': qname_attr(header, 'part', wsdl.target_namespace),
                 'use': header.get('use', 'literal'),
@@ -277,7 +278,7 @@ class SoapMessage(ConcreteMessage):
             }
 
         if headerfault is not None:
-            headerfault_info = {
+            obj._info['headerfault'] = {
                 'message': qname_attr(headerfault, 'message', wsdl.target_namespace),
                 'part': qname_attr(headerfault, 'part', wsdl.target_namespace),
                 'use': headerfault.get('use', 'literal'),
@@ -286,40 +287,45 @@ class SoapMessage(ConcreteMessage):
             }
 
         obj.namespace = {
-            'body': body_info.get('namespace'),
-            'header': header_info.get('namespace'),
-            'headerfault': headerfault_info.get('namespace'),
+            'body': obj._info['body'].get('namespace'),
+            'header': obj._info['header'].get('namespace'),
+            'headerfault': obj._info['headerfault'].get('namespace'),
         }
+        return obj
 
+    def resolve(self, wsdl, abstract_message):
+        self.abstract = abstract_message
+
+        header_info = self._info['header']
+        headerfault_info = self._info['headerfault']
+        body_info = self._info['body']
         part_names = list(abstract_message.parts.keys())
+
         if header_info:
             part_name = header_info['part'].text
-
             if header_info['message']:
                 msg = wsdl.messages[header_info['message'].text]
-                obj.header = msg.parts[part_name].element
+                self.header = msg.parts[part_name].element
                 if msg == abstract_message:
                     part_names.remove(part_name)
             else:
                 part_names.remove(part_name)
-                obj.header = abstract_message.parts[part_name].element
+                self.header = abstract_message.parts[part_name].element
         else:
-            obj.header = None
+            self.header = None
 
         if headerfault_info:
             part_name = headerfault_info['part'].text
             part_names.remove(part_name)
-            obj.headerfault = abstract_message.parts[part_name].element
+            self.headerfault = abstract_message.parts[part_name].element
         else:
-            obj.headerfault = None
+            self.headerfault = None
 
         if body_info:
             part_name = (
                 body_info['part'].text if body_info['part'] else part_names[0])
             part_names.remove(part_name)
-            obj.body = abstract_message.parts[part_name].element
-
-        return obj
+            self.body = abstract_message.parts[part_name].element
 
 
 class RpcMessage(SoapMessage):
@@ -369,7 +375,6 @@ class DocumentMessage(SoapMessage):
     def serialize(self, *args, **kwargs):
         soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=self.nsmap)
         body = header = headerfault = None
-
         header_value = kwargs.pop('_soapheader', None)
 
         if self.body:

@@ -17,45 +17,30 @@ NSMAP = {
 }
 
 
+
 class WSDL(object):
     def __init__(self, location, transport, namespaces=None):
         self.location = location
         self.transport = transport
         self.schema = None
-        self.ports = {}
-        self.messages = {}
-        self.bindings = {}
-        self.services = OrderedDict()
         self.namespaces = namespaces or {}
         self.schema_references = {}
 
-        if location.startswith(('http://', 'https://')):
-            response = transport.load(location)
-            doc = self._parse_content(response)
-        else:
-            with open(location, mode='rb') as fh:
-                doc = self._parse_content(fh.read())
+        self.definitions = Definitions(self, location)
+        self.definitions.resolve_imports()
+        self.schema = self.definitions.schema
 
-        self.nsmap = doc.nsmap
-        self.target_namespace = doc.get('targetNamespace')
-        self.namespaces[self.target_namespace] = self
 
-        # Process the definitions
-        self.parse_imports(doc)
-        schema = self.parse_types(doc)
-        if schema and self.schema:
-            raise ValueError("Multiple XSD schema's defined")
-        self.schema = self.schema or schema
-        self.messages.update(self.parse_messages(doc))
-        self.ports.update(self.parse_ports(doc))
-        self.bindings.update(self.parse_binding(doc))
-        self.services.update(self.parse_service(doc))
+    @property
+    def services(self):
+        return self.definitions.services
+
+    @property
+    def ports(self):
+        return self.definitions.port_types
 
     def __repr__(self):
         return '<WSDL(location=%r)>' % self.location
-
-    def _parse_content(self, content):
-        return parse_xml(content, self.transport, self.schema_references)
 
     def dump(self):
         type_instances = self.schema.types
@@ -70,11 +55,96 @@ class WSDL(object):
             for port in service.ports.values():
                 print(' ' * 4, six.text_type(port))
                 print(' ' * 8, 'Operations:')
-                for operation in port.binding.operations.values():
+                for operation in port.binding._operations.values():
                     print('%s%s' % (' ' * 12, six.text_type(operation)))
                 print('')
 
-    def merge(self, other, namespace, transitive=False):
+
+class Definitions(object):
+    def __init__(self, wsdl, location):
+        self.wsdl = wsdl
+        self.location = location
+        self.schema = None
+        self.port_types = {}
+        self.messages = {}
+        self.bindings = {}
+        self.services = OrderedDict()
+
+        self.imports = {}
+
+        if location.startswith(('http://', 'https://')):
+            response = self.wsdl.transport.load(location)
+            doc = self._parse_content(response)
+        else:
+            with open(location, mode='rb') as fh:
+                doc = self._parse_content(fh.read())
+
+        self.target_namespace = doc.get('targetNamespace')
+        self.namespaces[self.target_namespace] = self
+        self.nsmap = doc.nsmap
+
+        # Process the definitions
+        self.parse_imports(doc)
+
+        self.schema = self.parse_types(doc)
+
+        self.messages = self.parse_messages(doc)
+        self.port_types = self.parse_ports(doc)
+        self.bindings = self.parse_binding(doc)
+        self.services = self.parse_service(doc)
+
+    def __repr__(self):
+        return '<Definitions(location=%r)>' % self.location
+
+    @property
+    def transport(self):
+        return self.wsdl.transport
+
+    @property
+    def schema_references(self):
+        return self.wsdl.schema_references
+
+    @property
+    def namespaces(self):
+        return self.wsdl.namespaces
+
+
+    def resolve_imports(self):
+        """
+            A -> B -> C -> D
+
+            Items defined in D are only available in C, not in A or B.
+
+        """
+        for namespace, definition in self.imports.items():
+            self.merge(definition, namespace)
+
+        imports = self.imports.copy()
+        self.imports = {}
+
+        for definition in imports.values():
+            definition.resolve_imports()
+
+
+        for definition in self.imports:
+            pass
+
+        for message in self.messages.values():
+            message.resolve(self)
+
+        for port_type in self.port_types.values():
+            port_type.resolve(self)
+
+        for binding in self.bindings.values():
+            binding.resolve(self)
+
+        for service in self.services.values():
+            service.resolve(self)
+
+    def _parse_content(self, content):
+        return parse_xml(content, self.transport, self.schema_references)
+
+    def merge(self, other, namespace):
         """Merge another `WSDL` instance in this object."""
         def filter_namespace(source, namespace):
             return {
@@ -84,10 +154,8 @@ class WSDL(object):
 
         if not self.schema:
             self.schema = other.schema
-        print(self)
-        print(other)
-        print(other.ports)
-        self.ports.update(filter_namespace(other.ports, namespace))
+
+        self.port_types.update(filter_namespace(other.port_types, namespace))
         self.messages.update(filter_namespace(other.messages, namespace))
         self.bindings.update(filter_namespace(other.bindings, namespace))
         self.services.update(filter_namespace(other.services, namespace))
@@ -116,10 +184,11 @@ class WSDL(object):
                 location = os.path.join(os.path.dirname(self.location), location)
 
             if namespace in self.namespaces:
-                self.merge(self.namespaces[namespace], namespace)
+                self.imports[namespace] = self.namespaces[namespace]
             else:
-                wsdl = WSDL(location, self.transport, self.namespaces)
-                self.merge(wsdl, namespace)
+                wsdl = Definitions(self.wsdl, location)
+                self.imports[namespace] = wsdl
+
 
     def parse_types(self, doc):
         """Return a `types.Schema` instance.
@@ -197,7 +266,6 @@ class WSDL(object):
         result = {}
         for port_node in doc.findall('wsdl:portType', namespaces=NSMAP):
             port_type = definitions.PortType.parse(self, port_node)
-            print(port_type.name.text, port_type)
             result[port_type.name.text] = port_type
         return result
 

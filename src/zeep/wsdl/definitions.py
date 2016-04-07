@@ -20,6 +20,9 @@ class AbstractMessage(object):
         return '<%s(name=%r)>' % (
             self.__class__.__name__, self.name.text)
 
+    def resolve(self, wsdl):
+        pass
+
     def add_part(self, name, element):
         self.parts[name.text] = element
 
@@ -85,7 +88,7 @@ class AbstractOperation(object):
                </wsdl:fault>
             </wsdl:operation>
         """
-        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
+        name = xmlelement.get('name')
         kwargs = {
             'faults': {}
         }
@@ -116,6 +119,9 @@ class PortType(object):
         return '<%s(name=%r)>' % (
             self.__class__.__name__, self.name.text)
 
+    def resolve(self, wsdl):
+        pass
+
     @classmethod
     def parse(cls, wsdl, xmlelement):
         """
@@ -130,7 +136,7 @@ class PortType(object):
         operations = {}
         for elm in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
             operation = AbstractOperation.parse(wsdl, elm)
-            operations[operation.name.text] = operation
+            operations[operation.name] = operation
         return cls(name, operations)
 
 
@@ -153,22 +159,20 @@ class Binding(object):
         self._operations = {}
 
     def resolve(self, wsdl):
-        self.port_type = wsdl.ports[self.port_name.text]
+        self.port_type = wsdl.port_types[self.port_name.text]
+        for operation in self._operations.values():
+            operation.resolve(wsdl)
 
     def _operation_add(self, operation):
-
         # XXX: operation name is not unique
-        self._operations[operation.name.text] = operation
+        self._operations[operation.name] = operation
 
     def __repr__(self):
         return '<%s(name=%r, port_type=%r)>' % (
             self.__class__.__name__, self.name.text, self.port_type)
 
     def get(self, name):
-        name = etree.QName(name)
-        for operation_name, operation in self._operations.items():
-            if etree.QName(operation_name).localname == name.localname:
-                return operation
+        return self._operations.get(name)
 
     @classmethod
     def match(cls, node):
@@ -180,12 +184,11 @@ class Binding(object):
 
 
 class ConcreteMessage(object):
-    def __init__(self, wsdl, abstract, operation):
-        self.abstract = abstract
+    def __init__(self, wsdl, name, operation):
         self.wsdl = wsdl
         self.namespace = {}
         self.operation = operation
-        self.name = None
+        self.name = name
 
     def create(self, *args, **kwargs):
         raise NotImplementedError()
@@ -206,17 +209,21 @@ class Operation(object):
     Contains references to the concrete messages
 
     """
-    def __init__(self, name, abstract_operation):
+    def __init__(self, name, binding):
         self.name = name
-        self.abstract = abstract_operation
+        self.binding = binding
+        self.abstract = None
         self.style = None
         self.input = None
         self.output = None
         self.faults = {}
 
+    def resolve(self, wsdl):
+        self.abstract = self.binding.port_type.operations[self.name]
+
     def __repr__(self):
         return '<%s(name=%r, style=%r)>' % (
-            self.__class__.__name__, self.name.text, self.style)
+            self.__class__.__name__, self.name, self.style)
 
     def __unicode__(self):
         if not self.input:
@@ -249,10 +256,16 @@ class Operation(object):
 
 
 class Port(object):
-    def __init__(self, name, binding, binding_options):
+    def __init__(self, name, binding_name, xmlelement):
         self.name = name
-        self.binding = binding
-        self.binding_options = binding_options
+        self._resolve_context = {
+            'binding_name': binding_name,
+            'xmlelement': xmlelement,
+        }
+
+        # Set during resolve()
+        self.binding = None
+        self.binding_options = None
 
     def __repr__(self):
         return '<%s(name=%r, binding=%r, %r)>' % (
@@ -277,19 +290,28 @@ class Port(object):
         """
         name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
         binding_name = qname_attr(xmlelement, 'binding', wsdl.target_namespace)
-        binding = wsdl.bindings.get(binding_name.text)
-        if not binding:
+        return cls(name.text, binding_name=binding_name, xmlelement=xmlelement)
+
+    def resolve(self, wsdl):
+        if self._resolve_context is None:
             return
 
-        binding_options = binding.process_service_port(xmlelement)
-        return cls(name.text, binding, binding_options=binding_options)
+        binding = wsdl.bindings.get(self._resolve_context['binding_name'].text)
+        if not binding:
+            return False
 
+        self.binding = binding
+        self.binding_options = binding.process_service_port(
+            self._resolve_context['xmlelement'])
+        self._resolve_context = None
+        return True
 
 class Service(object):
 
     def __init__(self, name):
         self.ports = OrderedDict()
         self.name = name
+        self._is_resolved = False
 
     def __unicode__(self):
         return 'Service: %s' % self.name.text
@@ -297,6 +319,22 @@ class Service(object):
     def __repr__(self):
         return '<%s(name=%r, ports=%r)>' % (
             self.__class__.__name__, self.name.text, self.ports)
+
+    def resolve(self, wsdl):
+        if self._is_resolved:
+            return
+
+        unresolved = []
+        for name, port in self.ports.items():
+            is_resolved = port.resolve(wsdl)
+            if not is_resolved:
+                unresolved.append(name)
+
+        # Remove unresolved bindings (http etc)
+        for name in unresolved:
+            del self.ports[name]
+
+        self._is_resolved = True
 
     def add_port(self, port):
         self.ports[port.name] = port
