@@ -11,6 +11,11 @@ from zeep.xsd import Element
 
 class SoapBinding(Binding):
 
+    def __init__(self, name, port_name, transport, default_tyle):
+        super(SoapBinding, self).__init__(name, port_name)
+        self.transport = transport
+        self.default_style = default_tyle
+
     @classmethod
     def match(cls, node):
         soap_node = node.find('soap:binding', namespaces=cls.nsmap)
@@ -104,9 +109,6 @@ class SoapBinding(Binding):
         """
         name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
         port_name = qname_attr(xmlelement, 'type', wsdl.target_namespace)
-        port_type = wsdl.ports[port_name.text]
-
-        obj = cls(name, port_type)
 
         # The soap:binding element contains the transport method and
         # default style attribute for the operations.
@@ -116,15 +118,10 @@ class SoapBinding(Binding):
             raise NotImplementedError("Only soap/http is supported for now")
         default_style = soap_node.get('style', 'document')
 
-        obj.transport = transport
-        obj.default_style = default_style
-
+        obj = cls(name, port_name, transport, default_style)
         for node in xmlelement.findall('wsdl:operation', namespaces=cls.nsmap):
             operation = SoapOperation.parse(wsdl, node, obj, nsmap=cls.nsmap)
-
-            # XXX: operation name is not unique
-            obj.operations[operation.name.text] = operation
-
+            obj._operation_add(operation)
         return obj
 
 

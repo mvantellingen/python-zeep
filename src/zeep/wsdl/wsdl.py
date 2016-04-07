@@ -17,14 +17,15 @@ NSMAP = {
 
 
 class WSDL(object):
-    def __init__(self, filename, transport):
+    def __init__(self, filename, transport, namespaces=None):
+        self.filename = filename
         self.transport = transport
         self.schema = None
         self.ports = {}
         self.messages = {}
         self.bindings = {}
         self.services = OrderedDict()
-        self.namespaces = []
+        self.namespaces = namespaces or {}
         self.schema_references = {}
 
         if filename.startswith(('http://', 'https://')):
@@ -36,7 +37,7 @@ class WSDL(object):
 
         self.nsmap = doc.nsmap
         self.target_namespace = doc.get('targetNamespace')
-        self.namespaces.append(self.target_namespace)
+        self.namespaces[self.target_namespace] = self
 
         # Process the definitions
         self.parse_imports(doc)
@@ -48,6 +49,9 @@ class WSDL(object):
         self.ports.update(self.parse_ports(doc))
         self.bindings.update(self.parse_binding(doc))
         self.services.update(self.parse_service(doc))
+
+    def __repr__(self):
+        return '<WSDL(filename=%r)>' % self.filename
 
     def _parse_content(self, content):
         return parse_xml(content, self.transport, self.schema_references)
@@ -77,12 +81,18 @@ class WSDL(object):
                 if k.startswith('{%s}' % namespace)
             }
 
-        self.schema = other.schema
+        if not self.schema:
+            self.schema = other.schema
+        print(self)
+        print(other)
+        print(other.ports)
         self.ports.update(filter_namespace(other.ports, namespace))
         self.messages.update(filter_namespace(other.messages, namespace))
         self.bindings.update(filter_namespace(other.bindings, namespace))
         self.services.update(filter_namespace(other.services, namespace))
-        self.namespaces.append(namespace)
+
+        if namespace not in self.namespaces:
+            self.namespaces[namespace] = other
 
     def parse_imports(self, doc):
         """Import other WSDL documents in this document.
@@ -91,12 +101,21 @@ class WSDL(object):
         which are defined in the imported document and ignore definitions
         imported in that document.
 
+        This should handle recursive imports though:
+
+            A -> B -> A
+            A -> B -> C -> A
+
         """
         for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
             location = import_node.get('location')
             namespace = import_node.get('namespace')
-            wsdl = WSDL(location, self.transport)
-            self.merge(wsdl, namespace)
+
+            if namespace in self.namespaces:
+                self.merge(self.namespaces[namespace], namespace)
+            else:
+                wsdl = WSDL(location, self.transport, self.namespaces)
+                self.merge(wsdl, namespace)
 
     def parse_types(self, doc):
         """Return a `types.Schema` instance.
@@ -117,6 +136,8 @@ class WSDL(object):
         ]
 
         types = doc.find('wsdl:types', namespaces=NSMAP)
+        if types is None:
+            return
 
         schema_nodes = findall_multiple_ns(types, 'xsd:schema', namespace_sets)
         if not schema_nodes:
@@ -172,6 +193,7 @@ class WSDL(object):
         result = {}
         for port_node in doc.findall('wsdl:portType', namespaces=NSMAP):
             port_type = definitions.PortType.parse(self, port_node)
+            print(port_type.name.text, port_type)
             result[port_type.name.text] = port_type
         return result
 

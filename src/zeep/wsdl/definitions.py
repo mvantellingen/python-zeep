@@ -108,9 +108,9 @@ class AbstractOperation(object):
 
 
 class PortType(object):
-    def __init__(self, name):
+    def __init__(self, name, operations):
         self.name = name
-        self.operations = {}
+        self.operations = operations
 
     def __repr__(self):
         return '<%s(name=%r)>' % (
@@ -127,12 +127,11 @@ class PortType(object):
 
         """
         name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
-        obj = cls(name)
-
+        operations = {}
         for elm in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
             operation = AbstractOperation.parse(wsdl, elm)
-            obj.operations[operation.name.text] = operation
-        return obj
+            operations[operation.name.text] = operation
+        return cls(name, operations)
 
 
 class Binding(object):
@@ -147,10 +146,19 @@ class Binding(object):
                              +-> AbstractMessage
 
     """
-    def __init__(self, name, port_type):
+    def __init__(self, name, port_name):
         self.name = name
-        self.port_type = port_type
-        self.operations = {}
+        self.port_name = port_name
+        self.port_type = None
+        self._operations = {}
+
+    def resolve(self, wsdl):
+        self.port_type = wsdl.ports[self.port_name.text]
+
+    def _operation_add(self, operation):
+
+        # XXX: operation name is not unique
+        self._operations[operation.name.text] = operation
 
     def __repr__(self):
         return '<%s(name=%r, port_type=%r)>' % (
@@ -158,12 +166,16 @@ class Binding(object):
 
     def get(self, name):
         name = etree.QName(name)
-        for operation_name, operation in self.operations.items():
+        for operation_name, operation in self._operations.items():
             if etree.QName(operation_name).localname == name.localname:
                 return operation
 
     @classmethod
     def match(cls, node):
+        raise NotImplementedError()
+
+    @classmethod
+    def parse(cls, wsdl, xmlelement):
         raise NotImplementedError()
 
 
