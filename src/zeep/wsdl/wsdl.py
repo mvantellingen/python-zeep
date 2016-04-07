@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os
 
 from collections import OrderedDict
 
@@ -17,8 +18,8 @@ NSMAP = {
 
 
 class WSDL(object):
-    def __init__(self, filename, transport, namespaces=None):
-        self.filename = filename
+    def __init__(self, location, transport, namespaces=None):
+        self.location = location
         self.transport = transport
         self.schema = None
         self.ports = {}
@@ -28,11 +29,11 @@ class WSDL(object):
         self.namespaces = namespaces or {}
         self.schema_references = {}
 
-        if filename.startswith(('http://', 'https://')):
-            response = transport.load(filename)
+        if location.startswith(('http://', 'https://')):
+            response = transport.load(location)
             doc = self._parse_content(response)
         else:
-            with open(filename, mode='rb') as fh:
+            with open(location, mode='rb') as fh:
                 doc = self._parse_content(fh.read())
 
         self.nsmap = doc.nsmap
@@ -51,7 +52,7 @@ class WSDL(object):
         self.services.update(self.parse_service(doc))
 
     def __repr__(self):
-        return '<WSDL(filename=%r)>' % self.filename
+        return '<WSDL(location=%r)>' % self.location
 
     def _parse_content(self, content):
         return parse_xml(content, self.transport, self.schema_references)
@@ -110,6 +111,9 @@ class WSDL(object):
         for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
             location = import_node.get('location')
             namespace = import_node.get('namespace')
+
+            if '://' not in location and not os.path.isabs(location):
+                location = os.path.join(os.path.dirname(self.location), location)
 
             if namespace in self.namespaces:
                 self.merge(self.namespaces[namespace], namespace)
