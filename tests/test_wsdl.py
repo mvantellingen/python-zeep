@@ -18,6 +18,7 @@ def wsdl_obj():
     class DummyDefinitions(Definitions):
         def __init__(self, wsdl):
             self.wsdl = wsdl
+            self.location = None
 
     return DummyDefinitions(DummyWSDL())
 

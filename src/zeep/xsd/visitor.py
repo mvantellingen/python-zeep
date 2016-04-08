@@ -1,4 +1,5 @@
 import keyword
+import logging
 import os
 
 from lxml import etree
@@ -8,6 +9,9 @@ from zeep.utils import as_qname, qname_attr
 from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import types as xsd_types
+
+
+logger = logging.getLogger(__name__)
 
 
 class tags(object):
@@ -29,15 +33,6 @@ for name in [
 class SchemaVisitor(object):
     def __init__(self, schema):
         self.schema = schema
-        self.elm_instances = []
-
-    def resolve(self):
-        for type_ in self.schema._types.values():
-            type_.resolve(self.schema)
-
-        for element in self.elm_instances:
-            element.resolve_type(self.schema)
-        self.elm_instances = []
 
     def process(self, node, parent):
         visit_func = self.visitors.get(node.tag)
@@ -76,6 +71,7 @@ class SchemaVisitor(object):
         self.schema.target_namespace = node.get('targetNamespace')
         self.schema.element_form = node.get('elementFormDefault', 'unqualified')
         self.schema.attribute_form = node.get('attributeFormDefault', 'unqualified')
+
         parent = node
         for node in node.iterchildren():
             self.process(node, parent=parent)
@@ -90,12 +86,12 @@ class SchemaVisitor(object):
             Content: (annotation?)
             </import>
         """
-
         if not node.get('schemaLocation'):
             raise NotImplementedError("schemaLocation is required")
         namespace = node.get('namespace')
         location = node.get('schemaLocation')
 
+        # Resolve import if it is a file
         if (
             self.schema.location and
             '://' not in location and
@@ -104,10 +100,18 @@ class SchemaVisitor(object):
             location = os.path.join(
                 os.path.dirname(self.schema.location), location)
 
+        schema = self.schema.repository.get(location)
+        if schema:
+            logger.debug("Returning existing schema: %r", location)
+            self.schema.imports[namespace] = schema
+            return schema
+
         schema_node = load_external(
             location, self.schema.transport, self.schema.schema_references)
         schema = self.schema.__class__(
-            schema_node, self.schema.transport, location=self.schema.location)
+            schema_node, self.schema.transport, location=location,
+            repository=self.schema.repository)
+
         self.schema.imports[namespace] = schema
         return schema
 
@@ -186,7 +190,7 @@ class SchemaVisitor(object):
         cls = xsd_elements.Element if not is_list else xsd_elements.ListElement
         element = cls(name=qname, type_=xsd_type, min_occurs=min_occurs)
 
-        self.elm_instances.append(element)
+        self.schema.elm_instances.append(element)
 
         # Only register global elements
         if is_global:
@@ -224,7 +228,7 @@ class SchemaVisitor(object):
         except KeyError:
             xsd_type = xsd_types.UnresolvedType(node_type)
         attr = xsd_elements.Attribute(name, type_=xsd_type)
-        self.elm_instances.append(attr)
+        self.schema.elm_instances.append(attr)
         return attr
 
     def visit_simple_type(self, node, parent):

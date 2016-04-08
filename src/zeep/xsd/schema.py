@@ -8,10 +8,27 @@ from zeep.xsd.visitor import SchemaVisitor
 logger = logging.getLogger(__name__)
 
 
+class SchemaRepository(object):
+    def __init__(self):
+        self._schema_by_location = {}
+
+    def add(self, schema):
+        if schema.location:
+            self._schema_by_location[schema.location] = schema
+
+    def get(self, location):
+        if location in self._schema_by_location:
+            return self._schema_by_location[location]
+
+
 class Schema(object):
 
-    def __init__(self, node=None, transport=None, references=None, location=None):
+    def __init__(self, node=None, transport=None, references=None,
+                 location=None, repository=None):
         self.location = location
+
+        logger.debug("Init schema for %r", location)
+
         self.transport = transport
         self.schema_references = references or {}
         self.xml_schema = None
@@ -21,6 +38,13 @@ class Schema(object):
         self.imports = {}
         self.element_form = 'unqualified'
         self.attribute_form = 'unqualified'
+        self.elm_instances = []
+
+        if repository is None:
+            self.repository = SchemaRepository()
+        else:
+            self.repository = repository
+        self.repository.add(self)
 
         if node is not None:
             if len(node) > 0:
@@ -28,7 +52,19 @@ class Schema(object):
 
             visitor = SchemaVisitor(schema=self)
             visitor.visit_schema(node)
-            visitor.resolve()
+
+        if repository is None:
+            for schema in self.imports.values():
+                schema.resolve()
+            self.resolve()
+
+    def resolve(self):
+        for type_ in self._types.values():
+            type_.resolve(self)
+
+        for element in self.elm_instances:
+            element.resolve_type(self)
+        self.elm_instances = []
 
     def register_type(self, name, value):
         assert not isinstance(value, type)
