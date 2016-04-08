@@ -28,7 +28,9 @@ class WSDL(object):
         # Dict with internal schema objects, used for lxml.ImportResolver
         self._schema_references = {}
 
-        root_definitions = Definitions(self, location)
+        document = self._load_content(location)
+
+        root_definitions = Definitions(self, document, location)
         root_definitions.resolve_imports()
 
         # Make the wsdl definitions public
@@ -58,9 +60,25 @@ class WSDL(object):
                     print('%s%s' % (' ' * 12, six.text_type(operation)))
                 print('')
 
+    def _load_content(self, location):
+        if hasattr(location, 'read'):
+            return self._parse_content(location.read())
+
+        if location.startswith(('http://', 'https://')):
+            response = self.transport.load(location)
+            doc = self._parse_content(response)
+        else:
+            with open(location, mode='rb') as fh:
+                doc = self._parse_content(fh.read())
+        return doc
+
+    def _parse_content(self, content):
+        return parse_xml(
+            content, self.transport, self._schema_references)
+
 
 class Definitions(object):
-    def __init__(self, wsdl, location):
+    def __init__(self, wsdl, doc, location):
         self.wsdl = wsdl
         self.location = location
 
@@ -71,13 +89,6 @@ class Definitions(object):
         self.services = OrderedDict()
 
         self.imports = {}
-
-        if location.startswith(('http://', 'https://')):
-            response = self.wsdl.transport.load(location)
-            doc = self._parse_content(response)
-        else:
-            with open(location, mode='rb') as fh:
-                doc = self._parse_content(fh.read())
 
         self.target_namespace = doc.get('targetNamespace')
         self.wsdl._definitions[self.target_namespace] = self
@@ -123,10 +134,6 @@ class Definitions(object):
         for service in self.services.values():
             service.resolve(self)
 
-    def _parse_content(self, content):
-        return parse_xml(
-            content, self.wsdl.transport, self.wsdl._schema_references)
-
     def merge(self, other, namespace):
         """Merge another `WSDL` instance in this object."""
         def filter_namespace(source, namespace):
@@ -169,8 +176,15 @@ class Definitions(object):
             if namespace in self.wsdl._definitions:
                 self.imports[namespace] = self.wsdl._definitions[namespace]
             else:
-                wsdl = Definitions(self.wsdl, location)
-                self.imports[namespace] = wsdl
+
+                document = self.wsdl._load_content(location)
+                if etree.QName(document.tag).localname == 'schema':
+                    self.schema = Schema(
+                        document, self.wsdl.transport,
+                        self.wsdl._schema_references, location)
+                else:
+                    wsdl = Definitions(self.wsdl, document, location)
+                    self.imports[namespace] = wsdl
 
     def parse_types(self, doc):
         """Return a `types.Schema` instance.
@@ -200,7 +214,7 @@ class Definitions(object):
 
         # FIXME: This fixes `test_parse_types_nsmap_issues`, lame solution...
         schema_nodes = [
-            self._parse_content(etree.tostring(schema_node))
+            self.wsdl._parse_content(etree.tostring(schema_node))
             for schema_node in schema_nodes
         ]
 
