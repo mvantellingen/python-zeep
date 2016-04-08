@@ -1,9 +1,12 @@
 from __future__ import absolute_import, print_function
+import logging
 
 import sys
 
 if __name__ == '__main__':
     use_persistent_cache = '--cache' in sys.argv
+    if '--verbose' in sys.argv:
+        logging.basicConfig(format='%(message)s', level=logging.DEBUG)
 
     from zeep.client import Client
     from zeep.cache import SqliteCache
