@@ -10,7 +10,7 @@ class ImportResolver(etree.Resolver):
         if url.startswith('intschema'):
             text = etree.tostring(self.schema_references[url])
             return self.resolve_string(text, context)
-        else:
+        elif '://' in url:
             content = self.transport.load(url)
             return self.resolve_string(content, context)
 
@@ -26,5 +26,9 @@ def load_external(url, transport, schema_references=None):
         assert schema_references
         return schema_references[url]
 
-    response = transport.load(url)
+    if '://' in url:
+        response = transport.load(url)
+    else:
+        with open(url, 'rb') as fh:
+            response = fh.read()
     return parse_xml(response, transport, schema_references)

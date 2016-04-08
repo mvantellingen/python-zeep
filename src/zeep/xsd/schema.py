@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 class Schema(object):
 
-    def __init__(self, node=None, transport=None, references=None):
+    def __init__(self, node=None, transport=None, references=None, location=None):
+        self.location = location
         self.transport = transport
         self.schema_references = references or {}
         self.xml_schema = None

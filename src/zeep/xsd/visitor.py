@@ -1,4 +1,5 @@
 import keyword
+import os
 
 from lxml import etree
 
@@ -95,9 +96,18 @@ class SchemaVisitor(object):
         namespace = node.get('namespace')
         location = node.get('schemaLocation')
 
+        if (
+            self.schema.location and
+            '://' not in location and
+            not os.path.isabs(location)
+        ):
+            location = os.path.join(
+                os.path.dirname(self.schema.location), location)
+
         schema_node = load_external(
             location, self.schema.transport, self.schema.schema_references)
-        schema = self.schema.__class__(schema_node, self.schema.transport)
+        schema = self.schema.__class__(
+            schema_node, self.schema.transport, location=self.schema.location)
         self.schema.imports[namespace] = schema
         return schema
 

@@ -220,7 +220,8 @@ class Definitions(object):
         schema_node = schema_nodes[0]
 
         return Schema(
-            schema_node, self.wsdl.transport, self.wsdl._schema_references)
+            schema_node, self.wsdl.transport, self.wsdl._schema_references,
+            self.location)
 
     def parse_messages(self, doc):
         """
