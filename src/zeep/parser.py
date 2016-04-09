@@ -13,7 +13,7 @@ class ImportResolver(etree.Resolver):
     def resolve(self, url, pubid, context):
         if url.startswith('intschema'):
             text = etree.tostring(self.schema_references[url])
-            return self.resolve_string(text, context, base_url=self.parent_location)
+            return self.resolve_string(text, context)
 
         if urlparse(url).scheme:
             content = self.transport.load(url)
