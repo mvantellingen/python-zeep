@@ -204,20 +204,28 @@ class SchemaVisitor(object):
             Content: (annotation?, (simpleType?))
             </attribute>
         """
-        node_type = qname_attr(node, 'type')
-        if not node_type:
-            assert NotImplementedError()
-
         attribute_form = node.get('form', self.schema._attribute_form)
         if attribute_form == 'qualified':
             name = qname_attr(node, 'name', self.schema._target_namespace)
         else:
             name = etree.QName(node.get('name'))
 
-        try:
-            xsd_type = self.schema.get_type(node_type)
-        except KeyError:
-            xsd_type = xsd_types.UnresolvedType(node_type)
+        xsd_type = None
+        for child in node.iterchildren():
+            if child.tag == tags.annotation:
+                continue
+
+            elif child.tag == tags.simpleType:
+                assert xsd_type is None
+                xsd_type = self.visit_simple_type(child, node)
+
+        if xsd_type is None:
+            node_type = qname_attr(node, 'type')
+            try:
+                xsd_type = self.schema.get_type(node_type)
+            except KeyError:
+                xsd_type = xsd_types.UnresolvedType(node_type)
+
         attr = xsd_elements.Attribute(name, type_=xsd_type)
         self.schema._elm_instances.append(attr)
         return attr
@@ -258,7 +266,7 @@ class SchemaVisitor(object):
         if not is_anonymous:
             qname = as_qname(name, node.nsmap, self.schema._target_namespace)
             self.schema.register_type(qname, xsd_type)
-        return xsd_type()
+        return xsd_type
 
     def visit_complex_type(self, node, parent):
         """
