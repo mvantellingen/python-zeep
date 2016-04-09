@@ -173,8 +173,8 @@ class Definitions(object):
                 document = self.wsdl._load_content(location)
                 if etree.QName(document.tag).localname == 'schema':
                     self.schema = Schema(
-                        document, self.wsdl.transport,
-                        self.wsdl._parser_context, location)
+                        document, self.wsdl.transport, location,
+                        self.wsdl._parser_context)
                 else:
                     wsdl = Definitions(self.wsdl, document, location)
                     self.imports[namespace] = wsdl
