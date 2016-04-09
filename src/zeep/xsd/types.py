@@ -34,7 +34,9 @@ class UnresolvedType(Type):
         self.qname = qname
 
     def resolve(self, schema):
-        return schema.get_type(self.qname)
+        retval = schema.get_type(self.qname)
+        retval.resolve(schema)
+        return retval
 
 
 class SimpleType(Type):
