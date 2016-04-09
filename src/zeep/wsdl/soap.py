@@ -28,7 +28,7 @@ class SoapBinding(Binding):
                 raise ValueError("Operation not found")
 
         nsmap = self.nsmap.copy()
-        nsmap['ns0'] = self.wsdl.schema.target_namespace
+        nsmap['ns0'] = self.wsdl.schema._target_namespace
 
         body, header, headerfault = operation.create(*args, **kwargs)
         soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=nsmap)

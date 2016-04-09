@@ -27,8 +27,8 @@ def test_schema_empty(schema_visitor):
         </schema>
     """)
     schema_visitor.visit_schema(node)
-    assert schema_visitor.schema.element_form == 'qualified'
-    assert schema_visitor.schema.attribute_form == 'unqualified'
+    assert schema_visitor.schema._element_form == 'qualified'
+    assert schema_visitor.schema._attribute_form == 'unqualified'
 
 
 def test_element_simle_types(schema_visitor):
@@ -40,7 +40,7 @@ def test_element_simle_types(schema_visitor):
         </schema>
     """)
     schema_visitor.visit_schema(node)
-    assert len(schema_visitor.schema.elm_instances) == 2
+    assert len(schema_visitor.schema._elm_instances) == 2
 
 
 def test_element_simple_type_annotation(schema_visitor):
@@ -55,7 +55,7 @@ def test_element_simple_type_annotation(schema_visitor):
         </schema>
     """)
     schema_visitor.visit_schema(node)
-    assert len(schema_visitor.schema.elm_instances) == 1
+    assert len(schema_visitor.schema._elm_instances) == 1
 
 
 def test_element_default_type(schema_visitor):
@@ -67,7 +67,7 @@ def test_element_default_type(schema_visitor):
         </schema>
     """)
     schema_visitor.visit_schema(node)
-    element = schema_visitor.schema.elm_instances[0]
+    element = schema_visitor.schema._elm_instances[0]
     assert isinstance(element.type, builtins.String)
 
 
@@ -90,7 +90,7 @@ def test_element_simple_type_unresolved(schema_visitor):
         </schema>
     """)
     schema_visitor.visit_schema(node)
-    element = schema_visitor.schema.elm_instances[0]
+    element = schema_visitor.schema._elm_instances[0]
     assert isinstance(element.type, UnresolvedType)
     assert element.type.qname == etree.QName(
         'http://tests.python-zeep.org/', 'unresolved')
@@ -113,7 +113,7 @@ def test_element_max_occurs(schema_visitor):
         </schema>
     """)
     schema_visitor.visit_schema(node)
-    elements = {elm.name: elm for elm in schema_visitor.schema.elm_instances}
+    elements = {elm.name: elm for elm in schema_visitor.schema._elm_instances}
 
     assert not isinstance(elements['e1'], ListElement)
     assert not isinstance(elements['e2'], ListElement)

@@ -3,8 +3,8 @@ class SchemaRepository(object):
         self._schemas = {}
 
     def add(self, schema):
-        if schema.location:
-            self._schemas[schema.location] = schema
+        if schema._location:
+            self._schemas[schema._location] = schema
 
     def get(self, location):
         if location in self._schemas:

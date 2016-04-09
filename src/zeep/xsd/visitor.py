@@ -41,7 +41,7 @@ class SchemaVisitor(object):
         return result
 
     def process_ref_attribute(self, node):
-        ref = qname_attr(node, 'ref', self.schema.target_namespace)
+        ref = qname_attr(node, 'ref', self.schema._target_namespace)
         if ref:
             return xsd_elements.RefElement(node.tag, ref, self.schema)
 
@@ -67,9 +67,9 @@ class SchemaVisitor(object):
         """
         assert node is not None
 
-        self.schema.target_namespace = node.get('targetNamespace')
-        self.schema.element_form = node.get('elementFormDefault', 'unqualified')
-        self.schema.attribute_form = node.get('attributeFormDefault', 'unqualified')
+        self.schema._target_namespace = node.get('targetNamespace')
+        self.schema._element_form = node.get('elementFormDefault', 'unqualified')
+        self.schema._attribute_form = node.get('attributeFormDefault', 'unqualified')
 
         parent = node
         for node in node.iterchildren():
@@ -91,19 +91,19 @@ class SchemaVisitor(object):
         location = node.get('schemaLocation')
 
         # Resolve import if it is a file
-        location = absolute_location(location, self.schema.location)
+        location = absolute_location(location, self.schema._location)
         schema = self.parser_context.schema_objects.get(location)
         if schema:
             logger.debug("Returning existing schema: %r", location)
-            self.schema.imports[namespace] = schema
+            self.schema._imports[namespace] = schema
             return schema
 
         schema_node = load_external(
-            location, self.schema.transport, self.parser_context)
+            location, self.schema._transport, self.parser_context)
         schema = self.schema.__class__(
-            schema_node, self.schema.transport, location, self.parser_context)
+            schema_node, self.schema._transport, location, self.parser_context)
 
-        self.schema.imports[namespace] = schema
+        self.schema._imports[namespace] = schema
         return schema
 
     def visit_element(self, node, parent):
@@ -138,9 +138,9 @@ class SchemaVisitor(object):
             if result:
                 return result
 
-        element_form = node.get('form', self.schema.element_form)
+        element_form = node.get('form', self.schema._element_form)
         if element_form == 'qualified' or is_global:
-            qname = qname_attr(node, 'name', self.schema.target_namespace)
+            qname = qname_attr(node, 'name', self.schema._target_namespace)
         else:
             qname = etree.QName(node.get('name'))
 
@@ -181,7 +181,7 @@ class SchemaVisitor(object):
         cls = xsd_elements.Element if not is_list else xsd_elements.ListElement
         element = cls(name=qname, type_=xsd_type, min_occurs=min_occurs)
 
-        self.schema.elm_instances.append(element)
+        self.schema._elm_instances.append(element)
 
         # Only register global elements
         if is_global:
@@ -208,9 +208,9 @@ class SchemaVisitor(object):
         if not node_type:
             assert NotImplementedError()
 
-        attribute_form = node.get('form', self.schema.attribute_form)
+        attribute_form = node.get('form', self.schema._attribute_form)
         if attribute_form == 'qualified':
-            name = qname_attr(node, 'name', self.schema.target_namespace)
+            name = qname_attr(node, 'name', self.schema._target_namespace)
         else:
             name = etree.QName(node.get('name'))
 
@@ -219,7 +219,7 @@ class SchemaVisitor(object):
         except KeyError:
             xsd_type = xsd_types.UnresolvedType(node_type)
         attr = xsd_elements.Attribute(name, type_=xsd_type)
-        self.schema.elm_instances.append(attr)
+        self.schema._elm_instances.append(attr)
         return attr
 
     def visit_simple_type(self, node, parent):
@@ -256,7 +256,7 @@ class SchemaVisitor(object):
         base_type = xsd_builtins.String
         xsd_type = type(name, (base_type,), {})()
         if not is_anonymous:
-            qname = as_qname(name, node.nsmap, self.schema.target_namespace)
+            qname = as_qname(name, node.nsmap, self.schema._target_namespace)
             self.schema.register_type(qname, xsd_type)
         return xsd_type()
 
@@ -311,7 +311,7 @@ class SchemaVisitor(object):
             name = parent.get('name')
             is_anonymous = True
 
-        qname = as_qname(name, node.nsmap, self.schema.target_namespace)
+        qname = as_qname(name, node.nsmap, self.schema._target_namespace)
 
         cls = type(
             name, (xsd_types.ComplexType,), {'__module__': 'zeep.xsd.types'})
@@ -401,7 +401,7 @@ class SchemaVisitor(object):
                         ((attribute | attributeGroup)*, anyAttribute?)))
             </extension>
         """
-        base_name = qname_attr(node, 'base', self.schema.target_namespace)
+        base_name = qname_attr(node, 'base', self.schema._target_namespace)
         try:
             base = self.schema.get_type(base_name)
             children = base._children
@@ -434,7 +434,7 @@ class SchemaVisitor(object):
             Content: (annotation?, ((attribute | attributeGroup)*, anyAttribute?))
             </extension>
         """
-        base_name = qname_attr(node, 'base', self.schema.target_namespace)
+        base_name = qname_attr(node, 'base', self.schema._target_namespace)
         try:
             base = self.schema.get_type(base_name)
             if isinstance(base, xsd_types.ComplexType):
@@ -510,7 +510,7 @@ class SchemaVisitor(object):
         if result:
             return result
 
-        qname = qname_attr(node, 'name', self.schema.target_namespace)
+        qname = qname_attr(node, 'name', self.schema._target_namespace)
 
         # There should be only max nodes, first node (annotation) is irrelevant
         subnodes = node.getchildren()
