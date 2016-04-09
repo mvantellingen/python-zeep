@@ -36,8 +36,9 @@ class Schema(object):
         parser_context.schema_objects.add(self)
 
         if node is not None:
-            if len(node) > 0:
-                self.xml_schema = etree.XMLSchema(node)
+            # Disable XML schema validation for now
+            # if len(node) > 0:
+            #     self.xml_schema = etree.XMLSchema(node)
 
             visitor = SchemaVisitor(self, parser_context)
             visitor.visit_schema(node)
