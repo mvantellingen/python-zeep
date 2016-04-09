@@ -20,7 +20,7 @@ coverage:
 	py.test --cov=zeep --cov-report=term-missing
 
 docs:
-	cd docs && make html
+	$(MAKE) -C docs html
 
 release:
 	pip install twine wheel
