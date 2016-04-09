@@ -4,7 +4,7 @@ from collections import OrderedDict
 import six
 
 from zeep.utils import process_signature
-from zeep.xsd.elements import GroupElement, ListElement, RefElement
+from zeep.xsd.elements import GroupElement, ListElement, RefElement, Any
 
 
 class Type(object):
@@ -83,6 +83,21 @@ class ComplexType(Type):
     def properties(self):
         return list(self._children)
 
+    def fields(self):
+        """Return a list of tuples containing the name and element of the
+        fields.
+
+        """
+        result = []
+        num = 1
+        for prop in self._children:
+            if isinstance(prop, Any):
+                result.append(('_any_%d' % num, prop))
+                num += 1
+            else:
+                result.append((prop.name, prop))
+        return result
+
     def serialize(self, value):
         return {
             field.name: field.serialize(getattr(value, field.name, None))
@@ -90,8 +105,8 @@ class ComplexType(Type):
         }
 
     def render(self, parent, value):
-        for element in self.properties():
-            sub_value = getattr(value, element.name, None)
+        for name, element in self.fields():
+            sub_value = getattr(value, name, None)
             if sub_value is not None:
                 element.render(parent, sub_value)
 
@@ -121,7 +136,7 @@ class ComplexType(Type):
 
     def signature(self):
         return ', '.join([
-            '%s %s' % (prop.type.name, prop.name) for prop in self.properties()
+            '%s %s' % (name, element.name) for name, element in self.fields()
         ])
 
     def parse_xmlelement(self, xmlelement):
@@ -166,31 +181,37 @@ class ComplexType(Type):
 class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
-        fields = OrderedDict([
-            (prop.name, prop) for prop in self._xsd_type.properties()
-        ])
+        fields = self._xsd_type.fields()
 
         # Set default values
-        for key, value in fields.items():
+        for key, value in fields:
             if isinstance(value, ListElement):
                 value = []
             else:
                 value = None
             setattr(self, key, value)
 
+        fields = OrderedDict(fields)
         items = process_signature(fields.keys(), args, kwargs)
         for key, value in items.items():
+            field = fields[key]
 
             if isinstance(value, dict):
-                value = fields[key](**value)
+                value = field(**value)
 
             elif isinstance(value, list):
-                if isinstance(fields[key].type, ComplexType):
-                    value = [fields[key].type(**v) for v in value]
+                if isinstance(field.type, ComplexType):
+                    value = [field.type(**v) for v in value]
                 else:
-                    value = [fields[key].type(v) for v in value]
+                    value = [field.type(v) for v in value]
 
             setattr(self, key, value)
 
     def __repr__(self):
         return pprint.pformat(self.__dict__, indent=4)
+
+
+class AnyObject(object):
+    def __init__(self, xsd_type, value):
+        self.xsd_type = xsd_type
+        self.value = value

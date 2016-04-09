@@ -647,6 +647,52 @@ def test_element_ref():
     assert_nodes_equal(expected, node)
 
 
+def test_element_any():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <types>
+          <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                  xmlns:tns="http://tests.python-zeep.org/"
+                  targetNamespace="http://tests.python-zeep.org/"
+                     elementFormDefault="qualified">
+            <element name="foo" type="string"/>
+            <element name="bar">
+              <complexType>
+                <sequence>
+                  <element ref="tns:foo"/>
+                  <any/>
+                  <any maxOccurs="unbounded"/>
+                </sequence>
+              </complexType>
+            </element>
+          </schema>
+        </types>
+    """.strip())
+
+    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+
+    foo_type = schema.get_element('{http://tests.python-zeep.org/}foo')
+    assert isinstance(foo_type.type, xsd.String)
+
+    custom_type = schema.get_element('{http://tests.python-zeep.org/}bar')
+    foo = schema.get_element('{http://tests.python-zeep.org/}foo')
+    obj = custom_type(foo='bar', _any_1=xsd.AnyObject(foo, foo('argh')))
+
+    node = etree.Element('document')
+    custom_type.render(node, obj)
+    expected = """
+        <document>
+            <ns0:bar xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:foo>bar</ns0:foo>
+                <ns0:foo>argh</ns0:foo>
+            </ns0:bar>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+
+
 def test_unqualified():
     node = etree.fromstring("""
         <?xml version="1.0"?>

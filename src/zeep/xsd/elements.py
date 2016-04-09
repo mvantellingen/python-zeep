@@ -1,6 +1,24 @@
 from lxml import etree
 
 
+class Any(object):
+    def __init__(self, max_occurs=1, min_occurs=1):
+        self.name = 'any'
+
+    def render(self, parent, value):
+        assert parent is not None
+        if value is None and self.min_occurs == 0:
+            return
+        if isinstance(value.value, list):
+            for val in value.value:
+                value.xsd_type.render(parent, val)
+        else:
+            value.xsd_type.render(parent, value.value)
+
+    def __call__(self, any_object):
+        return any_object
+
+
 class Element(object):
     def __init__(self, name, type_=None, min_occurs=1):
         self.name = name.localname if name else None

@@ -474,6 +474,23 @@ class SchemaVisitor(object):
         """
         pass
 
+    def visit_any(self, node, parent):
+        """
+            <any
+              id = ID
+              maxOccurs = (nonNegativeInteger | unbounded) : 1
+              minOccurs = nonNegativeInteger : 1
+              namespace = "(##any | ##other) |
+                List of (anyURI | (##targetNamespace |  ##local))) : ##any
+              processContents = (lax | skip | strict) : strict
+              {any attributes with non-schema Namespace...}>
+            Content: (annotation?)
+            </any>
+        """
+        max_occurs = node.get('maxOccurs', '1')
+        min_occurs = node.get('minOccurs', '1')
+        return xsd_elements.Any(max_occurs=max_occurs, min_occurs=min_occurs)
+
     def visit_sequence(self, node, parent):
         """
             <sequence
@@ -582,6 +599,7 @@ class SchemaVisitor(object):
         pass
 
     visitors = {
+        tags.any: visit_any,
         tags.element: visit_element,
         tags.simpleType: visit_simple_type,
         tags.anyAttribute: visit_any_attribute,
