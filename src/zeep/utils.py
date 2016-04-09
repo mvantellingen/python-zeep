@@ -1,10 +1,14 @@
 from lxml import etree
 
 
-def parse_qname(value, nsmap, target_namespace=None):
-    if value.startswith('{'):
-        return etree.QName(value)
+def qname_attr(node, attr_name, target_namespace=None):
+    value = node.get(attr_name)
+    if value is not None:
+        return as_qname(value, node.nsmap, target_namespace)
 
+
+def as_qname(value, nsmap, target_namespace):
+    """Convert the given value to a QName"""
     if ':' in value:
         prefix, local = value.split(':')
         namespace = nsmap.get(prefix, prefix)
@@ -16,15 +20,6 @@ def parse_qname(value, nsmap, target_namespace=None):
     if None in nsmap:
         return etree.QName(nsmap[None], value)
     return etree.QName(value)
-
-
-def get_qname(node, name, target_namespace=None, as_text=True):
-    value = node.get(name)
-    if value is not None:
-        qname = parse_qname(value, node.nsmap, target_namespace)
-        if as_text:
-            return qname.text
-        return qname
 
 
 def findall_multiple_ns(node, name, namespace_sets):

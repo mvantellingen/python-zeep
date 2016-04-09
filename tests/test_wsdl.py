@@ -1,20 +1,10 @@
 import pytest
 import requests_mock
+from six import StringIO
 
 from tests.utils import assert_nodes_equal
 from zeep import wsdl
 from zeep.transports import Transport
-
-
-@pytest.fixture()
-def wsdl_obj():
-
-    class DummyWSDL(wsdl.WSDL):
-        def __init__(self):
-            self.schema_references = {}
-            self.transport = None
-
-    return DummyWSDL()
 
 
 @pytest.mark.requests
@@ -49,7 +39,7 @@ def test_parse_soap_wsdl():
         m.post('http://example.com/stockquote', text=response)
         result = port.send(
             transport=transport,
-            operation='{http://example.com/stockquote.wsdl}GetLastTradePrice',
+            operation='GetLastTradePrice',
             args=[],
             kwargs={'tickerSymbol': 'foobar'})
         assert result == 120.123
@@ -106,7 +96,7 @@ def test_parse_soap_header_wsdl():
         m.post('http://example.com/stockquote', text=response)
         result = port.send(
             transport=transport,
-            operation='{http://example.com/stockquote.wsdl}GetLastTradePrice',
+            operation='GetLastTradePrice',
             args=[],
             kwargs={
                 'tickerSymbol': 'foobar',
@@ -144,10 +134,10 @@ def test_parse_soap_header_wsdl():
         assert_nodes_equal(expected, request.body)
 
 
-def test_parse_types_multiple_schemas(wsdl_obj):
+def test_parse_types_multiple_schemas():
 
-    node = wsdl_obj._parse_content(b"""
-    <?xml version="1.0" encoding="utf-8"?>
+    content = StringIO("""
+    <?xml version="1.0"?>
     <wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:s1="http://microsoft.com/wsdl/types/"
         xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -175,12 +165,12 @@ def test_parse_types_multiple_schemas(wsdl_obj):
     </wsdl:definitions>
     """.strip())
 
-    assert wsdl_obj.parse_types(node)
+    assert wsdl.WSDL(content, None)
 
 
-def test_parse_types_nsmap_issues(wsdl_obj):
-    node = wsdl_obj._parse_content(b"""
-    <?xml version="1.0" encoding="UTF-8"?>
+def test_parse_types_nsmap_issues():
+    content = StringIO("""
+    <?xml version="1.0"?>
     <wsdl:definitions targetNamespace="urn:ec.europa.eu:taxud:vies:services:checkVat"
       xmlns:tns1="urn:ec.europa.eu:taxud:vies:services:checkVat:types"
       xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
@@ -212,5 +202,4 @@ def test_parse_types_nsmap_issues(wsdl_obj):
       </wsdl:types>
     </wsdl:definitions>
     """.strip())
-
-    assert wsdl_obj.parse_types(node)
+    assert wsdl.WSDL(content, None)
