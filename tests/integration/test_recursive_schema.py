@@ -9,4 +9,3 @@ def test_hello_world():
         'recursive_schema_main.wsdl')
     client = zeep.Client(path)
     client.wsdl.dump()
-

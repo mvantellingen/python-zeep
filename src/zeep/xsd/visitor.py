@@ -1,15 +1,13 @@
 import keyword
 import logging
-import os
 
 from lxml import etree
 
-from zeep.parser import load_external
+from zeep.parser import absolute_location, load_external
 from zeep.utils import as_qname, qname_attr
 from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import types as xsd_types
-
 
 logger = logging.getLogger(__name__)
 
@@ -92,14 +90,7 @@ class SchemaVisitor(object):
         location = node.get('schemaLocation')
 
         # Resolve import if it is a file
-        if (
-            self.schema.location and
-            '://' not in location and
-            not os.path.isabs(location)
-        ):
-            location = os.path.join(
-                os.path.dirname(self.schema.location), location)
-
+        location = absolute_location(location, self.schema.location)
         schema = self.schema.repository.get(location)
         if schema:
             logger.debug("Returning existing schema: %r", location)
@@ -107,7 +98,8 @@ class SchemaVisitor(object):
             return schema
 
         schema_node = load_external(
-            location, self.schema.transport, self.schema.schema_references)
+            location, self.schema.transport, self.schema.schema_references,
+            self.schema.location)
         schema = self.schema.__class__(
             schema_node, self.schema.transport, location=location,
             repository=self.schema.repository)

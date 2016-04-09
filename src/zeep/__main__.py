@@ -1,6 +1,6 @@
 from __future__ import absolute_import, print_function
-import logging
 
+import logging
 import sys
 
 if __name__ == '__main__':

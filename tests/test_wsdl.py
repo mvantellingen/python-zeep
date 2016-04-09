@@ -1,11 +1,10 @@
-from six import StringIO
 import pytest
 import requests_mock
+from six import StringIO
 
 from tests.utils import assert_nodes_equal
 from zeep import wsdl
 from zeep.transports import Transport
-from zeep.wsdl.wsdl import Definitions
 
 
 @pytest.mark.requests

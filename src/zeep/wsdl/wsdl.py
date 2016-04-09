@@ -1,13 +1,12 @@
 from __future__ import print_function
 
-import os
 from collections import OrderedDict
 
 import six
 from lxml import etree
 from lxml.etree import QName
 
-from zeep.parser import parse_xml
+from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import definitions, soap
 from zeep.xsd import Schema
@@ -19,7 +18,7 @@ NSMAP = {
 
 class WSDL(object):
     def __init__(self, location, transport):
-        self.location = location
+        self.location = location if not hasattr(location, 'read') else None
         self.transport = transport
 
         # Dict with all definition objects within this WSDL
@@ -30,7 +29,7 @@ class WSDL(object):
 
         document = self._load_content(location)
 
-        root_definitions = Definitions(self, document, location)
+        root_definitions = Definitions(self, document, self.location)
         root_definitions.resolve_imports()
 
         # Make the wsdl definitions public
@@ -45,7 +44,7 @@ class WSDL(object):
 
     def dump(self):
         type_instances = self.schema.types
-        print('Types:')
+        print('Global types:')
         for type_obj in sorted(type_instances, key=lambda k: six.text_type(k)):
             print(' ' * 4, six.text_type(type_obj))
 
@@ -63,18 +62,12 @@ class WSDL(object):
     def _load_content(self, location):
         if hasattr(location, 'read'):
             return self._parse_content(location.read())
+        return load_external(
+            location, self.transport, self._schema_references, self.location)
 
-        if location.startswith(('http://', 'https://')):
-            response = self.transport.load(location)
-            doc = self._parse_content(response)
-        else:
-            with open(location, mode='rb') as fh:
-                doc = self._parse_content(fh.read())
-        return doc
-
-    def _parse_content(self, content):
+    def _parse_content(self, content, base_url=None):
         return parse_xml(
-            content, self.transport, self._schema_references)
+            content, self.transport, self._schema_references, base_url)
 
 
 class Definitions(object):
@@ -170,8 +163,7 @@ class Definitions(object):
             location = import_node.get('location')
             namespace = import_node.get('namespace')
 
-            if '://' not in location and not os.path.isabs(location):
-                location = os.path.join(os.path.dirname(self.location), location)
+            location = absolute_location(location, self.location)
 
             if namespace in self.wsdl._definitions:
                 self.imports[namespace] = self.wsdl._definitions[namespace]
@@ -214,7 +206,7 @@ class Definitions(object):
 
         # FIXME: This fixes `test_parse_types_nsmap_issues`, lame solution...
         schema_nodes = [
-            self.wsdl._parse_content(etree.tostring(schema_node))
+            self.wsdl._parse_content(etree.tostring(schema_node), self.location)
             for schema_node in schema_nodes
         ]
 
