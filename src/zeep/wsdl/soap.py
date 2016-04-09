@@ -83,7 +83,7 @@ class SoapBinding(Binding):
             detail=fault_node.find('detail'))
 
     def process_service_port(self, xmlelement):
-        address_node = xmlelement.find('soap:address', namespaces=self.nsmap)
+        address_node = _soap_element(xmlelement, 'address')
         return {
             'address': address_node.get('location')
         }
@@ -112,7 +112,7 @@ class SoapBinding(Binding):
 
         # The soap:binding element contains the transport method and
         # default style attribute for the operations.
-        soap_node = xmlelement.find('soap:binding', namespaces=cls.nsmap)
+        soap_node = _soap_element(xmlelement, 'binding')
         transport = soap_node.get('transport')
         if transport != 'http://schemas.xmlsoap.org/soap/http':
             raise NotImplementedError("Only soap/http is supported for now")
@@ -191,7 +191,7 @@ class SoapOperation(Operation):
 
         # The soap:operation element is required for soap/http bindings
         # and may be omitted for other bindings.
-        soap_node = xmlelement.find('soap:operation', namespaces=nsmap)
+        soap_node = _soap_element(xmlelement, 'operation')
         action = None
         if soap_node is not None:
             action = soap_node.get('soapAction')
@@ -251,9 +251,9 @@ class SoapMessage(ConcreteMessage):
         """
         obj = cls(wsdl, name, operation, nsmap=nsmap)
 
-        body = xmlelement.find('soap:body', namespaces=nsmap)
-        header = xmlelement.find('soap:header', namespaces=nsmap)
-        headerfault = xmlelement.find('soap:headerfault', namespaces=nsmap)
+        body = _soap_element(xmlelement, 'body')
+        header = _soap_element(xmlelement, 'header')
+        headerfault = _soap_element(xmlelement, 'headerfault')
 
         obj._info = {
             'body': {}, 'header': {}, 'headerfault': {}
@@ -410,3 +410,16 @@ class DocumentMessage(SoapMessage):
         if len(item._xsd_type.properties()) == 1:
             return getattr(item, item._xsd_type.properties()[0].name)
         return item
+
+
+def _soap_element(xmlelement, key):
+    """So soap1.1 and 1.2 namespaces can be mixed HAH!"""
+    namespaces = [
+        'http://schemas.xmlsoap.org/wsdl/soap/',
+        'http://schemas.xmlsoap.org/wsdl/soap12/',
+    ]
+
+    for ns in namespaces:
+        retval = xmlelement.find('soap:%s' % key, namespaces={'soap': ns})
+        if retval is not None:
+            return retval
