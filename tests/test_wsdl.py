@@ -137,7 +137,7 @@ def test_parse_soap_header_wsdl():
 def test_parse_types_multiple_schemas():
 
     content = StringIO("""
-    <?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0"?>
     <wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:s1="http://microsoft.com/wsdl/types/"
         xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -170,7 +170,7 @@ def test_parse_types_multiple_schemas():
 
 def test_parse_types_nsmap_issues():
     content = StringIO("""
-    <?xml version="1.0" encoding="UTF-8"?>
+    <?xml version="1.0"?>
     <wsdl:definitions targetNamespace="urn:ec.europa.eu:taxud:vies:services:checkVat"
       xmlns:tns1="urn:ec.europa.eu:taxud:vies:services:checkVat:types"
       xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
