@@ -10,6 +10,7 @@ from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import definitions, soap
 from zeep.xsd import Schema
+from zeep.xsd.context import ParserContext
 
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
@@ -25,7 +26,7 @@ class WSDL(object):
         self._definitions = {}
 
         # Dict with internal schema objects, used for lxml.ImportResolver
-        self._schema_references = {}
+        self._parser_context = ParserContext()
 
         document = self._load_content(location)
 
@@ -63,11 +64,11 @@ class WSDL(object):
         if hasattr(location, 'read'):
             return self._parse_content(location.read())
         return load_external(
-            location, self.transport, self._schema_references, self.location)
+            location, self.transport, self._parser_context, self.location)
 
     def _parse_content(self, content, base_url=None):
         return parse_xml(
-            content, self.transport, self._schema_references, base_url)
+            content, self.transport, self._parser_context, base_url)
 
 
 class Definitions(object):
@@ -173,7 +174,7 @@ class Definitions(object):
                 if etree.QName(document.tag).localname == 'schema':
                     self.schema = Schema(
                         document, self.wsdl.transport,
-                        self.wsdl._schema_references, location)
+                        self.wsdl._parser_context, location)
                 else:
                     wsdl = Definitions(self.wsdl, document, location)
                     self.imports[namespace] = wsdl
@@ -212,7 +213,8 @@ class Definitions(object):
 
         for schema_node in schema_nodes:
             tns = schema_node.get('targetNamespace')
-            self.wsdl._schema_references['intschema+%s' % tns] = schema_node
+            self.wsdl._parser_context.schema_nodes.add(
+                'intschema+%s' % tns, schema_node)
 
         # Only handle the import statements from the 2001 xsd's for now
         import_tag = QName('http://www.w3.org/2001/XMLSchema', 'import').text
@@ -226,8 +228,8 @@ class Definitions(object):
         schema_node = schema_nodes[0]
 
         return Schema(
-            schema_node, self.wsdl.transport, self.wsdl._schema_references,
-            self.location)
+            schema_node, self.wsdl.transport, self.location,
+            self.wsdl._parser_context)
 
     def parse_messages(self, doc):
         """

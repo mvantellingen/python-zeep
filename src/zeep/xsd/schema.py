@@ -3,34 +3,21 @@ import logging
 from lxml import etree
 
 from zeep.xsd import builtins as xsd_builtins
+from zeep.xsd.context import ParserContext
 from zeep.xsd.visitor import SchemaVisitor
 
 logger = logging.getLogger(__name__)
 
 
-class SchemaRepository(object):
-    def __init__(self):
-        self._schema_by_location = {}
-
-    def add(self, schema):
-        if schema.location:
-            self._schema_by_location[schema.location] = schema
-
-    def get(self, location):
-        if location in self._schema_by_location:
-            return self._schema_by_location[location]
-
-
 class Schema(object):
 
-    def __init__(self, node=None, transport=None, references=None,
-                 location=None, repository=None):
+    def __init__(self, node=None, transport=None, location=None,
+                 parser_context=None):
         self.location = location
 
         logger.debug("Init schema for %r", location)
 
         self.transport = transport
-        self.schema_references = references or {}
         self.xml_schema = None
         self._types = {}
         self.elements = {}
@@ -40,20 +27,21 @@ class Schema(object):
         self.attribute_form = 'unqualified'
         self.elm_instances = []
 
-        if repository is None:
-            self.repository = SchemaRepository()
-        else:
-            self.repository = repository
-        self.repository.add(self)
+        is_root_schema = False
+        if not parser_context:
+            parser_context = ParserContext()
+        if not parser_context.schema_objects:
+            is_root_schema = True
+        parser_context.schema_objects.add(self)
 
         if node is not None:
             if len(node) > 0:
                 self.xml_schema = etree.XMLSchema(node)
 
-            visitor = SchemaVisitor(schema=self)
+            visitor = SchemaVisitor(self, parser_context)
             visitor.visit_schema(node)
 
-        if repository is None:
+        if is_root_schema:
             for schema in self.imports.values():
                 schema.resolve()
             self.resolve()

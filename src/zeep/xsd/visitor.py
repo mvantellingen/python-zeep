@@ -29,8 +29,9 @@ for name in [
 
 
 class SchemaVisitor(object):
-    def __init__(self, schema):
+    def __init__(self, schema, parser_context=None):
         self.schema = schema
+        self.parser_context = parser_context
 
     def process(self, node, parent):
         visit_func = self.visitors.get(node.tag)
@@ -91,18 +92,16 @@ class SchemaVisitor(object):
 
         # Resolve import if it is a file
         location = absolute_location(location, self.schema.location)
-        schema = self.schema.repository.get(location)
+        schema = self.parser_context.schema_objects.get(location)
         if schema:
             logger.debug("Returning existing schema: %r", location)
             self.schema.imports[namespace] = schema
             return schema
 
         schema_node = load_external(
-            location, self.schema.transport, self.schema.schema_references,
-            self.schema.location)
+            location, self.schema.transport, self.parser_context)
         schema = self.schema.__class__(
-            schema_node, self.schema.transport, location=location,
-            repository=self.schema.repository)
+            schema_node, self.schema.transport, location, self.parser_context)
 
         self.schema.imports[namespace] = schema
         return schema
