@@ -141,7 +141,6 @@ def test_simple_content(schema_visitor):
     assert xsd_type(10, sizing='qwe')
 
 
-
 def test_attribute_simple_type(schema_visitor):
     node = create_node("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"

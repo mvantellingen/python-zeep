@@ -13,7 +13,6 @@ class Schema(object):
 
     def __init__(self, node=None, transport=None, location=None,
                  parser_context=None):
-
         logger.debug("Init schema for %r", location)
 
         # Internal
