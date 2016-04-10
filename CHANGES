@@ -1,7 +1,16 @@
+0.3.0 (2016-04-10)
+------------------
+ - Correctly handle recursion in WSDL and XSD files
+ - Add support for the XSD Any element
+ - Allow usage of shorthand prefixes when creating elements and types
+ - And more various improvements
+
+
 0.2.5 (2016-04-05)
 ------------------
  - Temporarily disable the HTTP binding support until it works properly
  - Fix an issue with parsing SOAP responses with optional elements
+
 
 0.2.4 (2016-04-03)
 ------------------

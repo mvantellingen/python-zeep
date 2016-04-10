@@ -36,8 +36,7 @@ Complex types can be created using the `client.get_element()` method::
 
     >>> from zeep import Client
     >>> client = zeep.Client('http://my-entrprisy-endpoint.com')
-    >>> order_type = client.get_element(
-    ...     '{http://tests.python-zeep.org}Order')
+    >>> order_type = client.get_element('ns0:Order')
     >>> order = order_type(
     ...     number='1234', billing_address=billing_address)
     >>> client.service.submit_order(user_id=1, order=order)
@@ -52,8 +51,7 @@ Zeep offers proper support for Any elements.
     >>> from zeep import Client
     >>> from zeep import xsd
     >>> client = zeep.Client('http://my-entrprisy-endpoint.com')
-    >>> order_type = client.get_element(
-    ...     '{http://tests.python-zeep.org}Order')
+    >>> order_type = client.get_element('ns0:Order')
     >>> order = xsd.AnyObject(
     ...     order_type, 
     ...     order_type(number='1234', billing_address=billing_address))
