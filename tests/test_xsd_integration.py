@@ -796,7 +796,7 @@ def test_complex_with_simple():
           <xsd:element name="Address">
             <xsd:complexType>
               <xsd:simpleContent>
-                <xsd:extension base="DateTimeType">
+                <xsd:extension base="tns:DateTimeType">
                   <xsd:attribute name="name" type="xsd:token"/>
                 </xsd:extension>
               </xsd:simpleContent>
