@@ -1,3 +1,4 @@
+import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal
@@ -93,3 +94,20 @@ def test_any():
     node = etree.Element('document')
     custom_type.render(node, obj)
     assert_nodes_equal(expected, node)
+
+
+
+def test_any_type_check():
+    some_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'doei'),
+        xsd.String())
+
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'complex'),
+        xsd.ComplexType(
+            children=[
+                xsd.Any(),
+            ]
+        ))
+    with pytest.raises(TypeError):
+        obj = custom_type(_any_1=some_type)

@@ -200,6 +200,11 @@ class CompoundValue(object):
         for key, value in items.items():
             field = fields[key]
 
+            if isinstance(field, Any) and not isinstance(value, AnyObject):
+                raise TypeError(
+                    "%s: expected AnyObject, %s found" % (
+                        key, type(value).__name__))
+
             if isinstance(value, dict):
                 value = field(**value)
 
