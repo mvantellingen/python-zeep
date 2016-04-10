@@ -69,6 +69,12 @@ class Element(Base):
     def __call__(self, *args, **kwargs):
         return self.type(*args, **kwargs)
 
+    def _signature(self, name):
+        return '%s%s: %s%s' % (
+            name, '=None' if self.is_optional else '',
+            self.type.name, '[]' if self.max_occurs != 1 else ''
+        )
+
 
 class Attribute(Element):
     def render(self, parent, value):
@@ -104,6 +110,19 @@ class GroupElement(Element):
 
     def properties(self):
         return self.children
+
+
+class Choice(object):
+    def __init__(self, elements):
+        self.name = 'choice'
+        self.type = None
+
+    @property
+    def is_optional(self):
+        return True
+
+    def _signature(self, name):
+        return 'todo'
 
 
 class RefElement(object):

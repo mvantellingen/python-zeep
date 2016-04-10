@@ -142,10 +142,7 @@ class ComplexType(Type):
 
     def signature(self):
         return ', '.join([
-            '%s%s: %s%s' % (
-                name, '=None' if element.is_optional else '',
-                element.type.name, '[]' if element.max_occurs != 1 else ''
-            )
+            element._signature(name)
             for name, element in self.fields()
         ])
 

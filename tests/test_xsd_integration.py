@@ -814,7 +814,6 @@ def test_complex_with_simple():
     print address_type.type.signature()
     obj = address_type('argh', name='foobie')
 
-
     expected = """
       <document>
         <ns0:Address xmlns:ns0="http://tests.python-zeep.org/" name="foobie">argh</ns0:Address>
@@ -823,3 +822,28 @@ def test_complex_with_simple():
     node = etree.Element('document')
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
+
+
+def test_choice_element():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="Address">
+            <xsd:complexType>
+              <xsd:choice>
+                <xsd:element name="item_1" type="xsd:string" />
+                <xsd:element name="item_2" type="xsd:string" />
+                <xsd:element name="item_3" type="xsd:string" />
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """.strip())
+    schema = xsd.Schema(node)
+    address_type = schema.get_element('ns0:Address')
+
+    print address_type.type.signature()

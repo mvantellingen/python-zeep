@@ -111,3 +111,30 @@ def test_any_type_check():
         ))
     with pytest.raises(TypeError):
         obj = custom_type(_any_1=some_type)
+
+
+def test_choice():
+    root = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'kies'),
+        xsd.ComplexType(
+            children=[
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'pre'),
+                    xsd.String()),
+                xsd.Choice([
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                        xsd.String()),
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                        xsd.String()),
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_3'),
+                        xsd.String()),
+                ])
+
+            ]
+        )
+    )
+
+    root(pre='foo', _choice_1=ChoiceObject())

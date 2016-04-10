@@ -557,6 +557,18 @@ class SchemaVisitor(object):
         """
         raise NotImplementedError()
 
+    def visit_choice(self, node, parent):
+        """
+            <choice
+              id = ID
+              maxOccurs= (nonNegativeInteger | unbounded) : 1
+              minOccurs= nonNegativeInteger : 1
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (element | group | choice | sequence | any)*)
+            </choice>
+        """
+        raise NotImplementedError()
+
     def visit_union(self, node, parent):
         """
             <union
@@ -598,6 +610,7 @@ class SchemaVisitor(object):
     visitors = {
         tags.any: visit_any,
         tags.element: visit_element,
+        tags.choice: visit_choice,
         tags.simpleType: visit_simple_type,
         tags.anyAttribute: visit_any_attribute,
         tags.complexType: visit_complex_type,
