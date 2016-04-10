@@ -89,7 +89,7 @@ class SoapBinding(Binding):
         }
 
     @classmethod
-    def parse(cls, wsdl, xmlelement):
+    def parse(cls, definitions, xmlelement):
         """
             <wsdl:binding name="nmtoken" type="qname"> *
                 <-- extensibility element (1) --> *
@@ -107,8 +107,8 @@ class SoapBinding(Binding):
                 </wsdl:operation>
             </wsdl:binding>
         """
-        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
-        port_name = qname_attr(xmlelement, 'type', wsdl.target_namespace)
+        name = qname_attr(xmlelement, 'name', definitions.target_namespace)
+        port_name = qname_attr(xmlelement, 'type', definitions.target_namespace)
 
         # The soap:binding element contains the transport method and
         # default style attribute for the operations.
@@ -118,9 +118,9 @@ class SoapBinding(Binding):
             raise NotImplementedError("Only soap/http is supported for now")
         default_style = soap_node.get('style', 'document')
 
-        obj = cls(name, port_name, transport, default_style)
+        obj = cls(definitions.wsdl, name, port_name, transport, default_style)
         for node in xmlelement.findall('wsdl:operation', namespaces=cls.nsmap):
-            operation = SoapOperation.parse(wsdl, node, obj, nsmap=cls.nsmap)
+            operation = SoapOperation.parse(definitions, node, obj, nsmap=cls.nsmap)
             obj._operation_add(operation)
         return obj
 
@@ -156,7 +156,7 @@ class SoapOperation(Operation):
         return self.output.deserialize(node)
 
     @classmethod
-    def parse(cls, wsdl, xmlelement, binding, nsmap):
+    def parse(cls, definitions, xmlelement, binding, nsmap):
         """
 
             <wsdl:operation name="nmtoken"> *
@@ -213,11 +213,13 @@ class SoapOperation(Operation):
             name = node.get('name')
 
             if tag_name == 'fault':
-                msg = message_class.parse(wsdl, node, name, tag_name, obj, nsmap)
+                msg = message_class.parse(
+                    definitions, node, name, tag_name, obj, nsmap)
                 obj.faults[msg.name] = msg
 
             else:
-                msg = message_class.parse(wsdl, node, name, tag_name, obj, nsmap)
+                msg = message_class.parse(
+                    definitions, node, name, tag_name, obj, nsmap)
                 setattr(obj, tag_name, msg)
 
         return obj
@@ -240,7 +242,7 @@ class SoapMessage(ConcreteMessage):
         self.nsmap = nsmap
 
     @classmethod
-    def parse(cls, wsdl, xmlelement, name, tag_name, operation, nsmap):
+    def parse(cls, definitions, xmlelement, name, tag_name, operation, nsmap):
         """
         Example::
 
@@ -249,8 +251,9 @@ class SoapMessage(ConcreteMessage):
               </output>
 
         """
-        obj = cls(wsdl, name, operation, nsmap=nsmap)
+        obj = cls(definitions.wsdl, name, operation, nsmap=nsmap)
 
+        tns = definitions.target_namespace
         body = _soap_element(xmlelement, 'body')
         header = _soap_element(xmlelement, 'header')
         headerfault = _soap_element(xmlelement, 'headerfault')
@@ -269,7 +272,7 @@ class SoapMessage(ConcreteMessage):
 
         if header is not None:
             obj._info['header'] = {
-                'message': qname_attr(header, 'message', wsdl.target_namespace),
+                'message': qname_attr(header, 'message', tns),
                 'part': header.get('part'),
                 'use': header.get('use', 'literal'),
                 'encodingStyle': header.get('encodingStyle'),
@@ -278,7 +281,7 @@ class SoapMessage(ConcreteMessage):
 
         if headerfault is not None:
             obj._info['headerfault'] = {
-                'message': qname_attr(headerfault, 'message', wsdl.target_namespace),
+                'message': qname_attr(headerfault, 'message', tns),
                 'part': headerfault.get('part'),
                 'use': headerfault.get('use', 'literal'),
                 'encodingStyle': headerfault.get('encodingStyle'),
@@ -347,6 +350,7 @@ class RpcMessage(SoapMessage):
         tag_name = etree.QName(
             self.namespace['body'], self.abstract.name.localname)
 
+        # FIXME
         result = xsd.Element(tag_name, xsd.ComplexType(children=[
             xsd.Element(etree.QName(etree.QName(name).localname), message.type)
             for name, message in self.abstract.parts.items()

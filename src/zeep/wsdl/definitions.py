@@ -29,7 +29,7 @@ class AbstractMessage(object):
         return self.parts[name]
 
     @classmethod
-    def parse(cls, wsdl, xmlelement):
+    def parse(cls, definitions, xmlelement):
         """
             <definitions .... >
                 <message name="nmtoken"> *
@@ -37,19 +37,19 @@ class AbstractMessage(object):
                 </message>
             </definitions>
         """
-        msg = cls(name=qname_attr(xmlelement, 'name', wsdl.target_namespace))
+        msg = cls(name=qname_attr(xmlelement, 'name', definitions.target_namespace))
 
         for part in xmlelement.findall('wsdl:part', namespaces=NSMAP):
             part_name = part.get('name')
 
-            part_element = qname_attr(part, 'element', wsdl.target_namespace)
-            part_type = qname_attr(part, 'type', wsdl.target_namespace)
+            part_element = qname_attr(part, 'element', definitions.target_namespace)
+            part_type = qname_attr(part, 'type', definitions.target_namespace)
 
             if part_element is not None:
-                part_element = wsdl.schema.get_element(part_element)
+                part_element = definitions.schema.get_element(part_element)
 
             if part_type is not None:
-                part_type = wsdl.schema.get_type(part_type)
+                part_type = definitions.schema.get_type(part_type)
 
             msg.add_part(part_name, MessagePart(part_element, part_type))
         return msg
@@ -72,7 +72,7 @@ class AbstractOperation(object):
         return self.faults[name]
 
     @classmethod
-    def parse(cls, wsdl, xmlelement):
+    def parse(cls, definitions, xmlelement):
         """
             <wsdl:operation name="nmtoken">*
                <wsdl:documentation .... /> ?
@@ -97,12 +97,12 @@ class AbstractOperation(object):
             if tag_name not in ('input', 'output', 'fault'):
                 continue
 
-            param_msg = qname_attr(msg_node, 'message', wsdl.target_namespace)
+            param_msg = qname_attr(msg_node, 'message', definitions.target_namespace)
             param_name = msg_node.get('name')
             if tag_name in ('input', 'output'):
-                kwargs[tag_name] = wsdl.messages[param_msg.text]
+                kwargs[tag_name] = definitions.messages[param_msg.text]
             else:
-                kwargs['faults'][param_name] = wsdl.messages[param_msg.text]
+                kwargs['faults'][param_name] = definitions.messages[param_msg.text]
 
         kwargs['name'] = name
         kwargs['parameter_order'] = xmlelement.get('parameterOrder')
@@ -122,7 +122,7 @@ class PortType(object):
         pass
 
     @classmethod
-    def parse(cls, wsdl, xmlelement):
+    def parse(cls, definitions, xmlelement):
         """
             <wsdl:definitions .... >
                 <wsdl:portType name="nmtoken">
@@ -131,10 +131,10 @@ class PortType(object):
             </wsdl:definitions>
 
         """
-        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
+        name = qname_attr(xmlelement, 'name', definitions.target_namespace)
         operations = {}
         for elm in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
-            operation = AbstractOperation.parse(wsdl, elm)
+            operation = AbstractOperation.parse(definitions, elm)
             operations[operation.name] = operation
         return cls(name, operations)
 
@@ -151,10 +151,11 @@ class Binding(object):
                              +-> AbstractMessage
 
     """
-    def __init__(self, name, port_name):
+    def __init__(self, wsdl, name, port_name):
         self.name = name
         self.port_name = port_name
         self.port_type = None
+        self.wsdl = wsdl
         self._operations = {}
 
     def resolve(self, definitions):
@@ -178,7 +179,7 @@ class Binding(object):
         raise NotImplementedError()
 
     @classmethod
-    def parse(cls, wsdl, xmlelement):
+    def parse(cls, definitions, xmlelement):
         raise NotImplementedError()
 
 
@@ -345,7 +346,7 @@ class Service(object):
         self.ports[port.name] = port
 
     @classmethod
-    def parse(cls, wsdl, xmlelement):
+    def parse(cls, definitions, xmlelement):
         """
 
         Syntax::
@@ -369,10 +370,10 @@ class Service(object):
               </service>
 
         """
-        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
+        name = qname_attr(xmlelement, 'name', definitions.target_namespace)
         obj = cls(name)
         for port_node in xmlelement.findall('wsdl:port', namespaces=NSMAP):
-            port = Port.parse(wsdl, port_node)
+            port = Port.parse(definitions, port_node)
             if port:
                 obj.add_port(port)
 
