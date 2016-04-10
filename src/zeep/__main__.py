@@ -62,5 +62,4 @@ if __name__ == '__main__':
     if args.profile:
         profile.disable()
         profile.dump_stats(args.profile)
-
-    print(client.wsdl.dump())
+    client.wsdl.dump()
