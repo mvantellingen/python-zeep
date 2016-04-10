@@ -411,6 +411,14 @@ class DocumentMessage(SoapMessage):
             return getattr(item, item._xsd_type.properties()[0].name)
         return item
 
+    def signature(self, as_output=False):
+        if as_output:
+            if len(self.body.type.properties()) == 1:
+                return self.body.type.properties()[0].type.name
+
+            return self.body.type.name
+        return self.body.type.signature()
+
 
 def _soap_element(xmlelement, key):
     """So soap1.1 and 1.2 namespaces can be mixed HAH!"""

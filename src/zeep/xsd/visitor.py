@@ -170,16 +170,15 @@ class SchemaVisitor(object):
 
         # minOccurs / maxOccurs are not allowed on global elements
         if not is_global:
-            max_occurs = node.get('maxOccurs', '1')
-            min_occurs = node.get('minOccurs', '1')
-            is_list = max_occurs == 'unbounded' or int(max_occurs) > 1
+            min_occurs, max_occurs = _process_occurs_attrs(node)
         else:
             max_occurs = 1
             min_occurs = 1
-            is_list = False
 
-        cls = xsd_elements.Element if not is_list else xsd_elements.ListElement
-        element = cls(name=qname, type_=xsd_type, min_occurs=min_occurs)
+        cls = xsd_elements.Element if max_occurs == 1 else xsd_elements.ListElement
+        element = cls(
+            name=qname, type_=xsd_type,
+            min_occurs=min_occurs, max_occurs=max_occurs)
 
         self.schema._elm_instances.append(element)
 
@@ -487,8 +486,7 @@ class SchemaVisitor(object):
             Content: (annotation?)
             </any>
         """
-        max_occurs = node.get('maxOccurs', '1')
-        min_occurs = node.get('minOccurs', '1')
+        min_occurs, max_occurs = _process_occurs_attrs(node)
         return xsd_elements.Any(max_occurs=max_occurs, min_occurs=min_occurs)
 
     def visit_sequence(self, node, parent):
@@ -613,3 +611,14 @@ class SchemaVisitor(object):
         tags.import_: visit_import,
         tags.annotation: visit_annotation,
     }
+
+
+def _process_occurs_attrs(node):
+    max_occurs = node.get('maxOccurs', '1')
+    min_occurs = int(node.get('minOccurs', '1'))
+    if max_occurs == 'unbounded':
+        max_occurs = None
+    else:
+        max_occurs = int(max_occurs)
+
+    return min_occurs, max_occurs

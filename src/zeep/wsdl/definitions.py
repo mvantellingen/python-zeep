@@ -196,9 +196,9 @@ class ConcreteMessage(object):
     def parse(cls, wsdl, xmlelement, abstract_message, operation):
         raise NotImplementedError()
 
-    def signature(self):
-        # if self.operation.abstract.parameter_order:
-        #     self.operation.abstract.parameter_order.split()
+    def signature(self, as_output=False):
+        if as_output:
+            return self.body.type.name
         return self.body.type.signature()
 
 
@@ -227,7 +227,11 @@ class Operation(object):
     def __unicode__(self):
         if not self.input:
             return '%s(missing input message)' % (self.name)
-        return '%s(%s)' % (self.name, self.input.signature())
+
+        retval = '%s(%s)' % (self.name, self.input.signature())
+        if self.output:
+            retval += ' -> %s' % (self.output.signature(as_output=True))
+        return retval
 
     def create(self, *args, **kwargs):
         return self.input.serialize(*args, **kwargs)

@@ -136,7 +136,11 @@ class ComplexType(Type):
 
     def signature(self):
         return ', '.join([
-            '%s %s' % (name, element.name) for name, element in self.fields()
+            '%s%s: %s%s' % (
+                name, '=None' if element.is_optional else '',
+                element.type.name, '[]' if element.max_occurs != 1 else ''
+            )
+            for name, element in self.fields()
         ])
 
     def parse_xmlelement(self, xmlelement):

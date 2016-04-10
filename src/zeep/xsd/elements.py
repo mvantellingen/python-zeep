@@ -1,13 +1,26 @@
 from lxml import etree
 
 
-class Any(object):
+class Base(object):
+
+    @property
+    def is_optional(self):
+        return self.min_occurs == 0
+
+
+class Any(Base):
     def __init__(self, max_occurs=1, min_occurs=1):
         self.name = 'any'
+        self.max_occurs = max_occurs
+        self.min_occurs = min_occurs
+
+        # cyclic import
+        from zeep.xsd.builtins import AnyType
+        self.type = AnyType()
 
     def render(self, parent, value):
         assert parent is not None
-        if value is None and self.min_occurs == 0:
+        if value is None and self.is_optional:
             return
         if isinstance(value.value, list):
             for val in value.value:
@@ -19,12 +32,13 @@ class Any(object):
         return any_object
 
 
-class Element(object):
-    def __init__(self, name, type_=None, min_occurs=1):
+class Element(Base):
+    def __init__(self, name, type_=None, min_occurs=1, max_occurs=1):
         self.name = name.localname if name else None
         self.qname = name
         self.type = type_
         self.min_occurs = min_occurs
+        self.max_occurs = max_occurs
         # assert type_
 
     def __repr__(self):
@@ -41,7 +55,7 @@ class Element(object):
         assert parent is not None
         assert self.name is not None
 
-        if value is None and self.min_occurs == 0:
+        if value is None and self.is_optional:
             return
 
         node = etree.SubElement(parent, self.qname)
@@ -61,6 +75,7 @@ class Attribute(Element):
 
 
 class ListElement(Element):
+
     def __call__(self, *args, **kwargs):
         return [self.type(*args, **kwargs)]
 
