@@ -36,7 +36,7 @@ class SchemaVisitor(object):
     def process(self, node, parent):
         visit_func = self.visitors.get(node.tag)
         if not visit_func:
-            raise ValueError("No visitor defined for %r", node.tag)
+            raise ValueError("No visitor defined for %r" % node.tag)
         result = visit_func(self, node, parent)
         return result
 
