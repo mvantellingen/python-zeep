@@ -11,10 +11,10 @@ from zeep.xsd import Element
 
 class SoapBinding(Binding):
 
-    def __init__(self, name, port_name, transport, default_tyle):
-        super(SoapBinding, self).__init__(name, port_name)
+    def __init__(self, wsdl, name, port_name, transport, default_style):
+        super(SoapBinding, self).__init__(wsdl, name, port_name)
         self.transport = transport
-        self.default_style = default_tyle
+        self.default_style = default_style
 
     @classmethod
     def match(cls, node):
@@ -28,7 +28,7 @@ class SoapBinding(Binding):
                 raise ValueError("Operation not found")
 
         nsmap = self.nsmap.copy()
-        nsmap['ns0'] = self.wsdl.schema._target_namespace
+        nsmap.update(self.wsdl.schema._prefix_map)
 
         body, header, headerfault = operation.create(*args, **kwargs)
         soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=nsmap)

@@ -44,13 +44,19 @@ class WSDL(object):
         return '<WSDL(location=%r)>' % self.location
 
     def dump(self):
+
+        print('')
+        print("Prefixes:")
+        for prefix, namespace in self.schema._prefix_map.items():
+            print(' ' * 4, '%s: %s' % (prefix, namespace))
+
         type_instances = self.schema.types
-        print('Global types:')
+        print('')
+        print("Global types:")
         for type_obj in sorted(type_instances, key=lambda k: six.text_type(k)):
             print(' ' * 4, six.text_type(type_obj))
 
         print('')
-
         for service in self.services.values():
             print(six.text_type(service))
             for port in service.ports.values():
@@ -319,7 +325,6 @@ class Definitions(object):
             else:
                 continue
 
-            binding.wsdl = self
             result[binding.name.text] = binding
         return result
 

@@ -1,4 +1,5 @@
 import logging
+from collections import OrderedDict
 
 from lxml import etree
 
@@ -22,7 +23,8 @@ class Schema(object):
         self._elm_instances = []
         self._types = {}
         self._elements = {}
-        self._imports = {}
+        self._imports = OrderedDict()
+        self._prefix_map = {}
         self._xml_schema = None
         self._element_form = 'unqualified'
         self._attribute_form = 'unqualified'
@@ -46,6 +48,31 @@ class Schema(object):
             for schema in self._imports.values():
                 schema.resolve()
             self.resolve()
+            self._prefix_map = self.create_prefix_map()
+
+    def create_prefix_map(self):
+        assigned = set()
+        prefix_map = {}
+
+        if self._target_namespace:
+            prefix_map['ns0'] = self._target_namespace
+            assigned.add(self)
+
+        def _recurse(parent):
+            todo = []
+            for schema in parent._imports.values():
+                if schema._target_namespace and schema not in assigned:
+                    num = len(assigned)
+                    todo.append(schema)
+                    assigned.add(schema)
+                    if schema._target_namespace:
+                        prefix_map['ns%d' % num] = schema._target_namespace
+
+            for schema in todo:
+                _recurse(schema)
+
+        _recurse(self)
+        return prefix_map
 
     def __repr__(self):
         return '<Schema(location=%r)>' % (self._location)
