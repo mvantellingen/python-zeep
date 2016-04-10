@@ -100,8 +100,7 @@ class Schema(object):
         self._elements[name] = value
 
     def get_type(self, name):
-        if not isinstance(name, etree.QName):
-            name = etree.QName(name)
+        name = self._create_qname(name)
 
         if name.text in xsd_builtins.default_types:
             return xsd_builtins.default_types[name]
@@ -116,19 +115,8 @@ class Schema(object):
             "No such type: %r (Only have %s)" % (
                 name.text, ', '.join(self._types)))
 
-    @property
-    def types(self):
-        for value in self._types.values():
-            yield value
-
-        for schema in self._imports.values():
-            for value in schema._types.values():
-                yield value
-
     def get_element(self, name):
-        if not isinstance(name, etree.QName):
-            name = etree.QName(name)
-
+        name = self._create_qname(name)
         if name in self._elements:
             return self._elements[name]
 
@@ -138,6 +126,29 @@ class Schema(object):
         raise KeyError(
             "No such element: %r (Only have %s) (from: %s)" % (
                 name.text, ', '.join(self._elements), self))
+
+    def _create_qname(self, name):
+        if isinstance(name, etree.QName):
+            return name
+
+        if not name.startswith('{') and ':' in name and self._prefix_map:
+            prefix, localname = name.split(':', 1)
+            if prefix in self._prefix_map:
+                return etree.QName(self._prefix_map[prefix], localname)
+            else:
+                raise ValueError(
+                    "No namespace defined for the prefix %r" % prefix)
+        else:
+            return etree.QName(name)
+
+    @property
+    def types(self):
+        for value in self._types.values():
+            yield value
+
+        for schema in self._imports.values():
+            for value in schema._types.values():
+                yield value
 
     def custom_type(self, name):
         return self.get_type(name)

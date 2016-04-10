@@ -24,7 +24,7 @@ def test_complex_type_alt():
     """.strip())
 
     schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    address_type = schema.get_element('ns0:Address')
     obj = address_type(foo='bar')
 
     expected = """
