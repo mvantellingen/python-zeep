@@ -4,7 +4,7 @@ from collections import OrderedDict
 import six
 
 from zeep.utils import process_signature
-from zeep.xsd.elements import GroupElement, ListElement, RefElement, Any
+from zeep.xsd.elements import Any, GroupElement, ListElement, RefElement, Element
 
 
 class Type(object):
@@ -94,6 +94,8 @@ class ComplexType(Type):
             if isinstance(prop, Any):
                 result.append(('_any_%d' % num, prop))
                 num += 1
+            elif prop.name is None:
+                result.append(('_value', prop))
             else:
                 result.append((prop.name, prop))
         return result
@@ -125,8 +127,12 @@ class ComplexType(Type):
                 elm = elm._elm
 
             if isinstance(elm, UnresolvedType):
-                elm = elm.resolve(schema)
-                children.extend(list(elm._children))
+                xsd_type = elm.resolve(schema)
+                if isinstance(xsd_type, SimpleType):
+                    children.append(Element(None, xsd_type))
+                else:
+                    children.extend(list(xsd_type._children))
+
             elif isinstance(elm, GroupElement):
                 children.extend(list(elm))
             else:

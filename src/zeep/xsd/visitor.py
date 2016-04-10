@@ -447,9 +447,8 @@ class SchemaVisitor(object):
             if isinstance(base, xsd_types.ComplexType):
                 children = base._children
             else:
-                children = [base]
+                children = [xsd_types.Element(None, base)]
         except KeyError:
-            raise
             children = [xsd_types.UnresolvedType(base_name)]
 
         for child in node.iterchildren():

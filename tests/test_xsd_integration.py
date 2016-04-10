@@ -827,3 +827,43 @@ def test_init_with_dicts():
     node = etree.Element('document')
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
+
+
+def test_complex_with_simple():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="Address">
+            <xsd:complexType>
+              <xsd:simpleContent>
+                <xsd:extension base="DateTimeType">
+                  <xsd:attribute name="name" type="xsd:token"/>
+                </xsd:extension>
+              </xsd:simpleContent>
+            </xsd:complexType>
+          </xsd:element>
+
+          <xsd:simpleType name="DateTimeType">
+            <xsd:restriction base="xsd:dateTime"/>
+          </xsd:simpleType>
+        </xsd:schema>
+    """.strip())
+    schema = xsd.Schema(node)
+    address_type = schema.get_element('ns0:Address')
+
+    print address_type.type.signature()
+    obj = address_type('argh', name='foobie')
+
+
+    expected = """
+      <document>
+        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/" name="foobie">argh</ns0:Address>
+      </document>
+    """
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    assert_nodes_equal(expected, node)

@@ -53,7 +53,9 @@ class Element(Base):
 
     def render(self, parent, value):
         assert parent is not None
-        assert self.name is not None
+
+        if self.name is None:
+            return self.type.render(parent, value)
 
         if value is None and self.is_optional:
             return
