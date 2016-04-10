@@ -261,7 +261,7 @@ class SoapMessage(ConcreteMessage):
 
         if body is not None:
             obj._info['body'] = {
-                'part': qname_attr(body, 'part', wsdl.target_namespace),
+                'part': body.get('part'),
                 'use': body.get('use', 'literal'),
                 'encodingStyle': body.get('encodingStyle'),
                 'namespace': body.get('namespace'),
@@ -270,7 +270,7 @@ class SoapMessage(ConcreteMessage):
         if header is not None:
             obj._info['header'] = {
                 'message': qname_attr(header, 'message', wsdl.target_namespace),
-                'part': qname_attr(header, 'part', wsdl.target_namespace),
+                'part': header.get('part'),
                 'use': header.get('use', 'literal'),
                 'encodingStyle': header.get('encodingStyle'),
                 'namespace': header.get('namespace'),
@@ -279,7 +279,7 @@ class SoapMessage(ConcreteMessage):
         if headerfault is not None:
             obj._info['headerfault'] = {
                 'message': qname_attr(headerfault, 'message', wsdl.target_namespace),
-                'part': qname_attr(headerfault, 'part', wsdl.target_namespace),
+                'part': headerfault.get('part'),
                 'use': headerfault.get('use', 'literal'),
                 'encodingStyle': headerfault.get('encodingStyle'),
                 'namespace': headerfault.get('namespace'),
@@ -301,7 +301,7 @@ class SoapMessage(ConcreteMessage):
         part_names = list(abstract_message.parts.keys())
 
         if header_info:
-            part_name = header_info['part'].text
+            part_name = header_info['part']
             if header_info['message']:
                 msg = definitions.messages[header_info['message'].text]
                 self.header = msg.parts[part_name].element
@@ -314,15 +314,14 @@ class SoapMessage(ConcreteMessage):
             self.header = None
 
         if headerfault_info:
-            part_name = headerfault_info['part'].text
+            part_name = headerfault_info['part']
             part_names.remove(part_name)
             self.headerfault = abstract_message.parts[part_name].element
         else:
             self.headerfault = None
 
         if body_info:
-            part_name = (
-                body_info['part'].text if body_info['part'] else part_names[0])
+            part_name = body_info['part'] or part_names[0]
             part_names.remove(part_name)
             self.body = abstract_message.parts[part_name].element
 

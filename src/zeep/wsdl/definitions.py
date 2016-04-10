@@ -23,7 +23,7 @@ class AbstractMessage(object):
         pass
 
     def add_part(self, name, element):
-        self.parts[name.text] = element
+        self.parts[name] = element
 
     def get_part(self, name):
         return self.parts[name]
@@ -40,7 +40,7 @@ class AbstractMessage(object):
         msg = cls(name=qname_attr(xmlelement, 'name', wsdl.target_namespace))
 
         for part in xmlelement.findall('wsdl:part', namespaces=NSMAP):
-            part_name = qname_attr(part, 'name', wsdl.target_namespace)
+            part_name = part.get('name')
 
             part_element = qname_attr(part, 'element', wsdl.target_namespace)
             part_type = qname_attr(part, 'type', wsdl.target_namespace)
