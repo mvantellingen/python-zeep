@@ -20,13 +20,9 @@ tests_require = [
     'flake8-debugger==1.4.0',
 ]
 
-setup_requires = [
-    'setuptools_scm==1.10.1'
-]
-
-
 setup(
     name='zeep',
+    version='0.3.0',
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=open('README.rst').read(),
     author="Michael van Tellingen",
@@ -36,8 +32,6 @@ setup(
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require={'test': tests_require},
-    setup_requires=setup_requires,
-    use_scm_version=True,
 
     entry_points={},
     package_dir={'': 'src'},
