@@ -1,4 +1,5 @@
 import six
+from defusedxml.lxml import fromstring
 from lxml import etree
 from lxml.builder import ElementMaker
 
@@ -60,11 +61,11 @@ class SoapBinding(Binding):
             return self.process_error(response.content)
             raise NotImplementedError("No error handling yet!")
 
-        envelope = etree.fromstring(response.content)
+        envelope = fromstring(response.content)
         return operation.process_reply(envelope)
 
     def process_error(self, response):
-        doc = etree.fromstring(response)
+        doc = fromstring(response)
         fault_node = doc.find(
             'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
 

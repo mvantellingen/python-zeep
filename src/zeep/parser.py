@@ -1,5 +1,6 @@
 import os
 
+from defusedxml.lxml import fromstring
 from lxml import etree
 
 from six.moves.urllib.parse import urljoin, urlparse
@@ -23,7 +24,7 @@ class ImportResolver(etree.Resolver):
 def parse_xml(content, transport, parser_context=None, base_url=None):
     parser = etree.XMLParser(remove_comments=True)
     parser.resolvers.add(ImportResolver(transport, parser_context))
-    return etree.fromstring(content, parser=parser, base_url=base_url)
+    return fromstring(content, parser=parser, base_url=base_url)
 
 
 def load_external(url, transport, parser_context=None, base_url=None):

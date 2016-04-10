@@ -1,3 +1,8 @@
+0.4.0 (tbd)
+-----------
+ - Add defusedxml module for XML security issues
+
+
 0.3.0 (2016-04-10)
 ------------------
  - Correctly handle recursion in WSDL and XSD files

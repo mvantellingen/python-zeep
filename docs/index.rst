@@ -9,7 +9,7 @@ Highlights:
  * Modern codebase compatible with Python 2.7, 3.3, 3.4 and 3.5
  * Build on top of lxml and requests
  * Supports recursive WSDL and XSD documents and xsd:any elements.
-
+ * Uses the defusedxml module for XML security issues
 
 Features still in development include:
  * Support for WSSE 
