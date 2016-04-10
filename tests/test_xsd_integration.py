@@ -7,23 +7,21 @@ from zeep import xsd
 def test_complex_type_alt():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/"
-                  elementFormDefault="qualified">
-            <element name="Address">
-              <complexType>
-                <sequence>
-                  <element minOccurs="0" maxOccurs="1" name="foo" type="string" />
-                </sequence>
-              </complexType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="Address">
+            <complexType>
+              <sequence>
+                <element minOccurs="0" maxOccurs="1" name="foo" type="string" />
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('ns0:Address')
     obj = address_type(foo='bar')
 
@@ -43,25 +41,23 @@ def test_complex_type_alt():
 def test_element_with_annotation():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/"
-                  elementFormDefault="qualified">
-            <element name="Address" type="tns:AddressType">
-                <annotation>
-                    <documentation>HOI!</documentation>
-                </annotation>
-            </element>
-            <complexType name="AddressType">
-              <sequence>
-                <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
-              </sequence>
-            </complexType>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="Address" type="tns:AddressType">
+              <annotation>
+                  <documentation>HOI!</documentation>
+              </annotation>
+          </element>
+          <complexType name="AddressType">
+            <sequence>
+              <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
+            </sequence>
+          </complexType>
+        </schema>
     """.strip())
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     address_type(foo='bar')
 
@@ -69,23 +65,21 @@ def test_element_with_annotation():
 def test_complex_type_parsexml():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/"
-                  elementFormDefault="qualified">
-            <element name="Address">
-              <complexType>
-                <sequence>
-                  <element minOccurs="0" maxOccurs="1" name="foo" type="string" />
-                </sequence>
-              </complexType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="Address">
+            <complexType>
+              <sequence>
+                <element minOccurs="0" maxOccurs="1" name="foo" type="string" />
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     input_node = etree.fromstring("""
@@ -101,23 +95,21 @@ def test_complex_type_parsexml():
 def test_complex_type_array_parsexml():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/"
-                  elementFormDefault="qualified">
-            <element name="Address">
-              <complexType>
-                <sequence>
-                  <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
-                </sequence>
-              </complexType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="Address">
+            <complexType>
+              <sequence>
+                <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     input_node = etree.fromstring("""
@@ -134,23 +126,21 @@ def test_complex_type_array_parsexml():
 def test_array():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/"
-                  elementFormDefault="qualified">
-            <element name="Address">
-              <complexType>
-                <sequence>
-                  <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
-                </sequence>
-              </complexType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="Address">
+            <complexType>
+              <sequence>
+                <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type()
     assert obj.foo == []
@@ -174,23 +164,21 @@ def test_array():
 def test_array_single_init():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/"
-                  elementFormDefault="qualified">
-            <element name="Address">
-              <complexType>
-                <sequence>
-                  <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
-                </sequence>
-              </complexType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="Address">
+            <complexType>
+              <sequence>
+                <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type(foo=['foo'])
 
@@ -210,22 +198,20 @@ def test_array_single_init():
 def test_array_resolve_lazy():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/"
-                  elementFormDefault="qualified">
-            <element name="Address" type="tns:AddressType" />
-            <complexType name="AddressType">
-              <sequence>
-                <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
-              </sequence>
-            </complexType>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="Address" type="tns:AddressType" />
+          <complexType name="AddressType">
+            <sequence>
+              <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
+            </sequence>
+          </complexType>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type()
     assert obj.foo == []
@@ -249,24 +235,22 @@ def test_array_resolve_lazy():
 def test_complex_type_array_to_other_complex_object():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-            <xs:complexType name="Address">
-              <xs:sequence>
-                <xs:element minOccurs="0" maxOccurs="1" name="foo" type="xs:string" />
-              </xs:sequence>
-            </xs:complexType>
-            <xs:complexType name="ArrayOfAddress">
-              <xs:sequence>
-                <xs:element minOccurs="0" maxOccurs="unbounded" name="Address" nillable="true" type="Address" />
-              </xs:sequence>
-            </xs:complexType>
-            <xs:element name="ArrayOfAddress" type="ArrayOfAddress"/>
-          </xs:schema>
-        </types>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:complexType name="Address">
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="1" name="foo" type="xs:string" />
+            </xs:sequence>
+          </xs:complexType>
+          <xs:complexType name="ArrayOfAddress">
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="unbounded" name="Address" nillable="true" type="Address" />
+            </xs:sequence>
+          </xs:complexType>
+          <xs:element name="ArrayOfAddress" type="ArrayOfAddress"/>
+        </xs:schema>
     """.strip())  # noqa
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_array = schema.get_element('ArrayOfAddress')
     obj = address_array()
     assert obj.Address == []
@@ -290,24 +274,22 @@ def test_complex_type_array_to_other_complex_object():
 def test_complex_type_init_kwargs():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/">
-            <element name="Address">
-              <complexType>
-                <sequence>
-                  <element minOccurs="0" maxOccurs="1" name="NameFirst" type="string"/>
-                  <element minOccurs="0" maxOccurs="1" name="NameLast" type="string"/>
-                  <element minOccurs="0" maxOccurs="1" name="Email" type="string"/>
-                </sequence>
-              </complexType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="Address">
+            <complexType>
+              <sequence>
+                <element minOccurs="0" maxOccurs="1" name="NameFirst" type="string"/>
+                <element minOccurs="0" maxOccurs="1" name="NameLast" type="string"/>
+                <element minOccurs="0" maxOccurs="1" name="Email" type="string"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type(
         NameFirst='John', NameLast='Doe', Email='j.doe@example.com')
@@ -319,24 +301,22 @@ def test_complex_type_init_kwargs():
 def test_complex_type_init_args():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/">
-            <element name="Address">
-              <complexType>
-                <sequence>
-                  <element minOccurs="0" maxOccurs="1" name="NameFirst" type="string"/>
-                  <element minOccurs="0" maxOccurs="1" name="NameLast" type="string"/>
-                  <element minOccurs="0" maxOccurs="1" name="Email" type="string"/>
-                </sequence>
-              </complexType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="Address">
+            <complexType>
+              <sequence>
+                <element minOccurs="0" maxOccurs="1" name="NameFirst" type="string"/>
+                <element minOccurs="0" maxOccurs="1" name="NameLast" type="string"/>
+                <element minOccurs="0" maxOccurs="1" name="Email" type="string"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type('John', 'Doe', 'j.doe@example.com')
     assert obj.NameFirst == 'John'
@@ -347,22 +327,20 @@ def test_complex_type_init_args():
 def test_complex_type_with_attributes():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-            <xs:complexType name="Address">
-              <xs:sequence>
-                <xs:element minOccurs="0" maxOccurs="1" name="NameFirst" type="xs:string"/>
-                <xs:element minOccurs="0" maxOccurs="1" name="NameLast" type="xs:string"/>
-                <xs:element minOccurs="0" maxOccurs="1" name="Email" type="xs:string"/>
-              </xs:sequence>
-              <xs:attribute name="id" type="xs:string" use="required"/>
-            </xs:complexType>
-            <xs:element name="Address" type="Address"/>
-          </xs:schema>
-        </types>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:complexType name="Address">
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="1" name="NameFirst" type="xs:string"/>
+              <xs:element minOccurs="0" maxOccurs="1" name="NameLast" type="xs:string"/>
+              <xs:element minOccurs="0" maxOccurs="1" name="Email" type="xs:string"/>
+            </xs:sequence>
+            <xs:attribute name="id" type="xs:string" use="required"/>
+          </xs:complexType>
+          <xs:element name="Address" type="Address"/>
+        </xs:schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
 
     address_type = schema.get_element('Address')
     obj = address_type(
@@ -386,34 +364,32 @@ def test_complex_type_with_attributes():
 def test_complex_type_with_extension():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <xs:schema
-              xmlns:xs="http://www.w3.org/2001/XMLSchema"
-              xmlns:tns="http://tests.python-zeep.org/"
-              targetNamespace="http://tests.python-zeep.org/"
-              elementFormDefault="qualified">
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
 
-              <xs:complexType name="Address">
-                <xs:complexContent>
-                  <xs:extension base="tns:Name">
-                    <xs:sequence>
-                      <xs:element name="country" type="xs:string"/>
-                    </xs:sequence>
-                  </xs:extension>
-                </xs:complexContent>
-              </xs:complexType>
-            <xs:element name="Address" type="tns:Address"/>
-
-            <xs:complexType name="Name">
-              <xs:sequence>
-                <xs:element name="first_name" type="xs:string"/>
-                <xs:element name="last_name" type="xs:string"/>
-              </xs:sequence>
+            <xs:complexType name="Address">
+              <xs:complexContent>
+                <xs:extension base="tns:Name">
+                  <xs:sequence>
+                    <xs:element name="country" type="xs:string"/>
+                  </xs:sequence>
+                </xs:extension>
+              </xs:complexContent>
             </xs:complexType>
-          </xs:schema>
-        </types>
+          <xs:element name="Address" type="tns:Address"/>
+
+          <xs:complexType name="Name">
+            <xs:sequence>
+              <xs:element name="first_name" type="xs:string"/>
+              <xs:element name="last_name" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:schema>
     """.strip())
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     obj = address_type(
@@ -436,26 +412,24 @@ def test_complex_type_with_extension():
 def test_complex_type_simple_content():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <xs:schema
-              xmlns:xs="http://www.w3.org/2001/XMLSchema"
-              xmlns:tns="http://tests.python-zeep.org/"
-              targetNamespace="http://tests.python-zeep.org/"
-              elementFormDefault="qualified">
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
 
-            <xs:element name="ShoeSize">
-              <xs:complexType>
-                <xs:simpleContent>
-                  <xs:extension base="xs:integer">
-                    <xs:attribute name="sizing" type="xs:string" />
-                  </xs:extension>
-                </xs:simpleContent>
-              </xs:complexType>
-            </xs:element>
-          </xs:schema>
-        </types>
+          <xs:element name="ShoeSize">
+            <xs:complexType>
+              <xs:simpleContent>
+                <xs:extension base="xs:integer">
+                  <xs:attribute name="sizing" type="xs:string" />
+                </xs:extension>
+              </xs:simpleContent>
+            </xs:complexType>
+          </xs:element>
+        </xs:schema>
     """.strip())
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     shoe_type = schema.get_element('{http://tests.python-zeep.org/}ShoeSize')
 
     obj = shoe_type(20, sizing='EUR')
@@ -473,24 +447,22 @@ def test_complex_type_simple_content():
 def test_custom_simple_type():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/"
-                  elementFormDefault="qualified">
-            <element name="something">
-              <simpleType>
-                <restriction base="integer">
-                  <minInclusive value="0"/>
-                  <maxInclusive value="100"/>
-                </restriction>
-              </simpleType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="something">
+            <simpleType>
+              <restriction base="integer">
+                <minInclusive value="0"/>
+                <maxInclusive value="100"/>
+              </restriction>
+            </simpleType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
 
     custom_type = schema.get_element('{http://tests.python-zeep.org/}something')
     obj = custom_type(75)
@@ -508,29 +480,27 @@ def test_custom_simple_type():
 def test_group():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                     xmlns:tns="http://tests.python-zeep.org/"
-                     targetNamespace="http://tests.python-zeep.org/"
-                     elementFormDefault="qualified">
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://tests.python-zeep.org/"
+                   targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="qualified">
 
-            <xs:element name="Address">
-              <xs:complexType>
-                <xs:group ref="tns:Name" />
-              </xs:complexType>
-            </xs:element>
+          <xs:element name="Address">
+            <xs:complexType>
+              <xs:group ref="tns:Name" />
+            </xs:complexType>
+          </xs:element>
 
-            <xs:group name="Name">
-              <xs:sequence>
-                <xs:element name="first_name" type="xs:string" />
-                <xs:element name="last_name" type="xs:string" />
-              </xs:sequence>
-            </xs:group>
+          <xs:group name="Name">
+            <xs:sequence>
+              <xs:element name="first_name" type="xs:string" />
+              <xs:element name="last_name" type="xs:string" />
+            </xs:sequence>
+          </xs:group>
 
-          </xs:schema>
-        </types>
+        </xs:schema>
     """.strip())
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     obj = address_type(first_name='foo', last_name='bar')
@@ -551,41 +521,39 @@ def test_group():
 def test_group_for_type():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                     xmlns:tns="http://tests.python-zeep.org/"
-                     targetNamespace="http://tests.python-zeep.org/"
-                     elementFormDefault="unqualified">
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://tests.python-zeep.org/"
+                   targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="unqualified">
 
-            <xs:element name="Address" type="tns:AddressType" />
+          <xs:element name="Address" type="tns:AddressType" />
 
-            <xs:complexType name="AddressType">
-              <xs:sequence>
-                <xs:group ref="tns:NameGroup"/>
-                <xs:group ref="tns:AddressGroup"/>
-              </xs:sequence>
-            </xs:complexType>
+          <xs:complexType name="AddressType">
+            <xs:sequence>
+              <xs:group ref="tns:NameGroup"/>
+              <xs:group ref="tns:AddressGroup"/>
+            </xs:sequence>
+          </xs:complexType>
 
-            <xs:group name="NameGroup">
-              <xs:sequence>
-                <xs:element name="first_name" type="xs:string" />
-                <xs:element name="last_name" type="xs:string" />
-              </xs:sequence>
-            </xs:group>
+          <xs:group name="NameGroup">
+            <xs:sequence>
+              <xs:element name="first_name" type="xs:string" />
+              <xs:element name="last_name" type="xs:string" />
+            </xs:sequence>
+          </xs:group>
 
-            <xs:group name="AddressGroup">
-              <xs:annotation>
-                <xs:documentation>blub</xs:documentation>
-              </xs:annotation>
-              <xs:sequence>
-                <xs:element name="city" type="xs:string" />
-                <xs:element name="country" type="xs:string" />
-              </xs:sequence>
-            </xs:group>
-          </xs:schema>
-        </types>
+          <xs:group name="AddressGroup">
+            <xs:annotation>
+              <xs:documentation>blub</xs:documentation>
+            </xs:annotation>
+            <xs:sequence>
+              <xs:element name="city" type="xs:string" />
+              <xs:element name="country" type="xs:string" />
+            </xs:sequence>
+          </xs:group>
+        </xs:schema>
     """.strip())
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
     obj = address_type(
@@ -610,24 +578,22 @@ def test_group_for_type():
 def test_element_ref():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/"
-                     elementFormDefault="qualified">
-            <element name="foo" type="string"/>
-            <element name="bar">
-              <complexType>
-                <sequence>
-                  <element ref="tns:foo"/>
-                </sequence>
-              </complexType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="qualified">
+          <element name="foo" type="string"/>
+          <element name="bar">
+            <complexType>
+              <sequence>
+                <element ref="tns:foo"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
 
     foo_type = schema.get_element('{http://tests.python-zeep.org/}foo')
     assert isinstance(foo_type.type, xsd.String)
@@ -650,26 +616,24 @@ def test_element_ref():
 def test_element_any():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  targetNamespace="http://tests.python-zeep.org/"
-                     elementFormDefault="qualified">
-            <element name="foo" type="string"/>
-            <element name="bar">
-              <complexType>
-                <sequence>
-                  <element ref="tns:foo"/>
-                  <any/>
-                  <any maxOccurs="unbounded"/>
-                </sequence>
-              </complexType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="qualified">
+          <element name="foo" type="string"/>
+          <element name="bar">
+            <complexType>
+              <sequence>
+                <element ref="tns:foo"/>
+                <any/>
+                <any maxOccurs="unbounded"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
 
     foo_type = schema.get_element('{http://tests.python-zeep.org/}foo')
     assert isinstance(foo_type.type, xsd.String)
@@ -691,30 +655,26 @@ def test_element_any():
     assert_nodes_equal(expected, node)
 
 
-
-
 def test_unqualified():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <types>
-          <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  attributeFormDefault="qualified"
-                  elementFormDefault="qualified"
-                  targetNamespace="http://tests.python-zeep.org/">
-            <element name="Address">
-              <complexType>
-                <sequence>
-                  <element name="foo" type="xsd:string" form="unqualified" />
-                </sequence>
-              </complexType>
-            </element>
-          </schema>
-        </types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                attributeFormDefault="qualified"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="Address">
+            <complexType>
+              <sequence>
+                <element name="foo" type="xsd:string" form="unqualified" />
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type(foo='bar')
 
@@ -734,27 +694,25 @@ def test_unqualified():
 def test_qualified_attribute():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <wsdl:types xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
-          <xsd:schema
-                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  attributeFormDefault="qualified"
-                  elementFormDefault="qualified"
-                  targetNamespace="http://tests.python-zeep.org/">
-            <xsd:element name="Address">
-              <xsd:complexType>
-                <xsd:sequence>
-                  <xsd:element name="foo" type="xsd:string" form="unqualified" />
-                </xsd:sequence>
-                <xsd:attribute name="id" type="xsd:string" use="required" form="unqualified" />
-                <xsd:attribute name="pos" type="xsd:string" use="required" />
-              </xsd:complexType>
-            </xsd:element>
-          </xsd:schema>
-        </wsdl:types>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                attributeFormDefault="qualified"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="Address">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="foo" type="xsd:string" form="unqualified" />
+              </xsd:sequence>
+              <xsd:attribute name="id" type="xsd:string" use="required" form="unqualified" />
+              <xsd:attribute name="pos" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type(foo='bar', id="20", pos="30")
 
@@ -774,40 +732,38 @@ def test_qualified_attribute():
 def test_init_with_dicts():
     node = etree.fromstring("""
         <?xml version="1.0"?>
-        <wsdl:types xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
-          <xsd:schema
-                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                  xmlns:tns="http://tests.python-zeep.org/"
-                  attributeFormDefault="qualified"
-                  elementFormDefault="qualified"
-                  targetNamespace="http://tests.python-zeep.org/">
-            <xsd:element name="Address">
-              <xsd:complexType>
-                <xsd:sequence>
-                  <xsd:element name="name" type="xsd:string"/>
-                  <xsd:element minOccurs="0" name="optional" type="xsd:string"/>
-                  <xsd:element name="container" nillable="true" type="tns:Container"/>
-                </xsd:sequence>
-              </xsd:complexType>
-            </xsd:element>
-
-            <xsd:complexType name="Container">
-              <xsd:sequence>
-                <xsd:element maxOccurs="unbounded" minOccurs="0" name="service"
-                             nillable="true" type="tns:ServiceRequestType"/>
-              </xsd:sequence>
-            </xsd:complexType>
-
-            <xsd:complexType name="ServiceRequestType">
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                attributeFormDefault="qualified"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="Address">
+            <xsd:complexType>
               <xsd:sequence>
                 <xsd:element name="name" type="xsd:string"/>
+                <xsd:element minOccurs="0" name="optional" type="xsd:string"/>
+                <xsd:element name="container" nillable="true" type="tns:Container"/>
               </xsd:sequence>
             </xsd:complexType>
-          </xsd:schema>
-        </wsdl:types>
+          </xsd:element>
+
+          <xsd:complexType name="Container">
+            <xsd:sequence>
+              <xsd:element maxOccurs="unbounded" minOccurs="0" name="service"
+                           nillable="true" type="tns:ServiceRequestType"/>
+            </xsd:sequence>
+          </xsd:complexType>
+
+          <xsd:complexType name="ServiceRequestType">
+            <xsd:sequence>
+              <xsd:element name="name" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:schema>
     """.strip())
 
-    schema = xsd.Schema(node.find('{http://www.w3.org/2001/XMLSchema}schema'))
+    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
     obj = address_type(name='foo', container={'service': [{'name': 'foo'}]})
 
