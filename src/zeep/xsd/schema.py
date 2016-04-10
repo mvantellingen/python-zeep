@@ -47,6 +47,9 @@ class Schema(object):
                 schema.resolve()
             self.resolve()
 
+    def __repr__(self):
+        return '<Schema(location=%r)>' % (self._location)
+
     def resolve(self):
         for type_ in self._types.values():
             type_.resolve(self)
@@ -106,8 +109,8 @@ class Schema(object):
             return self._imports[name.namespace].get_element(name)
 
         raise KeyError(
-            "No such element: %r (Only have %s)" % (
-                name.text, ', '.join(self._elements)))
+            "No such element: %r (Only have %s) (from: %s)" % (
+                name.text, ', '.join(self._elements), self))
 
     def custom_type(self, name):
         return self.get_type(name)
