@@ -211,22 +211,48 @@ class Definitions(object):
             for schema_node in schema_nodes
         ]
 
-        for schema_node in schema_nodes:
-            tns = schema_node.get('targetNamespace')
-            self.wsdl._parser_context.schema_nodes.add(
-                'intschema+%s' % tns, schema_node)
+        if len(schema_nodes) == 1:
+            return Schema(
+                schema_nodes[0], self.wsdl.transport, self.location,
+                self.wsdl._parser_context)
+
+        # A wsdl can container multiple schema nodes. The can import each
+        # other by simply referencing by the namespace. To handle this in a
+        # way that lxml schema can also handle it we create a new root schema
+        # which imports the other schemas. This seems to work fine, although
+        # I'm not sure how the non-transitive nature of imports impact it.
+
+        # Create namespace mapping (namespace -> internal location)
+        schema_ns = {}
+        for i, schema_node in enumerate(schema_nodes):
+            ns = schema_node.get('targetNamespace')
+            schema_ns[ns] = 'intschema:xsd%d' % i
+            self.wsdl._parser_context.schema_nodes.add(schema_ns[ns], schema_node)
 
         # Only handle the import statements from the 2001 xsd's for now
         import_tag = QName('http://www.w3.org/2001/XMLSchema', 'import').text
-        for schema_node in schema_nodes:
+
+        # Create a new schema node with xsd:import statements for all
+        # schema's listed here.
+        root = etree.Element(
+            etree.QName('http://www.w3.org/2001/XMLSchema', 'schema'))
+        for i, schema_node in enumerate(schema_nodes):
+            import_node = etree.Element(
+                etree.QName('http://www.w3.org/2001/XMLSchema', 'import'))
+            import_node.set('schemaLocation', 'intschema:xsd%d' % i)
+            if schema_node.get('targetNamespace'):
+                import_node.set('namespace', schema_node.get('targetNamespace'))
+            root.append(import_node)
+
+            # Add the namespace mapping created earlier here to the import
+            # statements.
             for import_node in schema_node.findall(import_tag):
                 if import_node.get('schemaLocation'):
                     continue
                 namespace = import_node.get('namespace')
-                import_node.set('schemaLocation', 'intschema+%s' % namespace)
+                import_node.set('schemaLocation', schema_ns[namespace])
 
-        schema_node = schema_nodes[0]
-
+        schema_node = root
         return Schema(
             schema_node, self.wsdl.transport, self.location,
             self.wsdl._parser_context)
