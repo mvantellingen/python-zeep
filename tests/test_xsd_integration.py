@@ -811,9 +811,8 @@ def test_complex_with_simple():
     schema = xsd.Schema(node)
     address_type = schema.get_element('ns0:Address')
 
-    print address_type.type.signature()
+    assert address_type.type.signature()
     obj = address_type('argh', name='foobie')
-
 
     expected = """
       <document>
