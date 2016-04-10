@@ -41,7 +41,7 @@ class SchemaVisitor(object):
         return result
 
     def process_ref_attribute(self, node):
-        ref = qname_attr(node, 'ref', self.schema._target_namespace)
+        ref = qname_attr(node, 'ref')
         if ref:
             return xsd_elements.RefElement(node.tag, ref, self.schema)
 
