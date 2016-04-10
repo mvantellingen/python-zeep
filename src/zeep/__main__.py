@@ -46,11 +46,6 @@ if __name__ == '__main__':
                     'propagate': True,
                     'handlers': ['console'],
                 },
-                'zeep.xsd': {
-                    'level': 'INFO',
-                    'propagate': True,
-                    'handlers': ['console'],
-                },
             }
         })
 
