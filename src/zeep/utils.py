@@ -1,4 +1,5 @@
 from lxml import etree
+from collections import OrderedDict, defaultdict
 
 
 def qname_attr(node, attr_name, target_namespace=None):
@@ -29,25 +30,60 @@ def findall_multiple_ns(node, name, namespace_sets):
     return result
 
 
-def process_signature(attribute_order, args, kwargs):
+def process_signature(fields, args, kwargs):
     result = {}
+    field_map = OrderedDict([
+        (name, (elm, container)) for name, elm, container in fields
+    ])
 
-    if len(args) > len(attribute_order):
+    # XXX len(args) > len(attribute_order - num choice elms)
+    if len(args) > len(fields):
         raise TypeError(
             '__init__() takes exactly %d arguments (%d given)' % (
-                len(attribute_order), len(args)))
+                len(fields), len(args)))
 
-    for key, value in zip(attribute_order, args):
+    # Ignore choices
+    for key, value in zip(field_map.keys(), args):
         if key in kwargs:
             raise TypeError(
                 "__init__() got multiple values for keyword argument '%s'"
                 % key)
+
+        element, container = field_map[key]
+        if container:
+            raise TypeError(
+                "Choice element value (%s) can only be set via " +
+                "named arguments" % (key))
+
         result[key] = value
 
+    element_counts = defaultdict(lambda: 0)
     for key, value in kwargs.items():
-        if key not in attribute_order:
+        if key not in field_map:
             raise TypeError(
                 "__init__() got an unexpected keyword argument %r" % key)
+        element, container = field_map[key]
+        count_key = container.key if container else key
+
+        if isinstance(value, list):
+            element_counts[count_key] += len(value)
+        else:
+            element_counts[count_key] += 1
+        num_items = element_counts[count_key]
+
+        if container:
+            if container.max_occurs and num_items > container.max_occurs:
+                raise ValueError(
+                    "%s item can occur at max %d times, received: %d" % (
+                        container.__class__.__name__,
+                        container.max_occurs, num_items))
+
+        else:
+            if element.max_occurs and num_items > element.max_occurs:
+                raise ValueError(
+                    "%s element can occur at max %d times, received: %d" % (
+                        key, element.max_occurs, num_items))
+
         result[key] = value
 
     return result

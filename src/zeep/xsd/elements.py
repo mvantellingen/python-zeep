@@ -20,8 +20,10 @@ class Any(Base):
 
     def render(self, parent, value):
         assert parent is not None
-        if value is None and self.is_optional:
+        if value is None:
+            # not possible
             return
+
         if isinstance(value.value, list):
             for val in value.value:
                 value.xsd_type.render(parent, val)
@@ -39,6 +41,7 @@ class Element(Base):
         self.type = type_
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs
+        self.nillable = False
         # assert type_
 
     def __repr__(self):
@@ -54,11 +57,13 @@ class Element(Base):
     def render(self, parent, value):
         assert parent is not None
 
+        if value is None:
+            if not self.is_optional:
+                node = etree.SubElement(parent, self.qname)
+            return
+
         if self.name is None:
             return self.type.render(parent, value)
-
-        if value is None and self.is_optional:
-            return
 
         node = etree.SubElement(parent, self.qname)
         return self.type.render(node, value)
@@ -113,16 +118,28 @@ class GroupElement(Element):
 
 
 class Choice(object):
-    def __init__(self, elements):
+    def __init__(self, elements, max_occurs=1, min_occurs=1):
         self.name = 'choice'
         self.type = None
+        self.elements = elements
+        self.max_occurs = max_occurs
+        self.min_occurs = min_occurs
 
     @property
     def is_optional(self):
         return True
 
-    def _signature(self, name):
-        return 'todo'
+    def key(self):
+        # XXX Any elemetns?
+        return ':'.join(elm.name for elm in self.elements)
+
+    def _signature(self):
+        part = ', '.join([
+            element._signature(element.name)
+            for element in self.elements
+        ])
+
+        return '(Choice: %s)' % part
 
 
 class RefElement(object):

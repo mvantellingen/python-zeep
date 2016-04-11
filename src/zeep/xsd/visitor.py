@@ -567,7 +567,17 @@ class SchemaVisitor(object):
             Content: (annotation?, (element | group | choice | sequence | any)*)
             </choice>
         """
-        raise NotImplementedError()
+        # There should be only max nodes, first node (annotation) is irrelevant
+        children = node.getchildren()
+        if children[0].tag == tags.annotation:
+            children.pop(0)
+
+        choices = []
+        for child in children:
+            elm = self.process(child, node)
+            elm.min_occurs = 0
+            choices.append(elm)
+        return [xsd_elements.Choice(choices)]
 
     def visit_union(self, node, parent):
         """

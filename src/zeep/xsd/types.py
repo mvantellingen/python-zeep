@@ -4,7 +4,7 @@ from collections import OrderedDict
 import six
 
 from zeep.utils import process_signature
-from zeep.xsd.elements import Any, GroupElement, ListElement, RefElement, Element
+from zeep.xsd.elements import Any, GroupElement, ListElement, RefElement, Element, Choice
 
 
 class Type(object):
@@ -91,13 +91,16 @@ class ComplexType(Type):
         result = []
         num = 1
         for prop in self._children:
-            if isinstance(prop, Any):
-                result.append(('_any_%d' % num, prop))
+            if isinstance(prop, Choice):
+                for elm in prop.elements:
+                    result.append((elm.name, elm, prop))
+            elif isinstance(prop, Any):
+                result.append(('_any_%d' % num, prop, None))
                 num += 1
             elif prop.name is None:
-                result.append(('_value', prop))
+                result.append(('_value', prop, None))
             else:
-                result.append((prop.name, prop))
+                result.append((prop.name, prop, None))
         return result
 
     def serialize(self, value):
@@ -107,9 +110,16 @@ class ComplexType(Type):
         }
 
     def render(self, parent, value):
-        for name, element in self.fields():
+        for name, element, container in self.fields():
             sub_value = getattr(value, name, None)
-            if sub_value is not None:
+
+            if container and isinstance(container, Choice):
+                if isinstance(sub_value, list):
+                    for item in sub_value:
+                        element.render(parent, item)
+                elif sub_value is not None:
+                    element.render(parent, sub_value)
+            else:
                 element.render(parent, sub_value)
 
     def __call__(self, *args, **kwargs):
@@ -142,8 +152,8 @@ class ComplexType(Type):
 
     def signature(self):
         return ', '.join([
-            element._signature(name)
-            for name, element in self.fields()
+            element._signature(name) if not container else container._signature()
+            for name, element, container in self.fields()
         ])
 
     def parse_xmlelement(self, xmlelement):
@@ -191,15 +201,15 @@ class CompoundValue(object):
         fields = self._xsd_type.fields()
 
         # Set default values
-        for key, value in fields:
+        for key, value, container in fields:
             if isinstance(value, ListElement):
                 value = []
             else:
                 value = None
             setattr(self, key, value)
 
-        fields = OrderedDict(fields)
-        items = process_signature(fields.keys(), args, kwargs)
+        items = process_signature(fields, args, kwargs)
+        fields = OrderedDict([(name, elm) for name, elm, container in fields])
         for key, value in items.items():
             field = fields[key]
 

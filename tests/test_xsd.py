@@ -96,7 +96,6 @@ def test_any():
     assert_nodes_equal(expected, node)
 
 
-
 def test_any_type_check():
     some_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'doei'),
@@ -131,10 +130,28 @@ def test_choice():
                     xsd.Element(
                         etree.QName('http://tests.python-zeep.org/', 'item_3'),
                         xsd.String()),
-                ])
-
+                ], max_occurs=3),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'post'),
+                    xsd.String()),
             ]
         )
     )
 
-    root(pre='foo', _choice_1=ChoiceObject())
+    obj = root('foo', item_1=[20, 30], item_2='nyet')
+    node = etree.Element('document')
+    root.render(node, obj)
+    print etree.tostring(node)
+
+    expected = """
+    <document>
+      <ns0:kies xmlns:ns0="http://tests.python-zeep.org/">
+        <ns0:pre>foo</ns0:pre>
+        <ns0:item_1>20</ns0:item_1>
+        <ns0:item_1>30</ns0:item_1>
+        <ns0:item_2>nyet</ns0:item_2>
+        <ns0:post/>
+      </ns0:kies>
+    </document>
+    """.strip()
+    assert_nodes_equal(expected, node)

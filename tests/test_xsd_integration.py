@@ -847,3 +847,4 @@ def test_choice_element():
     address_type = schema.get_element('ns0:Address')
 
     print address_type.type.signature()
+    address_type(item_1="foo")
