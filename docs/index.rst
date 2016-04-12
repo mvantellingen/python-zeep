@@ -32,11 +32,11 @@ Complex requests
 ================
 
 Most of the times you need to pass nested data to the soap client. These 
-Complex types can be created using the `client.get_element()` method::
+Complex types can be created using the `client.get_type()` method::
 
     >>> from zeep import Client
     >>> client = zeep.Client('http://my-entrprisy-endpoint.com')
-    >>> order_type = client.get_element('ns0:Order')
+    >>> order_type = client.get_type('ns0:Order')
     >>> order = order_type(
     ...     number='1234', billing_address=billing_address)
     >>> client.service.submit_order(user_id=1, order=order)
