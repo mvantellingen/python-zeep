@@ -141,7 +141,7 @@ def test_choice():
     obj = root('foo', item_1=[20, 30], item_2='nyet')
     node = etree.Element('document')
     root.render(node, obj)
-    print etree.tostring(node)
+    assert etree.tostring(node)
 
     expected = """
     <document>
