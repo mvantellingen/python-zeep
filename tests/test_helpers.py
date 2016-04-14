@@ -33,7 +33,8 @@ def test_serialize():
                                 )
                             )
                         ]
-                    )
+                    ),
+                    max_occurs=2
                 )
 
             ]

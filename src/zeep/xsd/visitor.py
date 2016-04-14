@@ -557,6 +557,28 @@ class SchemaVisitor(object):
         """
         raise NotImplementedError()
 
+    def visit_choice(self, node, parent):
+        """
+            <choice
+              id = ID
+              maxOccurs= (nonNegativeInteger | unbounded) : 1
+              minOccurs= nonNegativeInteger : 1
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (element | group | choice | sequence | any)*)
+            </choice>
+        """
+        # There should be only max nodes, first node (annotation) is irrelevant
+        children = node.getchildren()
+        if children[0].tag == tags.annotation:
+            children.pop(0)
+
+        choices = []
+        for child in children:
+            elm = self.process(child, node)
+            elm.min_occurs = 0
+            choices.append(elm)
+        return [xsd_elements.Choice(choices)]
+
     def visit_union(self, node, parent):
         """
             <union
@@ -598,6 +620,7 @@ class SchemaVisitor(object):
     visitors = {
         tags.any: visit_any,
         tags.element: visit_element,
+        tags.choice: visit_choice,
         tags.simpleType: visit_simple_type,
         tags.anyAttribute: visit_any_attribute,
         tags.complexType: visit_complex_type,
