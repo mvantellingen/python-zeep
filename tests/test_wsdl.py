@@ -37,11 +37,18 @@ def test_parse_soap_wsdl():
 
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response)
+        account = obj.schema.get_type('{http://example.com/stockquote.xsd}account')
+        account.id = 100
+        country = obj.schema.get_element(
+            '{http://example.com/stockquote.xsd}country'
+        ).type()
+        country.name = 'The Netherlands'
+        country.code = 'NL'
         result = port.send(
             transport=transport,
             operation='GetLastTradePrice',
             args=[],
-            kwargs={'tickerSymbol': 'foobar'})
+            kwargs={'tickerSymbol': 'foobar', 'account': account, 'country': country})
         assert result == 120.123
 
         request = m.request_history[0]
@@ -54,9 +61,17 @@ def test_parse_soap_wsdl():
                 xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
                 xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-           <soap-env:Body>
+            <soap-env:Body>
               <ns0:TradePriceRequest>
-                 <tickerSymbol>foobar</tickerSymbol>
+                <tickerSymbol>foobar</tickerSymbol>
+                <account>
+                  <id>100</id>
+                  <user/>
+                </account>
+                <ns0:country>
+                  <name>The Netherlands</name>
+                  <code>NL</code>
+                </ns0:country>
               </ns0:TradePriceRequest>
            </soap-env:Body>
         </soap-env:Envelope>
