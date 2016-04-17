@@ -4,7 +4,8 @@ from collections import OrderedDict
 import six
 
 from zeep.utils import process_signature
-from zeep.xsd.elements import Any, GroupElement, ListElement, RefElement, Element, Choice
+from zeep.xsd.elements import (
+    Any, Choice, Element, GroupElement, ListElement, RefElement)
 
 
 class Type(object):

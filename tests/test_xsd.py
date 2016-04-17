@@ -109,7 +109,7 @@ def test_any_type_check():
             ]
         ))
     with pytest.raises(TypeError):
-        obj = custom_type(_any_1=some_type)
+        custom_type(_any_1=some_type)
 
 
 def test_choice():

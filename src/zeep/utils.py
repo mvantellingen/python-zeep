@@ -1,5 +1,6 @@
-from lxml import etree
 from collections import OrderedDict, defaultdict
+
+from lxml import etree
 
 
 def qname_attr(node, attr_name, target_namespace=None):
