@@ -1,7 +1,25 @@
-ZEEP
-====
+========================
+Zeep: Python SOAP client 
+========================
 
 A fast and hip Python SOAP client ;-)
+
+Highlights:
+ * Modern codebase compatible with Python 2.7, 3.3, 3.4 and 3.5 and PyPy
+ * Build on top of lxml and requests
+ * Supports recursive WSDL and XSD documents.
+ * Supports the xsd:choice and xsd:any elements.
+ * Uses the defusedxml module foy issues
+
+Features still in development include:
+ * Support for WSSE 
+ * Support for HTTP bindings 
+ * XML validation using lxml XMLSchema's
+
+ Please see for more information the documentation at 
+ http://docs.python-zeep.org/
+
+
 
 Status
 ------
@@ -51,8 +69,6 @@ information.
 
 Bugs
 ----
-
-**Yes there will be bugs! :-)**
 
 If you encounter bugs then please `let me know`_ . A copy of the WSDL file if
 possible would be most helpful. If you are really cool then please open a PR
