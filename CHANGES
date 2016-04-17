@@ -1,6 +1,8 @@
-0.4.0 (tbd)
+0.4.0 (2016-04-17)
 -----------
  - Add defusedxml module for XML security issues
+ - Add support for choice elements
+ - Fix documentation example for complex types (Falk Schuetzenmeister)
 
 
 0.3.0 (2016-04-10)

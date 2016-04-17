@@ -169,7 +169,7 @@ class ComplexType(Type):
         for element in elements:
 
             # Find matching element
-            while field.qname != element.tag:
+            while field and field.qname != element.tag:
                 field = next(fields, None)
 
             if not field:
