@@ -1,5 +1,6 @@
 import pytest
 import requests_mock
+from pretend import stub
 from six import StringIO
 
 from tests.utils import assert_nodes_equal
@@ -9,9 +10,9 @@ from zeep.transports import Transport
 
 @pytest.mark.requests
 def test_parse_soap_wsdl():
-    transport = Transport()
+    client = stub(transport=Transport(), wsse=None)
 
-    obj = wsdl.WSDL('tests/wsdl_files/soap.wsdl', transport=transport)
+    obj = wsdl.WSDL('tests/wsdl_files/soap.wsdl', transport=client.transport)
     assert len(obj.services) == 1
 
     service = obj.services['{http://example.com/stockquote.wsdl}StockQuoteService']
@@ -22,17 +23,17 @@ def test_parse_soap_wsdl():
     assert port
 
     response = """
-    <?xml version="1.0"?>
-    <soapenv:Envelope
-        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-        xmlns:stoc="http://example.com/stockquote.xsd">
-       <soapenv:Header/>
-       <soapenv:Body>
-          <stoc:TradePrice>
-             <price>120.123</price>
-          </stoc:TradePrice>
-       </soapenv:Body>
-    </soapenv:Envelope>
+        <?xml version="1.0"?>
+        <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:stoc="http://example.com/stockquote.xsd">
+           <soapenv:Header/>
+           <soapenv:Body>
+              <stoc:TradePrice>
+                 <price>120.123</price>
+              </stoc:TradePrice>
+           </soapenv:Body>
+        </soapenv:Envelope>
     """.strip()
 
     with requests_mock.mock() as m:
@@ -45,7 +46,7 @@ def test_parse_soap_wsdl():
         country.name = 'The Netherlands'
         country.code = 'NL'
         result = port.send(
-            transport=transport,
+            client=client,
             operation='GetLastTradePrice',
             args=[],
             kwargs={'tickerSymbol': 'foobar', 'account': account, 'country': country})
@@ -81,9 +82,10 @@ def test_parse_soap_wsdl():
 
 @pytest.mark.requests
 def test_parse_soap_header_wsdl():
-    transport = Transport()
+    client = stub(transport=Transport(), wsse=None)
 
-    obj = wsdl.WSDL('tests/wsdl_files/soap_header.wsdl', transport=transport)
+    obj = wsdl.WSDL(
+        'tests/wsdl_files/soap_header.wsdl', transport=client.transport)
     assert len(obj.services) == 1
 
     service = obj.services['{http://example.com/stockquote.wsdl}StockQuoteService']
@@ -110,7 +112,7 @@ def test_parse_soap_header_wsdl():
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response)
         result = port.send(
-            transport=transport,
+            client=client,
             operation='GetLastTradePrice',
             args=[],
             kwargs={

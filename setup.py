@@ -9,8 +9,15 @@ install_requires = [
     'pytz',
 ]
 
-tests_require = [
+all_require = [
+    'dm.xmlsec.binding==1.3.2',
+    'pyOpenSSL>=0.14',
+]
+
+
+tests_require = all_require + [
     'freezegun==0.3.6',
+    'pretend==1.0.8',
     'pytest-cov>=2.2.0',
     'pytest>=2.8.3',
     'requests_mock>=0.7.0',
@@ -21,6 +28,8 @@ tests_require = [
     'flake8-blind-except==0.1.0',
     'flake8-debugger==1.4.0',
 ]
+
+
 
 setup(
     name='zeep',
@@ -33,7 +42,10 @@ setup(
 
     install_requires=install_requires,
     tests_require=tests_require,
-    extras_require={'test': tests_require},
+    extras_require={
+        'test': tests_require,
+        'all': all_require,
+    },
 
     entry_points={},
     package_dir={'': 'src'},

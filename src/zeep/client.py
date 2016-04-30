@@ -21,7 +21,7 @@ class OperationProxy(object):
 
     def __call__(self, *args, **kwargs):
         return self._proxy._port.send(
-            self._proxy._client.transport, self._op_name, args, kwargs)
+            self._proxy._client, self._op_name, args, kwargs)
 
 
 class ServiceProxy(object):
@@ -40,10 +40,11 @@ class ServiceProxy(object):
 
 class Client(object):
 
-    def __init__(self, wsdl, cache=None):
+    def __init__(self, wsdl, cache=None, wsse=None):
         self.cache = cache or SqliteCache()
         self.transport = Transport(self.cache)
         self.wsdl = WSDL(wsdl, self.transport)
+        self.wsse = wsse
 
         port = self.get_port()
         self.service = ServiceProxy(self, port)
