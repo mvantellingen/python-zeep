@@ -35,13 +35,14 @@ class Any(Base):
 
 
 class Element(Base):
-    def __init__(self, name, type_=None, min_occurs=1, max_occurs=1):
+    def __init__(self, name, type_=None, min_occurs=1, max_occurs=1,
+                 nillable=False):
         self.name = name.localname if name else None
         self.qname = name
         self.type = type_
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs
-        self.nillable = False
+        self.nillable = nillable
         # assert type_
 
     def __repr__(self):

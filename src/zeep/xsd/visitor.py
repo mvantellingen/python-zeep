@@ -175,10 +175,11 @@ class SchemaVisitor(object):
             max_occurs = 1
             min_occurs = 1
 
+        nillable = node.get('nillable') == 'true'
         cls = xsd_elements.Element if max_occurs == 1 else xsd_elements.ListElement
         element = cls(
             name=qname, type_=xsd_type,
-            min_occurs=min_occurs, max_occurs=max_occurs)
+            min_occurs=min_occurs, max_occurs=max_occurs, nillable=nillable)
 
         self.schema._elm_instances.append(element)
 
