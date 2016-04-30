@@ -165,6 +165,8 @@ class ComplexType(Type):
 
         elements = xmlelement.getchildren()
         attributes = xmlelement.attrib
+        if not elements and not attributes:
+            return
 
         fields_map = {f.name: f for f in fields if isinstance(f, Attribute)}
         for key, value in attributes.items():

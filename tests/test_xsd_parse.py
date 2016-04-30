@@ -65,16 +65,28 @@ def test_parse_with_optional():
                     xsd.String()),
                 xsd.Element(
                     etree.QName('http://tests.python-zeep.org/', 'item_2'),
-                    xsd.String(),
-                    min_occurs=0),
+                    xsd.ComplexType(
+                        children=[
+                            xsd.Element(
+                                etree.QName('http://tests.python-zeep.org/', 'item_2_1'),
+                                xsd.String(),
+                                nillable=True)
+                        ]
+                    )
+                ),
                 xsd.ListElement(
                     etree.QName('http://tests.python-zeep.org/', 'item_3'),
-                    xsd.String())
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_4'),
+                    xsd.String(),
+                    min_occurs=0),
             ]
         ))
     expected = etree.fromstring("""
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>1</ns0:item_1>
+          <ns0:item_2/>
           <ns0:item_3>3</ns0:item_3>
         </ns0:container>
     """)
@@ -82,3 +94,4 @@ def test_parse_with_optional():
     assert obj.item_1 == '1'
     assert obj.item_2 is None
     assert obj.item_3 == ['3']
+    assert obj.item_4 is None
