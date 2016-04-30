@@ -6,6 +6,7 @@ install_requires = [
     'lxml>=3.0.0',
     'requests>=2.7.0',
     'six>=1.0.0',
+    'pytz',
 ]
 
 tests_require = [

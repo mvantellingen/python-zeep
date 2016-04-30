@@ -2,6 +2,8 @@ import datetime
 from decimal import Decimal as D
 
 import isodate
+import pytest
+import pytz
 import six
 
 from zeep.xsd import builtins
@@ -80,6 +82,22 @@ class TestFloat:
         assert instance.pythonvalue('INF') == float('inf')
 
 
+
+
+class TestDuration:
+
+    def test_xmlvalue(self):
+        instance = builtins.Duration()
+        value = isodate.parse_duration('P0Y1347M0D')
+        assert instance.xmlvalue(value) == 'P1347M'
+
+    def test_pythonvalue(self):
+        instance = builtins.Duration()
+        expected = isodate.parse_duration('P0Y1347M0D')
+        value = 'P0Y1347M0D'
+        assert instance.pythonvalue(value) == expected
+
+
 class TestDateTime:
 
     def test_xmlvalue(self):
@@ -87,23 +105,16 @@ class TestDateTime:
         value = datetime.datetime(2016, 3, 4, 21, 14, 42)
         assert instance.xmlvalue(value) == '2016-03-04T21:14:42'
 
+        value = datetime.datetime(2016, 3, 4, 21, 14, 42, tzinfo=pytz.utc)
+        assert instance.xmlvalue(value) == '2016-03-04T21:14:42Z'
+
+        value = value.astimezone(pytz.timezone('Europe/Amsterdam'))
+        assert instance.xmlvalue(value) == '2016-03-04T22:14:42+01:00'
+
     def test_pythonvalue(self):
         instance = builtins.DateTime()
         value = datetime.datetime(2016, 3, 4, 21, 14, 42)
         assert instance.pythonvalue('2016-03-04T21:14:42') == value
-
-
-class TestDate:
-
-    def test_xmlvalue(self):
-        instance = builtins.Date()
-        value = datetime.datetime(2016, 3, 4)
-        assert instance.xmlvalue(value) == '2016-03-04'
-
-    def test_pythonvalue(self):
-        instance = builtins.Date()
-        value = datetime.date(2016, 3, 4)
-        assert instance.pythonvalue('2016-03-04') == value
 
 
 class TestTime:
@@ -125,15 +136,127 @@ class TestTime:
         assert instance.pythonvalue('21:14:42.120+0200') == value
 
 
-class TestDuration:
+class TestDate:
 
     def test_xmlvalue(self):
-        instance = builtins.Duration()
-        value = isodate.parse_duration('P0Y1347M0D')
-        assert instance.xmlvalue(value) == 'P1347M'
+        instance = builtins.Date()
+        value = datetime.datetime(2016, 3, 4)
+        assert instance.xmlvalue(value) == '2016-03-04'
 
     def test_pythonvalue(self):
-        instance = builtins.Duration()
-        expected = isodate.parse_duration('P0Y1347M0D')
-        value = 'P0Y1347M0D'
-        assert instance.pythonvalue(value) == expected
+        instance = builtins.Date()
+        assert instance.pythonvalue('2016-03-04') == datetime.date(2016, 3, 4)
+        assert instance.pythonvalue('2001-10-26+02:00') == datetime.date(2001, 10, 26)
+        assert instance.pythonvalue('2001-10-26Z') == datetime.date(2001, 10, 26)
+        assert instance.pythonvalue('2001-10-26+00:00') == datetime.date(2001, 10, 26)
+
+        # negative dates are not supported for datetime.date objects so lets
+        # hope no-one uses it for now..
+        with pytest.raises(Exception):
+            assert instance.pythonvalue('-2001-10-26')
+        with pytest.raises(Exception):
+            assert instance.pythonvalue('-20000-04-01')
+
+
+class TestgYearMonth:
+
+    def test_xmlvalue(self):
+        instance = builtins.gYearMonth()
+        assert instance.xmlvalue((2012, 10, None)) == '2012-10'
+        assert instance.xmlvalue((2012, 10, pytz.utc)) == '2012-10Z'
+
+    def test_pythonvalue(self):
+        instance = builtins.gYearMonth()
+        assert instance.pythonvalue('2001-10') == (2001, 10, None)
+        assert instance.pythonvalue('2001-10+02:00') == (2001, 10, pytz.FixedOffset(120))
+        assert instance.pythonvalue('2001-10Z') == (2001, 10, pytz.utc)
+        assert instance.pythonvalue('2001-10+00:00') == (2001, 10, pytz.utc)
+        assert instance.pythonvalue('-2001-10') == (-2001, 10, None)
+        assert instance.pythonvalue('-20001-10') == (-20001, 10, None)
+
+        with pytest.raises(builtins.ParseError):
+            assert instance.pythonvalue('10-10')
+
+
+class TestgYear:
+
+    def test_xmlvalue(self):
+        instance = builtins.gYear()
+        instance.xmlvalue((2001, None)) == '2001'
+        instance.xmlvalue((2001, pytz.utc)) == '2001Z'
+
+    def test_pythonvalue(self):
+        instance = builtins.gYear()
+        assert instance.pythonvalue('2001') == (2001, None)
+        assert instance.pythonvalue('2001+02:00') == (2001, pytz.FixedOffset(120))
+        assert instance.pythonvalue('2001Z') == (2001, pytz.utc)
+        assert instance.pythonvalue('2001+00:00') == (2001, pytz.utc)
+        assert instance.pythonvalue('-2001') == (-2001, None)
+        assert instance.pythonvalue('-20000') == (-20000, None)
+
+        with pytest.raises(builtins.ParseError):
+            assert instance.pythonvalue('99')
+
+
+class TestgMonthDay:
+
+    def test_xmlvalue(self):
+        instance = builtins.gMonthDay()
+        assert instance.xmlvalue((12, 30, None)) == '--12-30'
+
+    def test_pythonvalue(self):
+        instance = builtins.gMonthDay()
+        assert instance.pythonvalue('--05-01') == (5, 1, None)
+        assert instance.pythonvalue('--11-01Z') == (11, 1, pytz.utc)
+        assert instance.pythonvalue('--11-01+02:00') == (11, 1, pytz.FixedOffset(120))
+        assert instance.pythonvalue('--11-01-04:00') == (11, 1, pytz.FixedOffset(-240))
+        assert instance.pythonvalue('--11-15') == (11, 15, None)
+        assert instance.pythonvalue('--02-29') == (2, 29, None)
+
+        with pytest.raises(builtins.ParseError):
+            assert instance.pythonvalue('99')
+
+
+class TestgMonth:
+
+    def test_xmlvalue(self):
+        instance = builtins.gMonth()
+        assert instance.xmlvalue((12, None)) == '--12'
+
+    def test_pythonvalue(self):
+        instance = builtins.gMonth()
+        assert instance.pythonvalue('--05') == (5, None)
+        assert instance.pythonvalue('--11Z') == (11, pytz.utc)
+        assert instance.pythonvalue('--11+02:00') == (11, pytz.FixedOffset(120))
+        assert instance.pythonvalue('--11-04:00') == (11, pytz.FixedOffset(-240))
+        assert instance.pythonvalue('--11') == (11, None)
+        assert instance.pythonvalue('--02') == (2, None)
+
+        with pytest.raises(builtins.ParseError):
+            assert instance.pythonvalue('99')
+
+
+class TestgDay:
+
+    def test_xmlvalue(self):
+        instance = builtins.gDay()
+
+        value = (1, None)
+        assert instance.xmlvalue(value) == '---01'
+
+        value = (1, pytz.FixedOffset(120))
+        assert instance.xmlvalue(value) == '---01+02:00'
+
+        value = (1, pytz.FixedOffset(-240))
+        assert instance.xmlvalue(value) == '---01-04:00'
+
+    def test_pythonvalue(self):
+        instance = builtins.gDay()
+        assert instance.pythonvalue('---01') == (1, None)
+        assert instance.pythonvalue('---01Z') == (1, pytz.utc)
+        assert instance.pythonvalue('---01+02:00') == (1, pytz.FixedOffset(120))
+        assert instance.pythonvalue('---01-04:00') == (1, pytz.FixedOffset(-240))
+        assert instance.pythonvalue('---15') == (15, None)
+        assert instance.pythonvalue('---31') == (31, None)
+        with pytest.raises(builtins.ParseError):
+            assert instance.pythonvalue('99')

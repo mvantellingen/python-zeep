@@ -49,13 +49,22 @@
 
 
 """
+from __future__ import division
+
 import base64
+import math
+import re
 from decimal import Decimal as _Decimal
 
 import isodate
+import pytz
 import six
 
 from zeep.xsd.types import SimpleType
+
+
+class ParseError(ValueError):
+    pass
 
 
 ##
@@ -129,7 +138,7 @@ class DateTime(SimpleType):
     name = 'xsd:dateTime'
 
     def xmlvalue(self, value):
-        return value.strftime('%Y-%m-%dT%H:%M:%S')
+        return isodate.isostrf.strftime(value, '%Y-%m-%dT%H:%M:%S%Z')
 
     def pythonvalue(self, value):
         return isodate.parse_datetime(value)
@@ -139,7 +148,7 @@ class Time(SimpleType):
     name = 'xsd:time'
 
     def xmlvalue(self, value):
-        return value.strftime('%H:%M:%S')
+        return isodate.isostrf.strftime(value, '%H:%M:%S%Z')
 
     def pythonvalue(self, value):
         return isodate.parse_time(value)
@@ -149,60 +158,126 @@ class Date(SimpleType):
     name = 'xsd:date'
 
     def xmlvalue(self, value):
-        return value.strftime('%Y-%m-%d')
+        return isodate.isostrf.strftime(value, '%Y-%m-%d')
 
     def pythonvalue(self, value):
         return isodate.parse_date(value)
 
 
 class gYearMonth(SimpleType):
+    """gYearMonth represents a specific gregorian month in a specific gregorian
+    year.
+
+    Lexical representation: CCYY-MM
+
+    """
     name = 'xsd:gYearMonth'
+    _pattern = re.compile(
+        r'^(?P<year>-?\d{4,})-(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
     def xmlvalue(self, value):
-        return str(value)
+        year, month, tzinfo = value
+        return '%04d-%02d%s' % (year, month, _unparse_timezone(tzinfo))
 
     def pythonvalue(self, value):
-        return str(value)
+        match = self._pattern.match(value)
+        if not match:
+            raise ParseError()
+        group = match.groupdict()
+        return (
+            int(group['year']), int(group['month']),
+            _parse_timezone(group['timezone']))
 
 
 class gYear(SimpleType):
+    """gYear represents a gregorian calendar year.
+
+    Lexical representation: CCYY
+
+    """
     name = 'xsd:gYear'
+    _pattern = re.compile(r'^(?P<year>-?\d{4,})(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
     def xmlvalue(self, value):
-        return str(value)
+        year, tzinfo = value
+        return '%04d%s' % (year, _unparse_timezone(tzinfo))
 
     def pythonvalue(self, value):
-        return int(value)
+        match = self._pattern.match(value)
+        if not match:
+            raise ParseError()
+        group = match.groupdict()
+        return (int(group['year']), _parse_timezone(group['timezone']))
 
 
 class gMonthDay(SimpleType):
+    """gMonthDay is a gregorian date that recurs, specifically a day of the
+    year such as the third of May.
+
+    Lexical representation: --MM-DD
+
+    """
+
     name = 'xsd:gMonthDay'
+    _pattern = re.compile(
+        r'^--(?P<month>\d\d)-(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
     def xmlvalue(self, value):
-        return str(value)
+        month, day, tzinfo = value
+        return '--%02d-%02d%s' % (month, day, _unparse_timezone(tzinfo))
 
     def pythonvalue(self, value):
-        return str(value)
+        match = self._pattern.match(value)
+        if not match:
+            raise ParseError()
+
+        group = match.groupdict()
+        return (
+            int(group['month']), int(group['day']),
+            _parse_timezone(group['timezone']))
 
 
 class gDay(SimpleType):
+    """gDay is a gregorian day that recurs, specifically a day of the month
+    such as the 5th of the month
+
+    Lexical representation: ---DD
+
+    """
     name = 'xsd:gDay'
+    _pattern = re.compile(r'^---(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
     def xmlvalue(self, value):
-        return str(value)
+        day, tzinfo = value
+        return '---%02d%s' % (day, _unparse_timezone(tzinfo))
 
     def pythonvalue(self, value):
-        return int(value)
+        match = self._pattern.match(value)
+        if not match:
+            raise ParseError()
+        group = match.groupdict()
+        return (int(group['day']), _parse_timezone(group['timezone']))
 
 
 class gMonth(SimpleType):
+    """gMonth is a gregorian month that recurs every year.
+
+    Lexical representation: --MM
+
+    """
     name = 'xsd:gMonth'
+    _pattern = re.compile(r'^--(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
     def xmlvalue(self, value):
-        return str(value)
+        month, tzinfo = value
+        return '--%d%s' % (month, _unparse_timezone(tzinfo))
 
     def pythonvalue(self, value):
-        return int(value)
+        match = self._pattern.match(value)
+        if not match:
+            raise ParseError()
+        group = match.groupdict()
+        return (int(group['month']), _parse_timezone(group['timezone']))
 
 
 class HexBinary(SimpleType):
@@ -367,6 +442,38 @@ class AnyType(SimpleType):
 
     def pythonvalue(self, value):
         return value
+
+
+def _parse_timezone(val):
+    """Return a pytz.tzinfo object"""
+    if not val:
+        return
+
+    if val == 'Z' or val == '+00:00':
+        return pytz.utc
+
+    negative = val.startswith('-')
+    minutes = int(val[-2:])
+    minutes += int(val[1:3]) * 60
+
+    if negative:
+        minutes = 0 - minutes
+    return pytz.FixedOffset(minutes)
+
+
+def _unparse_timezone(tzinfo):
+    if not tzinfo:
+        return ''
+
+    if tzinfo == pytz.utc:
+        return 'Z'
+
+    hours = math.floor(tzinfo._minutes / 60)
+    minutes = tzinfo._minutes % 60
+
+    if hours > 0:
+        return '+%02d:%02d' % (hours, minutes)
+    return '-%02d:%02d' % (abs(hours), minutes)
 
 
 default_types = {
