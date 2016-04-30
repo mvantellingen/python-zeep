@@ -82,6 +82,20 @@ class TestFloat:
         assert instance.pythonvalue('INF') == float('inf')
 
 
+class TestDouble:
+
+    def test_xmlvalue(self):
+        instance = builtins.Double()
+        assert instance.xmlvalue(float(10)) == '10.0'
+        assert instance.xmlvalue(float(3.9999)) == '3.9999'
+        assert instance.xmlvalue(float(12.78e-2)) == '0.1278'
+
+    def test_pythonvalue(self):
+        instance = builtins.Double()
+        assert instance.pythonvalue('10') == float('10')
+        assert instance.pythonvalue('12') == float(12)
+        assert instance.pythonvalue('-0') == float(0)
+        assert instance.pythonvalue('0') == float(0)
 
 
 class TestDuration:
@@ -260,3 +274,53 @@ class TestgDay:
         assert instance.pythonvalue('---31') == (31, None)
         with pytest.raises(builtins.ParseError):
             assert instance.pythonvalue('99')
+
+
+class TestHexBinary:
+    def test_xmlvalue(self):
+        instance = builtins.HexBinary()
+        assert instance.xmlvalue('\xFF') == '\xFF'
+
+    def test_pythonvalue(self):
+        instance = builtins.HexBinary()
+        assert instance.pythonvalue('\xFF') == '\xFF'
+
+
+class TestBase64Binary:
+    def test_xmlvalue(self):
+        instance = builtins.Base64Binary()
+        assert instance.xmlvalue('hoi') == 'aG9p'
+
+    def test_pythonvalue(self):
+        instance = builtins.Base64Binary()
+        assert instance.pythonvalue('aG9p') == 'hoi'
+
+
+class TestAnyURI:
+    def test_xmlvalue(self):
+        instance = builtins.AnyURI()
+        assert instance.xmlvalue('http://test.python-zeep.org') == 'http://test.python-zeep.org'
+
+    def test_pythonvalue(self):
+        instance = builtins.AnyURI()
+        assert instance.pythonvalue('http://test.python-zeep.org') == 'http://test.python-zeep.org'
+
+
+class TestInteger:
+    def test_xmlvalue(self):
+        instance = builtins.Integer()
+        assert instance.xmlvalue(100) == '100'
+
+    def test_pythonvalue(self):
+        instance = builtins.Integer()
+        assert instance.pythonvalue('100') == 100
+
+
+class TestAnyType:
+    def test_xmlvalue(self):
+        instance = builtins.AnyType()
+        assert instance.xmlvalue('http://test.python-zeep.org') == 'http://test.python-zeep.org'
+
+    def test_pythonvalue(self):
+        instance = builtins.AnyType()
+        assert instance.pythonvalue('http://test.python-zeep.org') == 'http://test.python-zeep.org'
