@@ -161,7 +161,7 @@ def test_array():
     assert_nodes_equal(expected, node)
 
 
-def test_array_single_init():
+def test_complex_type_unbounded_one():
     node = etree.fromstring("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
@@ -195,7 +195,7 @@ def test_array_single_init():
     assert_nodes_equal(expected, node)
 
 
-def test_array_resolve_lazy():
+def test_complex_type_unbounded_named():
     node = etree.fromstring("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
