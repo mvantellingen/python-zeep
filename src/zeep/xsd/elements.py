@@ -86,6 +86,8 @@ class Attribute(Element):
         value = self.type.xmlvalue(value)
         parent.set(self.qname, value)
 
+    def parse(self, value):
+        return self.type.pythonvalue(value)
 
 class ListElement(Element):
 

@@ -5,7 +5,7 @@ import six
 
 from zeep.utils import process_signature
 from zeep.xsd.elements import (
-    Any, Choice, Element, GroupElement, ListElement, RefElement)
+    Any, Choice, Element, GroupElement, ListElement, RefElement, Attribute)
 
 
 class Type(object):
@@ -164,7 +164,15 @@ class ComplexType(Type):
             return instance
 
         elements = xmlelement.getchildren()
-        fields = iter(fields)
+        attributes = xmlelement.attrib
+
+        fields_map = {f.name: f for f in fields if isinstance(f, Attribute)}
+        for key, value in attributes.items():
+            field = fields_map.get(key)
+            value = field.parse(value)
+            setattr(instance, key, value)
+
+        fields = iter(f for f in fields if not isinstance(f, Attribute))
         field = next(fields)
         for element in elements:
 

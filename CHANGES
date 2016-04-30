@@ -1,3 +1,8 @@
+0.5.0 (tbd)
+-----------
+ - Handle attributes during parsing of the response values
+
+
 0.4.0 (2016-04-17)
 -----------
  - Add defusedxml module for XML security issues
