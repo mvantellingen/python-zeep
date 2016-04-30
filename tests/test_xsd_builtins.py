@@ -279,21 +279,21 @@ class TestgDay:
 class TestHexBinary:
     def test_xmlvalue(self):
         instance = builtins.HexBinary()
-        assert instance.xmlvalue('\xFF') == '\xFF'
+        assert instance.xmlvalue(b'\xFF') == b'\xFF'
 
     def test_pythonvalue(self):
         instance = builtins.HexBinary()
-        assert instance.pythonvalue('\xFF') == '\xFF'
+        assert instance.pythonvalue(b'\xFF') == b'\xFF'
 
 
 class TestBase64Binary:
     def test_xmlvalue(self):
         instance = builtins.Base64Binary()
-        assert instance.xmlvalue('hoi') == 'aG9p'
+        assert instance.xmlvalue(b'hoi') == b'aG9p'
 
     def test_pythonvalue(self):
         instance = builtins.Base64Binary()
-        assert instance.pythonvalue('aG9p') == 'hoi'
+        assert instance.pythonvalue(b'aG9p') == b'hoi'
 
 
 class TestAnyURI:

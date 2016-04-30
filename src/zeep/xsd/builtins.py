@@ -284,10 +284,10 @@ class HexBinary(SimpleType):
     name = 'xsd:hexBinary'
 
     def xmlvalue(self, value):
-        return str(value)
+        return value
 
     def pythonvalue(self, value):
-        return str(value)
+        return value
 
 
 class Base64Binary(SimpleType):
