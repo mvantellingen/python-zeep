@@ -435,6 +435,9 @@ class DocumentMessage(SoapMessage):
                 header_value = header_obj(**header_value)
             header = soap.Header()
             header_obj.render(header, header_value)
+        else:
+            if header_value is not None:
+                header = soap.Header(header_value)
 
         headerfault = None
         return body, header, headerfault
