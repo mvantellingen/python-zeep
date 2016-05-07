@@ -1,11 +1,14 @@
 import requests
 
+from zeep.cache import SqliteCache
+
 
 class Transport(object):
 
-    def __init__(self, cache=None, timeout=300):
-        self.cache = cache
+    def __init__(self, cache=None, timeout=300, verify=True):
+        self.cache = cache or SqliteCache()
         self.timeout = timeout
+        self.verify = verify
 
     def load(self, url):
         if self.cache:
@@ -13,7 +16,7 @@ class Transport(object):
             if response:
                 return bytes(response)
 
-        response = requests.get(url, timeout=self.timeout)
+        response = requests.get(url, timeout=self.timeout, verify=self.verify)
 
         if self.cache:
             self.cache.add(url, response.content)
@@ -21,5 +24,7 @@ class Transport(object):
         return response.content
 
     def post(self, address, message, headers):
-        response = requests.post(address, data=message, headers=headers)
+        response = requests.post(
+            address, data=message, headers=headers, verify=self.verify
+        )
         return response
