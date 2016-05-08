@@ -15,11 +15,11 @@ def test_parse_soap_wsdl():
     obj = wsdl.WSDL('tests/wsdl_files/soap.wsdl', transport=client.transport)
     assert len(obj.services) == 1
 
-    service = obj.services['{http://example.com/stockquote.wsdl}StockQuoteService']
+    service = obj.services['StockQuoteService']
     assert service
     assert len(service.ports) == 1
 
-    port = service.ports['{http://example.com/stockquote.wsdl}StockQuotePort']
+    port = service.ports['StockQuotePort']
     assert port
 
     response = """
@@ -88,11 +88,11 @@ def test_parse_soap_header_wsdl():
         'tests/wsdl_files/soap_header.wsdl', transport=client.transport)
     assert len(obj.services) == 1
 
-    service = obj.services['{http://example.com/stockquote.wsdl}StockQuoteService']
+    service = obj.services['StockQuoteService']
     assert service
     assert len(service.ports) == 1
 
-    port = service.ports['{http://example.com/stockquote.wsdl}StockQuotePort']
+    port = service.ports['StockQuotePort']
     assert port
 
     response = """

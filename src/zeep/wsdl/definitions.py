@@ -292,9 +292,9 @@ class Port(object):
             </wsdl:port>
 
         """
-        name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
+        name = xmlelement.get('name')
         binding_name = qname_attr(xmlelement, 'binding', wsdl.target_namespace)
-        return cls(name.text, binding_name=binding_name, xmlelement=xmlelement)
+        return cls(name, binding_name=binding_name, xmlelement=xmlelement)
 
     def resolve(self, definitions):
         if self._resolve_context is None:
@@ -320,11 +320,11 @@ class Service(object):
         self._is_resolved = False
 
     def __unicode__(self):
-        return 'Service: %s' % self.name.text
+        return 'Service: %s' % self.name
 
     def __repr__(self):
         return '<%s(name=%r, ports=%r)>' % (
-            self.__class__.__name__, self.name.text, self.ports)
+            self.__class__.__name__, self.name, self.ports)
 
     def resolve(self, definitions):
         if self._is_resolved:
@@ -370,7 +370,7 @@ class Service(object):
               </service>
 
         """
-        name = qname_attr(xmlelement, 'name', definitions.target_namespace)
+        name = xmlelement.get('name')
         obj = cls(name)
         for port_node in xmlelement.findall('wsdl:port', namespaces=NSMAP):
             port = Port.parse(definitions, port_node)

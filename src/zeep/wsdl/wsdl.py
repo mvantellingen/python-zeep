@@ -341,5 +341,5 @@ class Definitions(object):
         result = OrderedDict()
         for service_node in doc.findall('wsdl:service', namespaces=NSMAP):
             service = definitions.Service.parse(self, service_node)
-            result[service.name.text] = service
+            result[service.name] = service
         return result
