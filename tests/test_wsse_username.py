@@ -66,7 +66,7 @@ def test_password_text():
             <ns0:Security>
               <ns0:UsernameToken>
                 <ns0:Username>michael</ns0:Username>
-                <ns0:Password Type="wsse:PasswordText">geheim</ns0:Password>
+                <ns0:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">geheim</ns0:Password>
               </ns0:UsernameToken>
             </ns0:Security>
           </ns0:Header>
@@ -83,7 +83,7 @@ def test_password_text():
 
 @freeze_time('2016-05-08 12:00:00')
 def test_password_digest(monkeypatch):
-    monkeypatch.setattr(os, 'urandom', lambda x: 'mocked-random')
+    monkeypatch.setattr(os, 'urandom', lambda x: b'mocked-random')
 
     envelope = load_xml("""
         <soap-env:Envelope
@@ -115,7 +115,7 @@ def test_password_digest(monkeypatch):
             <ns0:Security>
               <ns0:UsernameToken>
                 <ns0:Username>michael</ns0:Username>
-                <ns0:Password Type="wsse:PasswordDigest">hVicspAQSg70JNhe67OHqD9gexc=</ns0:Password>
+                <ns0:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">hVicspAQSg70JNhe67OHqD9gexc=</ns0:Password>
                 <ns0:Nonce>bW9ja2VkLXJhbmRvbQ==</ns0:Nonce>
                 <ns0:Created xmlns:ns0="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">2016-05-08T12:00:00+00:00</ns0:Created>
               </ns0:UsernameToken>

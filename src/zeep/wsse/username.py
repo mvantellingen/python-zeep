@@ -42,6 +42,7 @@ class UsernameToken(object):
         </wsse:Security>
 
     """
+    namespace = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0'  # noqa
 
     def __init__(self, username, password, use_digest=False):
         self.username = username
@@ -66,7 +67,8 @@ class UsernameToken(object):
 
     def _create_password_text(self):
         return [
-            WSSE.Password(self.password, Type='wsse:PasswordText')
+            WSSE.Password(
+                self.password, Type='%s#PasswordText' % self.namespace)
         ]
 
     def _create_password_digest(self):
@@ -80,7 +82,10 @@ class UsernameToken(object):
             ).digest())
 
         return [
-            WSSE.Password(digest, Type='wsse:PasswordDigest'),
-            WSSE.Nonce(base64.b64encode(nonce)),
+            WSSE.Password(
+                digest.decode('ascii'),
+                Type='%s#PasswordDigest' % self.namespace
+            ),
+            WSSE.Nonce(base64.b64encode(nonce).decode('ascii')),
             WSU.Created(timestamp)
         ]
