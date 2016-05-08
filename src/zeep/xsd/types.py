@@ -5,7 +5,7 @@ import six
 
 from zeep.utils import process_signature
 from zeep.xsd.elements import (
-    Any, Choice, Element, GroupElement, ListElement, RefElement, Attribute)
+    Any, Attribute, Choice, Element, GroupElement, ListElement, RefElement)
 
 
 class Type(object):
@@ -105,6 +105,9 @@ class ComplexType(Type):
         return result
 
     def serialize(self, value):
+        if value is None:
+            return
+
         return {
             field.name: field.serialize(getattr(value, field.name, None))
             for field in self.properties()
