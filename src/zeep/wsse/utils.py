@@ -1,6 +1,7 @@
 import datetime
 
 import pytz
+from lxml import etree
 from lxml.builder import ElementMaker
 
 NSMAP = {
@@ -14,9 +15,10 @@ def get_security_header(doc):
     created.
 
     """
-    header = doc.find('{http://schemas.xmlsoap.org/soap/envelope/}Header')
+    header_qname = '{http://schemas.xmlsoap.org/soap/envelope/}Header'
+    header = doc.find(header_qname)
     if header is None:
-        header = WSSE.Header()
+        header = etree.Element(header_qname)
         doc.insert(0, header)
 
     security = header.find('wsse:Security', namespaces=NSMAP)

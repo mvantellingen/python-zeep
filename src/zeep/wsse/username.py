@@ -50,16 +50,26 @@ class UsernameToken(object):
         self.use_digest = use_digest
 
     def sign(self, envelope, headers):
-        token = WSSE.UsernameToken(WSSE.Username(self.username))
+        security = utils.get_security_header(envelope)
+
+        # The token placeholder might already exists since it is specified in
+        # the WSDL.
+        token = security.find('{%s}UsernameToken' % NSMAP['wsse'])
+        if token is None:
+            token = WSSE.UsernameToken()
+            security.append(token)
+
+        # Create the sub elements of the UsernameToken element
+        elements = [
+            WSSE.Username(self.username)
+        ]
         if self.password is not None:
             if self.use_digest:
-                elements = self._create_password_digest()
+                elements.extend(self._create_password_digest())
             else:
-                elements = self._create_password_text()
-            token.extend(elements)
+                elements.extend(self._create_password_text())
 
-        security = utils.get_security_header(envelope)
-        security.append(token)
+        token.extend(elements)
         return envelope, headers
 
     def verify(self, envelope):
