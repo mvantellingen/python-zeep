@@ -1,11 +1,18 @@
-0.5.0 (tbd)
------------
- - Handle attributes during parsing of the response values
- - Don't create empty soap objects when the root element is nil
- - Implement support for WSSE usernameToken profiles
- - Minor XSD fixes
- - Use correct soap-envelope namespace for Soap 1.2 bindings
- - Use application/soap+xml in the soap binding for the content type
+0.5.0 (2015-05-08)
+------------------
+ - Handle attributes during parsing of the response values>
+ - Don't create empty soap objects when the root element is empty.
+ - Implement support for WSSE usernameToken profile including 
+   passwordText/passwordDigest.
+ - Improve XSD date/time related builtins.
+ - Various minor XSD handling fixes 
+ - Use the correct soap-envelope XML namespace for the Soap 1.2 binding
+ - Use `application/soap+xml` as content-type in the Soap 1.2 binding
+ - **backwards incompatible**: Make cache part of the transport object 
+   instead of the client.  This changes the call signature of the Client() 
+   class.  (Marek Wywiał)
+ - Add the `verify` kwarg to the Transport object to disable ssl certificate
+   verification. (Marek Wywiał)
 
 
 0.4.0 (2016-04-17)
