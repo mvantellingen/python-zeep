@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import operator
 from collections import OrderedDict
 
 import six
@@ -62,7 +63,12 @@ class WSDL(object):
             for port in service.ports.values():
                 print(' ' * 4, six.text_type(port))
                 print(' ' * 8, 'Operations:')
-                for operation in port.binding._operations.values():
+
+                operations = sorted(
+                    port.binding._operations.values(),
+                    key=operator.attrgetter('name'))
+
+                for operation in operations:
                     print('%s%s' % (' ' * 12, six.text_type(operation)))
                 print('')
 
