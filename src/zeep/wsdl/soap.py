@@ -278,6 +278,7 @@ class SoapMessage(ConcreteMessage):
     def __init__(self, wsdl, name, operation, nsmap):
         super(SoapMessage, self).__init__(wsdl, name, operation)
         self.nsmap = nsmap
+        self.abstract = None  # Set during resolve()
 
     @classmethod
     def parse(cls, definitions, xmlelement, name, tag_name, operation, nsmap):

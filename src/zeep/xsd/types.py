@@ -171,6 +171,8 @@ class ComplexType(Type):
         fields_map = {f.name: f for f in fields if isinstance(f, Attribute)}
         for key, value in attributes.items():
             field = fields_map.get(key)
+            if not field:
+                continue
             value = field.parse(value)
             setattr(instance, key, value)
 
