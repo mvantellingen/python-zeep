@@ -159,7 +159,7 @@ class Soap11Binding(SoapBinding):
 class Soap12Binding(SoapBinding):
     nsmap = {
         'soap': 'http://schemas.xmlsoap.org/wsdl/soap12/',
-        'soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
+        'soap-env': 'http://www.w3.org/2003/05/soap-envelope',
         'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
         'xsd': 'http://www.w3.org/2001/XMLSchema',
     }
