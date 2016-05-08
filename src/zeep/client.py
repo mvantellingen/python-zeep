@@ -1,7 +1,6 @@
 import logging
 import warnings
 
-from zeep.cache import SqliteCache
 from zeep.transports import Transport
 from zeep.wsdl import WSDL
 
@@ -41,9 +40,8 @@ class ServiceProxy(object):
 
 class Client(object):
 
-    def __init__(self, wsdl, cache=None, wsse=None):
-        self.cache = cache or SqliteCache()
-        self.transport = Transport(self.cache)
+    def __init__(self, wsdl, wsse=None, transport=None):
+        self.transport = transport or Transport()
         self.wsdl = WSDL(wsdl, self.transport)
         self.wsse = wsse
 

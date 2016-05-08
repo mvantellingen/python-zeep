@@ -8,6 +8,7 @@ import time
 
 from zeep.cache import SqliteCache
 from zeep.client import Client
+from zeep.transports import Transport
 
 logger = logging.getLogger('zeep')
 
@@ -57,8 +58,9 @@ def main(args):
         profile.enable()
 
     cache = SqliteCache(persistent=args.cache)
+    transport = Transport(cache=cache)
     st = time.time()
-    client = Client(args.wsdl_file, cache=cache)
+    client = Client(args.wsdl_file, transport=transport)
     logger.debug("Loading WSDL took %sms", (time.time() - st) * 1000)
 
     if args.profile:
