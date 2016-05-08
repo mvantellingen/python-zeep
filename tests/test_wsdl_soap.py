@@ -9,7 +9,6 @@ from zeep.xsd import builtins
 
 def test_rpc_message_deserializer():
     response_body = load_xml("""
-        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <SOAP-ENV:Body
             xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
             xmlns:tns="http://www.SoapClient.com/xml/SoapResponder.wsdl"
