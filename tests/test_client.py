@@ -4,22 +4,22 @@ import requests_mock
 from zeep import client
 
 
-def test_get_port_default():
+def test_bind():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
-    port = client_obj.get_port()
-    assert port
+    service = client_obj.bind()
+    assert service
 
 
-def test_get_port_service():
+def test_bind_service():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
-    port = client_obj.get_port('StockQuoteService')
-    assert port
+    service = client_obj.bind('StockQuoteService')
+    assert service
 
 
-def test_get_port_service_port():
+def test_bind_service_port():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
-    port = client_obj.get_port('StockQuoteService', 'StockQuotePort')
-    assert port
+    service = client_obj.bind('StockQuoteService', 'StockQuotePort')
+    assert service
 
 
 @pytest.mark.requests

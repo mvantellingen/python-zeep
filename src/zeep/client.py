@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 from zeep.cache import SqliteCache
 from zeep.transports import Transport
@@ -46,10 +47,35 @@ class Client(object):
         self.wsdl = WSDL(wsdl, self.transport)
         self.wsse = wsse
 
-        port = self.get_port()
-        self.service = ServiceProxy(self, port)
+        self.service = self.bind()
+
+    def bind(self, service_name=None, port_name=None):
+        """Create a new ServiceProxy for the given service_name and port_name
+
+        The default ServiceProxy instance (`self.service`) always referes to
+        the first service/port in the WSDL.  Use this when a specific port is
+        required.
+
+        """
+        if service_name:
+            service = self.wsdl.services.get(service_name)
+            if not service:
+                raise ValueError("Service not found")
+        else:
+            service = list(self.wsdl.services.values())[0]
+
+        if port_name:
+            port = service.ports.get(port_name)
+            if not port:
+                raise ValueError("Port not found")
+        else:
+            port = list(service.ports.values())[0]
+        return ServiceProxy(self, port)
 
     def get_port(self, service=None, port=None):
+        message = "This method will be removed in 0.6, please use bind()"
+        warnings.warn(message, DeprecationWarning, stacklevel=1)
+
         service = list(self.wsdl.services.values())[0]
         return list(service.ports.values())[0]
 
