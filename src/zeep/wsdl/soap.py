@@ -57,7 +57,7 @@ class SoapBinding(Binding):
         # Create the SOAP envelope
         envelope = self.create_message(operation_obj, *args, **kwargs)
         http_headers = {
-            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'Content-Type': self.content_type,
             'SOAPAction': operation_obj.soapaction,
         }
 
@@ -168,6 +168,7 @@ class Soap11Binding(SoapBinding):
         'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
         'xsd': 'http://www.w3.org/2001/XMLSchema',
     }
+    content_type = 'text/xml; charset=utf-8'
 
 
 class Soap12Binding(SoapBinding):
@@ -177,6 +178,7 @@ class Soap12Binding(SoapBinding):
         'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
         'xsd': 'http://www.w3.org/2001/XMLSchema',
     }
+    content_type = 'application/xml+soap; charset=utf-8'
 
 
 class SoapOperation(Operation):
