@@ -4,7 +4,7 @@ from lxml import etree
 from lxml.builder import ElementMaker
 
 from zeep import xsd
-from zeep.exceptions import Fault
+from zeep.exceptions import Fault, TransportError
 from zeep.utils import qname_attr
 from zeep.wsdl.definitions import Binding, ConcreteMessage, Operation
 from zeep.xsd import Element
@@ -76,7 +76,17 @@ class SoapBinding(Binding):
         """Process the XML reply from the server.
 
         """
-        doc = fromstring(response.content)
+        if response.status_code != 200 and not response.content:
+            raise TransportError(
+                u'Server returned HTTP status %d (no content available)'
+                % response.status_code)
+
+        try:
+            doc = fromstring(response.content)
+        except etree.XMLSyntaxError:
+            raise TransportError(
+                u'Server returned HTTP status %d (%s)'
+                % (response.status_code, response.content))
 
         if client.wsse:
             client.wsse.verify(doc)
