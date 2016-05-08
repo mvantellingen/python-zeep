@@ -101,7 +101,11 @@ class SoapBinding(Binding):
             'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
 
         if fault_node is None:
-            raise Fault(message='Unknown fault occured', code=None, actor=None, detail=None)
+            raise Fault(
+                message='Unknown fault occured',
+                code=None,
+                actor=None,
+                detail=etree.tostring(doc))
 
         def get_text(name):
             child = fault_node.find(name)
