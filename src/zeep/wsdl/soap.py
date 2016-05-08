@@ -279,6 +279,9 @@ class SoapMessage(ConcreteMessage):
         super(SoapMessage, self).__init__(wsdl, name, operation)
         self.nsmap = nsmap
         self.abstract = None  # Set during resolve()
+        self.body = None
+        self.header = None
+        self.headerfault = None
 
     @classmethod
     def parse(cls, definitions, xmlelement, name, tag_name, operation, nsmap):
@@ -440,7 +443,7 @@ class DocumentMessage(SoapMessage):
         result = []
         for part in self.abstract.parts.values():
             elm = node.find(part.element.qname)
-            assert elm is not None
+            assert elm is not None, '%s not found' % part.element.qname
             result.append(part.element.parse(elm))
 
         if len(result) > 1:
