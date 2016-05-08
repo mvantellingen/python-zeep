@@ -25,7 +25,7 @@ tests_require = [
 
 setup(
     name='zeep',
-    version='0.5.0',
+    version='0.6.0.dev0',
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=open('README.rst').read(),
     author="Michael van Tellingen",
