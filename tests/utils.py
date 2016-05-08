@@ -2,6 +2,11 @@ from lxml import etree
 from six import binary_type, string_types
 
 
+def load_xml(xml):
+    parser = etree.XMLParser(remove_blank_text=True)
+    return etree.fromstring(xml.strip(), parser=parser)
+
+
 def assert_nodes_equal(node_1, node_2):
     parser = etree.XMLParser(remove_blank_text=True)
 
