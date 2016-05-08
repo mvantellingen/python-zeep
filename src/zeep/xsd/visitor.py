@@ -409,7 +409,7 @@ class SchemaVisitor(object):
                         ((attribute | attributeGroup)*, anyAttribute?)))
             </extension>
         """
-        base_name = qname_attr(node, 'base', self.schema._target_namespace)
+        base_name = qname_attr(node, 'base')
         try:
             base = self.schema.get_type(base_name)
             children = base._children
@@ -442,7 +442,7 @@ class SchemaVisitor(object):
             Content: (annotation?, ((attribute | attributeGroup)*, anyAttribute?))
             </extension>
         """
-        base_name = qname_attr(node, 'base', self.schema._target_namespace)
+        base_name = qname_attr(node, 'base')
         try:
             base = self.schema.get_type(base_name)
             if isinstance(base, xsd_types.ComplexType):
