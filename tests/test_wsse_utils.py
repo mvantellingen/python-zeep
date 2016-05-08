@@ -1,5 +1,6 @@
-from zeep.wsse import utils
 from lxml import etree
+
+from zeep.wsse import utils
 
 
 def test_get_security_header():
@@ -21,4 +22,4 @@ def test_get_security_header():
     """.strip())
 
     element = utils.get_security_header(doc)
-    assert element.tag == '{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}Security'
+    assert element.tag == '{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}Security'  # noqa

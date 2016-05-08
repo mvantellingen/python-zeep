@@ -5,7 +5,7 @@ import six
 
 from zeep.utils import process_signature
 from zeep.xsd.elements import (
-    Any, Choice, Element, GroupElement, ListElement, RefElement, Attribute)
+    Any, Attribute, Choice, Element, GroupElement, ListElement, RefElement)
 
 
 class Type(object):

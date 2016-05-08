@@ -3,7 +3,6 @@ from __future__ import absolute_import, print_function
 import argparse
 import logging
 import logging.config
-import sys
 import time
 
 from zeep.cache import SqliteCache

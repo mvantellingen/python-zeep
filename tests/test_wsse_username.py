@@ -55,7 +55,7 @@ def test_password_text():
 
     token = UsernameToken('michael', 'geheim')
     envelope, headers = token.sign(envelope, {})
-    expected = load_xml("""
+    expected = """
         <soap-env:Envelope
             xmlns:ns0="http://example.com/stockquote.xsd"
             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -77,7 +77,7 @@ def test_password_text():
             </ns0:TradePriceRequest>
           </soap-env:Body>
         </soap-env:Envelope>
-    """)
+    """  # noqa
     assert_nodes_equal(envelope, expected)
 
 
@@ -104,7 +104,7 @@ def test_password_digest(monkeypatch):
 
     token = UsernameToken('michael', 'geheim', use_digest=True)
     envelope, headers = token.sign(envelope, {})
-    expected = load_xml("""
+    expected = """
         <soap-env:Envelope
             xmlns:ns0="http://example.com/stockquote.xsd"
             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -128,7 +128,7 @@ def test_password_digest(monkeypatch):
             </ns0:TradePriceRequest>
           </soap-env:Body>
         </soap-env:Envelope>
-    """)
+    """  # noqa
     assert_nodes_equal(envelope, expected)
 
 
@@ -153,11 +153,11 @@ def test_password_prepared():
             </ns0:TradePriceRequest>
           </soap-env:Body>
         </soap-env:Envelope>
-    """)
+    """)  # noqa
 
     token = UsernameToken('michael', 'geheim')
     envelope, headers = token.sign(envelope, {})
-    expected = load_xml("""
+    expected = """
         <soap-env:Envelope
             xmlns:ns0="http://example.com/stockquote.xsd"
             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -179,5 +179,5 @@ def test_password_prepared():
             </ns0:TradePriceRequest>
           </soap-env:Body>
         </soap-env:Envelope>
-    """)
+    """  # noqa
     assert_nodes_equal(envelope, expected)
