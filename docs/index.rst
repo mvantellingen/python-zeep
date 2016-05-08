@@ -10,9 +10,10 @@ Highlights:
  * Supports recursive WSDL and XSD documents.
  * Supports the xsd:choice and xsd:any elements.
  * Uses the defusedxml module for XML security issues
+ * Support for WSSE (UsernameToken only for now)
 
 Features still in development include:
- * Support for WSSE 
+ * WSSE x.509 support (BinarySecurityToken)
  * Support for HTTP bindings 
  * XML validation using lxml XMLSchema's
 
@@ -31,7 +32,7 @@ A quick example::
 Complex requests
 ================
 
-Most of the times you need to pass nested data to the soap client. These 
+Most of the times you need to pass nested data to the soap client.  These 
 Complex types can be created using the `client.get_type()` method::
 
     >>> from zeep import Client
@@ -40,7 +41,6 @@ Complex types can be created using the `client.get_type()` method::
     >>> order = order_type(
     ...     number='1234', billing_address=billing_address)
     >>> client.service.submit_order(user_id=1, order=order)
-
 
 
 Any objects
@@ -58,9 +58,24 @@ Zeep offers proper support for Any elements.
     >>> client.service.submit_something(user_id=1, _any_1=order)
 
 
+WS-Security (WSSE)
+==================
+Only the UsernameToken profile is supported for now.  It supports both the 
+passwordText and passwordDigest methods::
+
+    >>> from zeep import Client
+    >>> from zeep.wsse.username import UsernameToken
+    >>> client = zeep.Client(
+    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
+    ...     wsse=UsernameToken('username', 'password'))
+
+To use the passwordDigest method you need to supply `use_digest=True` to the
+`UsernameToken` class.
+
+
 Caching
 =======
-The default cache backed is SqliteCache. It caches the WSDL and XSD files for 
+The default cache backed is SqliteCache.  It caches the WSDL and XSD files for 
 1 hour by default. You can disable caching by passing `None` as value to the
 `cache` attribute when initializing the client::
 
@@ -91,7 +106,7 @@ In the `zeep.helper` module the following helpers functions are available:
 Bugs
 ====
 
-If you encounter bugs then please `let me know`_ . A copy of the WSDL file if
+If you encounter bugs then please `let me know`_ .  A copy of the WSDL file if
 possible would be most helpful. If you are really cool then please open a PR
 with the fix... :P
 
