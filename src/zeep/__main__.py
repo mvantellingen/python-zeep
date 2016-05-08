@@ -12,19 +12,21 @@ from zeep.client import Client
 logger = logging.getLogger('zeep')
 
 
-if __name__ == '__main__':
+def parse_arguments(args=None):
     parser = argparse.ArgumentParser(description='Zeep: The SOAP client')
     parser.add_argument(
-        'wsdl_file', type=str, help='Path or URL to the WSDL file')
+        'wsdl_file', type=str, help='Path or URL to the WSDL file',
+        default=None)
     parser.add_argument(
         '--cache', action='store_true', help='Enable cache')
     parser.add_argument(
         '--verbose', action='store_true', help='Enable verbose output')
     parser.add_argument(
         '--profile', help="Enable profiling and save output to given file")
+    return parser.parse_args(args)
 
-    args = parser.parse_args()
 
+def main(args):
     if args.verbose:
         logging.config.dictConfig({
             'version': 1,
@@ -56,10 +58,15 @@ if __name__ == '__main__':
 
     cache = SqliteCache(persistent=args.cache)
     st = time.time()
-    client = Client(sys.argv[1], cache=cache)
+    client = Client(args.wsdl_file, cache=cache)
     logger.debug("Loading WSDL took %sms", (time.time() - st) * 1000)
 
     if args.profile:
         profile.disable()
         profile.dump_stats(args.profile)
     client.wsdl.dump()
+
+
+if __name__ == '__main__':
+    args = parse_arguments()
+    main(args)
