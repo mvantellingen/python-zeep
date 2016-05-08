@@ -11,6 +11,7 @@ from zeep.xsd import Element
 
 
 class SoapBinding(Binding):
+    """Soap 1.1/1.2 binding"""
 
     def __init__(self, wsdl, name, port_name, transport, default_style):
         super(SoapBinding, self).__init__(wsdl, name, port_name)
@@ -23,6 +24,11 @@ class SoapBinding(Binding):
         return soap_node is not None
 
     def create_message(self, operation, *args, **kwargs):
+        """Create the XML document to send to the server.
+
+        Note that this generates the soap envelope without the wsse applied.
+
+        """
         if isinstance(operation, six.string_types):
             operation = self.get(operation)
             if not operation:
@@ -39,38 +45,53 @@ class SoapBinding(Binding):
             envelope.append(header)
         if body is not None:
             envelope.append(body)
+
         return envelope
 
-    def send(self, transport, options, operation, args, kwargs):
+    def send(self, client, options, operation, args, kwargs):
         """Called from the service"""
         operation_obj = self.get(operation)
         if not operation_obj:
             raise ValueError("Operation %r not found" % operation)
 
+        # Create the SOAP envelope
         envelope = self.create_message(operation_obj, *args, **kwargs)
         http_headers = {
             'Content-Type': 'text/xml; charset=utf-8',
             'SOAPAction': operation_obj.soapaction,
         }
-        response = transport.post(
+
+        # Apply plugins
+
+        # Apply WSSE
+        if client.wsse:
+            envelope, http_headers = client.wsse.sign(envelope, http_headers)
+
+        response = client.transport.post(
             options['address'], etree.tostring(envelope), http_headers)
-        return self.process_reply(operation_obj, response)
 
-    def process_reply(self, operation, response):
+        return self.process_reply(client, operation_obj, response)
+
+    def process_reply(self, client, operation, response):
+        """Process the XML reply from the server.
+
+        """
+        doc = fromstring(response.content)
+
+        if client.wsse:
+            client.wsse.verify(doc)
+
         if response.status_code != 200:
-            return self.process_error(response.content)
-            raise NotImplementedError("No error handling yet!")
+            return self.process_error(doc)
 
-        envelope = fromstring(response.content)
-        return operation.process_reply(envelope)
+        return operation.process_reply(doc)
 
-    def process_error(self, response):
-        doc = fromstring(response)
+    def process_error(self, doc):
         fault_node = doc.find(
             'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
 
         if fault_node is None:
-            raise Fault('Unknown fault occured')
+            raise Fault(message='Unknown fault occured', code=None, actor=None, detail=None)
 
         def get_text(name):
             child = fault_node.find(name)

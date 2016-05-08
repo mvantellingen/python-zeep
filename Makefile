@@ -11,7 +11,7 @@ clean:
 	find . -name '*.pyc' -delete
 
 test:
-	py.test
+	py.test -vvv
 
 retest:
 	py.test --lf

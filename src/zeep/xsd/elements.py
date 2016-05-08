@@ -90,6 +90,7 @@ class Attribute(Element):
     def parse(self, value):
         return self.type.pythonvalue(value)
 
+
 class ListElement(Element):
 
     def __call__(self, *args, **kwargs):
