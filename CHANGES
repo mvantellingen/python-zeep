@@ -5,6 +5,7 @@
  - Implement support for WSSE usernameToken profiles
  - Minor XSD fixes
  - Use correct soap-envelope namespace for Soap 1.2 bindings
+ - User application/soap+xml in the soap binding for the content type
 
 
 0.4.0 (2016-04-17)

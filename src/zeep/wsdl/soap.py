@@ -57,7 +57,7 @@ class SoapBinding(Binding):
         # Create the SOAP envelope
         envelope = self.create_message(operation_obj, *args, **kwargs)
         http_headers = {
-            'Content-Type': 'text/xml; charset=utf-8',
+            'Content-Type': 'application/soap+xml; charset=utf-8',
             'SOAPAction': operation_obj.soapaction,
         }
 
