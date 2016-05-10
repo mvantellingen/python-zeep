@@ -76,9 +76,13 @@ class Element(Base):
         return self.type(*args, **kwargs)
 
     def _signature(self, name):
+        if hasattr(self.type, 'name'):
+            typename = self.type.name
+        else:
+            typename = self.type.__repr__
         return '%s%s: %s%s' % (
             name, '=None' if self.is_optional else '',
-            self.type.name, '[]' if self.max_occurs != 1 else ''
+            typename, '[]' if self.max_occurs != 1 else ''
         )
 
 
