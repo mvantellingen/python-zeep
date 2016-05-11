@@ -305,6 +305,11 @@ class SchemaVisitor(object):
 
                 elif child.tag in (tags.choice, tags.sequence, tags.all):
                     assert not children
+
+                    # XXX: Not good
+                    if not isinstance(item, list):
+                        item = [item]
+
                     children = item
 
                 elif child.tag in (tags.attribute,):
@@ -578,7 +583,7 @@ class SchemaVisitor(object):
             elm = self.process(child, node)
             elm.min_occurs = 0
             choices.append(elm)
-        return [xsd_elements.Choice(choices)]
+        return xsd_elements.Choice(choices)
 
     def visit_union(self, node, parent):
         """
