@@ -328,7 +328,6 @@ class SchemaVisitor(object):
 
             else:
                 item = self.process(child, node)
-                print item
 
                 if child.tag == tags.group:
                     assert not children
