@@ -17,7 +17,7 @@ class tags(object):
 
 
 for name in [
-    'schema', 'import',
+    'schema', 'import', 'include',
     'annotation', 'element', 'simpleType', 'complexType',
     'simpleContent', 'complexContent',
     'sequence', 'group', 'choice', 'all', 'attribute', 'any', 'anyAttribute',
@@ -43,6 +43,12 @@ class SchemaVisitor(object):
     def process_ref_attribute(self, node):
         ref = qname_attr(node, 'ref')
         if ref:
+
+            # Some wsdl's reference to xs:schema, we ignore that for now. It
+            # might be better in the future to process the actual schema file
+            # so that it is handled correctly
+            if ref.namespace == 'http://www.w3.org/2001/XMLSchema':
+                return
             return xsd_elements.RefElement(node.tag, ref, self.schema)
 
     def visit_schema(self, node):
@@ -111,6 +117,24 @@ class SchemaVisitor(object):
 
         self.schema._imports[namespace] = schema
         return schema
+
+    def visit_include(self, node, parent):
+        """
+        <include
+          id = ID
+          schemaLocation = anyURI
+          {any attributes with non-schema Namespace}...>
+        Content: (annotation?)
+        </include>
+        """
+        if not node.get('schemaLocation'):
+            raise NotImplementedError("schemaLocation is required")
+        location = node.get('schemaLocation')
+
+        schema_node = load_external(
+            location, self.schema._transport, self.parser_context,
+            base_url=self.schema._location)
+        return self.visit_schema(schema_node)
 
     def visit_element(self, node, parent):
         """
@@ -304,6 +328,7 @@ class SchemaVisitor(object):
 
             else:
                 item = self.process(child, node)
+                print item
 
                 if child.tag == tags.group:
                     assert not children
@@ -643,6 +668,7 @@ class SchemaVisitor(object):
         tags.group: visit_group,
         tags.attribute: visit_attribute,
         tags.import_: visit_import,
+        tags.include: visit_include,
         tags.annotation: visit_annotation,
     }
 
