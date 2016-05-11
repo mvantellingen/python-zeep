@@ -311,11 +311,11 @@ class AnyURI(SimpleType):
 
 
 class QName(SimpleType):
-    pass
+    name = 'xsd:QName'
 
 
 class Notation(SimpleType):
-    pass
+    name = 'xsd:NOTATION'
 
 
 ##
