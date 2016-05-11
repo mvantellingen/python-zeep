@@ -458,8 +458,10 @@ class DocumentMessage(SoapMessage):
 
     def signature(self, as_output=False):
         if as_output:
-            if len(self.body.type.properties()) == 1:
-                return self.body.type.properties()[0].type.name
+
+            if isinstance(self.body.type, xsd.ComplexType):
+                if len(self.body.type.properties()) == 1:
+                    return self.body.type.properties()[0].type.name
 
             return self.body.type.name
         return self.body.type.signature()
