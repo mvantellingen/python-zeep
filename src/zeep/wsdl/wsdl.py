@@ -238,8 +238,9 @@ class Definitions(object):
         schema_ns = {}
         for i, schema_node in enumerate(schema_nodes):
             ns = schema_node.get('targetNamespace')
-            schema_ns[ns] = 'intschema:xsd%d' % i
+            int_name = schema_ns[ns] = 'intschema:xsd%d' % i
             self.wsdl._parser_context.schema_nodes.add(schema_ns[ns], schema_node)
+            self.wsdl._parser_context.schema_locations[int_name] = self.location
 
         # Only handle the import statements from the 2001 xsd's for now
         import_tag = QName('http://www.w3.org/2001/XMLSchema', 'import').text

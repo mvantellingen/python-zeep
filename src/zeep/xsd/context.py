@@ -33,3 +33,4 @@ class ParserContext(object):
     def __init__(self):
         self.schema_nodes = SchemaNodeRepository()
         self.schema_objects = SchemaRepository()
+        self.schema_locations = {}

@@ -100,6 +100,12 @@ class SchemaVisitor(object):
 
         schema_node = load_external(
             location, self.schema._transport, self.parser_context)
+
+        # If this schema location is 'internal' then retrieve the original
+        # location since that is used as base url for sub include/imports
+        if location in self.parser_context.schema_locations:
+            location = self.parser_context.schema_locations[location]
+
         schema = self.schema.__class__(
             schema_node, self.schema._transport, location, self.parser_context)
 
