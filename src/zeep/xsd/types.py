@@ -152,10 +152,16 @@ class ComplexType(Type):
         return self
 
     def signature(self):
-        return ', '.join([
-            element._signature(name) if not container else container._signature()
-            for name, element, container in self.fields()
-        ])
+        parts = []
+        containers = set()
+        for name, element, container in self.fields():
+            if container is None:
+                parts.append(element._signature(name))
+            elif container not in containers:
+                parts.append(container._signature())
+                containers.add(container)
+
+        return ', '.join(parts)
 
     def parse_xmlelement(self, xmlelement):
         instance = self()

@@ -848,3 +848,33 @@ def test_choice_element():
 
     print(address_type.type.signature())
     address_type(item_1="foo")
+
+
+def test_choice_nested_element():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="Address">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="something" type="xsd:string" />
+                <xsd:choice>
+                  <xsd:element name="item_1" type="xsd:string" />
+                  <xsd:element name="item_2" type="xsd:string" />
+                  <xsd:element name="item_3" type="xsd:string" />
+                </xsd:choice>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """.strip())
+    schema = xsd.Schema(node)
+    address_type = schema.get_element('ns0:Address')
+
+    assert address_type.type.signature() == (
+        'something: xsd:string, (Choice: item_1=None: xsd:string, item_2=None: xsd:string, item_3=None: xsd:string)')  # noqa
+    address_type(item_1="foo")
