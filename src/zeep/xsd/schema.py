@@ -13,10 +13,11 @@ logger = logging.getLogger(__name__)
 class Schema(object):
 
     def __init__(self, node=None, transport=None, location=None,
-                 parser_context=None):
+                 parser_context=None, base_url=None):
         logger.debug("Init schema for %r", location)
 
         # Internal
+        self._base_url = base_url or location
         self._location = location
         self._transport = transport
         self._target_namespace = None

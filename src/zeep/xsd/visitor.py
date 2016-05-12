@@ -97,7 +97,7 @@ class SchemaVisitor(object):
         location = node.get('schemaLocation')
 
         # Resolve import if it is a file
-        location = absolute_location(location, self.schema._location)
+        location = absolute_location(location, self.schema._base_url)
         schema = self.parser_context.schema_objects.get(location)
         if schema:
             logger.debug("Returning existing schema: %r", location)
@@ -110,10 +110,13 @@ class SchemaVisitor(object):
         # If this schema location is 'internal' then retrieve the original
         # location since that is used as base url for sub include/imports
         if location in self.parser_context.schema_locations:
-            location = self.parser_context.schema_locations[location]
+            base_url = self.parser_context.schema_locations[location]
+        else:
+            base_url = location
 
         schema = self.schema.__class__(
-            schema_node, self.schema._transport, location, self.parser_context)
+            schema_node, self.schema._transport, location,
+            self.parser_context, base_url)
 
         self.schema._imports[namespace] = schema
         return schema
@@ -133,7 +136,7 @@ class SchemaVisitor(object):
 
         schema_node = load_external(
             location, self.schema._transport, self.parser_context,
-            base_url=self.schema._location)
+            base_url=self.schema._base_url)
         return self.visit_schema(schema_node)
 
     def visit_element(self, node, parent):

@@ -186,7 +186,7 @@ class Definitions(object):
                 if etree.QName(document.tag).localname == 'schema':
                     self.schema = Schema(
                         document, self.wsdl.transport, location,
-                        self.wsdl._parser_context)
+                        self.wsdl._parser_context, location)
                 else:
                     wsdl = Definitions(self.wsdl, document, location)
                     self.imports[namespace] = wsdl
@@ -226,7 +226,7 @@ class Definitions(object):
         if len(schema_nodes) == 1:
             return Schema(
                 schema_nodes[0], self.wsdl.transport, self.location,
-                self.wsdl._parser_context)
+                self.wsdl._parser_context, self.location)
 
         # A wsdl can container multiple schema nodes. The can import each
         # other by simply referencing by the namespace. To handle this in a
@@ -268,7 +268,7 @@ class Definitions(object):
         schema_node = root
         return Schema(
             schema_node, self.wsdl.transport, self.location,
-            self.wsdl._parser_context)
+            self.wsdl._parser_context, self.location)
 
     def parse_messages(self, doc):
         """
