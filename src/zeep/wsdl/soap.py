@@ -178,7 +178,7 @@ class Soap12Binding(SoapBinding):
         'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
         'xsd': 'http://www.w3.org/2001/XMLSchema',
     }
-    content_type = 'application/xml+soap; charset=utf-8'
+    content_type = 'application/soap+xml; charset=utf-8'
 
 
 class SoapOperation(Operation):
