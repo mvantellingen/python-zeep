@@ -21,7 +21,7 @@ Features still in development include:
 A quick example::
 
     >>> from zeep import Client
-    >>> client = zeep.Client(
+    >>> client = Client(
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL')
     >>> print client.service.ConvertSpeed(
     ...     100, 'kilometersPerhour', 'milesPerhour')
@@ -36,7 +36,7 @@ Most of the times you need to pass nested data to the soap client.  These
 Complex types can be created using the `client.get_type()` method::
 
     >>> from zeep import Client
-    >>> client = zeep.Client('http://my-entrprisy-endpoint.com')
+    >>> client = Client('http://my-entrprisy-endpoint.com')
     >>> order_type = client.get_type('ns0:Order')
     >>> order = order_type(
     ...     number='1234', billing_address=billing_address)
@@ -50,7 +50,7 @@ Zeep offers proper support for Any elements.
 
     >>> from zeep import Client
     >>> from zeep import xsd
-    >>> client = zeep.Client('http://my-entrprisy-endpoint.com')
+    >>> client = Client('http://my-entrprisy-endpoint.com')
     >>> order_type = client.get_element('ns0:Order')
     >>> order = xsd.AnyObject(
     ...     order_type, 
@@ -65,7 +65,7 @@ passwordText and passwordDigest methods::
 
     >>> from zeep import Client
     >>> from zeep.wsse.username import UsernameToken
-    >>> client = zeep.Client(
+    >>> client = Client(
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
     ...     wsse=UsernameToken('username', 'password'))
 
@@ -83,7 +83,7 @@ The default cache backed is SqliteCache.  It caches the WSDL and XSD files for
     >>> from zeep.cache import SqliteCache
     >>> from zeep.transports import Transport
     >>> transport = Transport(cache=None)
-    >>> client = zeep.Client(
+    >>> client = Client(
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
     ...     transport=transport)
 
@@ -96,7 +96,7 @@ Changing the SqliteCache settings can be done via::
     >>> from zeep.transports import Transport
     >>> cache = SqliteCache(persistent=True, timeout=60)
     >>> transport = Transport(cache=cache)
-    >>> client = zeep.Client(
+    >>> client = Client(
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
     ...     transport=transport)
 
@@ -111,7 +111,7 @@ For instance to disable SSL verification use `verify` option::
     >>> from zeep import Client
     >>> from zeep.transports import Transport
     >>> transport = Transport(verify=False)
-    >>> client = zeep.Client(
+    >>> client = Client(
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
     ...     transport=transport)
 
