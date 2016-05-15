@@ -1,7 +1,6 @@
 import six
 from defusedxml.lxml import fromstring
 from lxml import etree
-from lxml.builder import ElementMaker
 
 from zeep.exceptions import Fault, TransportError
 from zeep.utils import qname_attr

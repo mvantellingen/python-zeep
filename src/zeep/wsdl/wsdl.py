@@ -9,7 +9,7 @@ from lxml.etree import QName
 
 from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
-from zeep.wsdl import definitions, soap, http
+from zeep.wsdl import definitions, http, soap
 from zeep.xsd import Schema
 from zeep.xsd.context import ParserContext
 

@@ -5,7 +5,7 @@ from pretend import stub
 
 from tests.utils import assert_nodes_equal, load_xml
 from zeep import xsd
-from zeep.wsdl import definitions, messages, soap, http
+from zeep.wsdl import definitions, messages, soap
 
 
 def test_document_message_serializer():
