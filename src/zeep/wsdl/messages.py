@@ -401,7 +401,8 @@ class MimeContent(MimeMessage):
 
         data = ''
         if self.content_type == 'application/x-www-form-urlencoded':
-            data = six.moves.urllib.parse.urlencode(result.serialize(value))
+            items = result.serialize(value)
+            data = six.moves.urllib.parse.urlencode(items)
 
         return SerializedMessage(
             path=self.operation.location, headers=headers, content=data)
