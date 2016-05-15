@@ -21,21 +21,10 @@
       <output message="tns:m2"/>
     </operation>
   </portType>
-  <service name="service1">
-    <port name="port1" binding="tns:b1">
-      <http:address location="http://example.com/"/>
-    </port>
-    <port name="port2" binding="tns:b2">
-      <http:address location="http://example.com/"/>
-    </port>
-    <port name="port3" binding="tns:b3">
-      <http:address location="http://example.com/"/>
-    </port>
-  </service>
   <binding name="b1" type="pt1">
     <http:binding verb="GET"/>
     <operation name="o1">
-      <http:operation location="o1/(tickerSymbol)/"/>
+      <http:operation location="/o1/(tickerSymbol)/"/>
       <input>
         <http:urlReplacement/>
       </input>
@@ -48,7 +37,7 @@
   <binding name="b2" type="pt1">
     <http:binding verb="GET"/>
     <operation name="o1">
-      <http:operation location="o1"/>
+      <http:operation location="/o1"/>
       <input>
         <http:urlEncoded/>
       </input>
@@ -61,7 +50,7 @@
   <binding name="b3" type="pt1">
     <http:binding verb="POST"/>
     <operation name="o1">
-      <http:operation location="o1"/>
+      <http:operation location="/o1"/>
       <input>
         <mime:content type="application/x-www-form-urlencoded"/>
       </input>
