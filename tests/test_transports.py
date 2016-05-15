@@ -13,4 +13,4 @@ def test_load():
         m.get('http://tests.python-zeep.org/test.xml', text='x')
         result = transport.load('http://tests.python-zeep.org/test.xml')
 
-        assert result == 'x'
+        assert result == b'x'
