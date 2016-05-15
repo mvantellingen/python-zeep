@@ -138,8 +138,7 @@ class HttpOperation(Operation):
                 message_class = messages.MimeXML
 
             if message_class:
-                msg = message_class.parse(
-                    definitions, node, name, tag_name, obj)
+                msg = message_class.parse(definitions, node, name, obj)
                 assert msg
                 setattr(obj, tag_name, msg)
         return obj

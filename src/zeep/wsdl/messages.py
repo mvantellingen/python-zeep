@@ -1,4 +1,5 @@
 from collections import namedtuple
+
 import six
 from defusedxml.lxml import fromstring
 from lxml import etree
@@ -8,7 +9,6 @@ from zeep import xsd
 from zeep.utils import qname_attr
 from zeep.wsdl.utils import _soap_element
 from zeep.xsd import Element
-
 
 SerializedMessage = namedtuple('SerializedMessage', ['path', 'headers', 'content'])
 
@@ -50,7 +50,7 @@ class SoapMessage(ConcreteMessage):
         self.headerfault = None
 
     @classmethod
-    def parse(cls, definitions, xmlelement, name, tag_name, operation, nsmap):
+    def parse(cls, definitions, xmlelement, name, operation, nsmap):
         """
         Example::
 
@@ -263,10 +263,12 @@ class RpcMessage(SoapMessage):
             return tuple(result)
         return result[0]
 
-    def signature(self):
-        # if self.operation.abstract.parameter_order:
-        #     self.operation.abstract.parameter_order.split()
-        return self.abstract.parts.keys()
+    def signature(self, as_output=False):
+        result = xsd.ComplexType(children=[
+            xsd.Element(etree.QName(etree.QName(name).localname), message.type)
+            for name, message in self.abstract.parts.items()
+        ])
+        return result.signature()
 
 
 class HttpMessage(ConcreteMessage):
@@ -309,7 +311,7 @@ class UrlEncoded(HttpMessage):
              xsd.ComplexType(children=abstract_message.parts.values()))
 
     @classmethod
-    def parse(cls, definitions, xmlelement, name, tag_name, operation):
+    def parse(cls, definitions, xmlelement, name, operation):
         obj = cls(definitions.wsdl, name, operation)
         return obj
 
@@ -344,7 +346,7 @@ class UrlReplacement(HttpMessage):
         path = self.operation.location
         for key, value in params.items():
             path = path.replace('(%s)' % key, value if value is not None else '')
-        return SerializedMessage(path=path, headers=headers, content=params)
+        return SerializedMessage(path=path, headers=headers, content='')
 
     def signature(self):
         result = xsd.ComplexType(children=[
@@ -357,7 +359,7 @@ class UrlReplacement(HttpMessage):
         self.abstract = abstract_message
 
     @classmethod
-    def parse(cls, definitions, xmlelement, name, tag_name, operation):
+    def parse(cls, definitions, xmlelement, name, operation):
         obj = cls(definitions.wsdl, name, operation)
         return obj
 
@@ -431,7 +433,7 @@ class MimeContent(MimeMessage):
         self.body = part
 
     @classmethod
-    def parse(cls, definitions, xmlelement, name, tag_name, operation):
+    def parse(cls, definitions, xmlelement, name, operation):
         content_type = None
         content_node = xmlelement.find('mime:content', namespaces=cls._nsmap)
         if content_node is not None:
@@ -468,7 +470,7 @@ class MimeXML(MimeMessage):
         return part.element.type
 
     @classmethod
-    def parse(cls, definitions, xmlelement, name, tag_name, operation):
+    def parse(cls, definitions, xmlelement, name, operation):
         obj = cls(definitions.wsdl, name, operation)
         return obj
 
