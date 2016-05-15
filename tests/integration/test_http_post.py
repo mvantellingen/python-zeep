@@ -13,8 +13,8 @@ def test_get_urlreplacement():
 
     with requests_mock.mock() as m:
         m.get('http://example.com/o1/EUR/', text='<root>Hoi</root>')
-        node = client.service.o1('EUR')
-        assert node.text == 'Hoi'
+        result = client.service.o1('EUR')
+        assert result == 'Hoi'
 
         history = m.request_history[0]
-        assert history.text == 'tickerSymbol=EUR'
+        assert history._request.path_url == '/o1/EUR/?tickerSymbol=EUR'

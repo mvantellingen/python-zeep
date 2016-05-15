@@ -188,26 +188,6 @@ class Binding(object):
         raise NotImplementedError()
 
 
-class ConcreteMessage(object):
-    def __init__(self, wsdl, name, operation):
-        self.wsdl = wsdl
-        self.namespace = {}
-        self.operation = operation
-        self.name = name
-
-    def create(self, *args, **kwargs):
-        raise NotImplementedError()
-
-    @classmethod
-    def parse(cls, wsdl, xmlelement, abstract_message, operation):
-        raise NotImplementedError()
-
-    def signature(self, as_output=False):
-        if as_output:
-            return self.body.type.name
-        return self.body.type.signature()
-
-
 @python_2_unicode_compatible
 class Operation(object):
     """Concrete operation

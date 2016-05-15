@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 from lxml import etree
+from pretend import stub
 
 from tests.utils import assert_nodes_equal, load_xml
 from zeep import xsd
@@ -8,10 +9,12 @@ from zeep.wsdl import definitions, soap
 
 
 def test_document_message_serializer():
+    wsdl = stub(schema=stub(_prefix_map={}))
+    operation = stub(soapaction='my-action')
     msg = soap.DocumentMessage(
-        wsdl=None,
+        wsdl=wsdl,
         name=None,
-        operation=None,
+        operation=operation,
         nsmap=soap.Soap11Binding.nsmap)
 
     namespace = 'http://docs.python-zeep.org/tests/document'
@@ -30,21 +33,23 @@ def test_document_message_serializer():
         'headerfault': None
     }
 
-    body, header, headerfault = msg.serialize(arg1='ah1', arg2='ah2')
+    serialized = msg.serialize(arg1='ah1', arg2='ah2')
     expected = """
         <?xml version="1.0"?>
-        <soap-env:Body
+        <soap-env:Envelope
             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
             xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-          <ns0:response xmlns:ns0="http://docs.python-zeep.org/tests/document">
-            <ns0:arg1>ah1</ns0:arg1>
-            <ns0:arg2>ah2</ns0:arg2>
-          </ns0:response>
-        </soap-env:Body>
+          <soap-env:Body>
+            <ns0:response xmlns:ns0="http://docs.python-zeep.org/tests/document">
+              <ns0:arg1>ah1</ns0:arg1>
+              <ns0:arg2>ah2</ns0:arg2>
+            </ns0:response>
+          </soap-env:Body>
+        </soap-env:Envelope>
     """
-    assert_nodes_equal(expected, body)
+    assert_nodes_equal(expected, serialized.content)
 
 
 def test_document_message_deserializer():
@@ -59,11 +64,13 @@ def test_document_message_deserializer():
           </mns:response>
         </SOAP-ENV:Body>
     """)  # noqa
+    wsdl = stub(schema=stub(_prefix_map={}))
+    operation = stub(soapaction='my-action')
 
     msg = soap.DocumentMessage(
-        wsdl=None,
+        wsdl=wsdl,
         name=None,
-        operation=None,
+        operation=operation,
         nsmap=soap.Soap11Binding.nsmap)
 
     # Fake resolve()
@@ -92,10 +99,13 @@ def test_document_message_deserializer():
 
 
 def test_rpc_message_serializer():
+    wsdl = stub(schema=stub(_prefix_map={}))
+    operation = stub(soapaction='my-action')
+
     msg = soap.RpcMessage(
-        wsdl=None,
+        wsdl=wsdl,
         name=None,
-        operation=None,
+        operation=operation,
         nsmap=soap.Soap11Binding.nsmap)
 
     # Fake resolve()
@@ -114,21 +124,23 @@ def test_rpc_message_serializer():
         'headerfault': None
     }
 
-    body, header, headerfault = msg.serialize(arg1='ah1', arg2='ah2')
+    serialized = msg.serialize(arg1='ah1', arg2='ah2')
     expected = """
         <?xml version="1.0"?>
-        <soap-env:Body
+        <soap-env:Envelope
             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
             xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-          <ns0:Method1Response xmlns:ns0="http://docs.python-zeep.org/tests/rpc">
-            <arg1>ah1</arg1>
-            <arg2>ah2</arg2>
-          </ns0:Method1Response>
-        </soap-env:Body>
+          <soap-env:Body>
+            <ns0:Method1Response xmlns:ns0="http://docs.python-zeep.org/tests/rpc">
+              <arg1>ah1</arg1>
+              <arg2>ah2</arg2>
+            </ns0:Method1Response>
+          </soap-env:Body>
+        </soap-env:Envelope>
     """
-    assert_nodes_equal(expected, body)
+    assert_nodes_equal(expected, serialized.content)
 
 
 def test_rpc_message_deserializer():
@@ -143,11 +155,13 @@ def test_rpc_message_deserializer():
           </mns:Method1Response>
         </SOAP-ENV:Body>
     """)  # noqa
+    wsdl = stub(schema=stub(_prefix_map={}))
+    operation = stub(soapaction='my-action')
 
     msg = soap.RpcMessage(
-        wsdl=None,
+        wsdl=wsdl,
         name=None,
-        operation=None,
+        operation=operation,
         nsmap=soap.Soap11Binding.nsmap)
 
     # Fake resolve()
