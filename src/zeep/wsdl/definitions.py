@@ -1,6 +1,7 @@
 from collections import OrderedDict, namedtuple
 
 from lxml import etree
+from six import python_2_unicode_compatible
 
 from zeep.utils import qname_attr
 
@@ -139,6 +140,7 @@ class PortType(object):
         return cls(name, operations)
 
 
+@python_2_unicode_compatible
 class Binding(object):
     """Base class for the various bindings (SoapBinding / HttpBinding)
 
@@ -167,6 +169,9 @@ class Binding(object):
         # XXX: operation name is not unique
         self._operations[operation.name] = operation
 
+    def __str__(self):
+        return self.__class__.__name__
+
     def __repr__(self):
         return '<%s(name=%r, port_type=%r)>' % (
             self.__class__.__name__, self.name.text, self.port_type)
@@ -183,26 +188,7 @@ class Binding(object):
         raise NotImplementedError()
 
 
-class ConcreteMessage(object):
-    def __init__(self, wsdl, name, operation):
-        self.wsdl = wsdl
-        self.namespace = {}
-        self.operation = operation
-        self.name = name
-
-    def create(self, *args, **kwargs):
-        raise NotImplementedError()
-
-    @classmethod
-    def parse(cls, wsdl, xmlelement, abstract_message, operation):
-        raise NotImplementedError()
-
-    def signature(self, as_output=False):
-        if as_output:
-            return self.body.type.name
-        return self.body.type.signature()
-
-
+@python_2_unicode_compatible
 class Operation(object):
     """Concrete operation
 
@@ -225,13 +211,13 @@ class Operation(object):
         return '<%s(name=%r, style=%r)>' % (
             self.__class__.__name__, self.name, self.style)
 
-    def __unicode__(self):
+    def __str__(self):
         if not self.input:
-            return '%s(missing input message)' % (self.name)
+            return u'%s(missing input message)' % (self.name)
 
-        retval = '%s(%s)' % (self.name, self.input.signature())
+        retval = u'%s(%s)' % (self.name, self.input.signature())
         if self.output:
-            retval += ' -> %s' % (self.output.signature(as_output=True))
+            retval += u' -> %s' % (self.output.signature(as_output=True))
         return retval
 
     def create(self, *args, **kwargs):
@@ -259,6 +245,7 @@ class Operation(object):
         raise NotImplementedError()
 
 
+@python_2_unicode_compatible
 class Port(object):
     def __init__(self, name, binding_name, xmlelement):
         self.name = name
@@ -276,8 +263,8 @@ class Port(object):
             self.__class__.__name__, self.name, self.binding,
             self.binding_options)
 
-    def __unicode__(self):
-        return 'Port: %s' % self.name
+    def __str__(self):
+        return u'Port: %s (%s)' % (self.name, self.binding)
 
     def send(self, client, operation, args, kwargs):
         return self.binding.send(
@@ -312,6 +299,7 @@ class Port(object):
         return True
 
 
+@python_2_unicode_compatible
 class Service(object):
 
     def __init__(self, name):
@@ -319,8 +307,8 @@ class Service(object):
         self.name = name
         self._is_resolved = False
 
-    def __unicode__(self):
-        return 'Service: %s' % self.name
+    def __str__(self):
+        return u'Service: %s' % self.name
 
     def __repr__(self):
         return '<%s(name=%r, ports=%r)>' % (

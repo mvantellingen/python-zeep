@@ -9,7 +9,7 @@ from lxml.etree import QName
 
 from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
-from zeep.wsdl import definitions, soap
+from zeep.wsdl import definitions, http, soap
 from zeep.xsd import Schema
 from zeep.xsd.context import ParserContext
 
@@ -326,9 +326,10 @@ class Definitions(object):
                 binding = soap.Soap11Binding.parse(self, binding_node)
             elif soap.Soap12Binding.match(binding_node):
                 binding = soap.Soap12Binding.parse(self, binding_node)
-            # Still in development
-            # elif http.HttpBinding.match(binding_node):
-            #     binding = http.HttpBinding.parse(self, binding_node)
+            elif http.HttpGetBinding.match(binding_node):
+                binding = http.HttpGetBinding.parse(self, binding_node)
+            elif http.HttpPostBinding.match(binding_node):
+                binding = http.HttpPostBinding.parse(self, binding_node)
             else:
                 continue
 

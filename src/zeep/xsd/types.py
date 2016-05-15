@@ -105,10 +105,10 @@ class ComplexType(Type):
         return result
 
     def serialize(self, value):
-        return {
-            field.name: field.serialize(getattr(value, field.name, None))
+        return OrderedDict([
+            (field.name, field.serialize(getattr(value, field.name, None)))
             for field in self.properties()
-        }
+        ])
 
     def render(self, parent, value):
         for name, element, container in self.fields():

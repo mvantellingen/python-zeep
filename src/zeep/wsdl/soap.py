@@ -1,13 +1,12 @@
 import six
 from defusedxml.lxml import fromstring
 from lxml import etree
-from lxml.builder import ElementMaker
 
-from zeep import xsd
 from zeep.exceptions import Fault, TransportError
 from zeep.utils import qname_attr
-from zeep.wsdl.definitions import Binding, ConcreteMessage, Operation
-from zeep.xsd import Element
+from zeep.wsdl.definitions import Binding, Operation
+from zeep.wsdl.messages import DocumentMessage, RpcMessage
+from zeep.wsdl.utils import _soap_element
 
 
 class SoapBinding(Binding):
@@ -33,20 +32,8 @@ class SoapBinding(Binding):
             operation = self.get(operation)
             if not operation:
                 raise ValueError("Operation not found")
-
-        nsmap = self.nsmap.copy()
-        nsmap.update(self.wsdl.schema._prefix_map)
-
-        body, header, headerfault = operation.create(*args, **kwargs)
-        soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=nsmap)
-
-        envelope = soap.Envelope()
-        if header is not None:
-            envelope.append(header)
-        if body is not None:
-            envelope.append(body)
-
-        return envelope
+        serialized = operation.create(*args, **kwargs)
+        return serialized.content
 
     def send(self, client, options, operation, args, kwargs):
         """Called from the service"""
@@ -55,20 +42,20 @@ class SoapBinding(Binding):
             raise ValueError("Operation %r not found" % operation)
 
         # Create the SOAP envelope
-        envelope = self.create_message(operation_obj, *args, **kwargs)
-        http_headers = {
-            'Content-Type': self.content_type,
-            'SOAPAction': operation_obj.soapaction,
-        }
+        serialized = operation_obj.create(*args, **kwargs)
+        serialized.headers['Content-Type'] = self.content_type
+
+        envelope = serialized.content
+        headers = serialized.headers
 
         # Apply plugins
 
         # Apply WSSE
         if client.wsse:
-            envelope, http_headers = client.wsse.sign(envelope, http_headers)
+            envelope, http_headers = client.wsse.sign(envelope, headers)
 
         response = client.transport.post(
-            options['address'], etree.tostring(envelope), http_headers)
+            options['address'], etree.tostring(envelope), headers)
 
         return self.process_reply(client, operation_obj, response)
 
@@ -250,14 +237,12 @@ class SoapOperation(Operation):
                 continue
             name = node.get('name')
 
+            msg = message_class.parse(
+                definitions=definitions, xmlelement=node, name=name,
+                operation=obj, nsmap=nsmap)
             if tag_name == 'fault':
-                msg = message_class.parse(
-                    definitions, node, name, tag_name, obj, nsmap)
                 obj.faults[msg.name] = msg
-
             else:
-                msg = message_class.parse(
-                    definitions, node, name, tag_name, obj, nsmap)
                 setattr(obj, tag_name, msg)
 
         return obj
@@ -271,210 +256,3 @@ class SoapOperation(Operation):
             self.output.resolve(definitions, self.abstract.output)
         if self.input:
             self.input.resolve(definitions, self.abstract.input)
-
-
-class SoapMessage(ConcreteMessage):
-
-    def __init__(self, wsdl, name, operation, nsmap):
-        super(SoapMessage, self).__init__(wsdl, name, operation)
-        self.nsmap = nsmap
-        self.abstract = None  # Set during resolve()
-        self.body = None
-        self.header = None
-        self.headerfault = None
-
-    @classmethod
-    def parse(cls, definitions, xmlelement, name, tag_name, operation, nsmap):
-        """
-        Example::
-
-              <output>
-                <soap:body use="literal"/>
-              </output>
-
-        """
-        obj = cls(definitions.wsdl, name, operation, nsmap=nsmap)
-
-        tns = definitions.target_namespace
-        body = _soap_element(xmlelement, 'body')
-        header = _soap_element(xmlelement, 'header')
-        headerfault = _soap_element(xmlelement, 'headerfault')
-
-        obj._info = {
-            'body': {}, 'header': {}, 'headerfault': {}
-        }
-
-        if body is not None:
-            obj._info['body'] = {
-                'part': body.get('part'),
-                'use': body.get('use', 'literal'),
-                'encodingStyle': body.get('encodingStyle'),
-                'namespace': body.get('namespace'),
-            }
-
-        if header is not None:
-            obj._info['header'] = {
-                'message': qname_attr(header, 'message', tns),
-                'part': header.get('part'),
-                'use': header.get('use', 'literal'),
-                'encodingStyle': header.get('encodingStyle'),
-                'namespace': header.get('namespace'),
-            }
-
-        if headerfault is not None:
-            obj._info['headerfault'] = {
-                'message': qname_attr(headerfault, 'message', tns),
-                'part': headerfault.get('part'),
-                'use': headerfault.get('use', 'literal'),
-                'encodingStyle': headerfault.get('encodingStyle'),
-                'namespace': headerfault.get('namespace'),
-            }
-
-        obj.namespace = {
-            'body': obj._info['body'].get('namespace'),
-            'header': obj._info['header'].get('namespace'),
-            'headerfault': obj._info['headerfault'].get('namespace'),
-        }
-        return obj
-
-    def resolve(self, definitions, abstract_message):
-        self.abstract = abstract_message
-
-        header_info = self._info['header']
-        headerfault_info = self._info['headerfault']
-        body_info = self._info['body']
-        part_names = list(abstract_message.parts.keys())
-
-        if header_info:
-            part_name = header_info['part']
-            if header_info['message']:
-                msg = definitions.messages[header_info['message'].text]
-                self.header = msg.parts[part_name].element
-                if msg == abstract_message:
-                    part_names.remove(part_name)
-            else:
-                part_names.remove(part_name)
-                self.header = abstract_message.parts[part_name].element
-        else:
-            self.header = None
-
-        if headerfault_info:
-            part_name = headerfault_info['part']
-            part_names.remove(part_name)
-            self.headerfault = abstract_message.parts[part_name].element
-        else:
-            self.headerfault = None
-
-        if body_info:
-            part_name = body_info['part'] or part_names[0]
-            part_names.remove(part_name)
-            self.body = abstract_message.parts[part_name].element
-
-
-class RpcMessage(SoapMessage):
-    def serialize(self, *args, **kwargs):
-        soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=self.nsmap)
-        tag_name = etree.QName(
-            self.namespace['body'], self.abstract.name.localname)
-
-        body = soap.Body()
-        operation = xsd.Element(tag_name, xsd.ComplexType(children=[
-            xsd.Element(etree.QName(name), message.type)
-            for name, message in self.abstract.parts.items()
-        ]))
-
-        operation_value = operation(*args, **kwargs)
-        operation.render(body, operation_value)
-
-        return body, None, None
-
-    def deserialize(self, node):
-        tag_name = etree.QName(
-            self.namespace['body'], self.abstract.name.localname)
-
-        # FIXME
-        result = xsd.Element(tag_name, xsd.ComplexType(children=[
-            xsd.Element(etree.QName(etree.QName(name).localname), message.type)
-            for name, message in self.abstract.parts.items()
-        ]))
-
-        value = node.find(result.qname)
-        result = result.parse(value)
-
-        result = [
-            getattr(result, field.name) for field in result._xsd_type._children
-        ]
-        if len(result) > 1:
-            return tuple(result)
-        return result[0]
-
-    def signature(self):
-        # if self.operation.abstract.parameter_order:
-        #     self.operation.abstract.parameter_order.split()
-        return self.abstract.parts.keys()
-
-
-class DocumentMessage(SoapMessage):
-
-    def serialize(self, *args, **kwargs):
-        soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=self.nsmap)
-        body = header = headerfault = None
-        header_value = kwargs.pop('_soapheader', None)
-
-        if self.body:
-            body_obj = self.body
-            body_value = body_obj(*args, **kwargs)
-            body = soap.Body()
-            body_obj.render(body, body_value)
-
-        if self.header:
-            header_obj = self.header
-            if header_value is None:
-                header_value = header_obj()
-            elif not isinstance(header_value, Element):
-                header_value = header_obj(**header_value)
-            header = soap.Header()
-            header_obj.render(header, header_value)
-
-        headerfault = None
-        return body, header, headerfault
-
-    def deserialize(self, node):
-        result = []
-        for part in self.abstract.parts.values():
-            elm = node.find(part.element.qname)
-            assert elm is not None, '%s not found' % part.element.qname
-            result.append(part.element.parse(elm))
-
-        if len(result) > 1:
-            return tuple(result)
-
-        # FIXME (not so sure about this): If the response object has only one
-        # property then return that property
-        item = result[0]
-        if len(item._xsd_type.properties()) == 1:
-            return getattr(item, item._xsd_type.properties()[0].name)
-        return item
-
-    def signature(self, as_output=False):
-        if as_output:
-
-            if isinstance(self.body.type, xsd.ComplexType):
-                if len(self.body.type.properties()) == 1:
-                    return self.body.type.properties()[0].type.name
-
-            return self.body.type.name
-        return self.body.type.signature()
-
-
-def _soap_element(xmlelement, key):
-    """So soap1.1 and 1.2 namespaces can be mixed HAH!"""
-    namespaces = [
-        'http://schemas.xmlsoap.org/wsdl/soap/',
-        'http://schemas.xmlsoap.org/wsdl/soap12/',
-    ]
-
-    for ns in namespaces:
-        retval = xmlelement.find('soap:%s' % key, namespaces={'soap': ns})
-        if retval is not None:
-            return retval
