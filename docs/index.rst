@@ -11,10 +11,10 @@ Highlights:
  * Supports the xsd:choice and xsd:any elements.
  * Uses the defusedxml module for handling potential XML security issues
  * Support for WSSE (UsernameToken only for now)
+ * Experimental support for HTTP bindings
 
 Features still in development include:
  * WSSE x.509 support (BinarySecurityToken)
- * Support for HTTP bindings 
  * XML validation using lxml XMLSchema's
 
 

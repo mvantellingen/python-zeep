@@ -3,6 +3,7 @@
  - Add missing `name` attributes to xsd.QName and xsd.NOTATION (#15)
  - Various fixes related to the Choice element
  - Support xsd:include
+ - Experimental support for HTTP bindings
 
 
 0.5.0 (2015-05-08)
