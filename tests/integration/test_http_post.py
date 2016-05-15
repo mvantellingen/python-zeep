@@ -17,4 +17,4 @@ def test_get_urlreplacement():
         assert result == 'Hoi'
 
         history = m.request_history[0]
-        assert history._request.path_url == '/o1/EUR/?tickerSymbol=EUR'
+        assert history._request.path_url == '/o1/EUR/'

@@ -5,13 +5,13 @@ from pretend import stub
 
 from tests.utils import assert_nodes_equal, load_xml
 from zeep import xsd
-from zeep.wsdl import definitions, soap
+from zeep.wsdl import definitions, messages, soap, http
 
 
 def test_document_message_serializer():
     wsdl = stub(schema=stub(_prefix_map={}))
     operation = stub(soapaction='my-action')
-    msg = soap.DocumentMessage(
+    msg = messages.DocumentMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
@@ -67,7 +67,7 @@ def test_document_message_deserializer():
     wsdl = stub(schema=stub(_prefix_map={}))
     operation = stub(soapaction='my-action')
 
-    msg = soap.DocumentMessage(
+    msg = messages.DocumentMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
@@ -102,7 +102,7 @@ def test_rpc_message_serializer():
     wsdl = stub(schema=stub(_prefix_map={}))
     operation = stub(soapaction='my-action')
 
-    msg = soap.RpcMessage(
+    msg = messages.RpcMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
@@ -158,7 +158,7 @@ def test_rpc_message_deserializer():
     wsdl = stub(schema=stub(_prefix_map={}))
     operation = stub(soapaction='my-action')
 
-    msg = soap.RpcMessage(
+    msg = messages.RpcMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
@@ -179,3 +179,93 @@ def test_rpc_message_deserializer():
 
     result = msg.deserialize(response_body)
     assert result == 'foobar'
+
+
+def test_urlencoded_serialize():
+    wsdl = stub(schema=stub(_prefix_map={}))
+    operation = stub(location='my-action')
+
+    msg = messages.UrlEncoded(
+        wsdl=wsdl, name=None, operation=operation)
+
+    # Fake resolve()
+    msg.abstract = definitions.AbstractMessage(
+        etree.QName('{http://docs.python-zeep.org/tests/rpc}Method1Response'))
+    msg.abstract.parts = OrderedDict([
+        ('arg1', definitions.MessagePart(
+            element=None, type=xsd.String())),
+        ('arg2', definitions.MessagePart(
+            element=None, type=xsd.String())),
+
+    ])
+    msg.namespace = {
+        'body': 'http://docs.python-zeep.org/tests/rpc',
+        'header': None,
+        'headerfault': None
+    }
+
+    serialized = msg.serialize(arg1='ah1', arg2='ah2')
+    assert serialized.headers == {'Content-Type': 'text/xml; charset=utf-8'}
+    assert serialized.path == 'my-action'
+    assert serialized.content == {'arg1': 'ah1', 'arg2': 'ah2'}
+
+
+def test_urlreplacement_serialize():
+    wsdl = stub(schema=stub(_prefix_map={}))
+    operation = stub(location='my-action/(arg1)/(arg2)/')
+
+    msg = messages.UrlReplacement(
+        wsdl=wsdl, name=None, operation=operation)
+
+    # Fake resolve()
+    msg.abstract = definitions.AbstractMessage(
+        etree.QName('{http://docs.python-zeep.org/tests/rpc}Method1Response'))
+    msg.abstract.parts = OrderedDict([
+        ('arg1', definitions.MessagePart(
+            element=None, type=xsd.String())),
+        ('arg2', definitions.MessagePart(
+            element=None, type=xsd.String())),
+
+    ])
+    msg.namespace = {
+        'body': 'http://docs.python-zeep.org/tests/rpc',
+        'header': None,
+        'headerfault': None
+    }
+
+    serialized = msg.serialize(arg1='ah1', arg2='ah2')
+    assert serialized.headers == {'Content-Type': 'text/xml; charset=utf-8'}
+    assert serialized.path == 'my-action/ah1/ah2/'
+    assert serialized.content == ''
+
+
+def test_mime_content_serialize_form_urlencoded():
+    wsdl = stub(schema=stub(_prefix_map={}))
+    operation = stub(location='my-action')
+
+    msg = messages.MimeContent(
+        wsdl=wsdl, name=None, operation=operation,
+        content_type='application/x-www-form-urlencoded')
+
+    # Fake resolve()
+    msg.abstract = definitions.AbstractMessage(
+        etree.QName('{http://docs.python-zeep.org/tests/rpc}Method1Response'))
+    msg.abstract.parts = OrderedDict([
+        ('arg1', definitions.MessagePart(
+            element=None, type=xsd.String())),
+        ('arg2', definitions.MessagePart(
+            element=None, type=xsd.String())),
+
+    ])
+    msg.namespace = {
+        'body': 'http://docs.python-zeep.org/tests/rpc',
+        'header': None,
+        'headerfault': None
+    }
+
+    serialized = msg.serialize(arg1='ah1', arg2='ah2')
+    assert serialized.headers == {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    assert serialized.path == 'my-action'
+    assert serialized.content == 'arg1=ah1&arg2=ah2'
