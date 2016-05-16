@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 import six
 from defusedxml.lxml import fromstring
@@ -106,6 +106,11 @@ class SoapMessage(ConcreteMessage):
     def resolve(self, definitions, abstract_message):
         self.abstract = abstract_message
 
+        # If this message has no parts then we have nothing to do. This might
+        # happen for output messages which don't return anything.
+        if not self.abstract.parts:
+            return
+
         header_info = self._info['header']
         headerfault_info = self._info['headerfault']
         body_info = self._info['body']
@@ -196,6 +201,8 @@ class DocumentMessage(SoapMessage):
 
     def signature(self, as_output=False):
         if as_output:
+            if not self.body:
+                return None
 
             if isinstance(self.body.type, xsd.ComplexType):
                 if len(self.body.type.properties()) == 1:
