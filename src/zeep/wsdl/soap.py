@@ -235,10 +235,8 @@ class SoapOperation(Operation):
             tag_name = etree.QName(node.tag).localname
             if tag_name not in ('input', 'output', 'fault'):
                 continue
-            name = node.get('name')
-
             msg = message_class.parse(
-                definitions=definitions, xmlelement=node, name=name,
+                definitions=definitions, xmlelement=node,
                 operation=obj, nsmap=nsmap)
             if tag_name == 'fault':
                 obj.faults[msg.name] = msg

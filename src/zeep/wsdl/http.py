@@ -1,6 +1,7 @@
 import six
 from lxml import etree
 
+from zeep.exceptions import Fault
 from zeep.utils import qname_attr
 from zeep.wsdl import messages
 from zeep.wsdl.definitions import Binding, Operation
@@ -42,10 +43,14 @@ class HttpBinding(Binding):
         return obj
 
     def process_reply(self, client, operation, response):
+        print response.content
         if response.status_code != 200:
             return self.process_error(response.content)
             raise NotImplementedError("No error handling yet!")
         return operation.process_reply(response.content)
+
+    def process_error(self, doc):
+        raise Fault(message=doc)
 
 
 class HttpPostBinding(HttpBinding):
@@ -123,7 +128,6 @@ class HttpOperation(Operation):
             tag_name = etree.QName(node.tag).localname
             if tag_name not in ('input', 'output'):
                 continue
-            name = node.get('name')
 
             # XXX Multiple mime types may be declared as alternatives
             message_node = node.getchildren()[0]
@@ -138,7 +142,7 @@ class HttpOperation(Operation):
                 message_class = messages.MimeXML
 
             if message_class:
-                msg = message_class.parse(definitions, node, name, obj)
+                msg = message_class.parse(definitions, node, obj)
                 assert msg
                 setattr(obj, tag_name, msg)
         return obj

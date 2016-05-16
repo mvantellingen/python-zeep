@@ -49,6 +49,12 @@ class Element(Base):
         return '<%s(name=%r, type=%r)>' % (
             self.__class__.__name__, self.name, self.type)
 
+    def __eq__(self, other):
+        return (
+            other is not None and
+            self.__class__ == other.__class__ and
+            self.__dict__ == other.__dict__)
+
     def serialize(self, value):
         return self.type.serialize(value)
 

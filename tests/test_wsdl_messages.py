@@ -33,6 +33,127 @@ def abstract_message_output():
     return abstract
 
 
+##
+# DocumentMessage
+#
+def test_document_message_parse():
+    xmlelement = load_xml("""
+      <input
+            xmlns="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+        <soap:body use="literal"/>
+      </input>
+    """)
+
+    operation = stub()
+    definitions_ = stub(
+        target_namespace='',
+        messages={},
+        wsdl=stub())
+
+    msg = messages.DocumentMessage.parse(
+        definitions=definitions_,
+        xmlelement=xmlelement,
+        operation=operation,
+        nsmap={})
+
+    abstract_body = definitions.AbstractMessage(
+        etree.QName('{http://docs.python-zeep.org/tests/msg}Input'))
+    abstract_body.parts['params'] = definitions.MessagePart(
+        element=xsd.Element(etree.QName('input'), xsd.String()),
+        type=None)
+
+    msg.resolve(definitions_, abstract_body)
+
+    assert msg.headerfault is None
+    assert msg.header is None
+    assert msg.body == abstract_body.parts['params'].element
+
+
+def test_document_message_parse_with_header():
+    xmlelement = load_xml("""
+      <input
+            xmlns="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:tns="http://tests.python-zeep.org/tns">
+        <soap:header message="tns:Input" part="authentication" use="literal" />
+        <soap:body use="literal"/>
+      </input>
+    """)
+
+    operation = stub()
+    definitions_ = stub(
+        target_namespace='',
+        messages={},
+        wsdl=stub())
+
+    msg = messages.DocumentMessage.parse(
+        definitions=definitions_,
+        xmlelement=xmlelement,
+        operation=operation,
+        nsmap={})
+
+    abstract_message = definitions.AbstractMessage(
+        etree.QName('{http://tests.python-zeep.org/tns}Input'))
+    abstract_message.parts['params'] = definitions.MessagePart(
+        element=xsd.Element(etree.QName('input'), xsd.String()),
+        type=None)
+    abstract_message.parts['authentication'] = definitions.MessagePart(
+        element=xsd.Element(etree.QName('authentication'), xsd.String()),
+        type=None)
+
+    definitions_.messages[abstract_message.name.text] = abstract_message
+    msg.resolve(definitions_, abstract_message)
+
+    assert msg.headerfault is None
+    assert msg.header == abstract_message.parts['authentication'].element
+    assert msg.body == abstract_message.parts['params'].element
+    assert len(abstract_message.parts.values()) == 2
+
+
+def test_document_message_parse_with_header_other_message():
+    xmlelement = load_xml("""
+      <input
+            xmlns="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:tns="http://tests.python-zeep.org/tns">
+        <soap:header message="tns:InputHeader" part="authentication" use="literal" />
+        <soap:body use="literal"/>
+      </input>
+    """)
+
+    operation = stub()
+    definitions_ = stub(
+        target_namespace='',
+        messages={},
+        wsdl=stub())
+
+    msg = messages.DocumentMessage.parse(
+        definitions=definitions_,
+        xmlelement=xmlelement,
+        operation=operation,
+        nsmap={})
+
+    abstract_header = definitions.AbstractMessage(
+        etree.QName('{http://tests.python-zeep.org/tns}InputHeader'))
+    abstract_header.parts['authentication'] = definitions.MessagePart(
+        element=xsd.Element(etree.QName('authentication'), xsd.String()),
+        type=None)
+    definitions_.messages[abstract_header.name.text] = abstract_header
+
+    abstract_body = definitions.AbstractMessage(
+        etree.QName('{http://docs.python-zeep.org/tests/msg}Input'))
+    abstract_body.parts['params'] = definitions.MessagePart(
+        element=xsd.Element(etree.QName('input'), xsd.String()),
+        type=None)
+
+    msg.resolve(definitions_, abstract_body)
+
+    assert msg.headerfault is None
+    assert msg.header == abstract_header.parts['authentication'].element
+    assert msg.body == abstract_body.parts['params'].element
+
+
 def test_document_message_serializer():
     wsdl = stub(schema=stub(_prefix_map={}))
     operation = stub(soapaction='my-actiGn')
@@ -123,6 +244,44 @@ def test_document_message_deserializer():
     assert result == 'foobar'
 
 
+##
+# RPC Message
+def test_rpc_message_parse():
+    xmlelement = load_xml("""
+      <input
+            xmlns="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+        <soap:body use="encoded" namespace="http://tests.python-zeep.org/rpc"
+                   encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </input>
+    """)
+
+    operation = stub()
+    definitions_ = stub(
+        target_namespace='',
+        messages={},
+        wsdl=stub())
+
+    msg = messages.RpcMessage.parse(
+        definitions=definitions_,
+        xmlelement=xmlelement,
+        operation=operation,
+        nsmap={})
+
+    abstract_body = definitions.AbstractMessage(
+        etree.QName('{http://docs.python-zeep.org/tests/msg}Input'))
+    abstract_body.parts['arg1'] = definitions.MessagePart(
+        element=None, type=xsd.String())
+    abstract_body.parts['arg2'] = definitions.MessagePart(
+        element=None, type=xsd.String())
+
+    msg.resolve(definitions_, abstract_body)
+
+    assert msg.headerfault is None
+    assert msg.header is None
+    assert msg.body is not None
+
+
 def test_rpc_message_serializer(abstract_message_input):
     wsdl = stub(schema=stub(_prefix_map={}))
     operation = stub(soapaction='my-action')
@@ -133,13 +292,14 @@ def test_rpc_message_serializer(abstract_message_input):
         operation=operation,
         nsmap=soap.Soap11Binding.nsmap)
 
-    # Fake resolve()
-    msg.abstract = abstract_message_input
-    msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/rpc',
+    msg._info = {
+        'body': {
+            'namespace': 'http://docs.python-zeep.org/tests/rpc',
+        },
         'header': None,
         'headerfault': None
     }
+    msg.resolve(wsdl, abstract_message_input)
 
     serialized = msg.serialize(arg1='ah1', arg2='ah2')
     expected = """
@@ -181,13 +341,12 @@ def test_rpc_message_deserializer(abstract_message_output):
         operation=operation,
         nsmap=soap.Soap11Binding.nsmap)
 
-    # Fake resolve()
-    msg.abstract = abstract_message_output
-    msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/rpc',
+    msg._info = {
+        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
+    msg.resolve(wsdl, abstract_message_output)
 
     result = msg.deserialize(response_body)
     assert result == 'foobar'
@@ -201,13 +360,12 @@ def test_rpc_message_signature(abstract_message_input):
         wsdl=wsdl, name=None, operation=operation,
         nsmap=soap.Soap11Binding.nsmap)
 
-    # Fake resolve()
-    msg.abstract = abstract_message_input
-    msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/rpc',
+    msg._info = {
+        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
+    msg.resolve(wsdl, abstract_message_input)
     assert msg.signature() == 'arg1: xsd:string, arg2: xsd:string'
 
 
@@ -219,16 +377,18 @@ def test_rpc_message_signature_output(abstract_message_output):
         wsdl=wsdl, name=None, operation=operation,
         nsmap=soap.Soap11Binding.nsmap)
 
-    # Fake resolve()
-    msg.abstract = abstract_message_output
-    msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/rpc',
+    msg._info = {
+        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
-    assert msg.signature(True) == 'result: xsd:string'
+    msg.resolve(wsdl, abstract_message_output)
+    assert msg.signature(True) == 'xsd:string'
 
 
+##
+# URLEncoded Message
+#
 def test_urlencoded_serialize(abstract_message_input):
     wsdl = stub(schema=stub(_prefix_map={}))
     operation = stub(location='my-action')
@@ -236,13 +396,12 @@ def test_urlencoded_serialize(abstract_message_input):
     msg = messages.UrlEncoded(
         wsdl=wsdl, name=None, operation=operation)
 
-    # Fake resolve()
-    msg.abstract = abstract_message_input
-    msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/rpc',
+    msg._info = {
+        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
+    msg.resolve(wsdl, abstract_message_input)
 
     serialized = msg.serialize(arg1='ah1', arg2='ah2')
     assert serialized.headers == {'Content-Type': 'text/xml; charset=utf-8'}
@@ -257,16 +416,18 @@ def test_urlencoded_signature(abstract_message_input):
     msg = messages.UrlEncoded(
         wsdl=wsdl, name=None, operation=operation)
 
-    # Fake resolve()
-    msg.abstract = abstract_message_input
     msg.namespace = {
         'body': 'http://docs.python-zeep.org/tests/rpc',
         'header': None,
         'headerfault': None
     }
+    msg.resolve(wsdl, abstract_message_input)
     assert msg.signature() == 'arg1: xsd:string, arg2: xsd:string'
 
 
+##
+# URLReplacement Message
+#
 def test_urlreplacement_serialize(abstract_message_input):
     wsdl = stub(schema=stub(_prefix_map={}))
     operation = stub(location='my-action/(arg1)/(arg2)/')
@@ -274,13 +435,12 @@ def test_urlreplacement_serialize(abstract_message_input):
     msg = messages.UrlReplacement(
         wsdl=wsdl, name=None, operation=operation)
 
-    # Fake resolve()
-    msg.abstract = abstract_message_input
     msg.namespace = {
         'body': 'http://docs.python-zeep.org/tests/rpc',
         'header': None,
         'headerfault': None
     }
+    msg.resolve(wsdl, abstract_message_input)
 
     serialized = msg.serialize(arg1='ah1', arg2='ah2')
     assert serialized.headers == {'Content-Type': 'text/xml; charset=utf-8'}
@@ -295,16 +455,18 @@ def test_urlreplacement_signature(abstract_message_input):
     msg = messages.UrlReplacement(
         wsdl=wsdl, name=None, operation=operation)
 
-    # Fake resolve()
-    msg.abstract = abstract_message_input
-    msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/rpc',
+    msg._info = {
+        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
+    msg.resolve(wsdl, abstract_message_input)
     assert msg.signature() == 'arg1: xsd:string, arg2: xsd:string'
 
 
+##
+# MimeContent Message
+#
 def test_mime_content_serialize_form_urlencoded(abstract_message_input):
     wsdl = stub(schema=stub(_prefix_map={}))
     operation = stub(location='my-action')
@@ -313,13 +475,12 @@ def test_mime_content_serialize_form_urlencoded(abstract_message_input):
         wsdl=wsdl, name=None, operation=operation,
         content_type='application/x-www-form-urlencoded')
 
-    # Fake resolve()
-    msg.abstract = abstract_message_input
-    msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/rpc',
+    msg._info = {
+        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
+    msg.resolve(wsdl, abstract_message_input)
 
     serialized = msg.serialize(arg1='ah1', arg2='ah2')
     assert serialized.headers == {
@@ -337,11 +498,10 @@ def test_mime_content_signature(abstract_message_input):
         wsdl=wsdl, name=None, operation=operation,
         content_type='application/x-www-form-urlencoded')
 
-    # Fake resolve()
-    msg.abstract = abstract_message_input
-    msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/rpc',
+    msg._info = {
+        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
+    msg.resolve(wsdl, abstract_message_input)
     assert msg.signature() == 'arg1: xsd:string, arg2: xsd:string'

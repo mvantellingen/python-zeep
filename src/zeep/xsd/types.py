@@ -42,6 +42,12 @@ class UnresolvedType(Type):
 
 class SimpleType(Type):
 
+    def __eq__(self, other):
+        return (
+            other is not None and
+            self.__class__ == other.__class__ and
+            self.__dict__ == other.__dict__)
+
     def render(self, parent, value):
         parent.text = self.xmlvalue(value)
 
