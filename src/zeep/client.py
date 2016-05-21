@@ -55,6 +55,10 @@ class Client(object):
         required.
 
         """
+        if not self.wsdl.services:
+            raise ValueError(
+                "No services found in the WSDL. Are you using the correct URL?")
+
         if service_name:
             service = self.wsdl.services.get(service_name)
             if not service:
