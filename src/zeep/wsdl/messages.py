@@ -1,4 +1,4 @@
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 
 import six
 from defusedxml.lxml import fromstring
@@ -88,7 +88,6 @@ class SoapMessage(ConcreteMessage):
         }
         return SerializedMessage(
             path=None, headers=headers, content=envelope)
-
 
     def resolve(self, definitions, abstract_message):
         self.abstract = abstract_message

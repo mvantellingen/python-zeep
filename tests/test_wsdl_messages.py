@@ -1,6 +1,6 @@
-import pytest
 from collections import OrderedDict
 
+import pytest
 from lxml import etree
 from pretend import stub
 
@@ -547,7 +547,7 @@ def test_mime_content_signature(abstract_message_input):
 
 
 def test_mime_multipart_parse():
-    xmlelement = load_xml("""
+    load_xml("""
         <output
             xmlns="http://schemas.xmlsoap.org/wsdl/"
             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"

@@ -1,7 +1,8 @@
 import pytest
 import requests_mock
-from zeep import transports
 from pretend import stub
+
+from zeep import transports
 
 
 @pytest.mark.requests

@@ -1,5 +1,4 @@
 import logging
-import warnings
 
 from zeep.transports import Transport
 from zeep.wsdl import WSDL
