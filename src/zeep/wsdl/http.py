@@ -43,7 +43,6 @@ class HttpBinding(Binding):
         return obj
 
     def process_reply(self, client, operation, response):
-        print response.content
         if response.status_code != 200:
             return self.process_error(response.content)
             raise NotImplementedError("No error handling yet!")

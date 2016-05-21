@@ -1,3 +1,4 @@
+import copy
 from lxml import etree
 
 
@@ -37,6 +38,9 @@ class Any(Base):
 class Element(Base):
     def __init__(self, name, type_=None, min_occurs=1, max_occurs=1,
                  nillable=False):
+        if name and not isinstance(name, etree.QName):
+            name = etree.QName(name)
+
         self.name = name.localname if name else None
         self.qname = name
         self.type = type_
@@ -54,6 +58,15 @@ class Element(Base):
             other is not None and
             self.__class__ == other.__class__ and
             self.__dict__ == other.__dict__)
+
+    def clone(self, name):
+        if not isinstance(name, etree.QName):
+            name = etree.QName(name)
+
+        new = copy.copy(self)
+        new.name = name.localname
+        new.qname = name
+        return new
 
     def serialize(self, value):
         return self.type.serialize(value)

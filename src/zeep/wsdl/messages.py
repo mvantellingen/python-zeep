@@ -7,7 +7,7 @@ from lxml.builder import ElementMaker
 
 from zeep import xsd
 from zeep.utils import qname_attr
-from zeep.wsdl.utils import _soap_element, get_element_for_message
+from zeep.wsdl.utils import _soap_element
 from zeep.xsd import Element
 
 SerializedMessage = namedtuple('SerializedMessage', ['path', 'headers', 'content'])
@@ -30,7 +30,14 @@ class ConcreteMessage(object):
         raise NotImplementedError()
 
     def signature(self, as_output=False):
+        if not self.body:
+            return None
+
         if as_output:
+            if isinstance(self.body.type, xsd.ComplexType):
+                if len(self.body.type.properties()) == 1:
+                    return self.body.type.properties()[0].type.name
+
             return self.body.type.name
         return self.body.type.signature()
 
@@ -82,17 +89,6 @@ class SoapMessage(ConcreteMessage):
         return SerializedMessage(
             path=None, headers=headers, content=envelope)
 
-    def signature(self, as_output=False):
-        if not self.body:
-            return None
-
-        if as_output:
-            if isinstance(self.body.type, xsd.ComplexType):
-                if len(self.body.type.properties()) == 1:
-                    return self.body.type.properties()[0].type.name
-
-            return self.body.type.name
-        return self.body.type.signature()
 
     def resolve(self, definitions, abstract_message):
         self.abstract = abstract_message
@@ -231,6 +227,10 @@ class RpcMessage(SoapMessage):
         return result[0]
 
     def resolve(self, definitions, abstract_message):
+        """Override the default `SoapMessage.resolve()` since we need to wrap
+        the parts in an element.
+
+        """
         self.abstract = abstract_message
 
         # If this message has no parts then we have nothing to do. This might
@@ -254,14 +254,26 @@ class RpcMessage(SoapMessage):
                 self._info['body']['namespace'], self.abstract.name.localname)
 
             self.body = xsd.Element(tag_name, xsd.ComplexType(children=[
-                xsd.Element(etree.QName(etree.QName(name).localname), msg.type)
+                xsd.Element(name, msg.type)
                 for name, msg in parts.items()
             ]))
 
 
 class HttpMessage(ConcreteMessage):
     """Base class for HTTP Binding messages"""
-    pass
+
+    def resolve(self, definitions, abstract_message):
+        self.abstract = abstract_message
+
+        children = []
+        for name, message in self.abstract.parts.items():
+            if message.element:
+                elm = message.element.clone(name)
+            else:
+                elm = xsd.Element(name, message.type)
+            children.append(elm)
+        self.body = xsd.Element(
+            self.operation.name, xsd.ComplexType(children=children))
 
 
 class UrlEncoded(HttpMessage):
@@ -284,19 +296,6 @@ class UrlEncoded(HttpMessage):
         headers = {'Content-Type': 'text/xml; charset=utf-8'}
         return SerializedMessage(
             path=self.operation.location, headers=headers, content=params)
-
-    def signature(self, as_output=False):
-        result = xsd.ComplexType(children=[
-            xsd.Element(etree.QName(etree.QName(name).localname), message.type)
-            for name, message in self.abstract.parts.items()
-        ])
-        return result.signature()
-
-    def resolve(self, definitions, abstract_message):
-        self.abstract = abstract_message
-        self.params = xsd.Element(
-             None,
-             xsd.ComplexType(children=abstract_message.parts.values()))
 
     @classmethod
     def parse(cls, definitions, xmlelement, operation):
@@ -337,16 +336,6 @@ class UrlReplacement(HttpMessage):
             path = path.replace('(%s)' % key, value if value is not None else '')
         return SerializedMessage(path=path, headers=headers, content='')
 
-    def signature(self):
-        result = xsd.ComplexType(children=[
-            xsd.Element(etree.QName(etree.QName(name).localname), message.type)
-            for name, message in self.abstract.parts.items()
-        ])
-        return result.signature()
-
-    def resolve(self, definitions, abstract_message):
-        self.abstract = abstract_message
-
     @classmethod
     def parse(cls, definitions, xmlelement, operation):
         name = xmlelement.get('name')
@@ -358,6 +347,52 @@ class MimeMessage(ConcreteMessage):
     _nsmap = {
         'mime': 'http://schemas.xmlsoap.org/wsdl/mime/',
     }
+
+    def __init__(self, wsdl, name, operation, part_name):
+        super(MimeMessage, self).__init__(wsdl, name, operation)
+        self.part_name = part_name
+
+    def resolve(self, definitions, abstract_message):
+        """Resolve the body element
+
+        The specs are (again) not really clear how to handle the message
+        parts in relation the message element vs type. The following strategy
+        is chosen, which seem to work:
+
+         - If the message part has a name and it maches then set it as body
+         - If the message part has a name but it doesn't match but there are no
+           other message parts, then just use that one.
+         - If the message part has no name then handle it like an rpc call,
+           in other words, each part is an argument.
+
+        """
+        self.abstract = abstract_message
+        if self.part_name:
+
+            if self.part_name in self.abstract.parts:
+                message = self.abstract.parts[self.part_name]
+            elif len(self.abstract.parts) == 1:
+                message = list(self.abstract.parts.values())[0]
+            else:
+                raise ValueError(
+                    "Multiple parts for message while no matching part found")
+
+            if message.element:
+                self.body = message.element
+            else:
+                elm = xsd.Element(self.part_name, message.type)
+                self.body = xsd.Element(
+                    self.operation.name, xsd.ComplexType(children=[elm]))
+        else:
+            children = []
+            for name, message in self.abstract.parts.items():
+                if message.element:
+                    elm = message.element.clone(name)
+                else:
+                    elm = xsd.Element(name, message.type)
+                children.append(elm)
+            self.body = xsd.Element(
+                self.operation.name, xsd.ComplexType(children=children))
 
 
 class MimeContent(MimeMessage):
@@ -375,24 +410,25 @@ class MimeContent(MimeMessage):
     goal for WSDL to exhaustively define XML grammar for each MIME type.
 
     """
-    def __init__(self, wsdl, name, operation, content_type):
-        super(MimeContent, self).__init__(wsdl, name, operation)
+    def __init__(self, wsdl, name, operation, content_type, part_name):
+        super(MimeContent, self).__init__(wsdl, name, operation, part_name)
         self.content_type = content_type
 
     def serialize(self, *args, **kwargs):
-        result = xsd.ComplexType(children=[
-            xsd.Element(etree.QName(etree.QName(name).localname), message.type)
-            for name, message in self.abstract.parts.items()
-        ])
-        value = result(*args, **kwargs)
+        value = self.body(*args, **kwargs)
         headers = {
             'Content-Type': self.content_type
         }
 
         data = ''
         if self.content_type == 'application/x-www-form-urlencoded':
-            items = result.serialize(value)
+            items = value._xsd_type.serialize(value)
             data = six.moves.urllib.parse.urlencode(items)
+        elif self.content_type == 'text/xml':
+            document = etree.Element('root')
+            self.body.render(document, value)
+            data = etree.tostring(
+                document.getchildren()[0], pretty_print=True)
 
         return SerializedMessage(
             path=self.operation.location, headers=headers, content=data)
@@ -402,36 +438,17 @@ class MimeContent(MimeMessage):
         part = list(self.abstract.parts.values())[0]
         return part.type.parse_xmlelement(node)
 
-    def signature(self, as_output=False):
-        result = xsd.ComplexType(children=[
-            xsd.Element(etree.QName(etree.QName(name).localname), message.type)
-            for name, message in self.abstract.parts.items()
-        ])
-        return result.signature()
-
-    def resolve(self, definitions, abstract_message):
-        if abstract_message.parts:
-            if not self.name:
-                if len(abstract_message.parts.keys()) > 1:
-                    part = abstract_message.parts
-                else:
-                    part = list(abstract_message.parts.values())[0]
-            else:
-                part = abstract_message.parts[self.name]
-        else:
-            part = None
-        self.abstract = abstract_message
-        self.body = part
-
     @classmethod
     def parse(cls, definitions, xmlelement, operation):
         name = xmlelement.get('name')
-        content_type = None
+
+        part_name = content_type = None
         content_node = xmlelement.find('mime:content', namespaces=cls._nsmap)
         if content_node is not None:
             content_type = content_node.get('type')
+            part_name = content_node.get('part')
 
-        obj = cls(definitions.wsdl, name, operation, content_type)
+        obj = cls(definitions.wsdl, name, operation, content_type, part_name)
         return obj
 
 
@@ -454,17 +471,15 @@ class MimeXML(MimeMessage):
         part = self.abstract.parts.values()[0]
         return part.element.parse(node)
 
-    def resolve(self, definitions, abstract_message):
-        self.abstract = abstract_message
-
-    def signature(self, as_output=False):
-        part = self.abstract.parts.values()[0]
-        return part.element.type
-
     @classmethod
     def parse(cls, definitions, xmlelement, operation):
         name = xmlelement.get('name')
-        obj = cls(definitions.wsdl, operation, name)
+        part_name = None
+
+        content_node = xmlelement.find('mime:mimeXml', namespaces=cls._nsmap)
+        if content_node is not None:
+            part_name = content_node.get('part')
+        obj = cls(definitions.wsdl, name, operation, part_name)
         return obj
 
 
