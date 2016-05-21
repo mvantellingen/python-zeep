@@ -108,7 +108,7 @@ class SoapMessage(ConcreteMessage):
             if body_info['part']:
                 part_name = body_info['part']
             else:
-                part_name = parts.keys()[0]
+                part_name = list(parts.keys())[0]
             self.body = parts[part_name].element
 
     def _resolve_header(self, info, definitions, parts):
