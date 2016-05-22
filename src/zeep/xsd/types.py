@@ -220,6 +220,16 @@ class ComplexType(Type):
         return '%s(%s)' % (self.__class__.__name__, self.signature())
 
 
+class ListType(object):
+    def __init__(self, item_type):
+        self.item_type = item_type
+
+
+class UnionType(object):
+    def __init__(self, item_types):
+        self.item_types = item_types
+
+
 class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):

@@ -20,7 +20,8 @@ for name in [
     'schema', 'import', 'include',
     'annotation', 'element', 'simpleType', 'complexType',
     'simpleContent', 'complexContent',
-    'sequence', 'group', 'choice', 'all', 'attribute', 'any', 'anyAttribute',
+    'sequence', 'group', 'choice', 'all', 'list', 'union',
+    'attribute', 'any', 'anyAttribute', 'attributeGroup',
     'restriction', 'extension',
 
 ]:
@@ -237,6 +238,16 @@ class SchemaVisitor(object):
             Content: (annotation?, (simpleType?))
             </attribute>
         """
+        is_global = parent.tag == tags.schema
+
+        # If the elment has a ref attribute then all other attributes cannot
+        # be present. Short circuit that here.
+        # Ref is prohibited on global elements (parent = schema)
+        if not is_global:
+            result = self.process_ref_attribute(node)
+            if result:
+                return result
+
         attribute_form = node.get('form', self.schema._attribute_form)
         if attribute_form == 'qualified':
             name = qname_attr(node, 'name', self.schema._target_namespace)
@@ -292,7 +303,7 @@ class SchemaVisitor(object):
                 self.visit_list(child, node)
 
             elif child.tag == tags.union:
-                self.visit_list(child, node)
+                self.visit_union(child, node)
 
         base_type = xsd_builtins.String
         xsd_type = type(name, (base_type,), {})()
@@ -450,7 +461,10 @@ class SchemaVisitor(object):
         base_name = qname_attr(node, 'base')
         try:
             base = self.schema.get_type(base_name)
-            children = base._children
+            if isinstance(base, xsd_types.ComplexType):
+                children = base._children
+            else:
+                children = [xsd_elements.Element(None, base)]
         except KeyError:
             children = [xsd_types.UnresolvedType(base_name)]
 
@@ -486,7 +500,7 @@ class SchemaVisitor(object):
             if isinstance(base, xsd_types.ComplexType):
                 children = base._children
             else:
-                children = [xsd_types.Element(None, base)]
+                children = [xsd_elements.Element(None, base)]
         except KeyError:
             children = [xsd_types.UnresolvedType(base_name)]
 
@@ -593,8 +607,21 @@ class SchemaVisitor(object):
             Content: (annotation?, (simpleType?))
             </list>
 
+        The use of the simpleType element child and the itemType attribute is
+        mutually exclusive.
+
         """
-        raise NotImplementedError()
+        item_type = qname_attr(node, 'itemType')
+        if item_type:
+            try:
+                xsd_type = self.schema.get_type(item_type.text)
+            except KeyError:
+                xsd_type = xsd_types.UnresolvedType(item_type.text)
+        else:
+            subnodes = node.getchildren()
+            child = subnodes[-1]
+            xsd_type = self.process(child, node)
+        return xsd_types.ListType(xsd_type)
 
     def visit_choice(self, node, parent):
         """
@@ -627,7 +654,7 @@ class SchemaVisitor(object):
             Content: (annotation?, (simpleType*))
             </union>
         """
-        raise NotImplementedError()
+        return xsd_types.UnionType([])
 
     def visit_unique(self, node, parent):
         """
@@ -638,7 +665,7 @@ class SchemaVisitor(object):
             Content: (annotation?, (selector, field+))
             </unique>
         """
-        raise NotImplementedError()
+        pass
 
     def visit_attribute_group(self, node, parent):
         """
@@ -672,6 +699,7 @@ class SchemaVisitor(object):
         tags.import_: visit_import,
         tags.include: visit_include,
         tags.annotation: visit_annotation,
+        tags.attributeGroup: visit_attribute_group,
     }
 
 

@@ -4,6 +4,7 @@ from lxml import etree
 from zeep.xsd import ListElement, builtins, visitor
 from zeep.xsd.schema import Schema
 from zeep.xsd.types import UnresolvedType
+from tests.utils import assert_nodes_equal
 
 
 @pytest.fixture
@@ -164,3 +165,86 @@ def test_attribute_simple_type(schema_visitor):
     xsd_element = schema_visitor.schema.get_element(
         '{http://tests.python-zeep.org/}foo')
     assert xsd_element(bar='hoi')
+
+
+def test_attribute_any_type(schema_visitor):
+    node = create_node("""
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="foo">
+            <complexType>
+              <xsd:attribute name="base" type="xsd:anyURI" />
+            </complexType>
+          </element>
+        </schema>
+    """)
+    schema_visitor.visit_schema(node)
+    xsd_element = schema_visitor.schema.get_element(
+        '{http://tests.python-zeep.org/}foo')
+    assert xsd_element(base='hoi')
+
+
+def test_complex_content_mixed(schema_visitor):
+    node = create_node("""
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="foo">
+            <xsd:complexType>
+              <xsd:complexContent mixed="true">
+                <xsd:extension base="xsd:anyType">
+                  <xsd:attribute name="bar" type="xsd:anyURI" use="required"/>
+                </xsd:extension>
+              </xsd:complexContent>
+            </xsd:complexType>
+          </xsd:element>
+        </schema>
+    """)
+    schema_visitor.visit_schema(node)
+    xsd_element = schema_visitor.schema.get_element(
+        '{http://tests.python-zeep.org/}foo')
+    result = xsd_element('basetype', bar='hoi')
+
+    node = etree.Element('document')
+    xsd_element.render(node, result)
+
+    expected = """
+      <document>
+        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/" bar="hoi">basetype</ns0:foo>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+def test_union_type(schema_visitor):
+    node = create_node("""
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:simpleType name="type">
+            <xsd:union memberTypes="xsd:language">
+              <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                  <xsd:enumeration value=""/>
+                </xsd:restriction>
+              </xsd:simpleType>
+            </xsd:union>
+          </xsd:simpleType>
+
+          <xsd:element name="foo">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="arg" type="tns:type"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </schema>
+    """)
+
+    schema_visitor.visit_schema(node)
+    xsd_element = schema_visitor.schema.get_element(
+        '{http://tests.python-zeep.org/}foo')
+    assert xsd_element(arg='hoi')
