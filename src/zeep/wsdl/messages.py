@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 import six
 from defusedxml.lxml import fromstring
@@ -237,7 +237,7 @@ class RpcMessage(SoapMessage):
         if not self.abstract.parts:
             return
 
-        parts = dict(self.abstract.parts)
+        parts = OrderedDict(self.abstract.parts)
 
         self.header = self._resolve_header(
             self._info['header'], definitions, parts)
