@@ -211,11 +211,15 @@ class Definitions(object):
 
         types = doc.find('wsdl:types', namespaces=NSMAP)
         if types is None:
-            return
+            return Schema(
+                None, self.wsdl.transport, self.location,
+                self.wsdl._parser_context, self.location)
 
         schema_nodes = findall_multiple_ns(types, 'xsd:schema', namespace_sets)
         if not schema_nodes:
-            return None
+            return Schema(
+                None, self.wsdl.transport, self.location,
+                self.wsdl._parser_context, self.location)
 
         # FIXME: This fixes `test_parse_types_nsmap_issues`, lame solution...
         schema_nodes = [
