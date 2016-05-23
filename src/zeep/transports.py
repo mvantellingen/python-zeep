@@ -17,7 +17,8 @@ class Transport(object):
             if response:
                 return bytes(response)
 
-        response = requests.get(url, timeout=self.timeout, verify=self.verify, auth=self.http_auth)
+        response = requests.get(url, timeout=self.timeout, verify=self.verify,
+                                auth=self.http_auth)
 
         if self.cache:
             self.cache.add(url, response.content)
@@ -26,12 +27,14 @@ class Transport(object):
 
     def post(self, address, message, headers):
         response = requests.post(
-            address, data=message, headers=headers, verify=self.verify, auth=self.http_auth
+            address, data=message, headers=headers, verify=self.verify,
+            auth=self.http_auth
         )
         return response
 
     def get(self, address, params, headers):
         response = requests.get(
-            address, params=params, headers=headers, verify=self.verify, auth=self.http_auth
+            address, params=params, headers=headers, verify=self.verify,
+            auth=self.http_auth
         )
         return response
