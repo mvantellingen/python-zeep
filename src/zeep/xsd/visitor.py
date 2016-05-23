@@ -50,6 +50,17 @@ class SchemaVisitor(object):
             # so that it is handled correctly
             if ref.namespace == 'http://www.w3.org/2001/XMLSchema':
                 return
+            return xsd_elements.RefAttribute(node.tag, ref, self.schema)
+
+    def process_ref_element(self, node):
+        ref = qname_attr(node, 'ref')
+        if ref:
+
+            # Some wsdl's reference to xs:schema, we ignore that for now. It
+            # might be better in the future to process the actual schema file
+            # so that it is handled correctly
+            if ref.namespace == 'http://www.w3.org/2001/XMLSchema':
+                return
             return xsd_elements.RefElement(node.tag, ref, self.schema)
 
     def visit_schema(self, node):
@@ -173,7 +184,7 @@ class SchemaVisitor(object):
         # be present. Short circuit that here.
         # Ref is prohibited on global elements (parent = schema)
         if not is_global:
-            result = self.process_ref_attribute(node)
+            result = self.process_ref_element(node)
             if result:
                 return result
 
@@ -254,8 +265,9 @@ class SchemaVisitor(object):
                 return result
 
         attribute_form = node.get('form', self.schema._attribute_form)
+        qname = qname_attr(node, 'name', self.schema._target_namespace)
         if attribute_form == 'qualified':
-            name = qname_attr(node, 'name', self.schema._target_namespace)
+            name = qname
         else:
             name = etree.QName(node.get('name'))
 
@@ -277,6 +289,10 @@ class SchemaVisitor(object):
 
         attr = xsd_elements.Attribute(name, type_=xsd_type)
         self.schema._elm_instances.append(attr)
+
+        # Only register global elements
+        if is_global:
+            self.schema.register_attribute(qname, attr)
         return attr
 
     def visit_simple_type(self, node, parent):
@@ -352,16 +368,15 @@ class SchemaVisitor(object):
                     assert not children
                     children = item
 
-                elif child.tag in (tags.choice, tags.sequence, tags.all):
+                elif child.tag == tags.choice:
                     assert not children
+                    children = [item]
 
-                    # XXX: Not good
-                    if not isinstance(item, list):
-                        item = [item]
-
+                elif child.tag in (tags.sequence, tags.all):
+                    assert not children
                     children = item
 
-                elif child.tag in (tags.attribute,):
+                elif child.tag == tags.attribute:
                     children.append(item)
 
         # If the complexType's parent is an element then this type is
@@ -572,8 +587,36 @@ class SchemaVisitor(object):
         assert None not in result
         return result
 
-    def visit_group(self, node, parent):
+    def visit_all(self, node, parent):
+        """Allows the elements in the group to appear (or not appear) in any
+        order in the containing element.
+
+            <all
+              id = ID
+              maxOccurs= 1: 1
+              minOccurs= (0 | 1): 1
+              {any attributes with non-schema Namespace...}>
+            Content: (annotation?, element*)
+            </all>
         """
+
+        sub_types = [
+            tags.annotation, tags.element
+        ]
+        result = []
+
+        for child in node.iterchildren():
+            assert child.tag in sub_types, child
+            item = self.process(child, node)
+            result.append(item)
+
+        assert None not in result
+        return result
+
+    def visit_group(self, node, parent):
+        """Groups a set of element declarations so that they can be
+        incorporated as a group into complex type definitions.
+
             <group
               name= NCName
               id = ID
@@ -584,9 +627,10 @@ class SchemaVisitor(object):
               {any attributes with non-schema Namespace}...>
             Content: (annotation?, (all | choice | sequence))
             </group>
+
         """
 
-        result = self.process_ref_attribute(node)
+        result = self.process_ref_element(node)
         if result:
             return result
 
@@ -595,7 +639,14 @@ class SchemaVisitor(object):
         # There should be only max nodes, first node (annotation) is irrelevant
         subnodes = node.getchildren()
         child = subnodes[-1]
-        children = self.process(child, parent)
+
+        item = self.process(child, parent)
+        if child.tag in (tags.all, tags.sequence):
+            children = item
+        elif child.tag == tags.choice:
+            children = [item]
+        else:
+            raise RuntimeError('Unexpected tag')
 
         elm = xsd_elements.GroupElement(name=qname, children=children)
 
@@ -698,7 +749,7 @@ class SchemaVisitor(object):
         tags.simpleContent: None,
         tags.complexContent: None,
         tags.sequence: visit_sequence,
-        tags.all: visit_sequence,
+        tags.all: visit_all,
         tags.group: visit_group,
         tags.attribute: visit_attribute,
         tags.import_: visit_import,

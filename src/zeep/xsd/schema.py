@@ -24,6 +24,7 @@ class Schema(object):
         self._elm_instances = []
         self._types = {}
         self._elements = {}
+        self._attributes = {}
         self._imports = OrderedDict()
         self._prefix_map = {}
         self._xml_schema = None
@@ -100,6 +101,12 @@ class Schema(object):
         logger.debug("register_element(%r, %r)", name, value)
         self._elements[name] = value
 
+    def register_attribute(self, name, value):
+        if isinstance(name, etree.QName):
+            name = name.text
+        logger.debug("register_attribute(%r, %r)", name, value)
+        self._attributes[name] = value
+
     def get_type(self, name):
         name = self._create_qname(name)
 
@@ -127,6 +134,18 @@ class Schema(object):
         raise KeyError(
             "No such element: %r (Only have %s) (from: %s)" % (
                 name.text, ', '.join(self._elements), self))
+
+    def get_attribute(self, name):
+        name = self._create_qname(name)
+        if name in self._attributes:
+            return self._attributes[name]
+
+        if name.namespace in self._imports:
+            return self._imports[name.namespace].get_attribute(name)
+
+        raise KeyError(
+            "No such attribute: %r (Only have %s) (from: %s)" % (
+                name.text, ', '.join(self._attributes), self))
 
     def _create_qname(self, name):
         if isinstance(name, etree.QName):
