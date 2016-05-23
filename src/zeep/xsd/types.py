@@ -272,3 +272,7 @@ class AnyObject(object):
     def __init__(self, xsd_type, value):
         self.xsd_type = xsd_type
         self.value = value
+
+    def __repr__(self):
+        return '<%s(name=%r, type=%r)>' % (
+            self.__class__.__name__, self.xsd_type, self.value)
