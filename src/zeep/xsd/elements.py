@@ -178,8 +178,15 @@ class RefElement(object):
 
     def __iter__(self, *args, **kwargs):
         elm = self._elm
-        for item in elm.properties():
-            yield item
+
+        if isinstance(elm, (GroupElement, ListElement)):
+            for item in elm.properties():
+                yield item
+        elif isinstance(elm, Choice):
+            for item in elm.elements:
+                yield item
+        else:
+            yield elm
 
     def __call__(self, *args, **kwargs):
         return self._elm(*args, **kwargs)

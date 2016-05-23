@@ -92,10 +92,15 @@ class SchemaVisitor(object):
             Content: (annotation?)
             </import>
         """
-        if not node.get('schemaLocation'):
-            raise NotImplementedError("schemaLocation is required")
         namespace = node.get('namespace')
         location = node.get('schemaLocation')
+
+        # Use namespace as location if the schemaLocation is missing
+        if not location:
+            if namespace:
+                location = namespace
+            else:
+                raise NotImplementedError("schemaLocation is required")
 
         # Resolve import if it is a file
         location = absolute_location(location, self.schema._base_url)
