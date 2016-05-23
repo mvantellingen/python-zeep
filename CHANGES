@@ -1,5 +1,8 @@
 0.7.0 (unreleased)
 ------------------
+ - Add support HTTP authentication (mcordes). This adds a new attribute to the
+   Transport client() which passes the http_auth value to requests.
+
 
 0.6.0 (2016-05-21)
 ------------------
