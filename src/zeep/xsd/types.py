@@ -274,5 +274,5 @@ class AnyObject(object):
         self.value = value
 
     def __repr__(self):
-        return '<%s(name=%r, type=%r)>' % (
+        return '<%s(type=%r, value=%r)>' % (
             self.__class__.__name__, self.xsd_type, self.value)

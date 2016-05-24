@@ -69,7 +69,7 @@ def test_element_default_type(schema_visitor):
     """)
     schema_visitor.visit_schema(node)
     element = schema_visitor.schema._elm_instances[0]
-    assert isinstance(element.type, builtins.String)
+    assert isinstance(element.type, builtins.AnyType)
 
 
 def test_element_simple_type_unresolved(schema_visitor):

@@ -216,7 +216,7 @@ class SchemaVisitor(object):
                 except KeyError:
                     xsd_type = xsd_types.UnresolvedType(node_type.text)
             else:
-                xsd_type = xsd_builtins.String()
+                xsd_type = xsd_builtins.AnyType()
 
         # minOccurs / maxOccurs are not allowed on global elements
         if not is_global:
