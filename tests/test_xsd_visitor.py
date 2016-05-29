@@ -4,7 +4,7 @@ from lxml import etree
 from zeep.xsd import ListElement, builtins, visitor
 from zeep.xsd.schema import Schema
 from zeep.xsd.types import UnresolvedType
-from tests.utils import assert_nodes_equal
+from tests.utils import assert_nodes_equal, load_xml, render_node
 
 
 @pytest.fixture
@@ -13,14 +13,8 @@ def schema_visitor():
     return visitor.SchemaVisitor(schema)
 
 
-def create_node(text):
-    node = etree.fromstring(text)
-    etree.XMLSchema(node)
-    return node
-
-
 def test_schema_empty(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
               targetNamespace="http://tests.python-zeep.org/"
               elementFormDefault="qualified"
@@ -33,7 +27,7 @@ def test_schema_empty(schema_visitor):
 
 
 def test_element_simle_types(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
               targetNamespace="http://tests.python-zeep.org/">
             <element name="foo" type="string" />
@@ -45,7 +39,7 @@ def test_element_simle_types(schema_visitor):
 
 
 def test_element_simple_type_annotation(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
               targetNamespace="http://tests.python-zeep.org/">
             <element name="foo" type="string">
@@ -60,7 +54,7 @@ def test_element_simple_type_annotation(schema_visitor):
 
 
 def test_element_default_type(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
                 targetNamespace="http://tests.python-zeep.org/">
@@ -73,7 +67,7 @@ def test_element_default_type(schema_visitor):
 
 
 def test_element_simple_type_unresolved(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
                 targetNamespace="http://tests.python-zeep.org/">
@@ -98,7 +92,7 @@ def test_element_simple_type_unresolved(schema_visitor):
 
 
 def test_element_max_occurs(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
               targetNamespace="http://tests.python-zeep.org/">
             <element name="container">
@@ -123,7 +117,7 @@ def test_element_max_occurs(schema_visitor):
 
 
 def test_simple_content(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                 targetNamespace="http://tests.python-zeep.org/">
@@ -143,7 +137,7 @@ def test_simple_content(schema_visitor):
 
 
 def test_attribute_simple_type(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                 targetNamespace="http://tests.python-zeep.org/">
@@ -168,7 +162,7 @@ def test_attribute_simple_type(schema_visitor):
 
 
 def test_attribute_any_type(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                 targetNamespace="http://tests.python-zeep.org/">
@@ -186,7 +180,7 @@ def test_attribute_any_type(schema_visitor):
 
 
 def test_complex_content_mixed(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -219,7 +213,7 @@ def test_complex_content_mixed(schema_visitor):
 
 
 def test_union_type(schema_visitor):
-    node = create_node("""
+    node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
