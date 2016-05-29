@@ -487,7 +487,7 @@ class SchemaVisitor(object):
         try:
             base = self.schema.get_type(base_name)
             if isinstance(base, xsd_types.ComplexType):
-                children = base._children
+                children = list(base._children)
             else:
                 children = [xsd_elements.Element(None, base)]
         except KeyError:

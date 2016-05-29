@@ -298,6 +298,51 @@ def test_complex_content_mixed(schema_visitor):
     assert_nodes_equal(expected, node)
 
 
+def test_complex_content_extension(schema_visitor):
+    node = load_xml("""
+        <schema
+                xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <complexType name="BaseType" abstract="true">
+            <sequence>
+              <element name="name" type="xsd:string" minOccurs="0"/>
+            </sequence>
+          </complexType>
+          <complexType name="SubType1">
+            <complexContent>
+              <extension base="tns:BaseType">
+                <attribute name="attr_1" type="xsd:string"/>
+                <attribute name="attr_2" type="xsd:string"/>
+              </extension>
+            </complexContent>
+          </complexType>
+          <complexType name="SubType2">
+            <complexContent>
+              <extension base="tns:BaseType">
+                <attribute name="attr_a" type="xsd:string"/>
+                <attribute name="attr_b" type="xsd:string"/>
+                <attribute name="attr_c" type="xsd:string"/>
+              </extension>
+            </complexContent>
+          </complexType>
+        </schema>
+    """)
+    schema_visitor.visit_schema(node)
+    schema = schema_visitor.schema
+    schema._prefix_map['ns0'] = 'http://tests.python-zeep.org/'
+
+    record_type = schema.get_type('ns0:SubType1')
+    child_attrs = [child.name for child in record_type._children]
+    assert len(child_attrs) == 3
+
+    record_type = schema.get_type('ns0:SubType2')
+    child_attrs = [child.name for child in record_type._children]
+    assert len(child_attrs) == 4
+
+
 def test_union_type(schema_visitor):
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
