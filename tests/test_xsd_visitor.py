@@ -382,13 +382,11 @@ def test_simple_content_extension(schema_visitor):
 
     record_type = schema.get_type('ns0:SubType1')
     child_attrs = [child.name for child in record_type._children]
-    print record_type
     assert len(child_attrs) == 3
 
     record_type = schema.get_type('ns0:SubType2')
     child_attrs = [child.name for child in record_type._children]
     assert len(child_attrs) == 4
-
 
 
 def test_union_type(schema_visitor):
