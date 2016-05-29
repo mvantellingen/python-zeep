@@ -113,7 +113,20 @@ class Element(Base):
 
 
 class Attribute(Element):
+    def __init__(self, name, type_=None, required=False, default=None):
+        super(Attribute, self).__init__(name=name, type_=type_)
+        self.required = required
+        self.default = default or ''
+
     def render(self, parent, value):
+        if value is None:
+            if self.default:
+                value = self.default
+            elif not self.required:
+                return
+            else:
+                value = ""  # XXX Throw exception?
+
         value = self.type.xmlvalue(value)
         parent.set(self.qname, value)
 

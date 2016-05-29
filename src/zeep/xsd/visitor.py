@@ -287,7 +287,12 @@ class SchemaVisitor(object):
             except KeyError:
                 xsd_type = xsd_types.UnresolvedType(node_type)
 
-        attr = xsd_elements.Attribute(name, type_=xsd_type)
+        # TODO: We ignore 'prohobited' for now
+        required = node.get('use') == 'required'
+        default = node.get('default')
+
+        attr = xsd_elements.Attribute(
+            name, type_=xsd_type, default=default, required=required)
         self.schema._elm_instances.append(attr)
 
         # Only register global elements

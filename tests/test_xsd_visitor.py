@@ -136,6 +136,84 @@ def test_simple_content(schema_visitor):
     assert xsd_type(10, sizing='qwe')
 
 
+def test_attribute_optional(schema_visitor):
+    node = load_xml("""
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="foo">
+            <complexType>
+              <xsd:attribute name="base" type="xsd:string" />
+            </complexType>
+          </element>
+        </schema>
+    """)
+    schema_visitor.visit_schema(node)
+    xsd_element = schema_visitor.schema.get_element(
+        '{http://tests.python-zeep.org/}foo')
+    value = xsd_element()
+
+    node = render_node(xsd_element, value)
+    expected = """
+      <document>
+        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/"/>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+def test_attribute_required(schema_visitor):
+    node = load_xml("""
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="foo">
+            <complexType>
+              <xsd:attribute name="base" use="required" type="xsd:string" />
+            </complexType>
+          </element>
+        </schema>
+    """)
+    schema_visitor.visit_schema(node)
+    xsd_element = schema_visitor.schema.get_element(
+        '{http://tests.python-zeep.org/}foo')
+    value = xsd_element()
+
+    node = render_node(xsd_element, value)
+    expected = """
+      <document>
+        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/" base=""/>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+def test_attribute_default(schema_visitor):
+    node = load_xml("""
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="foo">
+            <complexType>
+              <xsd:attribute name="base" default="x" type="xsd:string" />
+            </complexType>
+          </element>
+        </schema>
+    """)
+    schema_visitor.visit_schema(node)
+    xsd_element = schema_visitor.schema.get_element(
+        '{http://tests.python-zeep.org/}foo')
+    value = xsd_element()
+
+    node = render_node(xsd_element, value)
+    expected = """
+      <document>
+        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/" base="x"/>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
 def test_attribute_simple_type(schema_visitor):
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
@@ -176,7 +254,15 @@ def test_attribute_any_type(schema_visitor):
     schema_visitor.visit_schema(node)
     xsd_element = schema_visitor.schema.get_element(
         '{http://tests.python-zeep.org/}foo')
-    assert xsd_element(base='hoi')
+    value = xsd_element(base='hoi')
+
+    node = render_node(xsd_element, value)
+    expected = """
+      <document>
+        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/" base="hoi"/>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
 
 
 def test_complex_content_mixed(schema_visitor):
