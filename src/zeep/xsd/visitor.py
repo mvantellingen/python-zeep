@@ -318,20 +318,22 @@ class SchemaVisitor(object):
             name = parent.get('name')
             is_anonymous = True
 
+        base_type = xsd_builtins.String
         for child in node.iterchildren():
             if child.tag == tags.annotation:
                 continue
 
             elif child.tag == tags.restriction:
-                break
+                base_type = self.visit_restriction_simple_type(child, node)
 
             elif child.tag == tags.list:
                 self.visit_list(child, node)
+                break
 
             elif child.tag == tags.union:
                 self.visit_union(child, node)
+                break
 
-        base_type = xsd_builtins.String
         xsd_type = type(name, (base_type,), {})()
         if not is_anonymous:
             qname = as_qname(name, node.nsmap, self.schema._target_namespace)
@@ -455,6 +457,23 @@ class SchemaVisitor(object):
             </restriction>
         """
         pass
+
+
+    def visit_restriction_simple_type(self, node, parent, namespace=None):
+        """
+            <restriction
+              base = QName
+              id = ID
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?,
+                (simpleType?, (
+                    minExclusive | minInclusive | maxExclusive | maxInclusive |
+                    totalDigits |fractionDigits | length | minLength |
+                    maxLength | enumeration | whiteSpace | pattern)*))
+            </restriction>
+        """
+        base_name = qname_attr(node, 'base')
+        return self.schema.get_type(base_name).__class__
 
     def visit_restriction_simple_content(self, node, parent, namespace=None):
         """

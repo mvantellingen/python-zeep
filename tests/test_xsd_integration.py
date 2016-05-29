@@ -1,3 +1,5 @@
+import datetime
+
 from lxml import etree
 
 from tests.utils import assert_nodes_equal
@@ -812,11 +814,12 @@ def test_complex_with_simple():
     address_type = schema.get_element('ns0:Address')
 
     assert address_type.type.signature()
-    obj = address_type('argh', name='foobie')
+    val = datetime.datetime(2016, 5, 29, 11, 13, 45)
+    obj = address_type(val, name='foobie')
 
     expected = """
       <document>
-        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/" name="foobie">argh</ns0:Address>
+        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/" name="foobie">2016-05-29T11:13:45</ns0:Address>
       </document>
     """
     node = etree.Element('document')
