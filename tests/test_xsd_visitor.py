@@ -328,6 +328,7 @@ def test_complex_content_extension(schema_visitor):
               </extension>
             </complexContent>
           </complexType>
+          <element name="test" type="tns:BaseType"/>
         </schema>
     """)
     schema_visitor.visit_schema(node)
@@ -341,6 +342,21 @@ def test_complex_content_extension(schema_visitor):
     record_type = schema.get_type('ns0:SubType2')
     child_attrs = [child.name for child in record_type._children]
     assert len(child_attrs) == 4
+
+    xsd_element = schema.get_element('ns0:test')
+    xsd_type = schema.get_type('ns0:SubType2')
+
+    value = xsd_type(attr_a='a', attr_b='b', attr_c='c')
+    node = render_node(xsd_element, value)
+    expected = """
+      <document>
+        <ns0:test
+            xmlns:ns0="http://tests.python-zeep.org/"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            attr_a="a" attr_b="b" attr_c="c" xsi:type="ns0:SubType2"/>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
 
 
 def test_simple_content_extension(schema_visitor):

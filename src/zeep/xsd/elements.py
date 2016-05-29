@@ -59,6 +59,9 @@ class Element(Base):
         self.nillable = nillable
         # assert type_
 
+    def __call__(self, *args, **kwargs):
+        return self.type(*args, **kwargs)
+
     def __repr__(self):
         return '<%s(name=%r, type=%r)>' % (
             self.__class__.__name__, self.name, self.type)
@@ -96,13 +99,14 @@ class Element(Base):
             return self.type.render(parent, value)
 
         node = etree.SubElement(parent, self.qname)
+
+        xsd_type = getattr(value, '_xsd_type', self.type)
+        if xsd_type != self.type:
+            return value._xsd_type.render(node, value, xsd_type)
         return self.type.render(node, value)
 
     def parse(self, value):
         return self.type.parse_xmlelement(value)
-
-    def __call__(self, *args, **kwargs):
-        return self.type(*args, **kwargs)
 
     def _signature(self, name):
         assert self.type, '%r has no name' % self

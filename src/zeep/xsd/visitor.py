@@ -357,6 +357,7 @@ class SchemaVisitor(object):
 
         """
         children = []
+        base_type = None
 
         for child in node.iterchildren():
             if child.tag == tags.annotation:
@@ -366,7 +367,8 @@ class SchemaVisitor(object):
                 children = self.visit_simple_content(child, node)
 
             elif child.tag == tags.complexContent:
-                children = self.visit_complex_content(child, node)
+                base_type, children = self.visit_complex_content(child, node)
+                base_type = base_type.__class__
 
             else:
                 item = self.process(child, node)
@@ -397,8 +399,12 @@ class SchemaVisitor(object):
 
         qname = as_qname(name, node.nsmap, self.schema._target_namespace)
 
-        cls = type(
-            name, (xsd_types.ComplexType,), {'__module__': 'zeep.xsd.types'})
+        cls_attributes = {
+            '__module__': 'zeep.xsd.types',
+            '_xsd_base': base_type,
+            '_xsd_name': qname,
+        }
+        cls = type(name, (xsd_types.ComplexType,), cls_attributes)
         xsd_type = cls(children)
 
         if not is_anonymous:
@@ -420,10 +426,12 @@ class SchemaVisitor(object):
         child = node.getchildren()[-1]
 
         if child.tag == tags.restriction:
-            return self.visit_restriction_complex_content(child, node)
-
-        if child.tag == tags.extension:
-            return self.visit_extension_complex_content(child, node)
+            base_type, elements = self.visit_restriction_complex_content(
+                child, node)
+        elif child.tag == tags.extension:
+            base_type, elements = self.visit_extension_complex_content(
+                child, node)
+        return base_type, elements
 
     def visit_simple_content(self, node, parent, namespace=None):
         """Contains extensions or restrictions on a complexType element with
@@ -444,20 +452,6 @@ class SchemaVisitor(object):
         elif child.tag == tags.extension:
             return self.visit_extension_simple_content(child, node)
         raise AssertionError("Expected restriction or extension")
-
-    def visit_restriction_complex_content(self, node, parent, namespace=None):
-        """
-
-            <restriction
-              base = QName
-              id = ID
-              {any attributes with non-schema Namespace}...>
-            Content: (annotation?, (group | all | choice | sequence)?,
-                    ((attribute | attributeGroup)*, anyAttribute?))
-            </restriction>
-        """
-        pass
-
 
     def visit_restriction_simple_type(self, node, parent, namespace=None):
         """
@@ -491,6 +485,21 @@ class SchemaVisitor(object):
         """
         pass
 
+    def visit_restriction_complex_content(self, node, parent, namespace=None):
+        """
+
+            <restriction
+              base = QName
+              id = ID
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (group | all | choice | sequence)?,
+                    ((attribute | attributeGroup)*, anyAttribute?))
+            </restriction>
+        """
+        base_name = qname_attr(node, 'base')
+        base_type = self._get_type(base_name)
+        return base_type, []
+
     def visit_extension_complex_content(self, node, parent):
         """
             <extension
@@ -503,14 +512,14 @@ class SchemaVisitor(object):
             </extension>
         """
         base_name = qname_attr(node, 'base')
-        try:
-            base = self.schema.get_type(base_name)
-            if isinstance(base, xsd_types.ComplexType):
-                children = list(base._children)
-            else:
-                children = [xsd_elements.Element(None, base)]
-        except KeyError:
+        base_type = self._get_type(base_name)
+
+        if isinstance(base_type, xsd_types.ComplexType):
+            children = list(base_type._children)
+        elif isinstance(base_type, xsd_types.UnresolvedType):
             children = [xsd_types.UnresolvedType(base_name)]
+        else:
+            children = [xsd_elements.Element(None, base_type)]
 
         for child in node.iterchildren():
             if child.tag == tags.annotation:
@@ -527,7 +536,7 @@ class SchemaVisitor(object):
             elif child.tag in (tags.attribute,):
                 children.append(item)
 
-        return children
+        return base_type, children
 
     def visit_extension_simple_content(self, node, parent):
         """
@@ -762,6 +771,12 @@ class SchemaVisitor(object):
 
     def visit_any_attribute(self, node, parent):
         pass
+
+    def _get_type(self, name):
+        try:
+            return self.schema.get_type(name)
+        except KeyError:
+            return xsd_types.UnresolvedType(name)
 
     visitors = {
         tags.any: visit_any,
