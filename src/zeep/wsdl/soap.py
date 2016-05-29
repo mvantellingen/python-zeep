@@ -84,26 +84,7 @@ class SoapBinding(Binding):
         return operation.process_reply(doc)
 
     def process_error(self, doc):
-        fault_node = doc.find(
-            'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
-
-        if fault_node is None:
-            raise Fault(
-                message='Unknown fault occured',
-                code=None,
-                actor=None,
-                detail=etree.tostring(doc))
-
-        def get_text(name):
-            child = fault_node.find(name)
-            if child is not None:
-                return child.text
-
-        raise Fault(
-            message=get_text('faultstring'),
-            code=get_text('faultcode'),
-            actor=get_text('faultactor'),
-            detail=fault_node.find('detail'))
+        raise NotImplementedError
 
     def process_service_port(self, xmlelement):
         address_node = _soap_element(xmlelement, 'address')
@@ -157,6 +138,28 @@ class Soap11Binding(SoapBinding):
     }
     content_type = 'text/xml; charset=utf-8'
 
+    def process_error(self, doc):
+        fault_node = doc.find(
+            'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
+
+        if fault_node is None:
+            raise Fault(
+                message='Unknown fault occured',
+                code=None,
+                actor=None,
+                detail=etree.tostring(doc))
+
+        def get_text(name):
+            child = fault_node.find(name)
+            if child is not None:
+                return child.text
+
+        raise Fault(
+            message=get_text('faultstring'),
+            code=get_text('faultcode'),
+            actor=get_text('faultactor'),
+            detail=fault_node.find('detail'))
+
 
 class Soap12Binding(SoapBinding):
     nsmap = {
@@ -166,6 +169,31 @@ class Soap12Binding(SoapBinding):
         'xsd': 'http://www.w3.org/2001/XMLSchema',
     }
     content_type = 'application/soap+xml; charset=utf-8'
+
+    def process_error(self, doc):
+        fault_node = doc.find(
+            'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
+        assert fault_node
+
+        if fault_node is None:
+            raise Fault(
+                message='Unknown fault occured',
+                code=None,
+                actor=None,
+                detail=etree.tostring(doc))
+
+        def get_text(name):
+            child = fault_node.find(name)
+            if child is not None:
+                return child.text
+
+        message = fault_node.findtext('soap-env:Reason/soap-env:Text', namespaces=self.nsmap)
+        code = fault_node.findtext('soap-env:Code/soap-env:Value', namespaces=self.nsmap)
+        raise Fault(
+            message=message,
+            code=code,
+            actor=None,
+            detail=fault_node.find('Detail'))
 
 
 class SoapOperation(Operation):
