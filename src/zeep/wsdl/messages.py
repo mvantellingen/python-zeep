@@ -69,17 +69,18 @@ class SoapMessage(ConcreteMessage):
             body = soap.Body()
             self.body.render(body, body_value)
 
-        if self.header:
-            if header_value is None:
-                header_value = self.header()
-            elif not isinstance(header_value, Element):
+        if header_value is not None:
+            if self.header and isinstance(header_value, dict):
                 header_value = self.header(**header_value)
-            header = soap.Header()
-            self.header.render(header, header_value)
-        else:
-            if header_value is not None:
+                header = soap.Header()
+                self.header.render(header, header_value)
+            elif hasattr(header_value, '_xsd_elm'):
+                header = soap.Header()
+                header_value._xsd_elm.render(header, header_value)
+            elif isinstance(header_value, etree._Element):
                 header = soap.Header(header_value)
 
+        # Create the soap:envelope
         envelope = soap.Envelope()
         if header is not None:
             envelope.append(header)

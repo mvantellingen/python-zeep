@@ -188,7 +188,174 @@ def test_document_message_serializer():
             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
           <soap-env:Body>
-            <ns0:response xmlns:ns0="http://docs.python-zeep.org/tests/document">
+            <ns0:response xmlns:ns0="http://test.python-zeep.org/tests/document">
+              <ns0:arg1>ah1</ns0:arg1>
+              <ns0:arg2>ah2</ns0:arg2>
+            </ns0:response>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """
+    assert_nodes_equal(expected, serialized.content)
+
+
+def test_document_message_serializer_header():
+    wsdl = stub(schema=stub(_prefix_map={}))
+    operation = stub(soapaction='my-actiGn')
+    msg = messages.DocumentMessage(
+        wsdl=wsdl,
+        name=None,
+        operation=operation,
+        nsmap=soap.Soap11Binding.nsmap)
+
+    namespace = 'http://test.python-zeep.org/tests/document'
+
+    # Fake resolve()
+    msg.body = xsd.Element(
+        etree.QName(namespace, 'response'),
+        xsd.ComplexType([
+            xsd.Element(etree.QName(namespace, 'arg1'), xsd.String()),
+            xsd.Element(etree.QName(namespace, 'arg2'), xsd.String()),
+        ])
+    )
+    msg.header = xsd.Element(
+        etree.QName(namespace, 'auth'),
+        xsd.ComplexType([
+            xsd.Element(etree.QName(namespace, 'username'), xsd.String()),
+        ])
+    )
+    msg.namespace = {
+        'body': 'http://test.python-zeep.org/tests/document',
+        'header': None,
+        'headerfault': None
+    }
+
+    serialized = msg.serialize(arg1='ah1', arg2='ah2', _soapheader={'username': 'mvantellingen'})
+    expected = """
+        <?xml version="1.0"?>
+        <soap-env:Envelope
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <soap-env:Header>
+            <ns0:auth xmlns:ns0="http://test.python-zeep.org/tests/document">
+            <ns0:username>mvantellingen</ns0:username>
+            </ns0:auth>
+          </soap-env:Header>
+          <soap-env:Body>
+            <ns0:response xmlns:ns0="http://test.python-zeep.org/tests/document">
+              <ns0:arg1>ah1</ns0:arg1>
+              <ns0:arg2>ah2</ns0:arg2>
+            </ns0:response>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """
+    assert_nodes_equal(expected, serialized.content)
+
+
+def test_document_message_serializer_header_custom_elm():
+    wsdl = stub(schema=stub(_prefix_map={}))
+    operation = stub(soapaction='my-actiGn')
+    msg = messages.DocumentMessage(
+        wsdl=wsdl,
+        name=None,
+        operation=operation,
+        nsmap=soap.Soap11Binding.nsmap)
+
+    namespace = 'http://test.python-zeep.org/tests/document'
+
+    # Fake resolve()
+    msg.body = xsd.Element(
+        etree.QName(namespace, 'response'),
+        xsd.ComplexType([
+            xsd.Element(etree.QName(namespace, 'arg1'), xsd.String()),
+            xsd.Element(etree.QName(namespace, 'arg2'), xsd.String()),
+        ])
+    )
+
+    header = xsd.Element(
+        '{http://test.python-zeep.org}auth',
+        xsd.ComplexType([
+            xsd.Element('{http://test.python-zeep.org}username', xsd.String()),
+        ])
+    )
+    msg.namespace = {
+        'body': 'http://test.python-zeep.org/tests/document',
+        'header': None,
+        'headerfault': None
+    }
+
+    header_value = header(username='mvantellingen')
+    serialized = msg.serialize(arg1='ah1', arg2='ah2', _soapheader=header_value)
+    expected = """
+        <?xml version="1.0"?>
+        <soap-env:Envelope
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <soap-env:Header>
+            <ns0:auth xmlns:ns0="http://test.python-zeep.org">
+            <ns0:username>mvantellingen</ns0:username>
+            </ns0:auth>
+          </soap-env:Header>
+          <soap-env:Body>
+            <ns0:response xmlns:ns0="http://test.python-zeep.org/tests/document">
+              <ns0:arg1>ah1</ns0:arg1>
+              <ns0:arg2>ah2</ns0:arg2>
+            </ns0:response>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """
+    assert_nodes_equal(expected, serialized.content)
+
+
+def test_document_message_serializer_header_custom_xml():
+    wsdl = stub(schema=stub(_prefix_map={}))
+    operation = stub(soapaction='my-actiGn')
+    msg = messages.DocumentMessage(
+        wsdl=wsdl,
+        name=None,
+        operation=operation,
+        nsmap=soap.Soap11Binding.nsmap)
+
+    namespace = 'http://test.python-zeep.org/tests/document'
+
+    # Fake resolve()
+    msg.body = xsd.Element(
+        etree.QName(namespace, 'response'),
+        xsd.ComplexType([
+            xsd.Element(etree.QName(namespace, 'arg1'), xsd.String()),
+            xsd.Element(etree.QName(namespace, 'arg2'), xsd.String()),
+        ])
+    )
+
+    header_value = etree.Element('{http://test.python-zeep.org}auth')
+    etree.SubElement(
+        header_value, '{http://test.python-zeep.org}username'
+    ).text = 'mvantellingen'
+
+    msg.namespace = {
+        'body': 'http://test.python-zeep.org/tests/document',
+        'header': None,
+        'headerfault': None
+    }
+
+    serialized = msg.serialize(arg1='ah1', arg2='ah2', _soapheader=header_value)
+    expected = """
+        <?xml version="1.0"?>
+        <soap-env:Envelope
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <soap-env:Header>
+            <ns0:auth xmlns:ns0="http://test.python-zeep.org">
+            <ns0:username>mvantellingen</ns0:username>
+            </ns0:auth>
+          </soap-env:Header>
+          <soap-env:Body>
+            <ns0:response xmlns:ns0="http://test.python-zeep.org/tests/document">
               <ns0:arg1>ah1</ns0:arg1>
               <ns0:arg2>ah2</ns0:arg2>
             </ns0:response>

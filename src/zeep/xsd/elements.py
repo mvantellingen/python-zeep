@@ -60,7 +60,10 @@ class Element(Base):
         # assert type_
 
     def __call__(self, *args, **kwargs):
-        return self.type(*args, **kwargs)
+        instance = self.type(*args, **kwargs)
+        if hasattr(instance, '_xsd_type'):
+            instance._xsd_elm = self
+        return instance
 
     def __repr__(self):
         return '<%s(name=%r, type=%r)>' % (
