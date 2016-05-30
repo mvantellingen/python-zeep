@@ -18,7 +18,7 @@ NSMAP = {
 }
 
 
-class WSDL(object):
+class Document(object):
     def __init__(self, location, transport):
         self.location = location if not hasattr(location, 'read') else None
         self.transport = transport
@@ -31,7 +31,7 @@ class WSDL(object):
 
         document = self._load_content(location)
 
-        root_definitions = Definitions(self, document, self.location)
+        root_definitions = Definition(self, document, self.location)
         root_definitions.resolve_imports()
 
         # Make the wsdl definitions public
@@ -83,7 +83,9 @@ class WSDL(object):
             content, self.transport, self._parser_context, base_url)
 
 
-class Definitions(object):
+class Definition(object):
+    """The Definition represents one wsdl:definition within a Document."""
+
     def __init__(self, wsdl, doc, location):
         self.wsdl = wsdl
         self.location = location
@@ -110,15 +112,10 @@ class Definitions(object):
         self.services = self.parse_service(doc)
 
     def __repr__(self):
-        return '<Definitions(location=%r)>' % self.location
+        return '<Definition(location=%r)>' % self.location
 
     def resolve_imports(self):
-        """
-            A -> B -> C -> D
-
-            Items defined in D are only available in C, not in A or B.
-
-        """
+        """Resolve all root elements (types, messages, etc)."""
         for namespace, definition in self.imports.items():
             self.merge(definition, namespace)
 
@@ -188,7 +185,7 @@ class Definitions(object):
                         document, self.wsdl.transport, location,
                         self.wsdl._parser_context, location)
                 else:
-                    wsdl = Definitions(self.wsdl, document, location)
+                    wsdl = Definition(self.wsdl, document, location)
                     self.imports[namespace] = wsdl
 
     def parse_types(self, doc):

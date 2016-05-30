@@ -12,7 +12,7 @@ from zeep.transports import Transport
 def test_parse_soap_wsdl():
     client = stub(transport=Transport(), wsse=None)
 
-    obj = wsdl.WSDL('tests/wsdl_files/soap.wsdl', transport=client.transport)
+    obj = wsdl.Document('tests/wsdl_files/soap.wsdl', transport=client.transport)
     assert len(obj.services) == 1
 
     service = obj.services['StockQuoteService']
@@ -81,7 +81,7 @@ def test_parse_soap_wsdl():
 def test_parse_soap_header_wsdl():
     client = stub(transport=Transport(), wsse=None)
 
-    obj = wsdl.WSDL(
+    obj = wsdl.Document(
         'tests/wsdl_files/soap_header.wsdl', transport=client.transport)
     assert len(obj.services) == 1
 
@@ -176,7 +176,7 @@ def test_parse_types_multiple_schemas():
     </wsdl:definitions>
     """.strip())
 
-    assert wsdl.WSDL(content, None)
+    assert wsdl.Document(content, None)
 
 
 def test_parse_types_nsmap_issues():
@@ -213,4 +213,4 @@ def test_parse_types_nsmap_issues():
       </wsdl:types>
     </wsdl:definitions>
     """.strip())
-    assert wsdl.WSDL(content, None)
+    assert wsdl.Document(content, None)
