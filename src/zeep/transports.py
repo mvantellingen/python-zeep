@@ -25,6 +25,8 @@ class Transport(object):
                 return bytes(response)
 
         response = self.session.get(url, timeout=self.timeout)
+        response.raise_for_status()
+
         if self.cache:
             self.cache.add(url, response.content)
 
