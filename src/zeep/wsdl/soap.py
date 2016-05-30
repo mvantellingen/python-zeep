@@ -13,12 +13,33 @@ class SoapBinding(Binding):
     """Soap 1.1/1.2 binding"""
 
     def __init__(self, wsdl, name, port_name, transport, default_style):
+        """The SoapBinding is the base class for the Soap11Binding and
+        Soap12Binding.
+
+        :param wsdl:
+        :type wsdl:
+        :param name:
+        :type name: string
+        :param port_name:
+        :type port_name: string
+        :param transport:
+        :type transport: zeep.transports.Transport
+        :param default_style:
+
+        """
         super(SoapBinding, self).__init__(wsdl, name, port_name)
         self.transport = transport
         self.default_style = default_style
 
     @classmethod
     def match(cls, node):
+        """Check if this binding instance should be used to parse the given
+        node.
+
+        :param node: The node to match against
+        :type node: lxml.etree._Element
+
+        """
         soap_node = node.find('soap:binding', namespaces=cls.nsmap)
         return soap_node is not None
 
@@ -36,7 +57,20 @@ class SoapBinding(Binding):
         return serialized.content
 
     def send(self, client, options, operation, args, kwargs):
-        """Called from the service"""
+        """Called from the service
+
+        :param client: The client with which the operation was called
+        :type client: zeep.client.Client
+        :param options: The binding options
+        :type options: dict
+        :param operation: The operation object from which this is a reply
+        :type operation: zeep.wsdl.definitions.Operation
+        :param args: The *args to pass to the operation
+        :type args: tuple
+        :param kwargs: The **kwargs to pass to the operation
+        :type kwargs: dict
+
+        """
         operation_obj = self.get(operation)
         if not operation_obj:
             raise ValueError("Operation %r not found" % operation)
@@ -61,6 +95,13 @@ class SoapBinding(Binding):
 
     def process_reply(self, client, operation, response):
         """Process the XML reply from the server.
+
+        :param client: The client with which the operation was called
+        :type client: zeep.client.Client
+        :param operation: The operation object from which this is a reply
+        :type operation: zeep.wsdl.definitions.Operation
+        :param response: The response object returned by the remote server
+        :type response: requests.Response
 
         """
         if response.status_code != 200 and not response.content:

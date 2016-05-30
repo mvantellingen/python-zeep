@@ -13,6 +13,17 @@ MessagePart = namedtuple('MessagePart', ['element', 'type'])
 
 
 class AbstractMessage(object):
+    """Messages consist of one or more logical parts.
+
+    Each part is associated with a type from some type system using a
+    message-typing attribute. The set of message-typing attributes is
+    extensible. WSDL defines several such message-typing attributes for use
+    with XSD:
+
+        element: Refers to an XSD element using a QName.
+        type: Refers to an XSD simpleType or complexType using a QName.
+
+    """
     def __init__(self, name):
         self.name = name
         self.parts = OrderedDict()
@@ -38,17 +49,16 @@ class AbstractMessage(object):
                 </message>
             </definitions>
         """
-        msg = cls(name=qname_attr(xmlelement, 'name', definitions.target_namespace))
+        tns = definitions.target_namespace
+        msg = cls(name=qname_attr(xmlelement, 'name', tns))
 
         for part in xmlelement.findall('wsdl:part', namespaces=NSMAP):
             part_name = part.get('name')
-
-            part_element = qname_attr(part, 'element', definitions.target_namespace)
-            part_type = qname_attr(part, 'type', definitions.target_namespace)
+            part_element = qname_attr(part, 'element', tns)
+            part_type = qname_attr(part, 'type', tns)
 
             if part_element is not None:
                 part_element = definitions.schema.get_element(part_element)
-
             if part_type is not None:
                 part_type = definitions.schema.get_type(part_type)
 
@@ -154,6 +164,16 @@ class Binding(object):
 
     """
     def __init__(self, wsdl, name, port_name):
+        """Binding
+
+        :param wsdl:
+        :type wsdl:
+        :param name:
+        :type name: string
+        :param port_name:
+        :type port_name: string
+
+        """
         self.name = name
         self.port_name = port_name
         self.port_type = None

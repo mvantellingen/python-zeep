@@ -19,7 +19,31 @@ NSMAP = {
 
 
 class Document(object):
+    """A WSDL Document exists out of one or more definitions.
+
+    There is always one 'root' definition which should be passed as the
+    location to the Document.  This definition can import other definitions.
+    These imports are non-transitive, only the definitions defined in the
+    imported document are available in the parent definition.  This Document is
+    mostly just a simple interface to the root definition.
+
+    After all definitions are loaded the definitions are resolved. This
+    resolves references which were not yet available during the initial
+    parsing phase.
+
+    """
+
     def __init__(self, location, transport):
+        """Initialize a WSDL document.
+
+        The root definition properties are exposed as entry points.
+
+        :param location: Location of this WSDL
+        :type location: string
+        :param transport: The transport object to be used
+        :type transport: zeep.transports.Transport
+
+        """
         self.location = location if not hasattr(location, 'read') else None
         self.transport = transport
 
@@ -45,7 +69,6 @@ class Document(object):
         return '<WSDL(location=%r)>' % self.location
 
     def dump(self):
-
         print('')
         print("Prefixes:")
         for prefix, namespace in self.schema._prefix_map.items():
@@ -73,12 +96,27 @@ class Document(object):
                 print('')
 
     def _load_content(self, location):
+        """Load the XML content from the given location and return an
+        lxml.Element object.
+
+        :param location: The URL of the document to load
+        :type location: string
+
+        """
         if hasattr(location, 'read'):
             return self._parse_content(location.read())
         return load_external(
             location, self.transport, self._parser_context, self.location)
 
     def _parse_content(self, content, base_url=None):
+        """Parse the content as XML and return the document.
+
+        :param content: content to parse as XML
+        :param content: string, file
+        :param base_url: base url for loading referenced documents
+        :param base_url: string
+
+        """
         return parse_xml(
             content, self.transport, self._parser_context, base_url)
 
@@ -138,7 +176,14 @@ class Definition(object):
             service.resolve(self)
 
     def merge(self, other, namespace):
-        """Merge another `WSDL` instance in this object."""
+        """Merge another `WSDL` instance in this object.
+
+        :param other: The other Definition object to merge from
+        :type other: zeep.wsdl.wsdl.Definition
+        :param namespace: Namespace to only merge elements with
+        :type namespace: string
+
+        """
         def filter_namespace(source, namespace):
             return {
                 k: v for k, v in source.items()
@@ -157,7 +202,7 @@ class Definition(object):
             self._definitions[namespace] = other
 
     def parse_imports(self, doc):
-        """Import other WSDL documents in this document.
+        """Import other WSDL definitions in this document.
 
         Note that imports are non-transitive, so only import definitions
         which are defined in the imported document and ignore definitions
@@ -167,6 +212,9 @@ class Definition(object):
 
             A -> B -> A
             A -> B -> C -> A
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
 
         """
         for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
@@ -192,13 +240,16 @@ class Definition(object):
         """Return a `types.Schema` instance.
 
         Note that a WSDL can contain multiple XSD schema's. The schemas can
-        reference import each other using xsd:import statements.
+        reference each other using xsd:import statements.
 
             <definitions .... >
                 <types>
                     <xsd:schema .... />*
                 </types>
             </definitions>
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
 
         """
         namespace_sets = [
@@ -278,6 +329,10 @@ class Definition(object):
                     <part name="nmtoken" element="qname"? type="qname"?/> *
                 </message>
             </definitions>
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
+
         """
         result = {}
         for msg_node in doc.findall("wsdl:message", namespaces=NSMAP):
@@ -293,6 +348,10 @@ class Definition(object):
                     <wsdl:operation name="nmtoken" .... /> *
                 </wsdl:portType>
             </wsdl:definitions>
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
+
         """
         result = {}
         for port_node in doc.findall('wsdl:portType', namespaces=NSMAP):
@@ -301,7 +360,14 @@ class Definition(object):
         return result
 
     def parse_binding(self, doc):
-        """
+        """Parse the binding elements and return a dict of bindings.
+
+        Currently supported bindings are Soap 1.1, Soap 1.2., HTTP Get and
+        HTTP Post. The detection of the type of bindings is done by the
+        bindings themselves using the introspection of the xml nodes.
+
+        XML Structure::
+
             <wsdl:definitions .... >
                 <wsdl:binding name="nmtoken" type="qname"> *
                     <-- extensibility element (1) --> *
@@ -319,6 +385,10 @@ class Definition(object):
                     </wsdl:operation>
                 </wsdl:binding>
             </wsdl:definitions>
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
+
         """
         result = {}
         for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
@@ -346,6 +416,10 @@ class Definition(object):
                     </wsdl:port>
                 </wsdl:service>
             </wsdl:definitions>
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
+
         """
         result = OrderedDict()
         for service_node in doc.findall('wsdl:service', namespaces=NSMAP):
