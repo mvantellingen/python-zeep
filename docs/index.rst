@@ -2,7 +2,7 @@
 Zeep: Python SOAP client 
 ========================
 
-A fast and hip Python SOAP client ;-)
+A fast and modern Python SOAP client
 
 Highlights:
  * Modern codebase compatible with Python 2.7, 3.3, 3.4, 3.5 and PyPy
@@ -16,131 +16,114 @@ Highlights:
 Features still in development include:
  * WSSE x.509 support (BinarySecurityToken)
  * XML validation using lxml XMLSchema's
+ * WS-Addressing and WS Policy support
 
 
-A quick example::
+Simple example::
 
     >>> from zeep import Client
     >>> client = Client(
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL')
-    >>> print client.service.ConvertSpeed(
-    ...     100, 'kilometersPerhour', 'milesPerhour')
+    >>> print(client.service.ConvertSpeed(
+    ...     100, 'kilometersPerhour', 'milesPerhour'))
     62.137
 
 
+Quick Introduction
+==================
 
-Complex requests
-================
+Zeep inspects the wsdl document and generates the corresponding bindings.  This
+provides an easy to use programmatic interface to a soap server.
+
+The emphasis is on Soap 1.1 and Soap 1.2, however Zeep also offers experimental
+support for HTTP Get and Post bindings.
+
+Parsing the XML documents is done by using the lxml library. This is the most
+performant and compliant Python XML library currently available. This results
+in major speed benefits when retrieving large soap responses.
+
+
+A simple use-case
+-----------------
+
+To give you an idea how zeep works a basic example.
+
+.. code-block:: python
+
+    import zeep
+
+    wsdl = 'http://www.soapclient.com/xml/soapresponder.wsdl'
+    client = zeep.Client(wsdl=wsdl)
+    print(client.service.Method1('Zeep', 'is cool'))
+
+The WSDL used above only defines one simple function (``Method1``) which is 
+made available by zeep via ``client.service.Method1``. It takes two arguments
+and returns a string. To get an overview of the services available on the 
+endpoint you can run the following command in your terminal.
+
+.. code-block:: bash
+
+    python -mzeep http://www.soapclient.com/xml/soapresponder.wsdl
+
+
+
+Nested objects
+--------------
 
 Most of the times you need to pass nested data to the soap client.  These 
-Complex types can be created using the `client.get_type()` method::
+Complex types can be created using the `client.get_type()` method.
 
-    >>> from zeep import Client
-    >>> client = Client('http://my-entrprisy-endpoint.com')
-    >>> order_type = client.get_type('ns0:Order')
-    >>> order = order_type(
-    ...     number='1234', billing_address=billing_address)
-    >>> client.service.submit_order(user_id=1, order=order)
+.. code-block:: python
 
+    from zeep import Client
 
-Any objects
-===========
-
-Zeep offers proper support for Any elements. 
-
-    >>> from zeep import Client
-    >>> from zeep import xsd
-    >>> client = Client('http://my-entrprisy-endpoint.com')
-    >>> order_type = client.get_element('ns0:Order')
-    >>> order = xsd.AnyObject(
-    ...     order_type, 
-    ...     order_type(number='1234', billing_address=billing_address))
-    >>> client.service.submit_something(user_id=1, _any_1=order)
+    client = Client('http://my-enterprise-endpoint.com')
+    order_type = client.get_type('ns0:Order')
+    order = order_type(number='1234', price=99)
+    client.service.submit_order(user_id=1, order=order)
 
 
-WS-Security (WSSE)
-==================
-Only the UsernameToken profile is supported for now.  It supports both the 
-passwordText and passwordDigest methods::
-
-    >>> from zeep import Client
-    >>> from zeep.wsse.username import UsernameToken
-    >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
-    ...     wsse=UsernameToken('username', 'password'))
-
-To use the passwordDigest method you need to supply `use_digest=True` to the
-`UsernameToken` class.
+However instead of creating an object from a type defined in the XSD you can
+also pass in a dictionary. Zeep will automatically convert this dict to the
+required object during the call.
 
 
-Caching
+.. code-block:: python
+
+    from zeep import Client
+
+    client = Client('http://my-enterprise-endpoint.com')
+    client.service.submit_order(user_id=1, order={
+        'number': '1234',
+        'price': 99,
+    })
+
+
+
+
+
+More information
+================
+
+.. toctree::
+   :maxdepth: 1
+   :name: mastertoc
+
+   in-depth
+   transport
+   wsse
+   helpers
+   changes
+
+
+Support
 =======
-The default cache backed is SqliteCache.  It caches the WSDL and XSD files for 
-1 hour by default. You can disable caching by passing `None` as value to the
-`Transport.cache` attribute when initializing the client::
-
-    >>> from zeep import Client
-    >>> from zeep.cache import SqliteCache
-    >>> from zeep.transports import Transport
-    >>> transport = Transport(cache=None)
-    >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
-    ...     transport=transport)
-
-
-Changing the SqliteCache settings can be done via::
-
-
-    >>> from zeep import Client
-    >>> from zeep.cache import SqliteCache
-    >>> from zeep.transports import Transport
-    >>> cache = SqliteCache(persistent=True, timeout=60)
-    >>> transport = Transport(cache=cache)
-    >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
-    ...     transport=transport)
-
-
-Transport options
-=================
-If you need to change options like cache, timeout or ssl verification
-use `Transport` class.
-
-For instance to disable SSL verification use `verify` option::
-
-    >>> from zeep import Client
-    >>> from zeep.transports import Transport
-    >>> transport = Transport(verify=False)
-    >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
-    ...     transport=transport)
-
-
-Helpers
-=======
-In the `zeep.helper` module the following helpers functions are available:
-
-   - `serialize_object()` - Convert zeep value objects to native python 
-     datastructures.
-
-Bugs
-====
 
 If you encounter bugs then please `let me know`_ .  A copy of the WSDL file if
-possible would be most helpful. If you are really cool then please open a PR
-with the fix... :P
+possible would be most helpful. 
+
+I'm also able to offer commercial support.  Please contact me at
+info@mvantellingen.nl for more information.
 
 
 .. _let me know: https://github.com/mvantellingen/python-zeep/issues
-
-
-Contributing
-============
-
-Contributions are welcome!
-
-
-Changelog
-=========
-
-.. include:: ../CHANGES
