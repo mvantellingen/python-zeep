@@ -1,8 +1,7 @@
 from lxml import etree
-import pytest
 
-from zeep.wsdl import soap
 from tests.utils import load_xml
+from zeep.wsdl import soap
 
 
 def test_soap11_process_error():

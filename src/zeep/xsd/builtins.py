@@ -60,7 +60,7 @@ import isodate
 import pytz
 import six
 
-from zeep.xsd.types import SimpleType, AnyObject
+from zeep.xsd.types import AnyObject, SimpleType
 
 
 class ParseError(ValueError):

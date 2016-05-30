@@ -1,10 +1,10 @@
 import pytest
 from lxml import etree
 
+from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep.xsd import ListElement, builtins, visitor
 from zeep.xsd.schema import Schema
 from zeep.xsd.types import UnresolvedType
-from tests.utils import assert_nodes_equal, load_xml, render_node
 
 
 @pytest.fixture

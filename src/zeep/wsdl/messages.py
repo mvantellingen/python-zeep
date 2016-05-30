@@ -1,4 +1,4 @@
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict, namedtuple
 
 import six
 from defusedxml.lxml import fromstring
@@ -8,7 +8,6 @@ from lxml.builder import ElementMaker
 from zeep import xsd
 from zeep.utils import qname_attr
 from zeep.wsdl.utils import _soap_element
-from zeep.xsd import Element
 
 SerializedMessage = namedtuple('SerializedMessage', ['path', 'headers', 'content'])
 

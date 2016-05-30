@@ -819,7 +819,8 @@ def test_complex_with_simple():
 
     expected = """
       <document>
-        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/" name="foobie">2016-05-29T11:13:45</ns0:Address>
+        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/"
+            name="foobie">2016-05-29T11:13:45</ns0:Address>
       </document>
     """
     node = etree.Element('document')
