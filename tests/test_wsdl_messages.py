@@ -12,7 +12,7 @@ from zeep.wsdl import definitions, messages, soap
 @pytest.fixture
 def abstract_message_input():
     abstract = definitions.AbstractMessage(
-        etree.QName('{http://docs.python-zeep.org/tests/msg}Method'))
+        etree.QName('{http://test.python-zeep.org/tests/msg}Method'))
     abstract.parts = OrderedDict([
         ('arg1', definitions.MessagePart(
             element=None, type=xsd.String())),
@@ -25,7 +25,7 @@ def abstract_message_input():
 @pytest.fixture
 def abstract_message_output():
     abstract = definitions.AbstractMessage(
-        etree.QName('{http://docs.python-zeep.org/tests/msg}Response'))
+        etree.QName('{http://test.python-zeep.org/tests/msg}Response'))
     abstract.parts = OrderedDict([
         ('result', definitions.MessagePart(
             element=None, type=xsd.String())),
@@ -58,7 +58,7 @@ def test_document_message_parse():
         nsmap={})
 
     abstract_body = definitions.AbstractMessage(
-        etree.QName('{http://docs.python-zeep.org/tests/msg}Input'))
+        etree.QName('{http://test.python-zeep.org/tests/msg}Input'))
     abstract_body.parts['params'] = definitions.MessagePart(
         element=xsd.Element(etree.QName('input'), xsd.String()),
         type=None)
@@ -142,7 +142,7 @@ def test_document_message_parse_with_header_other_message():
     definitions_.messages[abstract_header.name.text] = abstract_header
 
     abstract_body = definitions.AbstractMessage(
-        etree.QName('{http://docs.python-zeep.org/tests/msg}Input'))
+        etree.QName('{http://test.python-zeep.org/tests/msg}Input'))
     abstract_body.parts['params'] = definitions.MessagePart(
         element=xsd.Element(etree.QName('input'), xsd.String()),
         type=None)
@@ -163,7 +163,7 @@ def test_document_message_serializer():
         operation=operation,
         nsmap=soap.Soap11Binding.nsmap)
 
-    namespace = 'http://docs.python-zeep.org/tests/document'
+    namespace = 'http://test.python-zeep.org/tests/document'
 
     # Fake resolve()
     msg.body = xsd.Element(
@@ -174,7 +174,7 @@ def test_document_message_serializer():
         ])
     )
     msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/document',
+        'body': 'http://test.python-zeep.org/tests/document',
         'header': None,
         'headerfault': None
     }
@@ -371,7 +371,7 @@ def test_document_message_deserializer():
             xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-          <mns:response xmlns:mns="http://docs.python-zeep.org/tests/document"
+          <mns:response xmlns:mns="http://test.python-zeep.org/tests/document"
                 SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
             <mns:return type="xsd:string">foobar</mns:return>
           </mns:response>
@@ -387,7 +387,7 @@ def test_document_message_deserializer():
         nsmap=soap.Soap11Binding.nsmap)
 
     # Fake resolve()
-    namespace = 'http://docs.python-zeep.org/tests/document'
+    namespace = 'http://test.python-zeep.org/tests/document'
     msg.abstract = definitions.AbstractMessage(
         etree.QName(namespace, 'Method1Response'))
     msg.abstract.parts = OrderedDict([
@@ -402,7 +402,7 @@ def test_document_message_deserializer():
         ])
 
     msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/document',
+        'body': 'http://test.python-zeep.org/tests/document',
         'header': None,
         'headerfault': None
     }
@@ -436,7 +436,7 @@ def test_rpc_message_parse():
         nsmap={})
 
     abstract_body = definitions.AbstractMessage(
-        etree.QName('{http://docs.python-zeep.org/tests/msg}Input'))
+        etree.QName('{http://test.python-zeep.org/tests/msg}Input'))
     abstract_body.parts['arg1'] = definitions.MessagePart(
         element=None, type=xsd.String())
     abstract_body.parts['arg2'] = definitions.MessagePart(
@@ -461,7 +461,7 @@ def test_rpc_message_serializer(abstract_message_input):
 
     msg._info = {
         'body': {
-            'namespace': 'http://docs.python-zeep.org/tests/rpc',
+            'namespace': 'http://test.python-zeep.org/tests/rpc',
         },
         'header': None,
         'headerfault': None
@@ -477,7 +477,7 @@ def test_rpc_message_serializer(abstract_message_input):
             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
           <soap-env:Body>
-            <ns0:Method xmlns:ns0="http://docs.python-zeep.org/tests/rpc">
+            <ns0:Method xmlns:ns0="http://test.python-zeep.org/tests/rpc">
               <arg1>ah1</arg1>
               <arg2>ah2</arg2>
             </ns0:Method>
@@ -493,7 +493,7 @@ def test_rpc_message_deserializer(abstract_message_output):
             xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-          <mns:Response xmlns:mns="http://docs.python-zeep.org/tests/rpc"
+          <mns:Response xmlns:mns="http://test.python-zeep.org/tests/rpc"
                 SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
             <result xsi:type="xsd:string">foobar</result>
           </mns:Response>
@@ -509,7 +509,7 @@ def test_rpc_message_deserializer(abstract_message_output):
         nsmap=soap.Soap11Binding.nsmap)
 
     msg._info = {
-        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
+        'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
@@ -528,7 +528,7 @@ def test_rpc_message_signature(abstract_message_input):
         nsmap=soap.Soap11Binding.nsmap)
 
     msg._info = {
-        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
+        'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
@@ -545,7 +545,7 @@ def test_rpc_message_signature_output(abstract_message_output):
         nsmap=soap.Soap11Binding.nsmap)
 
     msg._info = {
-        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
+        'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
@@ -564,7 +564,7 @@ def test_urlencoded_serialize(abstract_message_input):
         wsdl=wsdl, name=None, operation=operation)
 
     msg._info = {
-        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
+        'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
@@ -584,7 +584,7 @@ def test_urlencoded_signature(abstract_message_input):
         wsdl=wsdl, name=None, operation=operation)
 
     msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/rpc',
+        'body': 'http://test.python-zeep.org/tests/rpc',
         'header': None,
         'headerfault': None
     }
@@ -603,7 +603,7 @@ def test_urlreplacement_serialize(abstract_message_input):
         wsdl=wsdl, name=None, operation=operation)
 
     msg.namespace = {
-        'body': 'http://docs.python-zeep.org/tests/rpc',
+        'body': 'http://test.python-zeep.org/tests/rpc',
         'header': None,
         'headerfault': None
     }
@@ -623,7 +623,7 @@ def test_urlreplacement_signature(abstract_message_input):
         wsdl=wsdl, name=None, operation=operation)
 
     msg._info = {
-        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
+        'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
@@ -644,7 +644,7 @@ def test_mime_content_serialize_form_urlencoded(abstract_message_input):
         part_name='')
 
     msg._info = {
-        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
+        'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
@@ -667,7 +667,7 @@ def test_mime_content_serialize_xml():
     ]))
     element_2 = xsd.Element('arg2', xsd.String())
     abstract_message = definitions.AbstractMessage(
-        etree.QName('{http://docs.python-zeep.org/tests/msg}Method'))
+        etree.QName('{http://test.python-zeep.org/tests/msg}Method'))
     abstract_message.parts = OrderedDict([
         ('xarg1', definitions.MessagePart(element=element_1, type=None)),
         ('xarg2', definitions.MessagePart(element=element_2, type=None)),
@@ -678,7 +678,7 @@ def test_mime_content_serialize_xml():
         part_name=None)
 
     msg._info = {
-        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
+        'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
@@ -705,7 +705,7 @@ def test_mime_content_signature(abstract_message_input):
         part_name='')
 
     msg._info = {
-        'body': {'namespace': 'http://docs.python-zeep.org/tests/rpc'},
+        'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
         'header': None,
         'headerfault': None
     }
@@ -724,7 +724,7 @@ def test_mime_multipart_parse():
                   <soap:body parts="body" use="literal"/>
               </mime:part>
               <mime:part>
-                  <mime:content part="docs" type="text/html"/>
+                  <mime:content part="test" type="text/html"/>
               </mime:part>
               <mime:part>
                   <mime:content part="logo" type="image/gif"/>
