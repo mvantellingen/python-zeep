@@ -11,30 +11,29 @@ class Transport(object):
         self.verify = verify
         self.http_auth = http_auth
 
+        self.session = self.create_session()
+        self.session.verify = verify
+        self.session.auth = http_auth
+
+    def create_session(self):
+        return requests.Session()
+
     def load(self, url):
         if self.cache:
             response = self.cache.get(url)
             if response:
                 return bytes(response)
 
-        response = requests.get(url, timeout=self.timeout, verify=self.verify,
-                                auth=self.http_auth)
-
+        response = self.session.get(url, timeout=self.timeout)
         if self.cache:
             self.cache.add(url, response.content)
 
         return response.content
 
     def post(self, address, message, headers):
-        response = requests.post(
-            address, data=message, headers=headers, verify=self.verify,
-            auth=self.http_auth
-        )
+        response = self.session.post(address, data=message, headers=headers)
         return response
 
     def get(self, address, params, headers):
-        response = requests.get(
-            address, params=params, headers=headers, verify=self.verify,
-            auth=self.http_auth
-        )
+        response = self.session.get(address, params=params, headers=headers)
         return response
