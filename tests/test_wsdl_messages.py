@@ -183,10 +183,7 @@ def test_document_message_serializer():
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
-            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
           <soap-env:Body>
             <ns0:response xmlns:ns0="http://test.python-zeep.org/tests/document">
               <ns0:arg1>ah1</ns0:arg1>
@@ -233,10 +230,7 @@ def test_document_message_serializer_header():
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
-            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
           <soap-env:Header>
             <ns0:auth xmlns:ns0="http://test.python-zeep.org/tests/document">
             <ns0:username>mvantellingen</ns0:username>
@@ -290,13 +284,10 @@ def test_document_message_serializer_header_custom_elm():
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
-            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
           <soap-env:Header>
             <ns0:auth xmlns:ns0="http://test.python-zeep.org">
-            <ns0:username>mvantellingen</ns0:username>
+              <ns0:username>mvantellingen</ns0:username>
             </ns0:auth>
           </soap-env:Header>
           <soap-env:Body>
@@ -345,10 +336,7 @@ def test_document_message_serializer_header_custom_xml():
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
-            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
           <soap-env:Header>
             <ns0:auth xmlns:ns0="http://test.python-zeep.org">
             <ns0:username>mvantellingen</ns0:username>
@@ -472,10 +460,7 @@ def test_rpc_message_serializer(abstract_message_input):
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
-            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
           <soap-env:Body>
             <ns0:Method xmlns:ns0="http://test.python-zeep.org/tests/rpc">
               <arg1>ah1</arg1>

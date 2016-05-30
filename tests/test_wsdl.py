@@ -58,10 +58,7 @@ def test_parse_soap_wsdl():
         expected = """
         <soap-env:Envelope
                 xmlns:ns0="http://example.com/stockquote.xsd"
-                xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-                xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-                xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-                xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
             <soap-env:Body>
               <ns0:TradePriceRequest>
                 <tickerSymbol>foobar</tickerSymbol>
@@ -131,10 +128,7 @@ def test_parse_soap_header_wsdl():
         expected = """
         <soap-env:Envelope
                 xmlns:ns0="http://example.com/stockquote.xsd"
-                xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-                xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-                xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-                xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
            <soap-env:Header>
               <ns0:Authentication>
                  <username>ikke</username>

@@ -90,6 +90,8 @@ class SoapMessage(ConcreteMessage):
         headers = {
             'SOAPAction': self.operation.soapaction,
         }
+
+        etree.cleanup_namespaces(envelope)
         return SerializedMessage(
             path=None, headers=headers, content=envelope)
 
