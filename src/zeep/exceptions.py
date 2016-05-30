@@ -1,3 +1,6 @@
+class XMLSyntaxError(IOError):
+    pass
+
 
 class TransportError(IOError):
     pass
