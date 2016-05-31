@@ -1,7 +1,17 @@
-0.7.0 (unreleased)
+0.7.0 (2016-05-31)
 ------------------
  - Add support HTTP authentication (mcordes). This adds a new attribute to the
-   Transport client() which passes the http_auth value to requests.
+   Transport client() which passes the http_auth value to requests. (#31)
+ - Fix issue where setting cache=None to Transport class didn't disable 
+   caching.
+ - Refactor handling of wsdl:imports, don't merge definitions but instead 
+   lookup values in child definitions. (#40)
+ - Remove unused namespace declarations from the generated SOAP messages.
+ - Update requirement of six>=1.0.0 to six>=1.9.0 (#39)
+ - Fix handling of xsd:choice, xsd:group and xsd:attribute (#30)
+ - Improve error messages
+ - Fix generating soap messages when sub types are used via xsd extensions (#36)
+ - Improve handling of custom soap headers (#33)
 
 
 0.6.0 (2016-05-21)
