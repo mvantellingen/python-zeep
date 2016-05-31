@@ -110,10 +110,11 @@ class AbstractOperation(object):
 
             param_msg = qname_attr(msg_node, 'message', definitions.target_namespace)
             param_name = msg_node.get('name')
+            param_value = definitions.get('messages', param_msg.text)
             if tag_name in ('input', 'output'):
-                kwargs[tag_name] = definitions.messages[param_msg.text]
+                kwargs[tag_name] = param_value
             else:
-                kwargs['faults'][param_name] = definitions.messages[param_msg.text]
+                kwargs['faults'][param_name] = param_value
 
         kwargs['name'] = name
         kwargs['parameter_order'] = xmlelement.get('parameterOrder')
@@ -181,7 +182,7 @@ class Binding(object):
         self._operations = {}
 
     def resolve(self, definitions):
-        self.port_type = definitions.port_types[self.port_name.text]
+        self.port_type = definitions.get('port_types', self.port_name.text)
         for operation in self._operations.values():
             operation.resolve(definitions)
 
@@ -307,9 +308,10 @@ class Port(object):
         if self._resolve_context is None:
             return
 
-        binding = definitions.bindings.get(
-            self._resolve_context['binding_name'].text)
-        if not binding:
+        try:
+            binding = definitions.get(
+                'bindings', self._resolve_context['binding_name'].text)
+        except IndexError:
             return False
 
         self.binding = binding

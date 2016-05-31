@@ -135,6 +135,7 @@ class Definition(object):
         self.services = OrderedDict()
 
         self.imports = {}
+        self._resolved_imports = False
 
         self.target_namespace = doc.get('targetNamespace')
         self.wsdl._definitions[self.target_namespace] = self
@@ -152,15 +153,26 @@ class Definition(object):
     def __repr__(self):
         return '<Definition(location=%r)>' % self.location
 
+    def get(self, name, key):
+        container = getattr(self, name)
+        if key in container:
+            return container[key]
+
+        for definition in self.imports.values():
+            container = getattr(definition, name)
+            if key in container:
+                return container[key]
+        raise IndexError()
+
     def resolve_imports(self):
         """Resolve all root elements (types, messages, etc)."""
-        for namespace, definition in self.imports.items():
-            self.merge(definition, namespace)
 
-        imports = self.imports.copy()
-        self.imports = {}
+        # Simple guard to protect against cyclic imports
+        if self._resolved_imports:
+            return
+        self._resolved_imports = True
 
-        for definition in imports.values():
+        for definition in self.imports.values():
             definition.resolve_imports()
 
         for message in self.messages.values():
@@ -174,32 +186,6 @@ class Definition(object):
 
         for service in self.services.values():
             service.resolve(self)
-
-    def merge(self, other, namespace):
-        """Merge another `WSDL` instance in this object.
-
-        :param other: The other Definition object to merge from
-        :type other: zeep.wsdl.wsdl.Definition
-        :param namespace: Namespace to only merge elements with
-        :type namespace: string
-
-        """
-        def filter_namespace(source, namespace):
-            return {
-                k: v for k, v in source.items()
-                if k.startswith('{%s}' % namespace)
-            }
-
-        if not self.schema:
-            self.schema = other.schema
-
-        self.port_types.update(filter_namespace(other.port_types, namespace))
-        self.messages.update(filter_namespace(other.messages, namespace))
-        self.bindings.update(filter_namespace(other.bindings, namespace))
-        self.services.update(filter_namespace(other.services, namespace))
-
-        if namespace not in self.wsdl._definitions:
-            self._definitions[namespace] = other
 
     def parse_imports(self, doc):
         """Import other WSDL definitions in this document.
