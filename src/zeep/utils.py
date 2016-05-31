@@ -70,7 +70,9 @@ def process_signature(fields, args, kwargs):
     for key, value in kwargs.items():
         if key not in field_map:
             raise TypeError(
-                "__init__() got an unexpected keyword argument %r" % key)
+                "__init__() got an unexpected keyword argument %r\nValid arguments are: %s"
+                % (key, ', '.join(field_map.keys()))
+            )
         element, container = field_map[key]
         count_key = container.key if container else key
 
