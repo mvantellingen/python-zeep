@@ -1,12 +1,13 @@
 import requests
 
 from zeep.cache import SqliteCache
+from zeep.utils import NotSet
 
 
 class Transport(object):
 
-    def __init__(self, cache=None, timeout=300, verify=True, http_auth=None):
-        self.cache = cache or SqliteCache()
+    def __init__(self, cache=NotSet, timeout=300, verify=True, http_auth=None):
+        self.cache = SqliteCache() if cache is NotSet else cache
         self.timeout = timeout
         self.verify = verify
         self.http_auth = http_auth

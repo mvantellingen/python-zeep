@@ -3,6 +3,14 @@ from collections import OrderedDict, defaultdict
 from lxml import etree
 
 
+class _NotSetClass(object):
+    def __repr__(self):
+        return 'NotSet'
+
+
+NotSet = _NotSetClass()
+
+
 def qname_attr(node, attr_name, target_namespace=None):
     value = node.get(attr_name)
     if value is not None:
