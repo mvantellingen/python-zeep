@@ -78,6 +78,8 @@ class SoapMessage(ConcreteMessage):
                 header_value._xsd_elm.render(header, header_value)
             elif isinstance(header_value, etree._Element):
                 header = soap.Header(header_value)
+            else:
+                raise ValueError("Invalid value given to _soapheader")
 
         # Create the soap:envelope
         envelope = soap.Envelope()
