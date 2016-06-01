@@ -73,6 +73,28 @@ class Client(object):
             port = list(service.ports.values())[0]
         return ServiceProxy(self, port)
 
+    def set_address(self, service_name, port_name, address):
+        """Override the default port address for the given `service_name`
+        `port_name` combination.
+
+        :param service_name: Name of the service
+        :type address: string
+        :param port_name: Name of the port within the service
+        :type address: string
+        :param address: URL of the server
+        :type address: string
+
+        """
+        service = self.wsdl.services.get(service_name)
+        if not service:
+            raise ValueError("Service not found")
+
+        port = service.ports.get(port_name)
+        if not port:
+            raise ValueError("Port not found")
+
+        port.binding_options['address'] = address
+
     def get_type(self, name):
         return self.wsdl.schema.get_type(name)
 

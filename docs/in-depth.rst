@@ -29,6 +29,24 @@ binding is availble via ``client.service``. To use a specific binding you can
 use ``binding = client.bind('MyService', 'MyPort')``. 
 
 
+Overriding the default endpoint address
+---------------------------------------
+There are situations where you need to change the soap address from the one
+which is defined within the WSDL. This can be done by using the
+``Client.set_address()`` method.
+
+.. code-block:: python
+
+    from zeep import Client
+    from zeep import xsd
+
+    client = Client('http://my-endpoint.com/production.svc?wsdl')
+    client.set_address(
+        'EnterpriseService', 'EnterpriseSoap11', 
+        'http://my-endpoint.com/acceptance/')
+    client.service.submit('something')
+
+
 Any objects
 -----------
 

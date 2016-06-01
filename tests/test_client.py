@@ -21,6 +21,31 @@ def test_bind_service_port():
     service = client_obj.bind('StockQuoteService', 'StockQuotePort')
     assert service
 
+@pytest.mark.requests
+def test_set_address():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    client_obj.set_address(
+        'StockQuoteService', 'StockQuotePort', 'http://test.python-zeep.org/x')
+
+    response = """
+    <?xml version="1.0"?>
+    <soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:stoc="http://example.com/stockquote.xsd">
+       <soapenv:Header/>
+       <soapenv:Body>
+          <stoc:TradePrice>
+             <price>120.123</price>
+          </stoc:TradePrice>
+       </soapenv:Body>
+    </soapenv:Envelope>
+    """.strip()
+
+    with requests_mock.mock() as m:
+        m.post('http://test.python-zeep.org/x', text=response)
+        result = client_obj.service.GetLastTradePrice('foobar')
+        assert result == 120.123
+
 
 @pytest.mark.requests
 def test_service_proxy():
