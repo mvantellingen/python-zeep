@@ -56,6 +56,7 @@ class Document(object):
         document = self._load_content(location)
 
         root_definitions = Definition(self, document, self.location)
+        root_definitions.initialize_schema()
         root_definitions.resolve_imports()
 
         # Make the wsdl definitions public
@@ -164,6 +165,19 @@ class Definition(object):
                 return container[key]
         raise IndexError()
 
+    def initialize_schema(self):
+        if self.schema:
+            return
+
+        for definition in self.imports.values():
+            if self.schema is None and definition.schema:
+                self.schema = definition.schema
+                break
+        else:
+            self.schema = Schema(
+                None, self.wsdl.transport, self.location,
+                self.wsdl._parser_context, self.location)
+
     def resolve_imports(self):
         """Resolve all root elements (types, messages, etc)."""
 
@@ -244,10 +258,8 @@ class Definition(object):
         ]
 
         types = doc.find('wsdl:types', namespaces=NSMAP)
-        if types is None:
-            return Schema(
-                None, self.wsdl.transport, self.location,
-                self.wsdl._parser_context, self.location)
+        if types is None or len(types) == 0:
+            return None
 
         schema_nodes = findall_multiple_ns(types, 'xsd:schema', namespace_sets)
         if not schema_nodes:

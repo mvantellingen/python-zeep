@@ -1,3 +1,8 @@
+0.7.1 (2016-06-01)
+------------------
+ - Fix regression with handling wsdl:import statements for messages (#47)
+
+
 0.7.0 (2016-05-31)
 ------------------
  - Add support HTTP authentication (mcordes). This adds a new attribute to the

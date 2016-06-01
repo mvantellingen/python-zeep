@@ -85,6 +85,7 @@ def test_document_message_parse_with_header():
     definitions_ = stub(
         target_namespace='',
         messages={},
+        get=lambda name, key: getattr(definitions_, name).get(key),
         wsdl=stub())
 
     msg = messages.DocumentMessage.parse(
@@ -126,6 +127,7 @@ def test_document_message_parse_with_header_other_message():
     definitions_ = stub(
         target_namespace='',
         messages={},
+        get=lambda name, key: getattr(definitions_, name).get(key),
         wsdl=stub())
 
     msg = messages.DocumentMessage.parse(
