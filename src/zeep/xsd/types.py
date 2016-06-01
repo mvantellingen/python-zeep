@@ -87,6 +87,14 @@ class ComplexType(Type):
     def __init__(self, children=None):
         self._children = children or []
 
+    def __call__(self, *args, **kwargs):
+        if not hasattr(self, '_value_class'):
+            self._value_class = type(
+                self.__class__.__name__, (CompoundValue,),
+                {'_xsd_type': self, '__module__': 'zeep.objects'})
+
+        return self._value_class(*args, **kwargs)
+
     def properties(self):
         return list(self._children)
 
@@ -116,7 +124,7 @@ class ComplexType(Type):
             for field in self.properties()
         ])
 
-    def render(self, parent, value):
+    def render(self, parent, value, xsd_type=None):
         for name, element, container in self.fields():
             sub_value = getattr(value, name, None)
 
@@ -129,13 +137,10 @@ class ComplexType(Type):
             else:
                 element.render(parent, sub_value)
 
-    def __call__(self, *args, **kwargs):
-        if not hasattr(self, '_value_class'):
-            self._value_class = type(
-                self.__class__.__name__, (CompoundValue,),
-                {'_xsd_type': self, '__module__': 'zeep.objects'})
-
-        return self._value_class(*args, **kwargs)
+        if xsd_type:
+            parent.set(
+                '{http://www.w3.org/2001/XMLSchema-instance}type',
+                xsd_type._xsd_name)
 
     def resolve(self, schema):
         children = []
@@ -272,3 +277,7 @@ class AnyObject(object):
     def __init__(self, xsd_type, value):
         self.xsd_type = xsd_type
         self.value = value
+
+    def __repr__(self):
+        return '<%s(type=%r, value=%r)>' % (
+            self.__class__.__name__, self.xsd_type, self.value)

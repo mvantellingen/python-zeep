@@ -14,7 +14,7 @@ test:
 	py.test -vvv
 
 retest:
-	py.test --lf
+	py.test -vvv --lf
 
 coverage:
 	py.test --cov=zeep --cov-report=term-missing

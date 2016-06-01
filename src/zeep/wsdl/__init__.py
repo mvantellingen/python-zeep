@@ -1,1 +1,1 @@
-from zeep.wsdl.wsdl import WSDL  # noqa
+from zeep.wsdl.wsdl import Document  # noqa

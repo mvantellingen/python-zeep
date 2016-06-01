@@ -4,6 +4,7 @@ from defusedxml.lxml import fromstring
 from lxml import etree
 
 from six.moves.urllib.parse import urljoin, urlparse
+from zeep.exceptions import XMLSyntaxError
 
 
 class ImportResolver(etree.Resolver):
@@ -24,7 +25,10 @@ class ImportResolver(etree.Resolver):
 def parse_xml(content, transport, parser_context=None, base_url=None):
     parser = etree.XMLParser(remove_comments=True)
     parser.resolvers.add(ImportResolver(transport, parser_context))
-    return fromstring(content, parser=parser, base_url=base_url)
+    try:
+        return fromstring(content, parser=parser, base_url=base_url)
+    except etree.XMLSyntaxError as exc:
+        raise XMLSyntaxError("Invalid XML content received (%s)" % exc.message)
 
 
 def load_external(url, transport, parser_context=None, base_url=None):

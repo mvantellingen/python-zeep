@@ -1,7 +1,7 @@
 import logging
 
 from zeep.transports import Transport
-from zeep.wsdl import WSDL
+from zeep.wsdl import Document
 
 NSMAP = {
     'xsd': 'http://www.w3.org/2001/XMLSchema',
@@ -42,7 +42,7 @@ class Client(object):
     def __init__(self, wsdl, wsse=None, transport=None,
                  service_name=None, port_name=None):
         self.transport = transport or Transport()
-        self.wsdl = WSDL(wsdl, self.transport)
+        self.wsdl = Document(wsdl, self.transport)
         self.wsse = wsse
         self.service = self.bind(service_name=service_name, port_name=port_name)
 
@@ -50,8 +50,8 @@ class Client(object):
         """Create a new ServiceProxy for the given service_name and port_name
 
         The default ServiceProxy instance (`self.service`) always referes to
-        the first service/port in the WSDL.  Use this when a specific port is
-        required.
+        the first service/port in the wsdl Document.  Use this when a specific
+        port is required.
 
         """
         if not self.wsdl.services:

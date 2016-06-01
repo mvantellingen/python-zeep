@@ -50,6 +50,17 @@ class SchemaVisitor(object):
             # so that it is handled correctly
             if ref.namespace == 'http://www.w3.org/2001/XMLSchema':
                 return
+            return xsd_elements.RefAttribute(node.tag, ref, self.schema)
+
+    def process_ref_element(self, node):
+        ref = qname_attr(node, 'ref')
+        if ref:
+
+            # Some wsdl's reference to xs:schema, we ignore that for now. It
+            # might be better in the future to process the actual schema file
+            # so that it is handled correctly
+            if ref.namespace == 'http://www.w3.org/2001/XMLSchema':
+                return
             return xsd_elements.RefElement(node.tag, ref, self.schema)
 
     def visit_schema(self, node):
@@ -92,10 +103,15 @@ class SchemaVisitor(object):
             Content: (annotation?)
             </import>
         """
-        if not node.get('schemaLocation'):
-            raise NotImplementedError("schemaLocation is required")
         namespace = node.get('namespace')
         location = node.get('schemaLocation')
+
+        # Use namespace as location if the schemaLocation is missing
+        if not location:
+            if namespace:
+                location = namespace
+            else:
+                raise NotImplementedError("schemaLocation is required")
 
         # Resolve import if it is a file
         location = absolute_location(location, self.schema._base_url)
@@ -168,7 +184,7 @@ class SchemaVisitor(object):
         # be present. Short circuit that here.
         # Ref is prohibited on global elements (parent = schema)
         if not is_global:
-            result = self.process_ref_attribute(node)
+            result = self.process_ref_element(node)
             if result:
                 return result
 
@@ -200,7 +216,7 @@ class SchemaVisitor(object):
                 except KeyError:
                     xsd_type = xsd_types.UnresolvedType(node_type.text)
             else:
-                xsd_type = xsd_builtins.String()
+                xsd_type = xsd_builtins.AnyType()
 
         # minOccurs / maxOccurs are not allowed on global elements
         if not is_global:
@@ -249,8 +265,9 @@ class SchemaVisitor(object):
                 return result
 
         attribute_form = node.get('form', self.schema._attribute_form)
+        qname = qname_attr(node, 'name', self.schema._target_namespace)
         if attribute_form == 'qualified':
-            name = qname_attr(node, 'name', self.schema._target_namespace)
+            name = qname
         else:
             name = etree.QName(node.get('name'))
 
@@ -270,8 +287,17 @@ class SchemaVisitor(object):
             except KeyError:
                 xsd_type = xsd_types.UnresolvedType(node_type)
 
-        attr = xsd_elements.Attribute(name, type_=xsd_type)
+        # TODO: We ignore 'prohobited' for now
+        required = node.get('use') == 'required'
+        default = node.get('default')
+
+        attr = xsd_elements.Attribute(
+            name, type_=xsd_type, default=default, required=required)
         self.schema._elm_instances.append(attr)
+
+        # Only register global elements
+        if is_global:
+            self.schema.register_attribute(qname, attr)
         return attr
 
     def visit_simple_type(self, node, parent):
@@ -292,20 +318,22 @@ class SchemaVisitor(object):
             name = parent.get('name')
             is_anonymous = True
 
+        base_type = xsd_builtins.String
         for child in node.iterchildren():
             if child.tag == tags.annotation:
                 continue
 
             elif child.tag == tags.restriction:
-                break
+                base_type = self.visit_restriction_simple_type(child, node)
 
             elif child.tag == tags.list:
                 self.visit_list(child, node)
+                break
 
             elif child.tag == tags.union:
                 self.visit_union(child, node)
+                break
 
-        base_type = xsd_builtins.String
         xsd_type = type(name, (base_type,), {})()
         if not is_anonymous:
             qname = as_qname(name, node.nsmap, self.schema._target_namespace)
@@ -329,6 +357,7 @@ class SchemaVisitor(object):
 
         """
         children = []
+        base_type = None
 
         for child in node.iterchildren():
             if child.tag == tags.annotation:
@@ -338,7 +367,8 @@ class SchemaVisitor(object):
                 children = self.visit_simple_content(child, node)
 
             elif child.tag == tags.complexContent:
-                children = self.visit_complex_content(child, node)
+                base_type, children = self.visit_complex_content(child, node)
+                base_type = base_type.__class__
 
             else:
                 item = self.process(child, node)
@@ -347,16 +377,15 @@ class SchemaVisitor(object):
                     assert not children
                     children = item
 
-                elif child.tag in (tags.choice, tags.sequence, tags.all):
+                elif child.tag == tags.choice:
                     assert not children
+                    children = [item]
 
-                    # XXX: Not good
-                    if not isinstance(item, list):
-                        item = [item]
-
+                elif child.tag in (tags.sequence, tags.all):
+                    assert not children
                     children = item
 
-                elif child.tag in (tags.attribute,):
+                elif child.tag == tags.attribute:
                     children.append(item)
 
         # If the complexType's parent is an element then this type is
@@ -370,8 +399,12 @@ class SchemaVisitor(object):
 
         qname = as_qname(name, node.nsmap, self.schema._target_namespace)
 
-        cls = type(
-            name, (xsd_types.ComplexType,), {'__module__': 'zeep.xsd.types'})
+        cls_attributes = {
+            '__module__': 'zeep.xsd.types',
+            '_xsd_base': base_type,
+            '_xsd_name': qname,
+        }
+        cls = type(name, (xsd_types.ComplexType,), cls_attributes)
         xsd_type = cls(children)
 
         if not is_anonymous:
@@ -393,10 +426,12 @@ class SchemaVisitor(object):
         child = node.getchildren()[-1]
 
         if child.tag == tags.restriction:
-            return self.visit_restriction_complex_content(child, node)
-
-        if child.tag == tags.extension:
-            return self.visit_extension_complex_content(child, node)
+            base_type, elements = self.visit_restriction_complex_content(
+                child, node)
+        elif child.tag == tags.extension:
+            base_type, elements = self.visit_extension_complex_content(
+                child, node)
+        return base_type, elements
 
     def visit_simple_content(self, node, parent, namespace=None):
         """Contains extensions or restrictions on a complexType element with
@@ -418,18 +453,21 @@ class SchemaVisitor(object):
             return self.visit_extension_simple_content(child, node)
         raise AssertionError("Expected restriction or extension")
 
-    def visit_restriction_complex_content(self, node, parent, namespace=None):
+    def visit_restriction_simple_type(self, node, parent, namespace=None):
         """
-
             <restriction
               base = QName
               id = ID
               {any attributes with non-schema Namespace}...>
-            Content: (annotation?, (group | all | choice | sequence)?,
-                    ((attribute | attributeGroup)*, anyAttribute?))
+            Content: (annotation?,
+                (simpleType?, (
+                    minExclusive | minInclusive | maxExclusive | maxInclusive |
+                    totalDigits |fractionDigits | length | minLength |
+                    maxLength | enumeration | whiteSpace | pattern)*))
             </restriction>
         """
-        pass
+        base_name = qname_attr(node, 'base')
+        return self.schema.get_type(base_name).__class__
 
     def visit_restriction_simple_content(self, node, parent, namespace=None):
         """
@@ -447,6 +485,21 @@ class SchemaVisitor(object):
         """
         pass
 
+    def visit_restriction_complex_content(self, node, parent, namespace=None):
+        """
+
+            <restriction
+              base = QName
+              id = ID
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?, (group | all | choice | sequence)?,
+                    ((attribute | attributeGroup)*, anyAttribute?))
+            </restriction>
+        """
+        base_name = qname_attr(node, 'base')
+        base_type = self._get_type(base_name)
+        return base_type, []
+
     def visit_extension_complex_content(self, node, parent):
         """
             <extension
@@ -459,14 +512,14 @@ class SchemaVisitor(object):
             </extension>
         """
         base_name = qname_attr(node, 'base')
-        try:
-            base = self.schema.get_type(base_name)
-            if isinstance(base, xsd_types.ComplexType):
-                children = base._children
-            else:
-                children = [xsd_elements.Element(None, base)]
-        except KeyError:
+        base_type = self._get_type(base_name)
+
+        if isinstance(base_type, xsd_types.ComplexType):
+            children = list(base_type._children)
+        elif isinstance(base_type, xsd_types.UnresolvedType):
             children = [xsd_types.UnresolvedType(base_name)]
+        else:
+            children = [xsd_elements.Element(None, base_type)]
 
         for child in node.iterchildren():
             if child.tag == tags.annotation:
@@ -483,7 +536,7 @@ class SchemaVisitor(object):
             elif child.tag in (tags.attribute,):
                 children.append(item)
 
-        return children
+        return base_type, children
 
     def visit_extension_simple_content(self, node, parent):
         """
@@ -567,8 +620,36 @@ class SchemaVisitor(object):
         assert None not in result
         return result
 
-    def visit_group(self, node, parent):
+    def visit_all(self, node, parent):
+        """Allows the elements in the group to appear (or not appear) in any
+        order in the containing element.
+
+            <all
+              id = ID
+              maxOccurs= 1: 1
+              minOccurs= (0 | 1): 1
+              {any attributes with non-schema Namespace...}>
+            Content: (annotation?, element*)
+            </all>
         """
+
+        sub_types = [
+            tags.annotation, tags.element
+        ]
+        result = []
+
+        for child in node.iterchildren():
+            assert child.tag in sub_types, child
+            item = self.process(child, node)
+            result.append(item)
+
+        assert None not in result
+        return result
+
+    def visit_group(self, node, parent):
+        """Groups a set of element declarations so that they can be
+        incorporated as a group into complex type definitions.
+
             <group
               name= NCName
               id = ID
@@ -579,9 +660,10 @@ class SchemaVisitor(object):
               {any attributes with non-schema Namespace}...>
             Content: (annotation?, (all | choice | sequence))
             </group>
+
         """
 
-        result = self.process_ref_attribute(node)
+        result = self.process_ref_element(node)
         if result:
             return result
 
@@ -590,7 +672,14 @@ class SchemaVisitor(object):
         # There should be only max nodes, first node (annotation) is irrelevant
         subnodes = node.getchildren()
         child = subnodes[-1]
-        children = self.process(child, parent)
+
+        item = self.process(child, parent)
+        if child.tag in (tags.all, tags.sequence):
+            children = item
+        elif child.tag == tags.choice:
+            children = [item]
+        else:
+            raise RuntimeError('Unexpected tag')
 
         elm = xsd_elements.GroupElement(name=qname, children=children)
 
@@ -683,6 +772,12 @@ class SchemaVisitor(object):
     def visit_any_attribute(self, node, parent):
         pass
 
+    def _get_type(self, name):
+        try:
+            return self.schema.get_type(name)
+        except KeyError:
+            return xsd_types.UnresolvedType(name)
+
     visitors = {
         tags.any: visit_any,
         tags.element: visit_element,
@@ -693,7 +788,7 @@ class SchemaVisitor(object):
         tags.simpleContent: None,
         tags.complexContent: None,
         tags.sequence: visit_sequence,
-        tags.all: visit_sequence,
+        tags.all: visit_all,
         tags.group: visit_group,
         tags.attribute: visit_attribute,
         tags.import_: visit_import,

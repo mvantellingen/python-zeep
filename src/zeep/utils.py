@@ -3,6 +3,14 @@ from collections import OrderedDict, defaultdict
 from lxml import etree
 
 
+class _NotSetClass(object):
+    def __repr__(self):
+        return 'NotSet'
+
+
+NotSet = _NotSetClass()
+
+
 def qname_attr(node, attr_name, target_namespace=None):
     value = node.get(attr_name)
     if value is not None:
@@ -62,7 +70,9 @@ def process_signature(fields, args, kwargs):
     for key, value in kwargs.items():
         if key not in field_map:
             raise TypeError(
-                "__init__() got an unexpected keyword argument %r" % key)
+                "__init__() got an unexpected keyword argument %r\nValid arguments are: %s"
+                % (key, ', '.join(field_map.keys()))
+            )
         element, container = field_map[key]
         count_key = container.key if container else key
 

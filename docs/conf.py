@@ -29,7 +29,7 @@ import pkg_resources
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = ['sphinx.ext.autodoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Zeep'
-copyright = u'2016, Michael van Tellingen'
+copyright = u'2016, <a href="https://www.mvantellingen.nl/">Michael van Tellingen</a>'
 author = u'Michael van Tellingen'
 
 
@@ -102,6 +102,9 @@ pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
+
+
+autodoc_default_flags = [':members:']
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -161,8 +164,8 @@ html_static_path = ['_static']
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
-    'index': [
-        'sidebar-intro.html', 'localtoc.html', 'sourcelink.html',
+    '*': [
+        'sidebar-intro.html', 'globaltoc.html', 'sourcelink.html',
         'searchbox.html'
     ]
 }

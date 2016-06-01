@@ -1,5 +1,3 @@
-
-
 def _soap_element(xmlelement, key):
     """So soap1.1 and 1.2 namespaces can be mixed HAH!"""
     namespaces = [

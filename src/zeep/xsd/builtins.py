@@ -60,7 +60,7 @@ import isodate
 import pytz
 import six
 
-from zeep.xsd.types import SimpleType
+from zeep.xsd.types import AnyObject, SimpleType
 
 
 class ParseError(ValueError):
@@ -436,6 +436,12 @@ class PositiveInteger(NonNegativeInteger):
 
 class AnyType(SimpleType):
     name = 'xsd:anyType'
+
+    def render(self, parent, value):
+        if isinstance(value, AnyObject):
+            value.xsd_type.render(parent, value.value)
+        else:
+            parent.text = self.xmlvalue(value)
 
     def xmlvalue(self, value):
         return value

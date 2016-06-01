@@ -69,6 +69,13 @@ class HttpPostBinding(HttpBinding):
 
     @classmethod
     def match(cls, node):
+        """Check if this binding instance should be used to parse the given
+        node.
+
+        :param node: The node to match against
+        :type node: lxml.etree._Element
+
+        """
         http_node = node.find(etree.QName(NSMAP['http'], 'binding'))
         return http_node is not None and http_node.get('verb') == 'POST'
 
@@ -90,6 +97,13 @@ class HttpGetBinding(HttpBinding):
 
     @classmethod
     def match(cls, node):
+        """Check if this binding instance should be used to parse the given
+        node.
+
+        :param node: The node to match against
+        :type node: lxml.etree._Element
+
+        """
         http_node = node.find(etree.QName(NSMAP['http'], 'binding'))
         return http_node is not None and http_node.get('verb') == 'GET'
 

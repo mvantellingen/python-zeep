@@ -18,8 +18,32 @@ NSMAP = {
 }
 
 
-class WSDL(object):
+class Document(object):
+    """A WSDL Document exists out of one or more definitions.
+
+    There is always one 'root' definition which should be passed as the
+    location to the Document.  This definition can import other definitions.
+    These imports are non-transitive, only the definitions defined in the
+    imported document are available in the parent definition.  This Document is
+    mostly just a simple interface to the root definition.
+
+    After all definitions are loaded the definitions are resolved. This
+    resolves references which were not yet available during the initial
+    parsing phase.
+
+    """
+
     def __init__(self, location, transport):
+        """Initialize a WSDL document.
+
+        The root definition properties are exposed as entry points.
+
+        :param location: Location of this WSDL
+        :type location: string
+        :param transport: The transport object to be used
+        :type transport: zeep.transports.Transport
+
+        """
         self.location = location if not hasattr(location, 'read') else None
         self.transport = transport
 
@@ -31,7 +55,8 @@ class WSDL(object):
 
         document = self._load_content(location)
 
-        root_definitions = Definitions(self, document, self.location)
+        root_definitions = Definition(self, document, self.location)
+        root_definitions.initialize_schema()
         root_definitions.resolve_imports()
 
         # Make the wsdl definitions public
@@ -45,7 +70,6 @@ class WSDL(object):
         return '<WSDL(location=%r)>' % self.location
 
     def dump(self):
-
         print('')
         print("Prefixes:")
         for prefix, namespace in self.schema._prefix_map.items():
@@ -73,17 +97,34 @@ class WSDL(object):
                 print('')
 
     def _load_content(self, location):
+        """Load the XML content from the given location and return an
+        lxml.Element object.
+
+        :param location: The URL of the document to load
+        :type location: string
+
+        """
         if hasattr(location, 'read'):
             return self._parse_content(location.read())
         return load_external(
             location, self.transport, self._parser_context, self.location)
 
     def _parse_content(self, content, base_url=None):
+        """Parse the content as XML and return the document.
+
+        :param content: content to parse as XML
+        :param content: string, file
+        :param base_url: base url for loading referenced documents
+        :param base_url: string
+
+        """
         return parse_xml(
             content, self.transport, self._parser_context, base_url)
 
 
-class Definitions(object):
+class Definition(object):
+    """The Definition represents one wsdl:definition within a Document."""
+
     def __init__(self, wsdl, doc, location):
         self.wsdl = wsdl
         self.location = location
@@ -95,6 +136,7 @@ class Definitions(object):
         self.services = OrderedDict()
 
         self.imports = {}
+        self._resolved_imports = False
 
         self.target_namespace = doc.get('targetNamespace')
         self.wsdl._definitions[self.target_namespace] = self
@@ -110,22 +152,41 @@ class Definitions(object):
         self.services = self.parse_service(doc)
 
     def __repr__(self):
-        return '<Definitions(location=%r)>' % self.location
+        return '<Definition(location=%r)>' % self.location
+
+    def get(self, name, key):
+        container = getattr(self, name)
+        if key in container:
+            return container[key]
+
+        for definition in self.imports.values():
+            container = getattr(definition, name)
+            if key in container:
+                return container[key]
+        raise IndexError()
+
+    def initialize_schema(self):
+        if self.schema:
+            return
+
+        for definition in self.imports.values():
+            if self.schema is None and definition.schema:
+                self.schema = definition.schema
+                break
+        else:
+            self.schema = Schema(
+                None, self.wsdl.transport, self.location,
+                self.wsdl._parser_context, self.location)
 
     def resolve_imports(self):
-        """
-            A -> B -> C -> D
+        """Resolve all root elements (types, messages, etc)."""
 
-            Items defined in D are only available in C, not in A or B.
+        # Simple guard to protect against cyclic imports
+        if self._resolved_imports:
+            return
+        self._resolved_imports = True
 
-        """
-        for namespace, definition in self.imports.items():
-            self.merge(definition, namespace)
-
-        imports = self.imports.copy()
-        self.imports = {}
-
-        for definition in imports.values():
+        for definition in self.imports.values():
             definition.resolve_imports()
 
         for message in self.messages.values():
@@ -140,27 +201,8 @@ class Definitions(object):
         for service in self.services.values():
             service.resolve(self)
 
-    def merge(self, other, namespace):
-        """Merge another `WSDL` instance in this object."""
-        def filter_namespace(source, namespace):
-            return {
-                k: v for k, v in source.items()
-                if k.startswith('{%s}' % namespace)
-            }
-
-        if not self.schema:
-            self.schema = other.schema
-
-        self.port_types.update(filter_namespace(other.port_types, namespace))
-        self.messages.update(filter_namespace(other.messages, namespace))
-        self.bindings.update(filter_namespace(other.bindings, namespace))
-        self.services.update(filter_namespace(other.services, namespace))
-
-        if namespace not in self.wsdl._definitions:
-            self._definitions[namespace] = other
-
     def parse_imports(self, doc):
-        """Import other WSDL documents in this document.
+        """Import other WSDL definitions in this document.
 
         Note that imports are non-transitive, so only import definitions
         which are defined in the imported document and ignore definitions
@@ -170,6 +212,9 @@ class Definitions(object):
 
             A -> B -> A
             A -> B -> C -> A
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
 
         """
         for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
@@ -188,20 +233,23 @@ class Definitions(object):
                         document, self.wsdl.transport, location,
                         self.wsdl._parser_context, location)
                 else:
-                    wsdl = Definitions(self.wsdl, document, location)
+                    wsdl = Definition(self.wsdl, document, location)
                     self.imports[namespace] = wsdl
 
     def parse_types(self, doc):
         """Return a `types.Schema` instance.
 
         Note that a WSDL can contain multiple XSD schema's. The schemas can
-        reference import each other using xsd:import statements.
+        reference each other using xsd:import statements.
 
             <definitions .... >
                 <types>
                     <xsd:schema .... />*
                 </types>
             </definitions>
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
 
         """
         namespace_sets = [
@@ -210,10 +258,8 @@ class Definitions(object):
         ]
 
         types = doc.find('wsdl:types', namespaces=NSMAP)
-        if types is None:
-            return Schema(
-                None, self.wsdl.transport, self.location,
-                self.wsdl._parser_context, self.location)
+        if types is None or len(types) == 0:
+            return None
 
         schema_nodes = findall_multiple_ns(types, 'xsd:schema', namespace_sets)
         if not schema_nodes:
@@ -281,6 +327,10 @@ class Definitions(object):
                     <part name="nmtoken" element="qname"? type="qname"?/> *
                 </message>
             </definitions>
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
+
         """
         result = {}
         for msg_node in doc.findall("wsdl:message", namespaces=NSMAP):
@@ -296,6 +346,10 @@ class Definitions(object):
                     <wsdl:operation name="nmtoken" .... /> *
                 </wsdl:portType>
             </wsdl:definitions>
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
+
         """
         result = {}
         for port_node in doc.findall('wsdl:portType', namespaces=NSMAP):
@@ -304,7 +358,14 @@ class Definitions(object):
         return result
 
     def parse_binding(self, doc):
-        """
+        """Parse the binding elements and return a dict of bindings.
+
+        Currently supported bindings are Soap 1.1, Soap 1.2., HTTP Get and
+        HTTP Post. The detection of the type of bindings is done by the
+        bindings themselves using the introspection of the xml nodes.
+
+        XML Structure::
+
             <wsdl:definitions .... >
                 <wsdl:binding name="nmtoken" type="qname"> *
                     <-- extensibility element (1) --> *
@@ -322,6 +383,10 @@ class Definitions(object):
                     </wsdl:operation>
                 </wsdl:binding>
             </wsdl:definitions>
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
+
         """
         result = {}
         for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
@@ -349,6 +414,10 @@ class Definitions(object):
                     </wsdl:port>
                 </wsdl:service>
             </wsdl:definitions>
+
+        :param doc: The source document
+        :type doc: lxml.etree._Element
+
         """
         result = OrderedDict()
         for service_node in doc.findall('wsdl:service', namespaces=NSMAP):

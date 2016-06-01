@@ -1,4 +1,4 @@
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict, namedtuple
 
 import six
 from defusedxml.lxml import fromstring
@@ -8,7 +8,6 @@ from lxml.builder import ElementMaker
 from zeep import xsd
 from zeep.utils import qname_attr
 from zeep.wsdl.utils import _soap_element
-from zeep.xsd import Element
 
 SerializedMessage = namedtuple('SerializedMessage', ['path', 'headers', 'content'])
 
@@ -69,14 +68,20 @@ class SoapMessage(ConcreteMessage):
             body = soap.Body()
             self.body.render(body, body_value)
 
-        if self.header:
-            if header_value is None:
-                header_value = self.header()
-            elif not isinstance(header_value, Element):
+        if header_value is not None:
+            if self.header and isinstance(header_value, dict):
                 header_value = self.header(**header_value)
-            header = soap.Header()
-            self.header.render(header, header_value)
+                header = soap.Header()
+                self.header.render(header, header_value)
+            elif hasattr(header_value, '_xsd_elm'):
+                header = soap.Header()
+                header_value._xsd_elm.render(header, header_value)
+            elif isinstance(header_value, etree._Element):
+                header = soap.Header(header_value)
+            else:
+                raise ValueError("Invalid value given to _soapheader")
 
+        # Create the soap:envelope
         envelope = soap.Envelope()
         if header is not None:
             envelope.append(header)
@@ -86,6 +91,8 @@ class SoapMessage(ConcreteMessage):
         headers = {
             'SOAPAction': self.operation.soapaction,
         }
+
+        etree.cleanup_namespaces(envelope)
         return SerializedMessage(
             path=None, headers=headers, content=envelope)
 
@@ -118,7 +125,7 @@ class SoapMessage(ConcreteMessage):
         message_name = info['message'].text
         part_name = info['part']
 
-        message = definitions.messages[message_name]
+        message = definitions.get('messages', message_name)
         if message == self.abstract:
             del parts[part_name]
         return message.parts[part_name].element

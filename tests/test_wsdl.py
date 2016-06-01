@@ -12,7 +12,7 @@ from zeep.transports import Transport
 def test_parse_soap_wsdl():
     client = stub(transport=Transport(), wsse=None)
 
-    obj = wsdl.WSDL('tests/wsdl_files/soap.wsdl', transport=client.transport)
+    obj = wsdl.Document('tests/wsdl_files/soap.wsdl', transport=client.transport)
     assert len(obj.services) == 1
 
     service = obj.services['StockQuoteService']
@@ -58,10 +58,7 @@ def test_parse_soap_wsdl():
         expected = """
         <soap-env:Envelope
                 xmlns:ns0="http://example.com/stockquote.xsd"
-                xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-                xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-                xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-                xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
             <soap-env:Body>
               <ns0:TradePriceRequest>
                 <tickerSymbol>foobar</tickerSymbol>
@@ -84,7 +81,7 @@ def test_parse_soap_wsdl():
 def test_parse_soap_header_wsdl():
     client = stub(transport=Transport(), wsse=None)
 
-    obj = wsdl.WSDL(
+    obj = wsdl.Document(
         'tests/wsdl_files/soap_header.wsdl', transport=client.transport)
     assert len(obj.services) == 1
 
@@ -131,10 +128,7 @@ def test_parse_soap_header_wsdl():
         expected = """
         <soap-env:Envelope
                 xmlns:ns0="http://example.com/stockquote.xsd"
-                xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-                xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-                xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-                xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
            <soap-env:Header>
               <ns0:Authentication>
                  <username>ikke</username>
@@ -182,7 +176,7 @@ def test_parse_types_multiple_schemas():
     </wsdl:definitions>
     """.strip())
 
-    assert wsdl.WSDL(content, None)
+    assert wsdl.Document(content, None)
 
 
 def test_parse_types_nsmap_issues():
@@ -219,4 +213,4 @@ def test_parse_types_nsmap_issues():
       </wsdl:types>
     </wsdl:definitions>
     """.strip())
-    assert wsdl.WSDL(content, None)
+    assert wsdl.Document(content, None)

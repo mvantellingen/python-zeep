@@ -5,7 +5,7 @@ install_requires = [
     'isodate>=0.5.4',
     'lxml>=3.0.0',
     'requests>=2.7.0',
-    'six>=1.0.0',
+    'six>=1.9.0',
     'pytz',
 ]
 
@@ -25,7 +25,7 @@ tests_require = [
 
 setup(
     name='zeep',
-    version='0.7.0.dev0',
+    version='0.7.1',
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=open('README.rst').read(),
     author="Michael van Tellingen",

@@ -13,6 +13,17 @@ MessagePart = namedtuple('MessagePart', ['element', 'type'])
 
 
 class AbstractMessage(object):
+    """Messages consist of one or more logical parts.
+
+    Each part is associated with a type from some type system using a
+    message-typing attribute. The set of message-typing attributes is
+    extensible. WSDL defines several such message-typing attributes for use
+    with XSD:
+
+        element: Refers to an XSD element using a QName.
+        type: Refers to an XSD simpleType or complexType using a QName.
+
+    """
     def __init__(self, name):
         self.name = name
         self.parts = OrderedDict()
@@ -38,17 +49,16 @@ class AbstractMessage(object):
                 </message>
             </definitions>
         """
-        msg = cls(name=qname_attr(xmlelement, 'name', definitions.target_namespace))
+        tns = definitions.target_namespace
+        msg = cls(name=qname_attr(xmlelement, 'name', tns))
 
         for part in xmlelement.findall('wsdl:part', namespaces=NSMAP):
             part_name = part.get('name')
-
-            part_element = qname_attr(part, 'element', definitions.target_namespace)
-            part_type = qname_attr(part, 'type', definitions.target_namespace)
+            part_element = qname_attr(part, 'element', tns)
+            part_type = qname_attr(part, 'type', tns)
 
             if part_element is not None:
                 part_element = definitions.schema.get_element(part_element)
-
             if part_type is not None:
                 part_type = definitions.schema.get_type(part_type)
 
@@ -100,10 +110,11 @@ class AbstractOperation(object):
 
             param_msg = qname_attr(msg_node, 'message', definitions.target_namespace)
             param_name = msg_node.get('name')
+            param_value = definitions.get('messages', param_msg.text)
             if tag_name in ('input', 'output'):
-                kwargs[tag_name] = definitions.messages[param_msg.text]
+                kwargs[tag_name] = param_value
             else:
-                kwargs['faults'][param_name] = definitions.messages[param_msg.text]
+                kwargs['faults'][param_name] = param_value
 
         kwargs['name'] = name
         kwargs['parameter_order'] = xmlelement.get('parameterOrder')
@@ -154,6 +165,16 @@ class Binding(object):
 
     """
     def __init__(self, wsdl, name, port_name):
+        """Binding
+
+        :param wsdl:
+        :type wsdl:
+        :param name:
+        :type name: string
+        :param port_name:
+        :type port_name: string
+
+        """
         self.name = name
         self.port_name = port_name
         self.port_type = None
@@ -161,7 +182,7 @@ class Binding(object):
         self._operations = {}
 
     def resolve(self, definitions):
-        self.port_type = definitions.port_types[self.port_name.text]
+        self.port_type = definitions.get('port_types', self.port_name.text)
         for operation in self._operations.values():
             operation.resolve(definitions)
 
@@ -287,9 +308,10 @@ class Port(object):
         if self._resolve_context is None:
             return
 
-        binding = definitions.bindings.get(
-            self._resolve_context['binding_name'].text)
-        if not binding:
+        try:
+            binding = definitions.get(
+                'bindings', self._resolve_context['binding_name'].text)
+        except IndexError:
             return False
 
         self.binding = binding
