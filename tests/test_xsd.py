@@ -1,7 +1,7 @@
 import pytest
 from lxml import etree
 
-from tests.utils import assert_nodes_equal
+from tests.utils import assert_nodes_equal, render_node
 from zeep import xsd
 
 
@@ -30,6 +30,48 @@ def test_create_node():
     """
     node = etree.Element('document')
     custom_type.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+
+def test_nil_elements():
+    custom_type = xsd.Element(
+        '{http://tests.python-zeep.org/}container',
+        xsd.ComplexType(children=[
+            xsd.Element(
+                '{http://tests.python-zeep.org/}item_1',
+                xsd.ComplexType(children=[
+                    xsd.Element(
+                        '{http://tests.python-zeep.org/}item_1_1',
+                        xsd.String())
+                    ]), nillable=True),
+            xsd.Element(
+                '{http://tests.python-zeep.org/}item_2',
+                xsd.DateTime(), nillable=True),
+            xsd.Element(
+                '{http://tests.python-zeep.org/}item_3',
+                xsd.String(), min_occurs=0, nillable=False),
+            xsd.Element(
+                '{http://tests.python-zeep.org/}item_4',
+                xsd.ComplexType(children=[
+                    xsd.Element(
+                        '{http://tests.python-zeep.org/}item_4_1',
+                        xsd.String(), nillable=True)
+                    ])),
+        ]))
+    obj = custom_type(item_1=None, item_2=None, item_3=None, item_4={})
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1/>
+          <ns0:item_2/>
+          <ns0:item_4>
+            <ns0:item_4_1/>
+          </ns0:item_4>
+        </ns0:container>
+      </document>
+    """
+    node = render_node(custom_type, obj)
     assert_nodes_equal(expected, node)
 
 
