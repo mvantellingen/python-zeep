@@ -194,7 +194,13 @@ class ComplexType(Type):
             setattr(instance, key, value)
 
         fields = iter(f for f in fields if not isinstance(f, Attribute))
-        field = next(fields)
+        field = next(fields, None)
+
+        # If the type has no child elements (only attributes) then return
+        # early
+        if not field:
+            return instance
+
         for element in elements:
 
             # Find matching element
