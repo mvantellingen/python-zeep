@@ -99,7 +99,7 @@ def test_parse_with_optional():
 
 
 def test_parse_regression():
-    schema_doc = load_xml("""
+    schema_doc = load_xml(b"""
         <?xml version="1.0" encoding="utf-8"?>
         <xsd:schema xmlns:tns="http://tests.python-zeep.org/attr"
           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -118,7 +118,7 @@ def test_parse_regression():
         </xsd:schema>
     """)
 
-    response_doc = load_xml("""
+    response_doc = load_xml(b"""
         <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
           <s:Body xmlns:xsd="http://www.w3.org/2001/XMLSchema">
             <Response xmlns="http://tests.python-zeep.org/attr">
