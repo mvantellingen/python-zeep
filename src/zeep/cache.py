@@ -6,7 +6,7 @@ import sqlite3
 
 
 class SqliteCache(object):
-    _version = b'1'
+    _version = '1'
 
     def __init__(self, persistent=True, path=None, timeout=3600):
         self._timeout = timeout
@@ -63,4 +63,5 @@ class SqliteCache(object):
 
     @property
     def _version_string(self):
-        return b'$ZEEP:%s$' % self._version
+        prefix = u'$ZEEP:%s$' % self._version
+        return bytes(prefix.encode('ascii'))
