@@ -1,11 +1,12 @@
 import base64
 import datetime
 import os
+import six
 import sqlite3
 
 
 class SqliteCache(object):
-    _version = '1'
+    _version = b'1'
 
     def __init__(self, persistent=True, path=None, timeout=3600):
         self._timeout = timeout
@@ -50,13 +51,16 @@ class SqliteCache(object):
 
     def _encode_data(self, data):
         data = base64.b64encode(data)
+        if six.PY2:
+            return buffer(self._version_string + data)
         return self._version_string + data
 
     def _decode_data(self, data):
+        if six.PY2:
+            data = str(data)
         if data.startswith(self._version_string):
             return base64.b64decode(data[len(self._version_string):])
 
     @property
     def _version_string(self):
-        prefix = u'$ZEEP:%s$' % self._version
-        return bytes(prefix.encode('ascii'))
+        return b'$ZEEP:%s$' % self._version
