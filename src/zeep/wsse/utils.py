@@ -28,7 +28,7 @@ def get_security_header(doc):
     return security
 
 
-def get_timestamp():
-    timestamp = datetime.datetime.utcnow()
+def get_timestamp(timestamp=None):
+    timestamp = timestamp or datetime.datetime.utcnow()
     timestamp = timestamp.replace(tzinfo=pytz.utc, microsecond=0)
     return timestamp.isoformat()

@@ -1,3 +1,4 @@
+import datetime
 import os
 
 import pytest
@@ -130,6 +131,62 @@ def test_password_digest(monkeypatch):
         </soap-env:Envelope>
     """  # noqa
     assert_nodes_equal(envelope, expected)
+
+
+@freeze_time('2016-05-08 12:00:00')
+def test_password_digest_custom(monkeypatch):
+    monkeypatch.setattr(os, 'urandom', lambda x: b'mocked-random')
+
+    envelope = load_xml("""
+        <soap-env:Envelope
+            xmlns:ns0="http://example.com/stockquote.xsd"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        >
+          <soap-env:Body>
+            <ns0:TradePriceRequest>
+              <tickerSymbol>foobar</tickerSymbol>
+              <ns0:country/>
+            </ns0:TradePriceRequest>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """)
+
+    created = datetime.datetime(2016, 6, 4, 20, 10)
+    token = UsernameToken(
+        'michael', password_digest='12345', use_digest=True,
+        nonce='iets', created=created)
+    envelope, headers = token.sign(envelope, {})
+    expected = """
+        <soap-env:Envelope
+            xmlns:ns0="http://example.com/stockquote.xsd"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <soap-env:Header>
+            <ns0:Security xmlns:ns0="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+              <ns0:UsernameToken>
+                <ns0:Username>michael</ns0:Username>
+                <ns0:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">12345</ns0:Password>
+                <ns0:Nonce>aWV0cw==</ns0:Nonce>
+                <ns0:Created xmlns:ns0="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">2016-06-04T20:10:00+00:00</ns0:Created>
+              </ns0:UsernameToken>
+            </ns0:Security>
+          </soap-env:Header>
+          <soap-env:Body>
+            <ns0:TradePriceRequest>
+              <tickerSymbol>foobar</tickerSymbol>
+              <ns0:country/>
+            </ns0:TradePriceRequest>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """  # noqa
+    assert_nodes_equal(envelope, expected)
+
+
 
 
 def test_password_prepared():

@@ -44,9 +44,13 @@ class UsernameToken(object):
     """
     namespace = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0'  # noqa
 
-    def __init__(self, username, password, use_digest=False):
+    def __init__(self, username, password=None, password_digest=None,
+                 use_digest=False, nonce=None, created=None):
         self.username = username
         self.password = password
+        self.password_digest = password_digest
+        self.nonce = nonce
+        self.created = created
         self.use_digest = use_digest
 
     def sign(self, envelope, headers):
@@ -63,7 +67,7 @@ class UsernameToken(object):
         elements = [
             WSSE.Username(self.username)
         ]
-        if self.password is not None:
+        if self.password is not None or self.password_digest is not None:
             if self.use_digest:
                 elements.extend(self._create_password_digest())
             else:
@@ -82,20 +86,27 @@ class UsernameToken(object):
         ]
 
     def _create_password_digest(self):
-        nonce = os.urandom(16)
-        timestamp = utils.get_timestamp()
+        if self.nonce:
+            nonce = self.nonce.encode('utf-8')
+        else:
+            nonce = os.urandom(16)
+        timestamp = utils.get_timestamp(self.created)
 
         # digest = Base64 ( SHA-1 ( nonce + created + password ) )
-        digest = base64.b64encode(
-            hashlib.sha1(
-                nonce + timestamp.encode('utf-8') + self.password.encode('utf-8')
-            ).digest())
+        if not self.password_digest:
+            digest = base64.b64encode(
+                hashlib.sha1(
+                    nonce + timestamp.encode('utf-8') +
+                    self.password.encode('utf-8')
+                ).digest()
+            ).decode('ascii')
+        else:
+            digest = self.password_digest
 
         return [
             WSSE.Password(
-                digest.decode('ascii'),
-                Type='%s#PasswordDigest' % self.namespace
+                digest, Type='%s#PasswordDigest' % self.namespace
             ),
-            WSSE.Nonce(base64.b64encode(nonce).decode('ascii')),
+            WSSE.Nonce(base64.b64encode(nonce).decode('utf-8')),
             WSU.Created(timestamp)
         ]
