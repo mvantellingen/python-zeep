@@ -39,9 +39,13 @@ def load_external(url, transport, parser_context=None, base_url=None):
     if base_url:
         url = absolute_location(url, base_url)
 
-    if urlparse(url).scheme:
+    scheme = urlparse(url).scheme
+    if scheme and scheme != 'file':
         response = transport.load(url)
     else:
+        if url.startswith('file://'):
+            url = url[7:]
+
         with open(url, 'rb') as fh:
             response = fh.read()
     return parse_xml(response, transport, parser_context, base_url)

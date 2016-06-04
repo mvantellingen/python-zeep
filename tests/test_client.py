@@ -1,5 +1,6 @@
 import pytest
 import requests_mock
+import os
 
 from zeep import client
 
@@ -45,6 +46,12 @@ def test_set_address():
         m.post('http://test.python-zeep.org/x', text=response)
         result = client_obj.service.GetLastTradePrice('foobar')
         assert result == 120.123
+
+
+def test_load_wsdl_with_file_prefix():
+    cwd = os.path.dirname(__file__)
+    client_obj = client.Client('file://' + os.path.join(cwd,
+                               'wsdl_files/soap.wsdl'))
 
 
 @pytest.mark.requests
