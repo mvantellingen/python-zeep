@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import operator
+from copy import deepcopy
 from collections import OrderedDict
 
 import six
@@ -56,7 +57,6 @@ class Document(object):
         document = self._load_content(location)
 
         root_definitions = Definition(self, document, self.location)
-        root_definitions.initialize_schema()
         root_definitions.resolve_imports()
 
         # Make the wsdl definitions public
@@ -163,20 +163,7 @@ class Definition(object):
             container = getattr(definition, name)
             if key in container:
                 return container[key]
-        raise IndexError()
-
-    def initialize_schema(self):
-        if self.schema:
-            return
-
-        for definition in self.imports.values():
-            if self.schema is None and definition.schema:
-                self.schema = definition.schema
-                break
-        else:
-            self.schema = Schema(
-                None, self.wsdl.transport, self.location,
-                self.wsdl._parser_context, self.location)
+        raise IndexError("No definition %r found" % name)
 
     def resolve_imports(self):
         """Resolve all root elements (types, messages, etc)."""
@@ -185,6 +172,17 @@ class Definition(object):
         if self._resolved_imports:
             return
         self._resolved_imports = True
+
+        # Create a reference to an imported schema if the definition has no
+        # schema of it's own.
+        if self.schema is None:
+            for definition in self.imports.values():
+                if definition.schema and not definition.schema.is_empty:
+                    self.schema = definition.schema
+            else:
+                self.schema = Schema(
+                    None, self.wsdl.transport, self.location,
+                    self.wsdl._parser_context, self.location)
 
         for definition in self.imports.values():
             definition.resolve_imports()
@@ -221,13 +219,12 @@ class Definition(object):
             location = import_node.get('location')
             namespace = import_node.get('namespace')
 
-            location = absolute_location(location, self.location)
-
             if namespace in self.wsdl._definitions:
                 self.imports[namespace] = self.wsdl._definitions[namespace]
             else:
 
                 document = self.wsdl._load_content(location)
+                location = absolute_location(location, self.location)
                 if etree.QName(document.tag).localname == 'schema':
                     self.schema = Schema(
                         document, self.wsdl.transport, location,
@@ -257,15 +254,16 @@ class Definition(object):
             {'xsd': 'http://www.w3.org/1999/XMLSchema'},
         ]
 
+        # Find xsd:schema elements (wsdl:types/xsd:schema)
         types = doc.find('wsdl:types', namespaces=NSMAP)
         if types is None or len(types) == 0:
-            return None
+            schema_nodes = []
+        else:
+            schema_nodes = findall_multiple_ns(
+                types, 'xsd:schema', namespace_sets)
 
-        schema_nodes = findall_multiple_ns(types, 'xsd:schema', namespace_sets)
         if not schema_nodes:
-            return Schema(
-                None, self.wsdl.transport, self.location,
-                self.wsdl._parser_context, self.location)
+            return None
 
         # FIXME: This fixes `test_parse_types_nsmap_issues`, lame solution...
         schema_nodes = [
@@ -278,11 +276,11 @@ class Definition(object):
                 schema_nodes[0], self.wsdl.transport, self.location,
                 self.wsdl._parser_context, self.location)
 
-        # A wsdl can container multiple schema nodes. The can import each
-        # other by simply referencing by the namespace. To handle this in a
-        # way that lxml schema can also handle it we create a new root schema
-        # which imports the other schemas. This seems to work fine, although
-        # I'm not sure how the non-transitive nature of imports impact it.
+        # A wsdl can contain multiple schema nodes. These can import each other
+        # by simply referencing them by the namespace. To handle this in a way
+        # that lxml schema can also handle it we create a new container schema
+        # which imports the other schemas.  Since imports are non-transitive we
+        # need to copy the schema imports the newyl created container schema.
 
         # Create namespace mapping (namespace -> internal location)
         schema_ns = {}
@@ -293,29 +291,31 @@ class Definition(object):
             self.wsdl._parser_context.schema_locations[int_name] = self.location
 
         # Only handle the import statements from the 2001 xsd's for now
-        import_tag = QName('http://www.w3.org/2001/XMLSchema', 'import').text
+        import_tag = '{http://www.w3.org/2001/XMLSchema}import'
 
         # Create a new schema node with xsd:import statements for all
         # schema's listed here.
-        root = etree.Element(
-            etree.QName('http://www.w3.org/2001/XMLSchema', 'schema'))
+        container = etree.Element('{http://www.w3.org/2001/XMLSchema}schema')
         for i, schema_node in enumerate(schema_nodes):
-            import_node = etree.Element(
-                etree.QName('http://www.w3.org/2001/XMLSchema', 'import'))
+
+            # Create a new xsd:import element to import the schema
+            import_node = etree.Element(import_tag)
             import_node.set('schemaLocation', 'intschema:xsd%d' % i)
             if schema_node.get('targetNamespace'):
                 import_node.set('namespace', schema_node.get('targetNamespace'))
-            root.append(import_node)
+            container.append(import_node)
 
             # Add the namespace mapping created earlier here to the import
             # statements.
             for import_node in schema_node.findall(import_tag):
-                if import_node.get('schemaLocation'):
-                    continue
+                location = import_node.get('schemaLocation')
                 namespace = import_node.get('namespace')
-                import_node.set('schemaLocation', schema_ns[namespace])
+                if not location:
+                    import_node.set('schemaLocation', schema_ns[namespace])
 
-        schema_node = root
+                container.append(deepcopy(import_node))
+
+        schema_node = container
         return Schema(
             schema_node, self.wsdl.transport, self.location,
             self.wsdl._parser_context, self.location)

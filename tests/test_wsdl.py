@@ -214,3 +214,14 @@ def test_parse_types_nsmap_issues():
     </wsdl:definitions>
     """.strip())
     assert wsdl.Document(content, None)
+
+
+@pytest.mark.requests
+def test_parse_soap_import_wsdl():
+    client = stub(transport=Transport(), wsse=None)
+
+    obj = wsdl.Document(
+        'tests/wsdl_files/soap_import_main.wsdl', transport=client.transport)
+    assert len(obj.services) == 1
+    obj.dump()
+

@@ -170,5 +170,9 @@ class Schema(object):
             for value in schema._types.values():
                 yield value
 
+    @property
+    def is_empty(self):
+        return not bool(self._types and self._elements)
+
     def custom_type(self, name):
         return self.get_type(name)
