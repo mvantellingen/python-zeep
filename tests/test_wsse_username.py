@@ -187,8 +187,6 @@ def test_password_digest_custom(monkeypatch):
     assert_nodes_equal(envelope, expected)
 
 
-
-
 def test_password_prepared():
     envelope = load_xml("""
         <soap-env:Envelope

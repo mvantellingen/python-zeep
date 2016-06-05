@@ -2,7 +2,7 @@ import datetime
 
 from lxml import etree
 
-from tests.utils import assert_nodes_equal
+from tests.utils import assert_nodes_equal, load_xml
 from zeep import xsd
 
 
@@ -880,5 +880,79 @@ def test_choice_nested_element():
     address_type = schema.get_element('ns0:Address')
 
     assert address_type.type.signature() == (
-        'something: xsd:string, (Choice: item_1=None: xsd:string, item_2=None: xsd:string, item_3=None: xsd:string)')  # noqa
+        'something: xsd:string, _choice_1: {item_1: xsd:string} | {item_2: xsd:string} | {item_3: xsd:string}')  # noqa
     address_type(item_1="foo")
+
+
+def test_choice_with_sequence():
+    node = load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name='ElementName'>
+            <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+              <xsd:choice>
+                <xsd:sequence>
+                    <xsd:element name="UniqueElement-1" type="xsd:string"/>
+                    <xsd:element name="UniqueElement-2" type="xsd:string"/>
+                </xsd:sequence>
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """)
+    schema = xsd.Schema(node)
+    element = schema.get_element('ns0:ElementName')
+    assert element.type.signature() == (
+        '_choice_1: {UniqueElement-1: xsd:string, UniqueElement-2: xsd:string}')
+
+    element(**{'UniqueElement-1': 'foo', 'UniqueElement-2': 'bar'})
+
+
+def test_choice_with_sequence_change():
+    node = load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name='ElementName'>
+            <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+              <xsd:choice>
+                <xsd:sequence>
+                    <xsd:element name="UniqueElement-1" type="xsd:string"/>
+                    <xsd:element name="UniqueElement-2" type="xsd:string"/>
+                </xsd:sequence>
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """)
+    schema = xsd.Schema(node)
+    element = schema.get_element('ns0:ElementName')
+
+    elm = element(
+        _choice_1={'UniqueElement-1': 'foo', 'UniqueElement-2': 'bar'}
+    )
+
+    assert elm._choice_1['UniqueElement-1'] == 'foo'
+    assert elm._choice_1['UniqueElement-2'] == 'bar'
+
+    elm._choice_1['UniqueElement-1'] = 'bla-1'
+    elm._choice_1['UniqueElement-2'] = 'bla-2'
+
+    expected = """
+      <document>
+        <ns0:ElementName xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:UniqueElement-1>bla-1</ns0:UniqueElement-1>
+          <ns0:UniqueElement-2>bla-2</ns0:UniqueElement-2>
+        </ns0:ElementName>
+      </document>
+    """
+    node = etree.Element('document')
+    element.render(node, elm)
+    assert_nodes_equal(expected, node)

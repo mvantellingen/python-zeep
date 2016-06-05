@@ -1,8 +1,9 @@
 import base64
 import datetime
 import os
-import six
 import sqlite3
+
+import six
 
 
 class SqliteCache(object):

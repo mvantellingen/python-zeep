@@ -104,18 +104,19 @@ class ComplexType(Type):
 
         """
         result = []
-        num = 1
+        num_any = 1
+        num_choice = 1
         for prop in self._children:
-            if isinstance(prop, Choice):
-                for elm in prop.elements:
-                    result.append((elm.name, elm, prop))
-            elif isinstance(prop, Any):
-                result.append(('_any_%d' % num, prop, None))
-                num += 1
+            if isinstance(prop, Any):
+                result.append(('_any_%d' % num_any, prop))
+                num_any += 1
+            elif isinstance(prop, Choice):
+                result.append(('_choice_%d' % num_choice, prop))
+                num_choice += 1
             elif prop.name is None:
-                result.append(('_value', prop, None))
+                result.append(('_value', prop))
             else:
-                result.append((prop.name, prop, None))
+                result.append((prop.name, prop))
         return result
 
     def serialize(self, value):
@@ -125,16 +126,11 @@ class ComplexType(Type):
         ])
 
     def render(self, parent, value, xsd_type=None):
-        for name, element, container in self.fields():
-            sub_value = getattr(value, name, None)
-
-            if container and isinstance(container, Choice):
-                if isinstance(sub_value, list):
-                    for item in sub_value:
-                        element.render(parent, item)
-                elif sub_value is not None:
-                    element.render(parent, sub_value)
+        for name, element in self.fields():
+            if isinstance(element, Choice):
+                element.render(parent, name, value)
             else:
+                sub_value = getattr(value, name, None)
                 element.render(parent, sub_value)
 
         if xsd_type:
@@ -164,14 +160,10 @@ class ComplexType(Type):
 
     def signature(self):
         parts = []
-        containers = set()
-        for name, element, container in self.fields():
-            if container is None:
-                parts.append(element._signature(name))
-            elif container not in containers:
-                parts.append(container._signature())
-                containers.add(container)
 
+        for name, element in self.fields():
+            part = element.signature(name)
+            parts.append(part)
         return ', '.join(parts)
 
     def parse_xmlelement(self, xmlelement, schema=None):
@@ -217,6 +209,7 @@ class ComplexType(Type):
 
             result = field.parse(element, schema)
             if isinstance(field, ListElement):
+                assert getattr(instance, field.name) is not None
                 getattr(instance, field.name).append(result)
             else:
                 setattr(instance, field.name, result)
@@ -247,7 +240,7 @@ class CompoundValue(object):
         fields = self._xsd_type.fields()
 
         # Set default values
-        for key, value, container in fields:
+        for key, value in fields:
             if isinstance(value, ListElement):
                 value = []
             else:
@@ -255,23 +248,23 @@ class CompoundValue(object):
             setattr(self, key, value)
 
         items = process_signature(fields, args, kwargs)
-        fields = OrderedDict([(name, elm) for name, elm, container in fields])
+        fields = OrderedDict([(name, elm) for name, elm in fields])
         for key, value in items.items():
-            field = fields[key]
 
-            if isinstance(field, Any) and not isinstance(value, AnyObject):
-                raise TypeError(
-                    "%s: expected AnyObject, %s found" % (
-                        key, type(value).__name__))
+            if key in fields:
+                field = fields[key]
 
-            if isinstance(value, dict):
-                value = field(**value)
+                if isinstance(field, Choice):
+                    pass
 
-            elif isinstance(value, list):
-                if isinstance(field.type, ComplexType):
-                    value = [field.type(**v) for v in value]
-                else:
-                    value = [field.type(v) for v in value]
+                elif isinstance(value, dict):
+                    value = field(**value)
+
+                elif isinstance(value, list):
+                    if isinstance(field.type, ComplexType):
+                        value = [field.type(**v) for v in value]
+                    else:
+                        value = [field.type(v) for v in value]
 
             setattr(self, key, value)
 

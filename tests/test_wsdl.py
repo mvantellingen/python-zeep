@@ -224,4 +224,3 @@ def test_parse_soap_import_wsdl():
         'tests/wsdl_files/soap_import_main.wsdl', transport=client.transport)
     assert len(obj.services) == 1
     obj.dump()
-
