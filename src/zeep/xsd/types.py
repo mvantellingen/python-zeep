@@ -13,10 +13,10 @@ class Type(object):
     def accept(self, value):
         raise NotImplementedError
 
-    def parse_xmlelement(self, xmlelement):
+    def parse_xmlelement(self, xmlelement, schema=None):
         raise NotImplementedError
 
-    def parsexml(self, xml):
+    def parsexml(self, xml, schema=None):
         raise NotImplementedError
 
     def render(self, parent, value):
@@ -51,7 +51,7 @@ class SimpleType(Type):
     def render(self, parent, value):
         parent.text = self.xmlvalue(value)
 
-    def parse_xmlelement(self, xmlelement):
+    def parse_xmlelement(self, xmlelement, schema=None):
         if xmlelement.text is None:
             return
         return self.pythonvalue(xmlelement.text)
@@ -174,7 +174,7 @@ class ComplexType(Type):
 
         return ', '.join(parts)
 
-    def parse_xmlelement(self, xmlelement):
+    def parse_xmlelement(self, xmlelement, schema=None):
         instance = self()
         fields = self.properties()
         if not fields:
@@ -190,7 +190,7 @@ class ComplexType(Type):
             field = fields_map.get(key)
             if not field:
                 continue
-            value = field.parse(value)
+            value = field.parse(value, schema)
             setattr(instance, key, value)
 
         fields = iter(f for f in fields if not isinstance(f, Attribute))
@@ -215,7 +215,7 @@ class ComplexType(Type):
             if field.qname != element.tag:
                 continue
 
-            result = field.parse(element)
+            result = field.parse(element, schema)
             if isinstance(field, ListElement):
                 getattr(instance, field.name).append(result)
             else:

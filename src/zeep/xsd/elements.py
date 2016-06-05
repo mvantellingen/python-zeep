@@ -108,8 +108,8 @@ class Element(Base):
             return value._xsd_type.render(node, value, xsd_type)
         return self.type.render(node, value)
 
-    def parse(self, value):
-        return self.type.parse_xmlelement(value)
+    def parse(self, value, schema=None):
+        return self.type.parse_xmlelement(value, schema)
 
     def _signature(self, name):
         assert self.type, '%r has no name' % self
@@ -137,7 +137,7 @@ class Attribute(Element):
         value = self.type.xmlvalue(value)
         parent.set(self.qname, value)
 
-    def parse(self, value):
+    def parse(self, value, schema=None):
         return self.type.pythonvalue(value)
 
 

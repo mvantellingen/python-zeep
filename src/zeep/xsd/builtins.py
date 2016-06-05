@@ -61,7 +61,7 @@ import pytz
 import six
 
 from zeep.xsd.types import AnyObject, SimpleType
-
+from zeep.utils import qname_attr
 
 class ParseError(ValueError):
     pass
@@ -443,10 +443,22 @@ class AnyType(SimpleType):
         else:
             parent.text = self.xmlvalue(value)
 
+    def parse_xmlelement(self, xmlelement, schema=None):
+        xsi_type = qname_attr(
+            xmlelement,
+            '{http://www.w3.org/2001/XMLSchema-instance}type')
+        if xsi_type and schema:
+            xsd_type = schema.get_type(xsi_type)
+            return xsd_type.parse_xmlelement(xmlelement, schema)
+
+        if xmlelement.text is None:
+            return
+        return self.pythonvalue(xmlelement.text)
+
     def xmlvalue(self, value):
         return value
 
-    def pythonvalue(self, value):
+    def pythonvalue(self, value, schema=None):
         return value
 
 

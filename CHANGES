@@ -2,6 +2,8 @@
 ------------------
  - Add ability to override the soap endpoint via `Client.set_address()`
  - Fix parsing ComplexTypes which have no child elements (#50)
+ - Handle xsi:type attributes on anyType's correctly when deserializing 
+   responses (#17)
 
 
 0.7.1 (2016-06-01)

@@ -138,3 +138,56 @@ def test_parse_regression():
         })
     response = elm.parse(node[0])
     assert response.Result.id == 2
+
+
+def test_parse_anytype():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'container'),
+        xsd.ComplexType(
+            children=[
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.AnyType()),
+            ]
+        ))
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected)
+    assert obj.item_1 == 'foo'
+
+
+def test_parse_anytype_obj():
+    value_type = xsd.ComplexType(
+        children=[
+            xsd.Element(
+                '{http://tests.python-zeep.org/}value',
+                xsd.Integer()),
+        ]
+    )
+
+    schema = xsd.Schema()
+    schema.register_type('{http://tests.python-zeep.org/}something', value_type)
+
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'container'),
+        xsd.ComplexType(
+            children=[
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.AnyType()),
+            ]
+        ))
+    expected = etree.fromstring("""
+        <ns0:container
+            xmlns:ns0="http://tests.python-zeep.org/"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <ns0:item_1 xsi:type="ns0:something">
+            <ns0:value>100</ns0:value>
+          </ns0:item_1>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, schema)
+    assert obj.item_1.value == 100
