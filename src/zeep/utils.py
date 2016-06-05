@@ -1,4 +1,4 @@
-from collections import OrderedDict, defaultdict
+import copy
 
 from lxml import etree
 
@@ -9,6 +9,27 @@ class _NotSetClass(object):
 
 
 NotSet = _NotSetClass()
+
+
+class ChoiceItem(object):
+    def __init__(self, index, values):
+        self.index = index
+        self.values = values
+
+    def __repr__(self):
+        return '<%s(index=%r, values=%r)>' % (
+            self.__class__.__name__, self.index, self.values)
+
+    def __eq__(self, other):
+        return (
+            self.__class__ == other.__class__ and
+            self.__dict__ == other.__dict__)
+
+    def __getitem__(self, key):
+        return self.values[key]
+
+    def __setitem__(self, key, value):
+        self.values[key] = value
 
 
 def qname_attr(node, attr_name, target_namespace=None):
@@ -40,61 +61,162 @@ def findall_multiple_ns(node, name, namespace_sets):
 
 
 def process_signature(fields, args, kwargs):
+    """Return a dict with the args/kwargs mapped to the field name.
+
+    Special handling is done for Choice elements since we need to record which
+    element the user intends to use.
+
+    :param fields: List of tuples (name, element)
+    :type fields: list
+    :param args: arg tuples
+    :type args: tuple
+    :param kwargs: kwargs
+    :type kwargs: dict
+
+
+    """
     result = {}
-    field_map = OrderedDict([
-        (name, (elm, container)) for name, elm, container in fields
-    ])
 
-    # XXX len(args) > len(attribute_order - num choice elms)
-    if len(args) > len(fields):
+    fields = list(fields)
+    args = list(args)
+    kwargs = copy.copy(kwargs)
+
+    # Create a list of fields until field in any or choice
+    from zeep.xsd import AnyObject, Choice, Any
+
+    num_pos_args = 0
+    for name, element in fields:
+        if element._require_keyword_arg:
+            break
+        num_pos_args += 1
+
+    if len(args) > num_pos_args:
         raise TypeError(
-            '__init__() takes exactly %d arguments (%d given)' % (
-                len(fields), len(args)))
+            "__init__() takes at most %s positional arguments (%s given)" % (
+                num_pos_args, len(args)))
 
-    # Ignore choices
-    for key, value in zip(field_map.keys(), args):
-        if key in kwargs:
+    # Process the positional arguments
+    for name, element in list(fields):
+        if not args:
+            break
+        arg = args.pop(0)
+        if element._require_keyword_arg:
             raise TypeError(
-                "__init__() got multiple values for keyword argument '%s'"
-                % key)
+                "Any and Choice elements should be passed using a keyword argument")
+        result[name] = arg
+        fields.pop(0)
+    if args:
+        assert False
 
-        element, container = field_map[key]
-        if container:
-            raise TypeError(
-                "Choice element value (%s) can only be set via " +
-                "named arguments" % (key))
+    # Process the keyword arguments
+    for i, (name, element) in enumerate(fields):
+        if isinstance(element, Choice):
+            result[name] = process_signature_choice(name, element, kwargs)
 
-        result[key] = value
+        elif name in kwargs:
+            value = kwargs[name]
 
-    element_counts = defaultdict(lambda: 0)
-    for key, value in kwargs.items():
-        if key not in field_map:
-            raise TypeError(
-                "__init__() got an unexpected keyword argument %r\nValid arguments are: %s"
-                % (key, ', '.join(field_map.keys()))
-            )
-        element, container = field_map[key]
-        count_key = container.key if container else key
+            if isinstance(element, Any) and not isinstance(value, AnyObject):
+                raise TypeError(
+                    "%s: expected AnyObject, %s found" % (
+                        name, type(value).__name__))
 
-        if isinstance(value, list):
-            element_counts[count_key] += len(value)
+            result[name] = value
+    return result
+
+
+def process_signature_choice(name, element, kwargs):
+    """Processes the kwargs for given choice element.
+
+    Returns a list with multiple `utils.ChoiceItem` objects if maxOccurs > 1
+    or simply one object if maxOccurs = 0.
+
+    This handles two distinct initialization methods:
+
+    1. Passing the choice elements directly to the kwargs (unnested)
+    2. Passing the choice elements into the `name` kwarg (_choice_1) (nested).
+       This case is required when multiple choice elements are given.
+
+    :param name: Name of the choice element (_choice_1)
+    :type name: str
+    :param element: Choice element object
+    :type element: zeep.xsd.Choice
+    :param kwargs: dict (or list of dicts) of kwargs for initialization
+    :type kwargs: list / dict
+
+    """
+    from zeep.xsd import Sequence
+
+    result = []
+    if name in kwargs:
+        values = kwargs.pop(name)
+        if isinstance(values, dict):
+            values = [values]
+
+        for value in values:
+            for choice_index, choice in enumerate(element.elements):
+
+                if isinstance(choice, Sequence):
+                    match = all(
+                        child.name in value for child in choice
+                        if not child.is_optional
+                    )
+
+                    if match:
+                        result.append(ChoiceItem(choice_index, value))
+                        break
+                else:
+                    if choice.name in value:
+                        result.append(ChoiceItem(choice_index, value))
+                        break
+            else:
+                raise TypeError(
+                    "No complete xsd:Sequence found for the xsd:Choice %r.\n"
+                    "The signature is: %s" % (name, element.signature(name)))
+
+    else:
+
+        # When choice elements are specified directly in the kwargs
+        for choice_index, choice in enumerate(element.elements):
+
+            if isinstance(choice, Sequence):
+                match = all(
+                    child.name in kwargs for child in choice
+                    if not child.is_optional)
+
+                if match:
+                    item_values = {}
+                    for child in choice:
+                        if child.is_optional and child.name not in kwargs:
+                            item_values[child.name] = None
+                        else:
+                            item_values[child.name] = kwargs.pop(child.name)
+                    result.append(ChoiceItem(choice_index, item_values))
+                    break
+                elif any(
+                    child.name in kwargs for child in choice
+                    if not child.is_optional
+                 ):
+                    raise TypeError(
+                        "No complete xsd:Choice %r.\n"
+                        "The signature is: %s" % (name, element.signature(name)))
+
+            else:
+                if choice.name in kwargs:
+                    result.append(
+                        ChoiceItem(
+                            choice_index,
+                            {choice.name: kwargs.pop(choice.name)})
+                    )
+
+            if len(result) >= element.max_occurs:
+                break
+
+    if element.max_occurs == 1:
+        if len(result) == 1:
+            return result[0]
+        elif len(result) > 1:
+            raise TypeError("Number of items is larger then max_occurs")
         else:
-            element_counts[count_key] += 1
-        num_items = element_counts[count_key]
-
-        if container:
-            if container.max_occurs and num_items > container.max_occurs:
-                raise ValueError(
-                    "%s item can occur at max %d times, received: %d" % (
-                        container.__class__.__name__,
-                        container.max_occurs, num_items))
-
-        else:
-            if element.max_occurs and num_items > element.max_occurs:
-                raise ValueError(
-                    "%s element can occur at max %d times, received: %d" % (
-                        key, element.max_occurs, num_items))
-
-        result[key] = value
-
+            return ChoiceItem(0, [])
     return result

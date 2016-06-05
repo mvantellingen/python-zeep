@@ -60,8 +60,9 @@ import isodate
 import pytz
 import six
 
-from zeep.xsd.types import AnyObject, SimpleType
 from zeep.utils import qname_attr
+from zeep.xsd.types import AnyObject, SimpleType
+
 
 class ParseError(ValueError):
     pass

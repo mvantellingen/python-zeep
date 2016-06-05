@@ -180,7 +180,7 @@ def test_choice():
         )
     )
 
-    obj = root('foo', item_1=[20, 30], item_2='nyet')
+    obj = root('foo', _choice_1=[{'item_1': [20, 30]}, {'item_2': 'nyet'}])
     node = etree.Element('document')
     root.render(node, obj)
     assert etree.tostring(node)
@@ -193,6 +193,49 @@ def test_choice():
         <ns0:item_1>30</ns0:item_1>
         <ns0:item_2>nyet</ns0:item_2>
         <ns0:post/>
+      </ns0:kies>
+    </document>
+    """.strip()
+    assert_nodes_equal(expected, node)
+
+
+def test_choice_determinst():
+    root = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'kies'),
+        xsd.ComplexType(
+            children=[
+                xsd.Choice([
+                    xsd.Sequence([
+                        xsd.Element(
+                            etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                            xsd.String()),
+                        xsd.Element(
+                            etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                            xsd.String()),
+                    ]),
+                    xsd.Sequence([
+                        xsd.Element(
+                            etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                            xsd.String()),
+                        xsd.Element(
+                            etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                            xsd.String()),
+                    ]),
+                ])
+            ]
+        )
+    )
+
+    obj = root(item_1='item-1', item_2='item-2')
+    node = etree.Element('document')
+    root.render(node, obj)
+    assert etree.tostring(node)
+
+    expected = """
+    <document>
+      <ns0:kies xmlns:ns0="http://tests.python-zeep.org/">
+        <ns0:item_1>item-1</ns0:item_1>
+        <ns0:item_2>item-2</ns0:item_2>
       </ns0:kies>
     </document>
     """.strip()

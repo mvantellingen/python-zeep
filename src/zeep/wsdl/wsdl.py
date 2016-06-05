@@ -1,12 +1,11 @@
 from __future__ import print_function
 
 import operator
-from copy import deepcopy
 from collections import OrderedDict
+from copy import deepcopy
 
 import six
 from lxml import etree
-from lxml.etree import QName
 
 from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns

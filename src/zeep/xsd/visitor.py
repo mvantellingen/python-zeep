@@ -610,11 +610,13 @@ class SchemaVisitor(object):
             tags.annotation, tags.any, tags.choice, tags.element,
             tags.group, tags.sequence
         ]
-        result = []
+        result = xsd_elements.Sequence()
 
-        for child in node.iterchildren():
+        annotation, items = self._pop_annotation(node.getchildren())
+        for child in items:
             assert child.tag in sub_types, child
             item = self.process(child, node)
+            assert item is not None
             result.append(item)
 
         assert None not in result
@@ -722,17 +724,17 @@ class SchemaVisitor(object):
             Content: (annotation?, (element | group | choice | sequence | any)*)
             </choice>
         """
-        # There should be only max nodes, first node (annotation) is irrelevant
+        min_occurs, max_occurs = _process_occurs_attrs(node)
+
         children = node.getchildren()
-        if children[0].tag == tags.annotation:
-            children.pop(0)
+        annotation, children = self._pop_annotation(children)
 
         choices = []
         for child in children:
             elm = self.process(child, node)
-            elm.min_occurs = 0
             choices.append(elm)
-        return xsd_elements.Choice(choices)
+        return xsd_elements.Choice(
+            choices, min_occurs=min_occurs, max_occurs=max_occurs)
 
     def visit_union(self, node, parent):
         """
@@ -777,6 +779,13 @@ class SchemaVisitor(object):
             return self.schema.get_type(name)
         except KeyError:
             return xsd_types.UnresolvedType(name)
+
+    def _pop_annotation(self, items):
+        if not len(items):
+            return None, []
+        if items[0].tag == tags.annotation:
+            return items[0], items[1:]
+        return None, items
 
     visitors = {
         tags.any: visit_any,

@@ -1,7 +1,7 @@
 from lxml import etree
 
-from zeep import xsd
 from tests.utils import load_xml
+from zeep import xsd
 
 
 def test_parse_basic():

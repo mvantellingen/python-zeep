@@ -4,13 +4,19 @@ from lxml import etree
 
 
 class Base(object):
+    _require_keyword_arg = False
 
     @property
     def is_optional(self):
         return self.min_occurs == 0
 
+    def signature(self, name=None):
+        return ''
+
 
 class Any(Base):
+    _require_keyword_arg = False
+
     def __init__(self, max_occurs=1, min_occurs=1):
         self.name = 'any'
         self.max_occurs = max_occurs
@@ -38,7 +44,7 @@ class Any(Base):
     def __call__(self, any_object):
         return any_object
 
-    def _signature(self, name):
+    def signature(self, name=None):
         return '%s%s: %s' % (
             name, '=None' if self.is_optional else '',
             '[]' if self.max_occurs != 1 else ''
@@ -75,6 +81,13 @@ class Element(Base):
             self.__class__ == other.__class__ and
             self.__dict__ == other.__dict__)
 
+    def signature(self, name=None):
+        assert self.type, '%r has no name' % self
+        return '%s%s: %s%s' % (
+            name, '=None' if self.is_optional else '',
+            self.type.name, '[]' if self.max_occurs != 1 else ''
+        )
+
     def clone(self, name):
         if not isinstance(name, etree.QName):
             name = etree.QName(name)
@@ -110,13 +123,6 @@ class Element(Base):
 
     def parse(self, value, schema=None):
         return self.type.parse_xmlelement(value, schema)
-
-    def _signature(self, name):
-        assert self.type, '%r has no name' % self
-        return '%s%s: %s%s' % (
-            name, '=None' if self.is_optional else '',
-            self.type.name, '[]' if self.max_occurs != 1 else ''
-        )
 
 
 class Attribute(Element):
@@ -171,14 +177,16 @@ class GroupElement(Element):
     def properties(self):
         return self.children
 
-    def _signature(self, name):
+    def signature(self, name):
         return '%s%s: %s' % (
             name, '=None' if self.is_optional else '',
             '[]' if self.max_occurs != 1 else ''
         )
 
 
-class Choice(object):
+class Choice(Base):
+    _require_keyword_arg = False
+
     def __init__(self, elements, max_occurs=1, min_occurs=1):
         self.name = 'choice'
         self.type = None
@@ -194,13 +202,50 @@ class Choice(object):
         # XXX Any elemetns?
         return ':'.join(elm.name for elm in self.elements)
 
-    def _signature(self):
-        part = ', '.join([
-            element._signature(element.name)
+    def render(self, parent, name, value):
+        choice_metadata = getattr(value, name)
+
+        if self.max_occurs == 1:
+            choice_metadata = [choice_metadata]
+
+        for item in choice_metadata:
+            choice_element = self.elements[item.index]
+
+            if isinstance(choice_element, Element):
+                choice_value = item.values.get(choice_element.name)
+
+                if isinstance(choice_value, list):
+                    for item in choice_value:
+                        choice_element.render(parent, item)
+                else:
+                    choice_element.render(parent, choice_value)
+            else:
+                for element in choice_element:
+                    value = item.values[element.name]
+                    if isinstance(value, list):
+                        for item in value:
+                            element.render(parent, item)
+                    else:
+                        element.render(parent, value)
+
+    def signature(self, name):
+        part = ' | '.join([
+            '{%s}' % element.signature(element.name)
             for element in self.elements
         ])
 
-        return '(Choice: %s)' % part
+        if self.max_occurs != 1:
+            return '%s: [%s]' % (name, part)
+        return '%s: %s' % (name, part)
+
+
+class Sequence(list):
+    name = 'sequence'
+
+    def signature(self, name):
+        return ', '.join([
+            element.signature(element.name) for element in self
+        ])
 
 
 class RefElement(object):
@@ -227,9 +272,6 @@ class RefElement(object):
 
     def __getattr__(self, name):
         if not name.startswith('_'):
-            return getattr(self._elm, name)
-
-        if name in ('_signature',):
             return getattr(self._elm, name)
 
         return getattr(self, name)

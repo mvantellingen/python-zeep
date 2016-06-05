@@ -47,6 +47,99 @@ which is defined within the WSDL. This can be done by using the
     client.service.submit('something')
 
 
+
+xsd:choice
+----------
+Mapping the semantics of xsd:choice elements to code is unfortunately pretty
+difficult. Zeep tries to solve this using two methods:
+
+  1. Accepting the elements in the xsd:choice element as kwargs. This only 
+     works for simple xsd:choice definitions.
+  2. Using the special kwarg ``_choice_x`` where the x is the number of the
+     choice in the parent type. This method allows you to pass a list of 
+     dicts (when maxOccurs != 1) or a dict directly.
+
+
+The following examples should better illustrate this.
+
+
+
+Simple method
+~~~~~~~~~~~~~
+
+.. code-block:: xml
+
+    <?xml version="1.0"?>
+    <schema xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/">
+      <element name='ElementName'>
+        <complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <choice>
+            <element name="item_1" type="string"/>
+            <element name="item_2" type="string"/>
+          </choice>
+        </complexType>
+      </element>
+    </schema>
+
+
+.. code-block:: python
+
+    element = client.get_element('ns0:ElementName')
+    obj = element(item_1='foo')
+
+
+Nested using _choice_1
+~~~~~~~~~~~~~~~~~~~~~~
+.. code-block:: xml
+
+    <?xml version="1.0"?>
+    <schema xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/">
+      <element name='ElementName'>
+        <complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <choice maxOccurs="unbounded">
+            <sequence>
+                <element name="item_1_a" type="string"/>
+                <element name="item_1_b" type="string"/>
+            </sequence>
+            <element name="item_2" type="string"/>
+          </choice>
+        </complexType>
+      </element>
+    </schema>
+
+
+.. code-block:: python
+
+    element = client.get_element('ns0:ElementName')
+    obj = element(_choice_1={'item_1_a': 'foo', 'item_1_b': 'bar'})
+
+
+Nested list using _choice_1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block:: xml
+
+    <?xml version="1.0"?>
+    <schema xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/">
+      <element name='ElementName'>
+        <complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <choice maxOccurs="unbounded">
+            <element name="item_1" type="string"/>
+            <element name="item_2" type="string"/>
+          </choice>
+        </complexType>
+      </element>
+    </schema>
+
+
+.. code-block:: python
+
+    element = client.get_element('ns0:ElementName')
+    obj = element(_choice_1=[{'item_1': 'foo'}, {'item_2': 'bar'})
+
+
 Any objects
 -----------
 
