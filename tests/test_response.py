@@ -80,7 +80,7 @@ def test_parse_response():
     }
     node = response_node.find('soap:Body/tns:ZeepExampleResponse', namespaces=nsmap)
     assert node is not None
-    obj = response_type.parse(node)
+    obj = response_type.parse(node, schema)
     assert obj.ZeepExampleResult.SomeValue == 45313
     assert len(obj.ZeepExampleResult.Results.Item) == 2
     assert obj.ZeepExampleResult.Results.Item[0].Key == 'ABC100'

@@ -121,7 +121,7 @@ class Element(Base):
             return value._xsd_type.render(node, value, xsd_type)
         return self.type.render(node, value)
 
-    def parse(self, value, schema=None):
+    def parse(self, value, schema):
         return self.type.parse_xmlelement(value, schema)
 
 

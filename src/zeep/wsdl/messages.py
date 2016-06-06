@@ -195,7 +195,7 @@ class DocumentMessage(SoapMessage):
         for part in self.abstract.parts.values():
             elm = node.find(part.element.qname)
             assert elm is not None, '%s not found' % part.element.qname
-            result.append(part.element.parse(elm))
+            result.append(part.element.parse(elm, self.wsdl.schema))
 
         if len(result) > 1:
             return tuple(result)
@@ -222,7 +222,7 @@ class RpcMessage(SoapMessage):
 
     def deserialize(self, node):
         value = node.find(self.body.qname)
-        result = self.body.parse(value)
+        result = self.body.parse(value, self.wsdl.schema)
 
         result = [
             getattr(result, field.name)
@@ -475,7 +475,7 @@ class MimeXML(MimeMessage):
     def deserialize(self, node):
         node = fromstring(node)
         part = self.abstract.parts.values()[0]
-        return part.element.parse(node)
+        return part.element.parse(node, self.wsdl.schema)
 
     @classmethod
     def parse(cls, definitions, xmlelement, operation):

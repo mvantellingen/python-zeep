@@ -166,7 +166,7 @@ class ComplexType(Type):
             parts.append(part)
         return ', '.join(parts)
 
-    def parse_xmlelement(self, xmlelement, schema=None):
+    def parse_xmlelement(self, xmlelement, schema):
         instance = self()
         fields = self.properties()
         if not fields:

@@ -23,7 +23,7 @@ def test_parse_basic():
           <ns0:item_2>bar</ns0:item_2>
         </ns0:container>
     """)
-    obj = custom_type.parse(expected)
+    obj = custom_type.parse(expected, None)
     assert obj.item_1 == 'foo'
     assert obj.item_2 == 'bar'
 
@@ -50,7 +50,7 @@ def test_parse_basic_with_attrs():
           <ns0:item_2>bar</ns0:item_2>
         </ns0:authentication>
     """)
-    obj = custom_element.parse(expected)
+    obj = custom_element.parse(expected, None)
     assert obj.item_1 == 'foo'
     assert obj.item_2 == 'bar'
     assert obj.attr_1 == 'x'
@@ -91,7 +91,7 @@ def test_parse_with_optional():
           <ns0:item_3>3</ns0:item_3>
         </ns0:container>
     """)
-    obj = custom_type.parse(expected)
+    obj = custom_type.parse(expected, None)
     assert obj.item_1 == '1'
     assert obj.item_2 is None
     assert obj.item_3 == ['3']
@@ -136,7 +136,7 @@ def test_parse_regression():
             'xsd': 'http://www.w3.org/2001/XMLSchema',
             'ns0': 'http://tests.python-zeep.org/attr',
         })
-    response = elm.parse(node[0])
+    response = elm.parse(node[0], None)
     assert response.Result.id == 2
 
 
@@ -155,7 +155,7 @@ def test_parse_anytype():
           <ns0:item_1>foo</ns0:item_1>
         </ns0:container>
     """)
-    obj = custom_type.parse(expected)
+    obj = custom_type.parse(expected, None)
     assert obj.item_1 == 'foo'
 
 
@@ -191,3 +191,63 @@ def test_parse_anytype_obj():
     """)
     obj = custom_type.parse(expected, schema)
     assert obj.item_1.value == 100
+
+
+def test_parse_anytype_regression_17():
+    schema_doc = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <schema
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/tst"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/tst">
+          <complexType name="CustomField">
+            <sequence>
+              <element name="parentItemURI" type="xsd:string"/>
+              <element name="key" type="xsd:string"/>
+              <element name="value" nillable="true"/>
+            </sequence>
+          </complexType>
+          <complexType name="Text">
+            <sequence>
+              <element name="type" type="xsd:string"/>
+              <element name="content" type="xsd:string"/>
+              <element name="contentLossy" type="xsd:boolean"/>
+            </sequence>
+          </complexType>
+
+          <element name="getCustomFieldResponse">
+            <complexType>
+              <sequence>
+                <element name="getCustomFieldReturn" type="tns:CustomField"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """)
+
+    xml = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <tst:getCustomFieldResponse
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:tst="http://tests.python-zeep.org/tst">
+          <tst:getCustomFieldReturn>
+            <tst:parentItemURI>blabla</tst:parentItemURI>
+            <tst:key>solution</tst:key>
+            <tst:value xsi:type="tst:Text">
+              <tst:type xsi:type="xsd:string">text/html</tst:type>
+              <tst:content xsi:type="xsd:string">Test Solution</tst:content>
+              <tst:contentLossy xsi:type="xsd:boolean">false</tst:contentLossy>
+            </tst:value>
+          </tst:getCustomFieldReturn>
+        </tst:getCustomFieldResponse>
+    """)
+
+    schema = xsd.Schema(schema_doc)
+    elm = schema.get_element(
+        '{http://tests.python-zeep.org/tst}getCustomFieldResponse'
+    )
+    result = elm.parse(xml, schema)
+    assert result.getCustomFieldReturn.value.content == 'Test Solution'

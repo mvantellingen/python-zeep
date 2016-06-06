@@ -90,7 +90,7 @@ def test_complex_type_parsexml():
         </Address>
     """)
 
-    obj = address_type.parse(input_node)
+    obj = address_type.parse(input_node, None)
     assert obj.foo == 'bar'
 
 
@@ -121,7 +121,7 @@ def test_complex_type_array_parsexml():
         </Address>
     """)
 
-    obj = address_type.parse(input_node)
+    obj = address_type.parse(input_node, None)
     assert obj.foo == ['bar', 'zoo']
 
 
