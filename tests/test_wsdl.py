@@ -223,4 +223,5 @@ def test_parse_soap_import_wsdl():
     obj = wsdl.Document(
         'tests/wsdl_files/soap_import_main.wsdl', transport=client.transport)
     assert len(obj.services) == 1
+    assert obj.schema.is_empty is False
     obj.dump()

@@ -1,4 +1,6 @@
 from __future__ import print_function
+import logging
+
 
 import operator
 from collections import OrderedDict
@@ -16,6 +18,8 @@ from zeep.xsd.context import ParserContext
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
 }
+
+logger = logging.getLogger(__name__)
 
 
 class Document(object):
@@ -178,7 +182,11 @@ class Definition(object):
             for definition in self.imports.values():
                 if definition.schema and not definition.schema.is_empty:
                     self.schema = definition.schema
+                    break
             else:
+                logger.debug(
+                    "No suitable main schema found for wsdl. " +
+                    "Creating an empty placeholder")
                 self.schema = Schema(
                     None, self.wsdl.transport, self.location,
                     self.wsdl._parser_context, self.location)

@@ -53,6 +53,7 @@ class Schema(object):
             self._prefix_map = self.create_prefix_map()
 
     def create_prefix_map(self):
+        logger.debug("Creating prefix map on %r", self)
         assigned = set()
         prefix_map = {}
 
@@ -77,7 +78,7 @@ class Schema(object):
         return prefix_map
 
     def __repr__(self):
-        return '<Schema(location=%r)>' % (self._location)
+        return '<Schema(location=%r, is_empty=%r)>' % (self._location, self.is_empty)
 
     def resolve(self):
         for type_ in self._types.values():
@@ -172,7 +173,7 @@ class Schema(object):
 
     @property
     def is_empty(self):
-        return not bool(self._types and self._elements)
+        return not bool(self._imports or self._types or self._elements)
 
     def custom_type(self, name):
         return self.get_type(name)
