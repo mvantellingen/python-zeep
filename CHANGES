@@ -1,4 +1,4 @@
-0.8.0 (unreleased)
+0.8.0 (2016-06-07)
 ------------------
  - Add ability to override the soap endpoint via `Client.set_address()`
  - Fix parsing ComplexTypes which have no child elements (#50)
