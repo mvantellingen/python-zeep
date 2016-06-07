@@ -15,6 +15,7 @@
     <schema xmlns="http://www.w3.org/2001/XMLSchema" 
             targetNamespace="http://test.python-zeep.org/something"
             xmlns:tns="http://test.python-zeep.org/something">
+      <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
     </schema>
   </types>
   <message name="GetLastTradePriceInput">

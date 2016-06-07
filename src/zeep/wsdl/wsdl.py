@@ -317,7 +317,7 @@ class Definition(object):
             for import_node in schema_node.findall(import_tag):
                 location = import_node.get('schemaLocation')
                 namespace = import_node.get('namespace')
-                if not location:
+                if not location and namespace in schema_ns:
                     import_node.set('schemaLocation', schema_ns[namespace])
 
                 container.append(deepcopy(import_node))
