@@ -318,13 +318,14 @@ class SchemaVisitor(object):
             name = parent.get('name')
             is_anonymous = True
 
-        base_type = xsd_builtins.String
+        base_type = '{http://www.w3.org/2001/XMLSchema}string'
         for child in node.iterchildren():
             if child.tag == tags.annotation:
                 continue
 
             elif child.tag == tags.restriction:
                 base_type = self.visit_restriction_simple_type(child, node)
+                break
 
             elif child.tag == tags.list:
                 self.visit_list(child, node)
@@ -334,7 +335,7 @@ class SchemaVisitor(object):
                 self.visit_union(child, node)
                 break
 
-        xsd_type = type(name, (base_type,), {})()
+        xsd_type = xsd_types.UnresolvedCustomType(name, base_type)
         if not is_anonymous:
             qname = as_qname(name, node.nsmap, self.schema._target_namespace)
             self.schema.register_type(qname, xsd_type)
@@ -357,7 +358,7 @@ class SchemaVisitor(object):
 
         """
         children = []
-        base_type = None
+        base_type = '{http://www.w3.org/2001/XMLSchema}anyType'
 
         for child in node.iterchildren():
             if child.tag == tags.annotation:
@@ -400,7 +401,7 @@ class SchemaVisitor(object):
         qname = as_qname(name, node.nsmap, self.schema._target_namespace)
 
         cls_attributes = {
-            '__module__': 'zeep.xsd.types',
+            '__module__': 'zeep.xsd.dynamic_types',
             '_xsd_base': base_type,
             '_xsd_name': qname,
         }
@@ -466,8 +467,7 @@ class SchemaVisitor(object):
                     maxLength | enumeration | whiteSpace | pattern)*))
             </restriction>
         """
-        base_name = qname_attr(node, 'base')
-        return self.schema.get_type(base_name).__class__
+        return qname_attr(node, 'base')
 
     def visit_restriction_simple_content(self, node, parent, namespace=None):
         """
@@ -483,7 +483,7 @@ class SchemaVisitor(object):
                 )?, ((attribute | attributeGroup)*, anyAttribute?))
             </restriction>
         """
-        pass
+        return qname_attr(node, 'base')
 
     def visit_restriction_complex_content(self, node, parent, namespace=None):
         """

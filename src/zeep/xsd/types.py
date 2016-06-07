@@ -36,8 +36,24 @@ class UnresolvedType(Type):
 
     def resolve(self, schema):
         retval = schema.get_type(self.qname)
-        retval.resolve(schema)
-        return retval
+        return retval.resolve(schema)
+
+
+class UnresolvedCustomType(Type):
+
+    def __init__(self, name, base_qname):
+        self.name = name
+        self.base_qname = base_qname
+
+    def resolve(self, schema):
+        base = schema.get_type(self.base_qname)
+        base = base.resolve(schema)
+
+        cls_attributes = {
+            '__module__': 'zeep.xsd.dynamic_types',
+        }
+        xsd_type = type(self.name, (base.__class__,), cls_attributes)
+        return xsd_type()
 
 
 class SimpleType(Type):

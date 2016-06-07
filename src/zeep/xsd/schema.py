@@ -81,8 +81,9 @@ class Schema(object):
         return '<Schema(location=%r, is_empty=%r)>' % (self._location, self.is_empty)
 
     def resolve(self):
-        for type_ in self._types.values():
-            type_.resolve(self)
+        for key, type_ in self._types.items():
+            new = type_.resolve(self)
+            self._types[key] = new
 
         for element in self._elm_instances:
             element.resolve_type(self)

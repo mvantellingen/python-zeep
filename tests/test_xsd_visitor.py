@@ -435,3 +435,31 @@ def test_union_type(schema_visitor):
     xsd_element = schema_visitor.schema.get_element(
         '{http://tests.python-zeep.org/}foo')
     assert xsd_element(arg='hoi')
+
+
+def test_simple_type_restriction(schema_visitor):
+    node = load_xml("""
+        <xsd:schema
+            xmlns="http://tests.python-zeep.org/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified">
+          <xsd:simpleType name="type_3">
+            <xsd:restriction base="type_2"/>
+          </xsd:simpleType>
+          <xsd:simpleType name="type_2">
+            <xsd:restriction base="type_1"/>
+          </xsd:simpleType>
+          <xsd:simpleType name="type_1">
+            <xsd:restriction base="xsd:int">
+              <xsd:totalDigits value="3"/>
+            </xsd:restriction>
+          </xsd:simpleType>
+        </xsd:schema>
+    """)
+    schema_visitor.visit_schema(node)
+    xsd_element = schema_visitor.schema.resolve()
+    xsd_element = schema_visitor.schema.get_type(
+        '{http://tests.python-zeep.org/}type_3')
+    assert xsd_element(100) == '100'
