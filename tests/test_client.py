@@ -49,7 +49,7 @@ def test_set_address():
         result = client_obj.service.GetLastTradePrice('foobar')
         assert result == 120.123
         assert m.request_history[0].body.startswith(
-            "<?xml version='1.0' encoding='utf-8'?>")
+            b"<?xml version='1.0' encoding='utf-8'?>")
 
 
 def test_load_wsdl_with_file_prefix():
