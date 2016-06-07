@@ -89,7 +89,9 @@ class SoapBinding(Binding):
             envelope, http_headers = client.wsse.sign(envelope, headers)
 
         response = client.transport.post(
-            options['address'], etree.tostring(envelope), headers)
+            options['address'],
+            etree.tostring(envelope, xml_declaration=True, encoding='utf-8'),
+            headers)
 
         return self.process_reply(client, operation_obj, response)
 

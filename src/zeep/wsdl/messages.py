@@ -434,7 +434,8 @@ class MimeContent(MimeMessage):
             document = etree.Element('root')
             self.body.render(document, value)
             data = etree.tostring(
-                document.getchildren()[0], pretty_print=True)
+                document.getchildren()[0],
+                pretty_print=True, xml_declaration=True, encoding='utf-8')
 
         return SerializedMessage(
             path=self.operation.location, headers=headers, content=data)

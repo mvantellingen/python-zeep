@@ -6,6 +6,7 @@
    responses (#17)
  - Fix xsd:restriction on xsd:simpleType's when the base type wasn't defined
    yet. (#59)
+ - Add xml declaration to the generate xml strings (#60)
 
 
 0.7.1 (2016-06-01)
