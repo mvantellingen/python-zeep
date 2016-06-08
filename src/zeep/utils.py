@@ -1,5 +1,6 @@
 import copy
 
+import six
 from lxml import etree
 
 
@@ -77,6 +78,7 @@ def process_signature(fields, args, kwargs):
     """
     result = {}
 
+    all_fields = fields
     fields = list(fields)
     args = list(args)
     kwargs = copy.copy(kwargs)
@@ -114,7 +116,7 @@ def process_signature(fields, args, kwargs):
             result[name] = process_signature_choice(name, element, kwargs)
 
         elif name in kwargs:
-            value = kwargs[name]
+            value = kwargs.pop(name)
 
             if isinstance(element, Any) and not isinstance(value, AnyObject):
                 raise TypeError(
@@ -122,6 +124,14 @@ def process_signature(fields, args, kwargs):
                         name, type(value).__name__))
 
             result[name] = value
+
+    if kwargs:
+        raise TypeError(
+            (
+                "__init__() got an unexpected keyword argument %r, " +
+                "Valid keyword arguments are: %s"
+            ) % (next(six.iterkeys(kwargs)), ', '.join(x[0] for x in all_fields)))
+
     return result
 
 

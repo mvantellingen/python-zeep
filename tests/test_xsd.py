@@ -75,6 +75,24 @@ def test_nil_elements():
     assert_nodes_equal(expected, node)
 
 
+def test_invalid_kwarg():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            children=[
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'username'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'password'),
+                    xsd.String()),
+            ]
+        ))
+
+    with pytest.raises(TypeError):
+        custom_type(something='is-wrong')
+
+
 def test_any():
     some_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'doei'),
