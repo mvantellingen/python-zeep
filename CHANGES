@@ -1,5 +1,8 @@
 0.9.0 (unreleased)
 ------------------
+ - Use the operation name for the xml element which wraps the parameters in 
+   for soap RPC messages (#60)
+
 
 0.8.0 (2016-06-07)
 ------------------

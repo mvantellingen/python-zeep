@@ -308,7 +308,7 @@ class SoapOperation(Operation):
                 continue
             msg = message_class.parse(
                 definitions=definitions, xmlelement=node,
-                operation=obj, nsmap=nsmap)
+                operation=obj, nsmap=nsmap, type=tag_name)
             if tag_name == 'fault':
                 obj.faults[msg.name] = msg
             else:

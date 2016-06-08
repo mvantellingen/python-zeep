@@ -47,13 +47,14 @@ class ConcreteMessage(object):
 
 class SoapMessage(ConcreteMessage):
 
-    def __init__(self, wsdl, name, operation, nsmap):
+    def __init__(self, wsdl, name, operation, type, nsmap):
         super(SoapMessage, self).__init__(wsdl, name, operation)
         self.nsmap = nsmap
         self.abstract = None  # Set during resolve()
         self.body = None
         self.header = None
         self.headerfault = None
+        self.type = type
 
     def serialize(self, *args, **kwargs):
         nsmap = self.nsmap.copy()
@@ -131,7 +132,7 @@ class SoapMessage(ConcreteMessage):
         return message.parts[part_name].element
 
     @classmethod
-    def parse(cls, definitions, xmlelement, operation, nsmap):
+    def parse(cls, definitions, xmlelement, operation, type, nsmap):
         """
         Example::
 
@@ -141,7 +142,7 @@ class SoapMessage(ConcreteMessage):
 
         """
         name = xmlelement.get('name')
-        obj = cls(definitions.wsdl, name, operation, nsmap=nsmap)
+        obj = cls(definitions.wsdl, name, operation, nsmap=nsmap, type=type)
 
         tns = definitions.target_namespace
 
@@ -256,8 +257,12 @@ class RpcMessage(SoapMessage):
         # name and its namespace is the value of the namespace attribute.
         body_info = self._info['body']
         if body_info:
-            tag_name = etree.QName(
-                self._info['body']['namespace'], self.abstract.name.localname)
+
+            namespace = self._info['body']['namespace']
+            if self.type == 'input':
+                tag_name = etree.QName(namespace, self.operation.name)
+            else:
+                tag_name = etree.QName(namespace, self.abstract.name.localname)
 
             self.body = xsd.Element(tag_name, xsd.ComplexType(children=[
                 xsd.Element(name, msg.type)

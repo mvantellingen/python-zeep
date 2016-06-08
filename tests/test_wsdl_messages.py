@@ -55,7 +55,8 @@ def test_document_message_parse():
         definitions=definitions_,
         xmlelement=xmlelement,
         operation=operation,
-        nsmap={})
+        nsmap={},
+        type='input')
 
     abstract_body = definitions.AbstractMessage(
         etree.QName('{http://test.python-zeep.org/tests/msg}Input'))
@@ -92,7 +93,8 @@ def test_document_message_parse_with_header():
         definitions=definitions_,
         xmlelement=xmlelement,
         operation=operation,
-        nsmap={})
+        nsmap={},
+        type='input')
 
     abstract_message = definitions.AbstractMessage(
         etree.QName('{http://tests.python-zeep.org/tns}Input'))
@@ -134,7 +136,8 @@ def test_document_message_parse_with_header_other_message():
         definitions=definitions_,
         xmlelement=xmlelement,
         operation=operation,
-        nsmap={})
+        nsmap={},
+        type='input')
 
     abstract_header = definitions.AbstractMessage(
         etree.QName('{http://tests.python-zeep.org/tns}InputHeader'))
@@ -158,12 +161,13 @@ def test_document_message_parse_with_header_other_message():
 
 def test_document_message_serializer():
     wsdl = stub(schema=stub(_prefix_map={}))
-    operation = stub(soapaction='my-actiGn')
+    operation = stub(soapaction='my-action')
     msg = messages.DocumentMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
-        nsmap=soap.Soap11Binding.nsmap)
+        nsmap=soap.Soap11Binding.nsmap,
+        type='input')
 
     namespace = 'http://test.python-zeep.org/tests/document'
 
@@ -199,12 +203,13 @@ def test_document_message_serializer():
 
 def test_document_message_serializer_header():
     wsdl = stub(schema=stub(_prefix_map={}))
-    operation = stub(soapaction='my-actiGn')
+    operation = stub(soapaction='my-action')
     msg = messages.DocumentMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
-        nsmap=soap.Soap11Binding.nsmap)
+        nsmap=soap.Soap11Binding.nsmap,
+        type='input')
 
     namespace = 'http://test.python-zeep.org/tests/document'
 
@@ -251,12 +256,13 @@ def test_document_message_serializer_header():
 
 def test_document_message_serializer_header_custom_elm():
     wsdl = stub(schema=stub(_prefix_map={}))
-    operation = stub(soapaction='my-actiGn')
+    operation = stub(soapaction='my-action', name='something')
     msg = messages.DocumentMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
-        nsmap=soap.Soap11Binding.nsmap)
+        nsmap=soap.Soap11Binding.nsmap,
+        type='input')
 
     namespace = 'http://test.python-zeep.org/tests/document'
 
@@ -305,12 +311,13 @@ def test_document_message_serializer_header_custom_elm():
 
 def test_document_message_serializer_header_custom_xml():
     wsdl = stub(schema=stub(_prefix_map={}))
-    operation = stub(soapaction='my-actiGn')
+    operation = stub(soapaction='my-action')
     msg = messages.DocumentMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
-        nsmap=soap.Soap11Binding.nsmap)
+        nsmap=soap.Soap11Binding.nsmap,
+        type='input')
 
     namespace = 'http://test.python-zeep.org/tests/document'
 
@@ -368,13 +375,14 @@ def test_document_message_deserializer():
         </SOAP-ENV:Body>
     """)  # noqa
     wsdl = stub(schema=stub(_prefix_map={}))
-    operation = stub(soapaction='my-action')
+    operation = stub(soapaction='my-action', name='something')
 
     msg = messages.DocumentMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
-        nsmap=soap.Soap11Binding.nsmap)
+        nsmap=soap.Soap11Binding.nsmap,
+        type='input')
 
     # Fake resolve()
     namespace = 'http://test.python-zeep.org/tests/document'
@@ -413,7 +421,7 @@ def test_rpc_message_parse():
       </input>
     """)
 
-    operation = stub()
+    operation = stub(name='Operation')
     definitions_ = stub(
         target_namespace='',
         messages={},
@@ -423,7 +431,8 @@ def test_rpc_message_parse():
         definitions=definitions_,
         xmlelement=xmlelement,
         operation=operation,
-        nsmap={})
+        nsmap={},
+        type='input')
 
     abstract_body = definitions.AbstractMessage(
         etree.QName('{http://test.python-zeep.org/tests/msg}Input'))
@@ -441,13 +450,13 @@ def test_rpc_message_parse():
 
 def test_rpc_message_serializer(abstract_message_input):
     wsdl = stub(schema=stub(_prefix_map={}))
-    operation = stub(soapaction='my-action')
+    operation = stub(soapaction='my-action', name='Operation')
 
     msg = messages.RpcMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
-        nsmap=soap.Soap11Binding.nsmap)
+        nsmap=soap.Soap11Binding.nsmap, type='input')
 
     msg._info = {
         'body': {
@@ -464,10 +473,10 @@ def test_rpc_message_serializer(abstract_message_input):
         <soap-env:Envelope
             xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
           <soap-env:Body>
-            <ns0:Method xmlns:ns0="http://test.python-zeep.org/tests/rpc">
+            <ns0:Operation xmlns:ns0="http://test.python-zeep.org/tests/rpc">
               <arg1>ah1</arg1>
               <arg2>ah2</arg2>
-            </ns0:Method>
+            </ns0:Operation>
           </soap-env:Body>
         </soap-env:Envelope>
     """
@@ -487,13 +496,13 @@ def test_rpc_message_deserializer(abstract_message_output):
         </SOAP-ENV:Body>
     """)  # noqa
     wsdl = stub(schema=stub(_prefix_map={}))
-    operation = stub(soapaction='my-action')
+    operation = stub(soapaction='my-action', name='something')
 
     msg = messages.RpcMessage(
         wsdl=wsdl,
         name=None,
         operation=operation,
-        nsmap=soap.Soap11Binding.nsmap)
+        nsmap=soap.Soap11Binding.nsmap, type='output')
 
     msg._info = {
         'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
@@ -508,11 +517,11 @@ def test_rpc_message_deserializer(abstract_message_output):
 
 def test_rpc_message_signature(abstract_message_input):
     wsdl = stub(schema=stub(_prefix_map={}))
-    operation = stub(soapaction='my-action')
+    operation = stub(soapaction='my-action', name='something')
 
     msg = messages.RpcMessage(
         wsdl=wsdl, name=None, operation=operation,
-        nsmap=soap.Soap11Binding.nsmap)
+        nsmap=soap.Soap11Binding.nsmap, type='input')
 
     msg._info = {
         'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
@@ -529,7 +538,7 @@ def test_rpc_message_signature_output(abstract_message_output):
 
     msg = messages.RpcMessage(
         wsdl=wsdl, name=None, operation=operation,
-        nsmap=soap.Soap11Binding.nsmap)
+        nsmap=soap.Soap11Binding.nsmap, type='output')
 
     msg._info = {
         'body': {'namespace': 'http://test.python-zeep.org/tests/rpc'},
