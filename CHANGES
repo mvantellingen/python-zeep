@@ -1,4 +1,4 @@
-0.9.0 (unreleased)
+0.8.1 (2016-06-08)
 ------------------
  - Use the operation name for the xml element which wraps the parameters in 
    for soap RPC messages (#60)
