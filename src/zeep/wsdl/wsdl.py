@@ -78,10 +78,14 @@ class Document(object):
         for prefix, namespace in self.schema._prefix_map.items():
             print(' ' * 4, '%s: %s' % (prefix, namespace))
 
-        type_instances = self.schema.types
+        print('')
+        print("Global elements:")
+        for elm_obj in sorted(self.schema.elements, key=lambda k: six.text_type(k)):
+            print(' ' * 4, six.text_type(elm_obj))
+
         print('')
         print("Global types:")
-        for type_obj in sorted(type_instances, key=lambda k: six.text_type(k)):
+        for type_obj in sorted(self.schema.types, key=lambda k: six.text_type(k)):
             print(' ' * 4, six.text_type(type_obj))
 
         print('')

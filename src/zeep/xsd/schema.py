@@ -164,6 +164,15 @@ class Schema(object):
             return etree.QName(name)
 
     @property
+    def elements(self):
+        for value in self._elements.values():
+            yield value
+
+        for schema in self._imports.values():
+            for value in schema._elements.values():
+                yield value
+
+    @property
     def types(self):
         for value in self._types.values():
             yield value
