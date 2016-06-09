@@ -42,7 +42,8 @@ class UsernameToken(object):
         </wsse:Security>
 
     """
-    namespace = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0'  # noqa
+    username_token_profile_ns = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0'  # noqa
+    soap_message_secutity_ns = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0'    # noqa
 
     def __init__(self, username, password=None, password_digest=None,
                  use_digest=False, nonce=None, created=None):
@@ -82,7 +83,8 @@ class UsernameToken(object):
     def _create_password_text(self):
         return [
             WSSE.Password(
-                self.password, Type='%s#PasswordText' % self.namespace)
+                self.password,
+                Type='%s#PasswordText' % self.username_token_profile_ns)
         ]
 
     def _create_password_digest(self):
@@ -105,8 +107,12 @@ class UsernameToken(object):
 
         return [
             WSSE.Password(
-                digest, Type='%s#PasswordDigest' % self.namespace
+                digest,
+                Type='%s#PasswordDigest' % self.username_token_profile_ns
             ),
-            WSSE.Nonce(base64.b64encode(nonce).decode('utf-8')),
+            WSSE.Nonce(
+                base64.b64encode(nonce).decode('utf-8'),
+                EncodingType='%s#Base64Binary' % self.soap_message_secutity_ns
+            ),
             WSU.Created(timestamp)
         ]
