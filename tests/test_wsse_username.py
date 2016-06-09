@@ -117,7 +117,7 @@ def test_password_digest(monkeypatch):
               <ns0:UsernameToken>
                 <ns0:Username>michael</ns0:Username>
                 <ns0:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">hVicspAQSg70JNhe67OHqD9gexc=</ns0:Password>
-                <ns0:Nonce>bW9ja2VkLXJhbmRvbQ==</ns0:Nonce>
+                <ns0:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">bW9ja2VkLXJhbmRvbQ==</ns0:Nonce>
                 <ns0:Created xmlns:ns0="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">2016-05-08T12:00:00+00:00</ns0:Created>
               </ns0:UsernameToken>
             </ns0:Security>
@@ -171,7 +171,7 @@ def test_password_digest_custom(monkeypatch):
               <ns0:UsernameToken>
                 <ns0:Username>michael</ns0:Username>
                 <ns0:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">12345</ns0:Password>
-                <ns0:Nonce>aWV0cw==</ns0:Nonce>
+                <ns0:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">aWV0cw==</ns0:Nonce>
                 <ns0:Created xmlns:ns0="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">2016-06-04T20:10:00+00:00</ns0:Created>
               </ns0:UsernameToken>
             </ns0:Security>
