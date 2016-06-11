@@ -17,7 +17,7 @@ class ImportResolver(etree.Resolver):
             text = etree.tostring(self.parser_context.schema_nodes.get(url))
             return self.resolve_string(text, context)
 
-        if urlparse(url).scheme:
+        if urlparse(url).scheme in ('http', 'https'):
             content = self.transport.load(url)
             return self.resolve_string(content, context)
 
@@ -44,13 +44,13 @@ def load_external(url, transport, parser_context=None, base_url=None):
 
 
 def absolute_location(location, base):
-    if location == base:
+    if location == base or location.startswith('intschema'):
         return location
 
-    if urlparse(location).scheme:
+    if urlparse(location).scheme in ('http', 'https'):
         return location
 
-    if base and urlparse(base).scheme:
+    if base and urlparse(base).scheme in ('http', 'https'):
         return urljoin(base, location)
     else:
         if os.path.isabs(location):
