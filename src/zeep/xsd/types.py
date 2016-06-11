@@ -1,9 +1,8 @@
-import pprint
 from collections import OrderedDict
 
 import six
 
-from zeep.utils import process_signature
+from zeep.xsd.valueobjects import CompoundValue
 from zeep.xsd.elements import (
     Any, Attribute, Choice, Element, GroupElement, ListElement, RefElement)
 
@@ -270,51 +269,3 @@ class ListType(object):
 class UnionType(object):
     def __init__(self, item_types):
         self.item_types = item_types
-
-
-class CompoundValue(object):
-
-    def __init__(self, *args, **kwargs):
-        fields = self._xsd_type.fields()
-
-        # Set default values
-        for key, value in fields:
-            if isinstance(value, ListElement):
-                value = []
-            else:
-                value = None
-            setattr(self, key, value)
-
-        items = process_signature(fields, args, kwargs)
-        fields = OrderedDict([(name, elm) for name, elm in fields])
-        for key, value in items.items():
-
-            if key in fields:
-                field = fields[key]
-
-                if isinstance(field, Choice):
-                    pass
-
-                elif isinstance(value, dict):
-                    value = field(**value)
-
-                elif isinstance(value, list):
-                    if isinstance(field.type, ComplexType):
-                        value = [field.type(**v) for v in value]
-                    else:
-                        value = [field.type(v) for v in value]
-
-            setattr(self, key, value)
-
-    def __repr__(self):
-        return pprint.pformat(self.__dict__, indent=4)
-
-
-class AnyObject(object):
-    def __init__(self, xsd_type, value):
-        self.xsd_type = xsd_type
-        self.value = value
-
-    def __repr__(self):
-        return '<%s(type=%r, value=%r)>' % (
-            self.__class__.__name__, self.xsd_type, self.value)

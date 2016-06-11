@@ -956,3 +956,53 @@ def test_choice_with_sequence_change():
     node = etree.Element('document')
     element.render(node, elm)
     assert_nodes_equal(expected, node)
+
+
+def test_sequence_with_type():
+    node = load_xml("""
+        <?xml version="1.0"?>
+        <schema
+                xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <complexType name="BaseType" abstract="true">
+            <sequence>
+              <element name="name" type="xsd:string" minOccurs="0"/>
+            </sequence>
+          </complexType>
+          <complexType name="SubType1">
+            <complexContent>
+              <extension base="tns:BaseType">
+                <attribute name="attr_1" type="xsd:string"/>
+              </extension>
+            </complexContent>
+          </complexType>
+          <complexType name="PolySequenceType">
+            <sequence>
+              <element name="item" type="tns:BaseType" maxOccurs="unbounded" minOccurs="0"/>
+            </sequence>
+          </complexType>
+          <element name="Seq" type="tns:PolySequenceType"/>
+        </schema>
+    """)
+    schema = xsd.Schema(node)
+    seq = schema.get_type('ns0:PolySequenceType')
+    sub_type = schema.get_type('ns0:SubType1')
+    value = seq(item=[sub_type(attr_1="test", name="name")])
+
+    node = etree.Element('document')
+    seq.render(node, value)
+
+    expected = """
+      <document>
+        <ns0:item
+            xmlns:ns0="http://tests.python-zeep.org/"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            attr_1="test" xsi:type="ns0:SubType1">
+          <ns0:name>name</ns0:name>
+        </ns0:item>
+      </document>
+    """
+    assert_nodes_equal(expected, node)

@@ -1,6 +1,7 @@
 import six
 
-from zeep import utils, xsd
+from zeep import xsd
+from zeep.xsd import valueobjects
 
 
 def test_simple_args():
@@ -10,7 +11,7 @@ def test_simple_args():
     ]
     args = tuple(['value-1', 'value-2'])
     kwargs = {}
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         'item_1': 'value-1',
         'item_2': 'value-2',
@@ -26,7 +27,7 @@ def test_simple_args_too_many():
     kwargs = {}
 
     try:
-        utils.process_signature(fields, args, kwargs)
+        valueobjects._process_signature(fields, args, kwargs)
     except TypeError as exc:
         assert six.text_type(exc) == (
             '__init__() takes at most 2 positional arguments (3 given)')
@@ -41,7 +42,7 @@ def test_simple_args_too_few():
     ]
     args = tuple(['value-1'])
     kwargs = {}
-    utils.process_signature(fields, args, kwargs)
+    valueobjects._process_signature(fields, args, kwargs)
 
 
 def test_simple_kwargs():
@@ -51,7 +52,7 @@ def test_simple_kwargs():
     ]
     args = tuple([])
     kwargs = {'item_1': 'value-1', 'item_2': 'value-2'}
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         'item_1': 'value-1',
         'item_2': 'value-2',
@@ -65,7 +66,7 @@ def test_simple_mixed():
     ]
     args = tuple(['value-1'])
     kwargs = {'item_2': 'value-2'}
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         'item_1': 'value-1',
         'item_2': 'value-2',
@@ -81,9 +82,9 @@ def test_choice():
     ]
     args = tuple([])
     kwargs = {'item_2': 'value-2'}
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
-        '_choice_1': utils.ChoiceItem(1, {'item_2': 'value-2'})
+        '_choice_1': valueobjects.ChoiceItem(1, {'item_2': 'value-2'})
     }
 
 
@@ -99,11 +100,11 @@ def test_choice_max_occurs_simple_interface():
         'item_1': 'foo',
         'item_2': 'bar',
     }
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         '_choice_1': [
-            utils.ChoiceItem(0, {'item_1': 'foo'}),
-            utils.ChoiceItem(1, {'item_2': 'bar'}),
+            valueobjects.ChoiceItem(0, {'item_1': 'foo'}),
+            valueobjects.ChoiceItem(1, {'item_2': 'bar'}),
         ]
     }
 
@@ -121,12 +122,12 @@ def test_choice_max_occurs():
             {'item_1': 'foo'}, {'item_2': 'bar'}, {'item_1': 'bla'}
         ]
     }
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         '_choice_1': [
-            utils.ChoiceItem(0, {'item_1': 'foo'}),
-            utils.ChoiceItem(1, {'item_2': 'bar'}),
-            utils.ChoiceItem(0, {'item_1': 'bla'}),
+            valueobjects.ChoiceItem(0, {'item_1': 'foo'}),
+            valueobjects.ChoiceItem(1, {'item_2': 'bar'}),
+            valueobjects.ChoiceItem(0, {'item_1': 'bla'}),
         ]
     }
 
@@ -145,11 +146,11 @@ def test_choice_max_occurs_on_choice():
             {'item_2': 'bla'},
         ]
     }
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         '_choice_1': [
-            utils.ChoiceItem(0, {'item_1': ['foo', 'bar']}),
-            utils.ChoiceItem(1, {'item_2': 'bla'})
+            valueobjects.ChoiceItem(0, {'item_1': ['foo', 'bar']}),
+            valueobjects.ChoiceItem(1, {'item_2': 'bla'})
         ]
     }
 
@@ -164,10 +165,10 @@ def test_choice_mixed():
     ]
     args = tuple([])
     kwargs = {'item_1': 'value-1', 'item_2': 'value-2'}
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         'item_2': 'value-2',
-        '_choice_1': utils.ChoiceItem(0, {'item_1': 'value-1'})
+        '_choice_1': valueobjects.ChoiceItem(0, {'item_1': 'value-1'})
     }
 
 
@@ -186,9 +187,9 @@ def test_choice_sequences_simple():
     ]
     args = tuple([])
     kwargs = {'item_1': 'value-1', 'item_2': 'value-2'}
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
-        '_choice_1': utils.ChoiceItem(0, {
+        '_choice_1': valueobjects.ChoiceItem(0, {
             'item_1': 'value-1', 'item_2': 'value-2'
         })
     }
@@ -211,7 +212,7 @@ def test_choice_sequences_no_match():
     kwargs = {'item_1': 'value-1', 'item_3': 'value-3'}
 
     try:
-        utils.process_signature(fields, args, kwargs)
+        valueobjects._process_signature(fields, args, kwargs)
     except TypeError as exc:
         assert six.text_type(exc) == (
             "No complete xsd:Choice '_choice_1'.\n" +
@@ -233,7 +234,7 @@ def test_choice_sequences_no_match_nested():
     args = tuple([])
     kwargs = {'_choice_1': {'item_1': 'value-1'}}
     try:
-        utils.process_signature(fields, args, kwargs)
+        valueobjects._process_signature(fields, args, kwargs)
     except TypeError as exc:
         assert six.text_type(exc) == (
             "No complete xsd:Sequence found for the xsd:Choice '_choice_1'.\n" +
@@ -258,9 +259,9 @@ def test_choice_sequences_optional_elms():
     ]
     args = tuple([])
     kwargs = {'item_1': 'value-1'}
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
-        '_choice_1': utils.ChoiceItem(
+        '_choice_1': valueobjects.ChoiceItem(
             0, {'item_1': 'value-1', 'item_2': None})
     }
 
@@ -286,11 +287,11 @@ def test_choice_sequences_max_occur():
         ]
     }
 
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         '_choice_1': [
-            utils.ChoiceItem(0, {'item_1': 'value-1', 'item_2': 'value-2'}),
-            utils.ChoiceItem(1, {'item_2': 'value-2', 'item_3': 'value-3'}),
+            valueobjects.ChoiceItem(0, {'item_1': 'value-1', 'item_2': 'value-2'}),
+            valueobjects.ChoiceItem(1, {'item_2': 'value-2', 'item_3': 'value-3'}),
         ]
     }
 
@@ -313,9 +314,9 @@ def test_choice_sequences_init_dict():
         '_choice_1': {'item_1': 'value-1', 'item_2': 'value-2'},
     }
 
-    result = utils.process_signature(fields, args, kwargs)
+    result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         '_choice_1': [
-            utils.ChoiceItem(0, {'item_1': 'value-1', 'item_2': 'value-2'})
+            valueobjects.ChoiceItem(0, {'item_1': 'value-1', 'item_2': 'value-2'})
         ]
     }

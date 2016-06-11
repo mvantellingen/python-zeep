@@ -164,8 +164,7 @@ class ListElement(Element):
 
     def render(self, parent, value):
         for val in value:
-            node = etree.SubElement(parent, self.qname)
-            self.type.render(node, val)
+            super(ListElement, self).render(parent, val)
 
 
 class GroupElement(Element):
