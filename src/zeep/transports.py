@@ -1,4 +1,5 @@
 import requests
+from six.moves.urllib.parse import urlparse
 
 from zeep.cache import SqliteCache
 from zeep.utils import NotSet
@@ -20,18 +21,28 @@ class Transport(object):
         return requests.Session()
 
     def load(self, url):
-        if self.cache:
-            response = self.cache.get(url)
-            if response:
-                return bytes(response)
+        scheme = urlparse(url).scheme
+        if scheme in ('http', 'https'):
 
-        response = self.session.get(url, timeout=self.timeout)
-        response.raise_for_status()
+            if self.cache:
+                response = self.cache.get(url)
+                if response:
+                    return bytes(response)
 
-        if self.cache:
-            self.cache.add(url, response.content)
+            response = self.session.get(url, timeout=self.timeout)
+            response.raise_for_status()
 
-        return response.content
+            if self.cache:
+                self.cache.add(url, response.content)
+
+            return response.content
+
+        elif scheme == 'file':
+            if url.startswith('file://'):
+                url = url[7:]
+
+        with open(url, 'rb') as fh:
+            return fh.read()
 
     def post(self, address, message, headers):
         response = self.session.post(address, data=message, headers=headers)

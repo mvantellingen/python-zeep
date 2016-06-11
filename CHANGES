@@ -1,5 +1,8 @@
 0.9.0 (unreleased)
 ------------------
+ - Use the appdirs module to retrieve the OS cache path. Note that this results
+   in an other default cache path then previous releases! See 
+   https://github.com/ActiveState/appdirs for more information.
  - Fix regression when initializing soap objects with invalid kwargs.
  - Add '--no-verify' to the command line interface. (#63)
  - Correctly xsi:type attributes on unbounded elements. (nicholjy) (#68)

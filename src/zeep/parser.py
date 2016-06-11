@@ -2,8 +2,8 @@ import os
 
 from defusedxml.lxml import fromstring
 from lxml import etree
-
 from six.moves.urllib.parse import urljoin, urlparse
+
 from zeep.exceptions import XMLSyntaxError
 
 
@@ -17,7 +17,7 @@ class ImportResolver(etree.Resolver):
             text = etree.tostring(self.parser_context.schema_nodes.get(url))
             return self.resolve_string(text, context)
 
-        if urlparse(url).scheme:
+        if urlparse(url).scheme in ('http', 'https'):
             content = self.transport.load(url)
             return self.resolve_string(content, context)
 
@@ -39,26 +39,18 @@ def load_external(url, transport, parser_context=None, base_url=None):
     if base_url:
         url = absolute_location(url, base_url)
 
-    scheme = urlparse(url).scheme
-    if scheme and scheme != 'file':
-        response = transport.load(url)
-    else:
-        if url.startswith('file://'):
-            url = url[7:]
-
-        with open(url, 'rb') as fh:
-            response = fh.read()
+    response = transport.load(url)
     return parse_xml(response, transport, parser_context, base_url)
 
 
 def absolute_location(location, base):
-    if location == base:
+    if location == base or location.startswith('intschema'):
         return location
 
-    if urlparse(location).scheme:
+    if urlparse(location).scheme in ('http', 'https'):
         return location
 
-    if base and urlparse(base).scheme:
+    if base and urlparse(base).scheme in ('http', 'https'):
         return urljoin(base, location)
     else:
         if os.path.isabs(location):

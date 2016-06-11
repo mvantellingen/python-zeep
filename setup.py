@@ -1,6 +1,7 @@
 from setuptools import find_packages, setup
 
 install_requires = [
+    'appdirs>=1.4.0',
     'defusedxml>=0.4.1',
     'isodate>=0.5.4',
     'lxml>=3.0.0',
