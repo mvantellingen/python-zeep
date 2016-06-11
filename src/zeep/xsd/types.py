@@ -115,6 +115,10 @@ class SimpleType(Type):
     def __unicode__(self):
         return six.text_type(self.name)
 
+    @classmethod
+    def signature(cls):
+        return 'value'
+
 
 class ComplexType(Type):
 

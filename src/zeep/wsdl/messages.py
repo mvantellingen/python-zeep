@@ -38,7 +38,11 @@ class ConcreteMessage(object):
                     return self.body.type.properties()[0].type.name
 
             return self.body.type.name
-        return self.body.type.signature()
+
+        result = self.body.type.signature()
+        if getattr(self, 'header', None):
+            result += ', _soapheader=%s' % self.header
+        return result
 
     @classmethod
     def parse(cls, wsdl, xmlelement, abstract_message, operation):

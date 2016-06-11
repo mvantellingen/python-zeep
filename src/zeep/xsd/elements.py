@@ -65,6 +65,9 @@ class Element(Base):
         self.nillable = nillable
         # assert type_
 
+    def __str__(self):
+        return '%s(%s)' % (self.name, self.type.signature())
+
     def __call__(self, *args, **kwargs):
         instance = self.type(*args, **kwargs)
         if hasattr(instance, '_xsd_type'):
