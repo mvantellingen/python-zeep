@@ -4,16 +4,9 @@
 environment:
   matrix:
     - PYTHON: "C:\\Python27"
-      TOX_ENV: "py27"
-
     - PYTHON: "C:\\Python33"
-      TOX_ENV: "py33"
-
     - PYTHON: "C:\\Python34"
-      TOX_ENV: "py34"
-
     - PYTHON: "C:\\Python35"
-      TOX_ENV: "py35"
 
 
 init:
@@ -22,13 +15,15 @@ init:
 
 install:
   - "%PYTHON%/Scripts/easy_install -U pip"
-  - "%PYTHON%/Scripts/pip install tox"
+  - "%PYTHON%/Scripts/easy_install lxml"
   - "%PYTHON%/Scripts/pip install wheel"
+  - "%PYTHON%/Scripts/pip install -e .[test]"
+
 
 build: false  # Not a C# project, build stuff at the test step instead.
 
 test_script:
-  - "%PYTHON%/Scripts/tox -e %TOX_ENV%"
+  - "%PYTHON%/Scripts/py.test --cov=zeep --cov-report=term-missing"
 
 after_test:
   - "%PYTHON%/python setup.py bdist_wheel"
