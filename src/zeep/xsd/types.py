@@ -87,9 +87,27 @@ class SimpleType(Type):
         return value
 
     def __call__(self, *args, **kwargs):
-        if args:
-            return six.text_type(args[0])
-        return u''
+        """Return the xmlvalue for the given value.
+
+        The args, kwargs handling is done here manually so that we can return
+        readable error messages instead of only '__call__ takes x arguments'
+
+        """
+        num_args = len(args) + len(kwargs)
+        if num_args != 1:
+            raise TypeError((
+                '%s() takes exactly 1 argument (%d given). ' +
+                'Simple types expect only a single value argument'
+            ) % (self.__class__.__name__, num_args))
+
+        if kwargs and 'value' not in kwargs:
+            raise TypeError((
+                '%s() got an unexpected keyword argument %r. ' +
+                'Simple types expect only a single value argument'
+            ) % (self.__class__.__name__, next(six.iterkeys(kwargs))))
+
+        value = args[0] if args else kwargs['value']
+        return self.xmlvalue(value)
 
     def __str__(self):
         return self.name

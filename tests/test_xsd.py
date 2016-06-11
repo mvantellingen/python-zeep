@@ -33,6 +33,21 @@ def test_create_node():
     assert_nodes_equal(expected, node)
 
 
+def test_element_simple_type():
+    elm = xsd.Element(
+        '{http://tests.python-zeep.org/}item', xsd.String())
+    obj = elm('foo')
+
+    expected = """
+      <document>
+        <ns0:item xmlns:ns0="http://tests.python-zeep.org/">foo</ns0:item>
+      </document>
+    """
+    node = etree.Element('document')
+    elm.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+
 def test_nil_elements():
     custom_type = xsd.Element(
         '{http://tests.python-zeep.org/}container',
@@ -91,6 +106,14 @@ def test_invalid_kwarg():
 
     with pytest.raises(TypeError):
         custom_type(something='is-wrong')
+
+
+def test_invalid_kwarg_simple_type():
+    elm = xsd.Element(
+        '{http://tests.python-zeep.org/}item', xsd.String())
+
+    with pytest.raises(TypeError):
+        elm(something='is-wrong')
 
 
 def test_any():
