@@ -1,8 +1,10 @@
 import base64
 import datetime
+import errno
 import os
 import sqlite3
 
+import appdirs
 import six
 
 
@@ -15,7 +17,7 @@ class SqliteCache(object):
         # Create db
         if persistent:
             if not path:
-                path = os.path.expanduser('~/.pyzeep.cache.db')
+                path = _get_default_cache_path()
         else:
             path = ':memory:'
 
@@ -66,3 +68,15 @@ class SqliteCache(object):
     def _version_string(self):
         prefix = u'$ZEEP:%s$' % self._version
         return bytes(prefix.encode('ascii'))
+
+
+def _get_default_cache_path():
+    path = appdirs.user_cache_dir('zeep', False)
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+    return os.path.join(path, 'cache.db')
