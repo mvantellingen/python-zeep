@@ -43,6 +43,23 @@ performant and compliant Python XML library currently available. This results
 in major speed benefits when retrieving large soap responses.
 
 
+
+Getting started
+===============
+
+You can install the latest version of zeep using pip::
+
+    pip install zeep
+
+The first thing you generally want to do is inspect the wsdl file you need to
+implement. This can be done with::
+
+    python -mzeep <wsdl>
+
+
+See ``python -mzeep --help`` for more information about this command.
+
+
 A simple use-case
 -----------------
 
@@ -106,7 +123,7 @@ More information
 ================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :name: mastertoc
 
    in-depth
