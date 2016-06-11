@@ -2,8 +2,8 @@ import os
 
 from defusedxml.lxml import fromstring
 from lxml import etree
-
 from six.moves.urllib.parse import urljoin, urlparse
+
 from zeep.exceptions import XMLSyntaxError
 
 
@@ -39,15 +39,7 @@ def load_external(url, transport, parser_context=None, base_url=None):
     if base_url:
         url = absolute_location(url, base_url)
 
-    scheme = urlparse(url).scheme
-    if scheme and scheme != 'file':
-        response = transport.load(url)
-    else:
-        if url.startswith('file://'):
-            url = url[7:]
-
-        with open(url, 'rb') as fh:
-            response = fh.read()
+    response = transport.load(url)
     return parse_xml(response, transport, parser_context, base_url)
 
 
