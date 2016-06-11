@@ -66,7 +66,9 @@ class Element(Base):
         # assert type_
 
     def __str__(self):
-        return '%s(%s)' % (self.name, self.type.signature())
+        if self.type:
+            return '%s(%s)' % (self.name, self.type.signature())
+        return '%s()' % self.name
 
     def __call__(self, *args, **kwargs):
         instance = self.type(*args, **kwargs)
