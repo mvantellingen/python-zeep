@@ -6,9 +6,7 @@ def no_requests(request, monkeypatch):
     if request.node.get_marker('requests'):
         return
 
-    def func(session, method, url, *args, **kwargs):
-        pytest.fail(
-            "Session.request() not allowed during tests. (%s %s, %r, %r)" %
-            (method, url, args, kwargs))
+    def func(*args, **kwargs):
+        pytest.fail("External connections not allowed during tests.")
 
-    monkeypatch.setattr("requests.sessions.Session.request", func)
+    monkeypatch.setattr("socket.socket", func)
