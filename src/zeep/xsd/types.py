@@ -261,9 +261,20 @@ class ComplexType(Type):
         return '%s(%s)' % (self.__class__.__name__, self.signature())
 
 
-class ListType(object):
+class ListType(Type):
     def __init__(self, item_type):
         self.item_type = item_type
+
+    def resolve(self, schema):
+        self.item_type = self.item_type.resolve(schema)
+        return self
+
+    def xmlvalue(self, value):
+        item_type = self.item_type
+        return ' '.join(item_type.xmlvalue(v) for v in value)
+
+    def render(self, parent, value):
+        parent.text = self.xmlvalue(value)
 
 
 class UnionType(object):

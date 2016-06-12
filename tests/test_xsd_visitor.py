@@ -2,6 +2,7 @@ import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
+from zeep import xsd
 from zeep.xsd import ListElement, builtins, visitor
 from zeep.xsd.schema import Schema
 from zeep.xsd.types import UnresolvedType
@@ -403,6 +404,125 @@ def test_simple_content_extension(schema_visitor):
     record_type = schema.get_type('ns0:SubType2')
     child_attrs = [child.name for child in record_type._children]
     assert len(child_attrs) == 4
+
+
+def test_list_type():
+    node = load_xml("""
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/">
+
+          <xsd:simpleType name="listOfIntegers">
+            <xsd:list itemType="integer" />
+          </xsd:simpleType>
+
+          <xsd:element name="foo">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="arg" type="tns:listOfIntegers"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </schema>
+    """)
+
+    schema = xsd.Schema(node)
+    xsd_element = schema.get_element(
+        '{http://tests.python-zeep.org/}foo')
+    value = xsd_element(arg=[1, 2, 3, 4, 5])
+
+    node = render_node(xsd_element, value)
+    expected = """
+        <document>
+          <ns0:foo xmlns:ns0="http://tests.python-zeep.org/">
+            <arg>1 2 3 4 5</arg>
+          </ns0:foo>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+def test_list_type_unresolved():
+    node = load_xml("""
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/">
+
+          <xsd:simpleType name="listOfIntegers">
+            <xsd:list itemType="tns:something" />
+          </xsd:simpleType>
+
+          <xsd:simpleType name="something">
+            <xsd:restriction base="xsd:integer" />
+          </xsd:simpleType>
+
+          <xsd:element name="foo">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="arg" type="tns:listOfIntegers"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </schema>
+    """)
+
+    schema = xsd.Schema(node)
+    xsd_element = schema.get_element(
+        '{http://tests.python-zeep.org/}foo')
+    value = xsd_element(arg=[1, 2, 3, 4, 5])
+
+    node = render_node(xsd_element, value)
+    expected = """
+        <document>
+          <ns0:foo xmlns:ns0="http://tests.python-zeep.org/">
+            <arg>1 2 3 4 5</arg>
+          </ns0:foo>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+def test_list_type_simple_type():
+    node = load_xml("""
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/">
+
+          <xsd:simpleType name="listOfIntegers">
+            <xsd:list>
+              <simpleType>
+                <xsd:restriction base="xsd:integer" />
+              </simpleType>
+            </xsd:list>
+          </xsd:simpleType>
+
+          <xsd:element name="foo">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="arg" type="tns:listOfIntegers"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </schema>
+    """)
+
+    schema = xsd.Schema(node)
+    xsd_element = schema.get_element(
+        '{http://tests.python-zeep.org/}foo')
+    value = xsd_element(arg=[1, 2, 3, 4, 5])
+
+    node = render_node(xsd_element, value)
+    expected = """
+        <document>
+          <ns0:foo xmlns:ns0="http://tests.python-zeep.org/">
+            <arg>1 2 3 4 5</arg>
+          </ns0:foo>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
 
 
 def test_union_type(schema_visitor):

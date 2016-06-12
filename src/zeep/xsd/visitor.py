@@ -315,27 +315,26 @@ class SchemaVisitor(object):
             name = node.get('name')
             is_anonymous = False
         else:
-            name = parent.get('name')
+            name = parent.get('name', 'Anonymous')
             is_anonymous = True
 
         base_type = '{http://www.w3.org/2001/XMLSchema}string'
-        for child in node.iterchildren():
-            if child.tag == tags.annotation:
-                continue
 
-            elif child.tag == tags.restriction:
-                base_type = self.visit_restriction_simple_type(child, node)
-                break
+        annotation, items = self._pop_annotation(node.getchildren())
+        child = items[0]
+        if child.tag == tags.restriction:
+            base_type = self.visit_restriction_simple_type(child, node)
+            xsd_type = xsd_types.UnresolvedCustomType(name, base_type)
 
-            elif child.tag == tags.list:
-                self.visit_list(child, node)
-                break
+        elif child.tag == tags.list:
+            xsd_type = self.visit_list(child, node)
 
-            elif child.tag == tags.union:
-                self.visit_union(child, node)
-                break
+        elif child.tag == tags.union:
+            xsd_type = self.visit_union(child, node)
+        else:
+            raise AssertionError("Unexpected child: %r" % child.tag)
 
-        xsd_type = xsd_types.UnresolvedCustomType(name, base_type)
+        assert xsd_type is not None
         if not is_anonymous:
             qname = as_qname(name, node.nsmap, self.schema._target_namespace)
             self.schema.register_type(qname, xsd_type)
@@ -704,15 +703,12 @@ class SchemaVisitor(object):
         """
         item_type = qname_attr(node, 'itemType')
         if item_type:
-            try:
-                xsd_type = self.schema.get_type(item_type.text)
-            except KeyError:
-                xsd_type = xsd_types.UnresolvedType(item_type.text)
+            sub_type = self._get_type(item_type.text)
         else:
             subnodes = node.getchildren()
-            child = subnodes[-1]
-            xsd_type = self.process(child, node)
-        return xsd_types.ListType(xsd_type)
+            child = subnodes[-1]  # skip annotation
+            sub_type = self.visit_simple_type(child, node)
+        return xsd_types.ListType(sub_type)
 
     def visit_choice(self, node, parent):
         """
@@ -737,7 +733,8 @@ class SchemaVisitor(object):
             choices, min_occurs=min_occurs, max_occurs=max_occurs)
 
     def visit_union(self, node, parent):
-        """
+        """Defines a collection of multiple simpleType definitions.
+
             <union
               id = ID
               memberTypes = List of QNames
@@ -745,10 +742,14 @@ class SchemaVisitor(object):
             Content: (annotation?, (simpleType*))
             </union>
         """
+        # TODO
         return xsd_types.UnionType([])
 
     def visit_unique(self, node, parent):
-        """
+        """Specifies that an attribute or element value (or a combination of
+        attribute or element values) must be unique within the specified scope.
+        The value must be unique or nil.
+
             <unique
               id = ID
               name = NCName
@@ -756,6 +757,7 @@ class SchemaVisitor(object):
             Content: (annotation?, (selector, field+))
             </unique>
         """
+        # TODO
         pass
 
     def visit_attribute_group(self, node, parent):
@@ -769,9 +771,11 @@ class SchemaVisitor(object):
                      ((attribute | attributeGroup)*, anyAttribute?))
             </attributeGroup>
         """
+        # TODO
         pass
 
     def visit_any_attribute(self, node, parent):
+        # TODO
         pass
 
     def _get_type(self, name):

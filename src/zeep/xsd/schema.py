@@ -84,6 +84,7 @@ class Schema(object):
         logger.info("Resolving schema %s", self)
         for key, type_ in self._types.items():
             new = type_.resolve(self)
+            assert new is not None, "resolve() should return a type"
             self._types[key] = new
 
         for element in self._elm_instances:
