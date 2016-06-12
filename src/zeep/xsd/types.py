@@ -41,6 +41,7 @@ class UnresolvedType(Type):
 class UnresolvedCustomType(Type):
 
     def __init__(self, name, base_qname):
+        assert name is not None
         self.name = name
         self.base_qname = base_qname
 
@@ -55,7 +56,9 @@ class UnresolvedCustomType(Type):
         return xsd_type()
 
 
+@six.python_2_unicode_compatible
 class SimpleType(Type):
+    name = None
 
     def __eq__(self, other):
         return (
@@ -111,15 +114,13 @@ class SimpleType(Type):
     def __str__(self):
         return self.name
 
-    def __unicode__(self):
-        return six.text_type(self.name)
-
     @classmethod
     def signature(cls):
         return 'value'
 
 
 class ComplexType(Type):
+    name = None
 
     def __init__(self, children=None):
         self._children = children or []
