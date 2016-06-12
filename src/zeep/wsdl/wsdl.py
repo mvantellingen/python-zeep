@@ -1,7 +1,6 @@
 from __future__ import print_function
+
 import logging
-
-
 import operator
 from collections import OrderedDict
 from copy import deepcopy

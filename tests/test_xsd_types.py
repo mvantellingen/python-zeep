@@ -1,4 +1,5 @@
 import pytest
+import six
 from lxml import etree
 
 from zeep.xsd import types
@@ -70,7 +71,7 @@ def test_simpletype_call_wrong_kwarg():
 def test_simpletype_str():
     item = types.SimpleType()
     item.name = u'foobar'
-    assert unicode(item) == u'foobar'
+    assert six.text_type(item) == u'foobar'
 
 
 def test_complextype_parse_xmlelement_no_childs():

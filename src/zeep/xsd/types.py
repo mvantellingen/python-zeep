@@ -2,9 +2,9 @@ from collections import OrderedDict
 
 import six
 
-from zeep.xsd.valueobjects import CompoundValue
 from zeep.xsd.elements import (
     Any, Attribute, Choice, Element, GroupElement, ListElement, RefElement)
+from zeep.xsd.valueobjects import CompoundValue
 
 
 class Type(object):
