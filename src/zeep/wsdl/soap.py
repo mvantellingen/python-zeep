@@ -216,7 +216,6 @@ class Soap12Binding(SoapBinding):
     def process_error(self, doc):
         fault_node = doc.find(
             'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
-        assert fault_node
 
         if fault_node is None:
             raise Fault(
