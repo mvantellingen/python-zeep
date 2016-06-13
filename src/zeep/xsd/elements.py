@@ -2,6 +2,8 @@ import copy
 
 from lxml import etree
 
+from six.moves import zip_longest
+
 
 class Base(object):
     _require_keyword_arg = False
@@ -242,6 +244,31 @@ class Choice(Base):
             return '%s: [%s]' % (name, part)
         return '%s: %s' % (name, part)
 
+    def parse(self, elements, schema):
+        result = []
+        i = 0
+        for choice_element in elements:
+            for iter_field in self.elements:
+                if isinstance(iter_field, Sequence):
+                    subresult = iter_field.parse(elements[i:], schema)
+                    if subresult:
+                        i += len(subresult)
+                        result.append(subresult)
+                        break
+                else:
+                    if iter_field.qname == choice_element.tag:
+                        choice_result = iter_field.parse(choice_element, schema)
+                        result.append({
+                            iter_field.name: choice_result
+                        })
+                        i += 1
+                        break
+
+            if len(result) >= self.max_occurs:
+                break
+
+        return result
+
 
 class Sequence(list):
     name = 'sequence'
@@ -250,6 +277,23 @@ class Sequence(list):
         return ', '.join([
             element.signature(element.name) for element in self
         ])
+
+    def parse(self, elements, schema):
+
+        result = {}
+        for field, element in zip_longest(self, elements):
+            if field is None:
+                break
+
+            if element is None and field.is_optional:
+                result[field.name] = None
+            elif field.qname == element.tag:
+                result[field.name] = field.parse(element, schema)
+            elif field.is_optional:
+                result[field.name] = None
+            else:
+                return None
+        return result
 
 
 class RefElement(object):

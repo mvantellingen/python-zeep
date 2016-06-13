@@ -193,6 +193,150 @@ def test_parse_anytype_obj():
     assert obj.item_1.value == 100
 
 
+def test_parse_choice():
+    schema_doc = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <schema
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/tst"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/tst">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <choice>
+                  <element name="item_1" type="xsd:string" />
+                  <element name="item_2" type="xsd:string" />
+                </choice>
+                <element name="item_3" type="xsd:string" />
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """)
+
+    xml = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <tst:container
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:tst="http://tests.python-zeep.org/tst">
+          <tst:item_1>blabla</tst:item_1>
+          <tst:item_3>haha</tst:item_3>
+        </tst:container>
+    """)
+
+    schema = xsd.Schema(schema_doc)
+    elm = schema.get_element('{http://tests.python-zeep.org/tst}container')
+    result = elm.parse(xml, schema)
+    assert result.item_1 == 'blabla'
+    assert result._choice_1 == [
+        {'item_1': 'blabla'}
+    ]
+    assert result.item_3 == 'haha'
+
+
+def test_parse_choice_max_occurs():
+    schema_doc = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <schema
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/tst"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/tst">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <choice maxOccurs="2">
+                  <element name="item_1" type="xsd:string" />
+                  <element name="item_2" type="xsd:string" />
+                </choice>
+                <element name="item_3" type="xsd:string" />
+              </sequence>
+              <attribute name="item_1" type="xsd:string" use="optional" />
+              <attribute name="item_2" type="xsd:string" use="optional" />
+            </complexType>
+          </element>
+        </schema>
+    """)
+
+    xml = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <tst:container
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:tst="http://tests.python-zeep.org/tst">
+          <tst:item_1>blabla</tst:item_1>
+          <tst:item_1>blabla</tst:item_1>
+          <tst:item_3>haha</tst:item_3>
+        </tst:container>
+    """)
+
+    schema = xsd.Schema(schema_doc)
+    elm = schema.get_element('{http://tests.python-zeep.org/tst}container')
+    result = elm.parse(xml, schema)
+    assert result._choice_1 == [
+        {'item_1': 'blabla'},
+        {'item_1': 'blabla'},
+    ]
+
+    assert result.item_3 == 'haha'
+
+
+def test_parse_choice_sequence_max_occurs():
+    schema_doc = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <schema
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/tst"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/tst">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <choice maxOccurs="3">
+                  <sequence>
+                    <element name="item_1" type="xsd:string" />
+                    <element name="item_2" type="xsd:string" />
+                  </sequence>
+                  <element name="item_3" type="xsd:string" />
+                </choice>
+                <element name="item_4" type="xsd:string" />
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """)
+
+    xml = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <tst:container
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:tst="http://tests.python-zeep.org/tst">
+          <tst:item_1>text-1</tst:item_1>
+          <tst:item_2>text-2</tst:item_2>
+          <tst:item_1>text-1</tst:item_1>
+          <tst:item_2>text-2</tst:item_2>
+          <tst:item_3>text-3</tst:item_3>
+          <tst:item_4>text-4</tst:item_4>
+        </tst:container>
+    """)
+
+    schema = xsd.Schema(schema_doc)
+    elm = schema.get_element('{http://tests.python-zeep.org/tst}container')
+    result = elm.parse(xml, schema)
+    assert result._choice_1 == [
+        {'item_1': 'text-1', 'item_2': 'text-2'},
+        {'item_1': 'text-1', 'item_2': 'text-2'},
+        {'item_3': 'text-3'},
+    ]
+    assert result.item_4 == 'text-4'
+
+
 def test_parse_anytype_regression_17():
     schema_doc = load_xml(b"""
         <?xml version="1.0" encoding="utf-8"?>

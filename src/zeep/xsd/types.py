@@ -1,9 +1,12 @@
+import itertools
+
 from collections import OrderedDict
 
 import six
 
 from zeep.xsd.elements import (
-    Any, Attribute, Choice, Element, GroupElement, ListElement, RefElement)
+    Any, Attribute, Choice, Element, GroupElement, ListElement, RefElement,
+    Sequence)
 from zeep.xsd.valueobjects import CompoundValue
 
 
@@ -206,7 +209,7 @@ class ComplexType(Type):
 
     def parse_xmlelement(self, xmlelement, schema):
         instance = self()
-        fields = self.properties()
+        fields = self.fields()
         if not fields:
             return instance
 
@@ -215,7 +218,7 @@ class ComplexType(Type):
         if not elements and not attributes:
             return
 
-        fields_map = {f.name: f for f in fields if isinstance(f, Attribute)}
+        fields_map = {k: v for k, v in fields if isinstance(v, Attribute)}
         for key, value in attributes.items():
             field = fields_map.get(key)
             if not field:
@@ -223,34 +226,60 @@ class ComplexType(Type):
             value = field.parse(value, schema)
             setattr(instance, key, value)
 
-        fields = iter(f for f in fields if not isinstance(f, Attribute))
-        field = next(fields, None)
+        fields = iter((k, v) for k, v in fields if not isinstance(v, Attribute))
+        field_name, field = next(fields, (None, None))
 
         # If the type has no child elements (only attributes) then return
         # early
         if not field:
             return instance
 
-        for element in elements:
+        i = 0
+        num_elements = len(elements)
+        while i < num_elements:
+            element = elements[i]
+            result = None
 
-            # Find matching element
-            while field and field.qname != element.tag:
-                field = next(fields, None)
+            if isinstance(field, Choice):
+                result = field.parse(elements[i:], schema)
+                i += sum(len(choice) for choice in result)
 
-            if not field:
-                break
+                # If the field has maxOccurs = 1 and is not a sequence then
+                # make the interface easier to use by setting the property
+                # directly.
+                if field.max_occurs == 1:
+                    if len(result[0]) == 1:
+                        setattr(
+                            instance,
+                            next(six.iterkeys(result[0])),
+                            next(six.itervalues(result[0])))
 
-            # Element can be optional, so if this doesn't match then assume it
-            # was.
-            if field.qname != element.tag:
-                continue
+                setattr(instance, field_name, result)
+                field_name, field = next(fields, None)
+            else:
+                # Find matching element
+                while field and field.qname != element.tag:
+                    field_name, field = next(fields, (None, None))
 
-            result = field.parse(element, schema)
+                if not field:
+                    raise ValueError("Unexpected element: %r" % element)
+                    break
+
+                # Element can be optional, so if this doesn't match then assume
+                # it was.
+                if field.qname != element.tag:
+                    continue
+
+                current_field = field
+
+                result = current_field.parse(element, schema)
+                i += 1
+
             if isinstance(field, ListElement):
                 assert getattr(instance, field.name) is not None
-                getattr(instance, field.name).append(result)
+                getattr(instance, field_name).append(result)
             else:
-                setattr(instance, field.name, result)
+                setattr(instance, field_name, result)
 
         return instance
 
