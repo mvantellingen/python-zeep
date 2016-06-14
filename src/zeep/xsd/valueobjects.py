@@ -231,7 +231,7 @@ def _process_signature_choice(name, element, kwargs):
         elif len(result) > 1:
             raise TypeError("Number of items is larger then max_occurs")
         else:
-            return ChoiceItem(0, [])
+            return ChoiceItem(0, {})
     return result
 
 

@@ -219,6 +219,8 @@ class Choice(Base):
 
             if isinstance(choice_element, Element):
                 choice_value = item.values.get(choice_element.name)
+                if choice_value is None and self.is_optional:
+                    return
 
                 if isinstance(choice_value, list):
                     for item in choice_value:
