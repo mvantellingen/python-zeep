@@ -43,6 +43,18 @@ class Any(Base):
         else:
             value.xsd_type.render(parent, value.value)
 
+    def parse(self, xmlelement, schema):
+        xsd_type = xmlelement.get('{http://www.w3.org/2001/XMLSchema-instance}type')
+        if xsd_type is not None:
+            element_type = schema.get_type(xsd_type)
+            return element_type.parse(xmlelement, schema)
+
+        try:
+            element_type = schema.get_element(xmlelement.tag)
+            return element_type.parse(xmlelement, schema)
+        except KeyError:
+            return xmlelement
+
     def __call__(self, any_object):
         return any_object
 

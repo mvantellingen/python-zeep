@@ -101,7 +101,7 @@ def test_complex_type_array_parsexml():
                 xmlns:tns="http://tests.python-zeep.org/"
                 targetNamespace="http://tests.python-zeep.org/"
                 elementFormDefault="qualified">
-          <element name="Address">
+          <element name="container">
             <complexType>
               <sequence>
                 <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
@@ -112,7 +112,7 @@ def test_complex_type_array_parsexml():
     """.strip())
 
     schema = xsd.Schema(node)
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    address_type = schema.get_element('{http://tests.python-zeep.org/}container')
 
     input_node = etree.fromstring("""
         <Address xmlns="http://tests.python-zeep.org/">
@@ -622,11 +622,11 @@ def test_element_any():
                 xmlns:tns="http://tests.python-zeep.org/"
                 targetNamespace="http://tests.python-zeep.org/"
                    elementFormDefault="qualified">
-          <element name="foo" type="string"/>
-          <element name="bar">
+          <element name="item" type="string"/>
+          <element name="container">
             <complexType>
               <sequence>
-                <element ref="tns:foo"/>
+                <element ref="tns:item"/>
                 <any/>
                 <any maxOccurs="unbounded"/>
               </sequence>
@@ -637,24 +637,59 @@ def test_element_any():
 
     schema = xsd.Schema(node)
 
-    foo_type = schema.get_element('{http://tests.python-zeep.org/}foo')
-    assert isinstance(foo_type.type, xsd.String)
+    item_elm = schema.get_element('{http://tests.python-zeep.org/}item')
+    assert isinstance(item_elm.type, xsd.String)
 
-    custom_type = schema.get_element('{http://tests.python-zeep.org/}bar')
-    foo = schema.get_element('{http://tests.python-zeep.org/}foo')
-    obj = custom_type(foo='bar', _any_1=xsd.AnyObject(foo, foo('argh')))
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = container_elm(
+        item='bar',
+        _any_1=xsd.AnyObject(item_elm, item_elm('argh')))
 
     node = etree.Element('document')
-    custom_type.render(node, obj)
+    container_elm.render(node, obj)
     expected = """
         <document>
-            <ns0:bar xmlns:ns0="http://tests.python-zeep.org/">
-                <ns0:foo>bar</ns0:foo>
-                <ns0:foo>argh</ns0:foo>
-            </ns0:bar>
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:item>bar</ns0:item>
+                <ns0:item>argh</ns0:item>
+            </ns0:container>
         </document>
     """
     assert_nodes_equal(expected, node)
+    item = container_elm.parse(node.getchildren()[0], schema)
+    assert item.item == 'bar'
+    assert item._any_1 == 'argh'
+
+
+def test_element_any_parse():
+    return
+    node = load_xml("""
+        <xsd:schema
+            elementFormDefault="qualified"
+            targetNamespace="https://tests.python-zeep.org"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:any/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """)
+
+    schema = xsd.Schema(node)
+
+    node = load_xml("""
+          <container xmlns="https://tests.python-zeep.org">
+            <something>
+              <contains>text</contains>
+            </something>
+          </container>
+    """)
+
+    elm = schema.get_element('ns0:container')
+    elm.parse(node, schema)
 
 
 def test_unqualified():

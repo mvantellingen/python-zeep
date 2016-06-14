@@ -34,8 +34,11 @@ class ConcreteMessage(object):
 
         if as_output:
             if isinstance(self.body.type, xsd.ComplexType):
-                if len(self.body.type.properties()) == 1:
-                    return self.body.type.properties()[0].type.name
+                try:
+                    if len(self.body.type.properties()) == 1:
+                        return self.body.type.properties()[0].type.name
+                except AttributeError:
+                    return None
 
             return self.body.type.name
 

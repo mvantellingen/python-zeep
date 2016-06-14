@@ -240,6 +240,16 @@ class ComplexType(Type):
             element = elements[i]
             result = None
 
+            # Find matching element
+            while field:
+                if isinstance(field, (Choice, Any)):
+                    break
+
+                if field.qname == element.tag:
+                    break
+
+                field_name, field = next(fields, (None, None))
+
             if isinstance(field, Choice):
                 result = field.parse(elements[i:], schema)
                 i += sum(len(choice) for choice in result)
@@ -255,12 +265,13 @@ class ComplexType(Type):
                             next(six.itervalues(result[0])))
 
                 setattr(instance, field_name, result)
-                field_name, field = next(fields, None)
-            else:
-                # Find matching element
-                while field and field.qname != element.tag:
-                    field_name, field = next(fields, (None, None))
 
+            elif isinstance(field, Any):
+                result = field.parse(element, schema)
+                setattr(instance, field_name, result)
+                i += 1
+
+            else:
                 if not field:
                     raise ValueError("Unexpected element: %r" % element)
                     break
@@ -275,11 +286,18 @@ class ComplexType(Type):
                 result = current_field.parse(element, schema)
                 i += 1
 
-            if isinstance(field, ListElement):
-                assert getattr(instance, field.name) is not None
-                getattr(instance, field_name).append(result)
-            else:
-                setattr(instance, field_name, result)
+                if isinstance(field, ListElement):
+                    assert getattr(instance, field.name) is not None
+                    getattr(instance, field_name).append(result)
+                else:
+                    setattr(instance, field_name, result)
+
+            # Check if the next element also applies to the current field
+            try:
+                if field.max_occurs == 1 or element.tag != elements[i].tag:
+                    field_name, field = next(fields, (None, None))
+            except IndexError:
+                break
 
         return instance
 
