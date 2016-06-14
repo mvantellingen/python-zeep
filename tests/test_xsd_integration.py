@@ -662,7 +662,6 @@ def test_element_any():
 
 
 def test_element_any_parse():
-    return
     node = load_xml("""
         <xsd:schema
             elementFormDefault="qualified"
