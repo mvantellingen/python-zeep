@@ -13,6 +13,16 @@ For instance to disable SSL verification use `verify` option::
     ...     transport=transport)
 
 
+To set a transport timeout use the `timeout` option. The default timeout is 300 seconds::
+
+    >>> from zeep import Client
+    >>> from zeep.transports import Transport
+    >>> transport = Transport(timeout=10)
+    >>> client = Client(
+    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
+    ...     transport=transport)
+
+
 Caching
 -------
 The default cache backed is SqliteCache.  It caches the WSDL and XSD files for 
