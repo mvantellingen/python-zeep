@@ -41,6 +41,9 @@ class Client(object):
 
     def __init__(self, wsdl, wsse=None, transport=None,
                  service_name=None, port_name=None):
+        if not wsdl:
+            raise ValueError("No URL given for the wsdl")
+
         self.transport = transport or Transport()
         self.wsdl = Document(wsdl, self.transport)
         self.wsse = wsse

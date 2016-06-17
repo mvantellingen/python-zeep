@@ -21,6 +21,9 @@ class Transport(object):
         return requests.Session()
 
     def load(self, url):
+        if not url:
+            raise ValueError("No url given to load")
+
         scheme = urlparse(url).scheme
         if scheme in ('http', 'https'):
 
