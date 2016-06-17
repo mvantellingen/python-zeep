@@ -273,7 +273,7 @@ class RpcMessage(SoapMessage):
                 tag_name = etree.QName(namespace, self.abstract.name.localname)
 
             self.body = xsd.Element(tag_name, xsd.ComplexType(children=[
-                xsd.Element(name, msg.type)
+                msg.element if msg.element else xsd.Element(name, msg.type)
                 for name, msg in parts.items()
             ]))
 

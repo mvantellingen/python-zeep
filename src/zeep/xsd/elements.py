@@ -101,7 +101,7 @@ class Element(Base):
             self.__dict__ == other.__dict__)
 
     def signature(self, name=None):
-        assert self.type, '%r has no name' % self
+        assert self.type, '%r has no type' % self
         return '%s%s: %s%s' % (
             name, '=None' if self.is_optional else '',
             self.type.name, '[]' if self.max_occurs != 1 else ''
