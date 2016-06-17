@@ -24,7 +24,9 @@ def test_multiple_extension():
             xmlns:b="http://tests.python-zeep.org/b"
             elementFormDefault="qualified">
 
-            <xs:import namespace="http://tests.python-zeep.org/b"/>
+            <xs:import
+                schemaLocation="http://tests.python-zeep.org/b.xsd"
+                namespace="http://tests.python-zeep.org/b"/>
 
             <xs:complexType name="type_a">
               <xs:complexContent>
@@ -45,7 +47,9 @@ def test_multiple_extension():
             xmlns:c="http://tests.python-zeep.org/c"
             elementFormDefault="qualified">
 
-            <xs:import namespace="http://tests.python-zeep.org/c"/>
+            <xs:import
+                schemaLocation="http://tests.python-zeep.org/c.xsd"
+                namespace="http://tests.python-zeep.org/c"/>
 
             <xs:complexType name="type_b">
               <xs:complexContent>
@@ -77,8 +81,8 @@ def test_multiple_extension():
     etree.XMLSchema(node_c)
 
     transport = DummyTransport()
-    transport.bind('http://tests.python-zeep.org/b', node_b)
-    transport.bind('http://tests.python-zeep.org/c', node_c)
+    transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
+    transport.bind('http://tests.python-zeep.org/c.xsd', node_c)
 
     schema = xsd.Schema(node_a, transport=transport)
     type_a = schema.get_type('ns0:type_a')

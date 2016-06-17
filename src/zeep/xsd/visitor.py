@@ -105,24 +105,32 @@ class SchemaVisitor(object):
         """
         namespace = node.get('namespace')
         location = node.get('schemaLocation')
+        schema_node = None
 
-        # Use namespace as location if the schemaLocation is missing
+        # Check if a schemaLocation is defined, if it isn't perhaps the
+        # namespaces references to an internal xml schema. Otherwise we just
+        # raise an error for now.
         if not location:
             if namespace:
                 location = namespace
-            else:
+                schema_node = self.parser_context.schema_nodes.get(namespace)
+
+            if not schema_node:
                 raise NotImplementedError("schemaLocation is required")
 
-        # Resolve import if it is a file
-        location = absolute_location(location, self.schema._base_url)
-        schema = self.parser_context.schema_objects.get(location)
-        if schema:
-            logger.debug("Returning existing schema: %r", location)
-            self.schema._imports[namespace] = schema
-            return schema
+        # If a schemaLocation is defined then make the location absolute based
+        # on the base url and see if the schema is already processed (for
+        # cyclic schema references). Otherwise load the data.
+        else:
+            location = absolute_location(location, self.schema._base_url)
+            schema = self.parser_context.schema_objects.get(location)
+            if schema:
+                logger.debug("Returning existing schema: %r", location)
+                self.schema._imports[namespace] = schema
+                return schema
 
-        schema_node = load_external(
-            location, self.schema._transport, self.parser_context)
+            schema_node = load_external(
+                location, self.schema._transport, self.parser_context)
 
         # If this schema location is 'internal' then retrieve the original
         # location since that is used as base url for sub include/imports
@@ -523,7 +531,10 @@ class SchemaVisitor(object):
             if child.tag == tags.group:
                 children.extend(item)
 
-            elif child.tag in (tags.choice, tags.sequence, tags.all):
+            if child.tag == tags.choice:
+                children.append(item)
+
+            elif child.tag in (tags.sequence, tags.all):
                 children.extend(item)
 
             elif child.tag in (tags.attribute,):
