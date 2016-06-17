@@ -98,7 +98,7 @@ class SoapMessage(ConcreteMessage):
             envelope.append(body)
 
         headers = {
-            'SOAPAction': '"%s"' % (self.operation.soapaction or self.operation.name)
+            'SOAPAction': '"%s"' % self.operation.soapaction
         }
 
         etree.cleanup_namespaces(envelope)
