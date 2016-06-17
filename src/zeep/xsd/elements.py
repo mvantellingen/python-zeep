@@ -286,6 +286,7 @@ class Choice(Base):
 
 class Sequence(list):
     name = 'sequence'
+    _require_keyword_arg = False
 
     def signature(self, name):
         return ', '.join([
