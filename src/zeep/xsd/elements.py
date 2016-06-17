@@ -119,8 +119,8 @@ class Element(Base):
     def serialize(self, value):
         return self.type.serialize(value)
 
-    def resolve_type(self, schema):
-        self.type = self.type.resolve(schema)
+    def resolve_type(self):
+        self.type = self.type.resolve()
 
     def render(self, parent, value):
         assert parent is not None

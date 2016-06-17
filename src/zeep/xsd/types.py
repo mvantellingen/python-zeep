@@ -24,7 +24,7 @@ class Type(object):
     def render(self, parent, value):
         raise NotImplementedError
 
-    def resolve(self, schema):
+    def resolve(self):
         raise NotImplementedError
 
     @classmethod
@@ -40,21 +40,22 @@ class UnresolvedType(Type):
     def __repr__(self):
         return '<%s(qname=%r)>' % (self.__class__.__name__, self.qname)
 
-    def resolve(self, schema):
+    def resolve(self):
         retval = self.schema.get_type(self.qname)
-        return retval.resolve(self.schema)
+        return retval.resolve()
 
 
 class UnresolvedCustomType(Type):
 
-    def __init__(self, name, base_qname):
+    def __init__(self, name, base_qname, schema):
         assert name is not None
         self.name = name
+        self.schema = schema
         self.base_qname = base_qname
 
-    def resolve(self, schema):
-        base = schema.get_type(self.base_qname)
-        base = base.resolve(schema)
+    def resolve(self):
+        base = self.schema.get_type(self.base_qname)
+        base = base.resolve()
 
         cls_attributes = {
             '__module__': 'zeep.xsd.dynamic_types',
@@ -89,7 +90,7 @@ class SimpleType(Type):
         raise NotImplementedError(
             '%s.pytonvalue() not implemented' % self.__class__.__name__)
 
-    def resolve(self, schema):
+    def resolve(self):
         return self
 
     def serialize(self, value):
@@ -183,14 +184,14 @@ class ComplexType(Type):
                 '{http://www.w3.org/2001/XMLSchema-instance}type',
                 xsd_type._xsd_name)
 
-    def resolve(self, schema):
+    def resolve(self):
         children = []
         for elm in self._children:
             if isinstance(elm, RefElement):
                 elm = elm._elm
 
             if isinstance(elm, UnresolvedType):
-                xsd_type = elm.resolve(schema)
+                xsd_type = elm.resolve()
                 if isinstance(xsd_type, SimpleType):
                     children.append(Element(None, xsd_type))
                 else:
@@ -317,8 +318,8 @@ class ListType(Type):
     def __init__(self, item_type):
         self.item_type = item_type
 
-    def resolve(self, schema):
-        self.item_type = self.item_type.resolve(schema)
+    def resolve(self):
+        self.item_type = self.item_type.resolve()
         return self
 
     def xmlvalue(self, value):

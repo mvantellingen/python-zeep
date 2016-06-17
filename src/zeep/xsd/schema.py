@@ -85,12 +85,12 @@ class Schema(object):
         logger.info("Resolving types in schema %s", self)
 
         for key, type_ in self._types.items():
-            new = type_.resolve(self)
+            new = type_.resolve()
             assert new is not None, "resolve() should return a type"
             self._types[key] = new
 
         for element in self._elm_instances:
-            element.resolve_type(self)
+            element.resolve_type()
         self._elm_instances = []
 
     def register_type(self, name, value):

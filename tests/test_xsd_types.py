@@ -21,7 +21,7 @@ def test_base_type():
         base.render(None, None)
 
     with pytest.raises(NotImplementedError):
-        base.resolve(None)
+        base.resolve()
 
     base.signature() == ''
 

@@ -318,7 +318,7 @@ class SchemaVisitor(object):
         child = items[0]
         if child.tag == tags.restriction:
             base_type = self.visit_restriction_simple_type(child, node)
-            xsd_type = xsd_types.UnresolvedCustomType(name, base_type)
+            xsd_type = xsd_types.UnresolvedCustomType(name, base_type, self.schema)
 
         elif child.tag == tags.list:
             xsd_type = self.visit_list(child, node)
