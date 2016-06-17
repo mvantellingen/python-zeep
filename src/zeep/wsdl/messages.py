@@ -212,8 +212,17 @@ class DocumentMessage(SoapMessage):
         # FIXME (not so sure about this): If the response object has only one
         # property then return that property
         item = result[0]
-        if item and len(item._xsd_type.properties()) == 1:
-            return getattr(item, item._xsd_type.properties()[0].name)
+        if not item:
+            return None
+
+        children = item._xsd_type.fields()
+        if len(children) == 1:
+            item_name, item_element = children[0]
+            retval = getattr(item, item_name)
+            if isinstance(item_element, xsd.Choice):
+                if item_element.max_occurs == 1:
+                    retval = retval[0]
+            return retval
         return item
 
 

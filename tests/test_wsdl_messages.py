@@ -409,6 +409,55 @@ def test_document_message_deserializer():
     assert result == 'foobar'
 
 
+def test_document_message_deserializer_choice():
+    response_body = load_xml("""
+        <SOAP-ENV:Body
+            xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <mns:response xmlns:mns="http://test.python-zeep.org/tests/document"
+                SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+            <mns:return type="xsd:string">foobar</mns:return>
+          </mns:response>
+        </SOAP-ENV:Body>
+    """)  # noqa
+    wsdl = stub(types=stub(_prefix_map={}))
+    operation = stub(soapaction='my-action', name='something')
+
+    msg = messages.DocumentMessage(
+        wsdl=wsdl,
+        name=None,
+        operation=operation,
+        nsmap=soap.Soap11Binding.nsmap,
+        type='input')
+
+    # Fake resolve()
+    namespace = 'http://test.python-zeep.org/tests/document'
+    msg.abstract = definitions.AbstractMessage(
+        etree.QName(namespace, 'Method1Response'))
+    msg.abstract.parts = OrderedDict([
+        ('body', definitions.MessagePart(
+            element=xsd.Element(
+                etree.QName(namespace, 'response'),
+                xsd.ComplexType([
+                    xsd.Choice([
+                        xsd.Element(etree.QName(namespace, 'return'), xsd.String()),
+                    ])
+                ])
+            ),
+            type=None))
+        ])
+
+    msg.namespace = {
+        'body': 'http://test.python-zeep.org/tests/document',
+        'header': None,
+        'headerfault': None
+    }
+
+    result = msg.deserialize(response_body)
+    assert result == {'return': 'foobar'}
+
+
 ##
 # RPC Message
 def test_rpc_message_parse():

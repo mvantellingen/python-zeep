@@ -144,7 +144,7 @@ class SchemaDocument(object):
             visitor.visit_schema(node)
 
     def __repr__(self):
-        return '<SchemaDocument(location=%r, tns=%s, is_empty=%r)>' % (
+        return '<SchemaDocument(location=%r, tns=%r, is_empty=%r)>' % (
             self._location, self._target_namespace, self.is_empty)
 
     def resolve(self):
