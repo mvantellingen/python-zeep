@@ -333,3 +333,7 @@ class ListType(Type):
 class UnionType(object):
     def __init__(self, item_types):
         self.item_types = item_types
+
+    def resolve(self):
+        self.item_types = [item.resolve() for item in self.item_types]
+        return self
