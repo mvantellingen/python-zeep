@@ -33,12 +33,16 @@ class Type(object):
 
 
 class UnresolvedType(Type):
-    def __init__(self, qname):
+    def __init__(self, qname, schema):
         self.qname = qname
+        self.schema = schema
+
+    def __repr__(self):
+        return '<%s(qname=%r)>' % (self.__class__.__name__, self.qname)
 
     def resolve(self, schema):
-        retval = schema.get_type(self.qname)
-        return retval.resolve(schema)
+        retval = self.schema.get_type(self.qname)
+        return retval.resolve(self.schema)
 
 
 class UnresolvedCustomType(Type):

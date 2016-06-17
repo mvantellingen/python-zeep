@@ -211,10 +211,7 @@ class SchemaVisitor(object):
         if not xsd_type:
             node_type = qname_attr(node, 'type')
             if node_type:
-                try:
-                    xsd_type = self.schema.get_type(node_type.text)
-                except KeyError:
-                    xsd_type = xsd_types.UnresolvedType(node_type.text)
+                xsd_type = self._get_type(node_type.text)
             else:
                 xsd_type = xsd_builtins.AnyType()
 
@@ -282,10 +279,7 @@ class SchemaVisitor(object):
 
         if xsd_type is None:
             node_type = qname_attr(node, 'type')
-            try:
-                xsd_type = self.schema.get_type(node_type)
-            except KeyError:
-                xsd_type = xsd_types.UnresolvedType(node_type)
+            xsd_type = self._get_type(node_type)
 
         # TODO: We ignore 'prohobited' for now
         required = node.get('use') == 'required'
@@ -516,7 +510,7 @@ class SchemaVisitor(object):
         if isinstance(base_type, xsd_types.ComplexType):
             children = list(base_type._children)
         elif isinstance(base_type, xsd_types.UnresolvedType):
-            children = [xsd_types.UnresolvedType(base_name)]
+            children = [xsd_types.UnresolvedType(base_name, self.schema)]
         else:
             children = [xsd_elements.Element(None, base_type)]
 
@@ -554,7 +548,7 @@ class SchemaVisitor(object):
             else:
                 children = [xsd_elements.Element(None, base)]
         except KeyError:
-            children = [xsd_types.UnresolvedType(base_name)]
+            children = [xsd_types.UnresolvedType(base_name, self.schema)]
 
         for child in node.iterchildren():
             if child.tag == tags.annotation:
@@ -782,7 +776,7 @@ class SchemaVisitor(object):
         try:
             return self.schema.get_type(name)
         except KeyError:
-            return xsd_types.UnresolvedType(name)
+            return xsd_types.UnresolvedType(name, self.schema)
 
     def _pop_annotation(self, items):
         if not len(items):

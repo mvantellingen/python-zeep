@@ -78,10 +78,12 @@ class Schema(object):
         return prefix_map
 
     def __repr__(self):
-        return '<Schema(location=%r, is_empty=%r)>' % (self._location, self.is_empty)
+        return '<Schema(location=%r, tns=%s, is_empty=%r)>' % (
+            self._location, self._target_namespace, self.is_empty)
 
     def resolve(self):
-        logger.info("Resolving schema %s", self)
+        logger.info("Resolving types in schema %s", self)
+
         for key, type_ in self._types.items():
             new = type_.resolve(self)
             assert new is not None, "resolve() should return a type"
@@ -124,8 +126,8 @@ class Schema(object):
             return self._imports[name.namespace].get_type(name)
 
         raise KeyError(
-            "No such type: %r (Only have %s)" % (
-                name.text, ', '.join(self._types)))
+            "No such type: %r in %s (Only have %s)" % (
+                name.text, self, ', '.join(self._types)))
 
     def get_element(self, name):
         name = self._create_qname(name)

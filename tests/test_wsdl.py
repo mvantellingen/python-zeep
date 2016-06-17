@@ -225,3 +225,68 @@ def test_parse_soap_import_wsdl():
     assert len(obj.services) == 1
     assert obj.schema.is_empty is False
     obj.dump()
+
+
+def test_multiple_extension():
+    content = StringIO("""
+    <?xml version="1.0"?>
+    <wsdl:definitions
+      xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+      xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+      xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/">
+      <wsdl:types>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+            <xs:import namespace="http://tests.python-zeep.org/b"/>
+
+            <xs:complexType name="type_a">
+              <xs:complexContent>
+                <xs:extension base="b:type_b"/>
+              </xs:complexContent>
+            </xs:complexType>
+            <xs:element name="typetje" type="tns:type_a"/>
+        </xs:schema>
+
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            targetNamespace="http://tests.python-zeep.org/b"
+            xmlns:c="http://tests.python-zeep.org/c"
+            elementFormDefault="qualified">
+
+            <xs:import namespace="http://tests.python-zeep.org/c"/>
+
+            <xs:complexType name="type_b">
+              <xs:complexContent>
+                <xs:extension base="c:type_c"/>
+              </xs:complexContent>
+            </xs:complexType>
+        </xs:schema>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/c"
+            targetNamespace="http://tests.python-zeep.org/c"
+            elementFormDefault="qualified">
+
+            <xs:complexType name="type_c">
+              <xs:complexContent>
+                <xs:extension base="tns:type_d"/>
+              </xs:complexContent>
+            </xs:complexType>
+
+            <xs:complexType name="type_d">
+                <xs:attribute name="wat" type="xs:string" />
+            </xs:complexType>
+        </xs:schema>
+      </wsdl:types>
+    </wsdl:definitions>
+    """.strip())
+    document = wsdl.Document(content, None)
+
+    type_a = document.schema.get_type('ns0:type_a')
+    type_a(wat='x')

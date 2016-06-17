@@ -63,13 +63,18 @@ def test_multiple_extension():
             targetNamespace="http://tests.python-zeep.org/c"
             elementFormDefault="qualified">
 
-            <xs:import namespace="http://tests.python-zeep.org/c"/>
-
             <xs:complexType name="type_c">
+              <xs:complexContent>
+                <xs:extension base="tns:type_d"/>
+              </xs:complexContent>
+            </xs:complexType>
+
+            <xs:complexType name="type_d">
                 <xs:attribute name="wat" type="xs:string" />
             </xs:complexType>
         </xs:schema>
     """.strip())
+    etree.XMLSchema(node_c)
 
     transport = DummyTransport()
     transport.bind('http://tests.python-zeep.org/b', node_b)
