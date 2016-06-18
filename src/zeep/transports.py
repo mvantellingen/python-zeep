@@ -16,6 +16,8 @@ class Transport(object):
         self.session = self.create_session()
         self.session.verify = verify
         self.session.auth = http_auth
+        self._sent = None
+        self._received = None
 
     def create_session(self):
         return requests.Session()
@@ -48,9 +50,18 @@ class Transport(object):
             return fh.read()
 
     def post(self, address, message, headers):
+        self._sent = message
         response = self.session.post(address, data=message, headers=headers)
+        self._received = response.content
         return response
 
     def get(self, address, params, headers):
         response = self.session.get(address, params=params, headers=headers)
+        self._received = response.content
         return response
+
+    def last_sent(self):
+        return self._sent
+
+    def last_received(self):
+        return self._received

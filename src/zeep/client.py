@@ -103,3 +103,9 @@ class Client(object):
 
     def get_element(self, name):
         return self.wsdl.schema.get_element(name)
+
+    def last_sent(self):
+        return self.transport.last_sent()
+
+    def last_received(self):
+        return self.transport.last_received()
