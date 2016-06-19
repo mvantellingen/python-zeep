@@ -99,7 +99,7 @@ class Client(object):
         port.binding_options['address'] = address
 
     def get_type(self, name):
-        return self.wsdl.schema.get_type(name)
+        return self.wsdl.types.get_type(name)
 
     def get_element(self, name):
-        return self.wsdl.schema.get_element(name)
+        return self.wsdl.types.get_element(name)

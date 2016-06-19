@@ -1,4 +1,5 @@
 class SchemaRepository(object):
+    """Mapping between schema location and schema object"""
     def __init__(self):
         self._schemas = {}
 
@@ -15,7 +16,7 @@ class SchemaRepository(object):
 
 
 class SchemaNodeRepository(object):
-
+    """Mapping between schema namespace and lxml node"""
     def __init__(self):
         self._nodes = {}
 
@@ -33,4 +34,6 @@ class ParserContext(object):
     def __init__(self):
         self.schema_nodes = SchemaNodeRepository()
         self.schema_objects = SchemaRepository()
+
+        # Mapping between internal nodes and original location
         self.schema_locations = {}

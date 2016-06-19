@@ -2,6 +2,8 @@ from lxml import etree
 
 from tests.utils import load_xml
 from zeep import xsd
+from zeep.xsd.context import ParserContext
+from zeep.xsd.schema import SchemaDocument
 
 
 def test_parse_basic():
@@ -168,7 +170,9 @@ def test_parse_anytype_obj():
         ]
     )
 
-    schema = xsd.Schema()
+    parser_context = ParserContext()
+    schema = SchemaDocument(parser_context=parser_context)
+    schema._target_namespace = 'http://tests.python-zeep.org/'
     schema.register_type('{http://tests.python-zeep.org/}something', value_type)
 
     custom_type = xsd.Element(

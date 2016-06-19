@@ -65,7 +65,7 @@ class SoapMessage(ConcreteMessage):
 
     def serialize(self, *args, **kwargs):
         nsmap = self.nsmap.copy()
-        nsmap.update(self.wsdl.schema._prefix_map)
+        nsmap.update(self.wsdl.types._prefix_map)
 
         soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=nsmap)
         body = header = None
@@ -204,7 +204,7 @@ class DocumentMessage(SoapMessage):
         for part in self.abstract.parts.values():
             elm = node.find(part.element.qname)
             assert elm is not None, '%s not found' % part.element.qname
-            result.append(part.element.parse(elm, self.wsdl.schema))
+            result.append(part.element.parse(elm, self.wsdl.types))
 
         if len(result) > 1:
             return tuple(result)
@@ -231,7 +231,7 @@ class RpcMessage(SoapMessage):
 
     def deserialize(self, node):
         value = node.find(self.body.qname)
-        result = self.body.parse(value, self.wsdl.schema)
+        result = self.body.parse(value, self.wsdl.types)
 
         result = [
             getattr(result, field.name)
@@ -489,7 +489,7 @@ class MimeXML(MimeMessage):
     def deserialize(self, node):
         node = fromstring(node)
         part = self.abstract.parts.values()[0]
-        return part.element.parse(node, self.wsdl.schema)
+        return part.element.parse(node, self.wsdl.types)
 
     @classmethod
     def parse(cls, definitions, xmlelement, operation):
