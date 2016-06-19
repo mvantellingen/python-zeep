@@ -38,9 +38,9 @@ def test_parse_soap_wsdl():
 
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response)
-        account = obj.schema.get_type('{http://example.com/stockquote.xsd}account')
+        account = obj.types.get_type('{http://example.com/stockquote.xsd}account')
         account.id = 100
-        country = obj.schema.get_element(
+        country = obj.types.get_element(
             '{http://example.com/stockquote.xsd}country'
         ).type()
         country.name = 'The Netherlands'
@@ -223,7 +223,7 @@ def test_parse_soap_import_wsdl():
     obj = wsdl.Document(
         'tests/wsdl_files/soap_import_main.wsdl', transport=client.transport)
     assert len(obj.services) == 1
-    assert obj.schema.is_empty is False
+    assert obj.types.is_empty is False
     obj.dump()
 
 
@@ -288,5 +288,5 @@ def test_multiple_extension():
     """.strip())
     document = wsdl.Document(content, None)
 
-    type_a = document.schema.get_type('ns0:type_a')
+    type_a = document.types.get_type('ns1:type_a')
     type_a(wat='x')

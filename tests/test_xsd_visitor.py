@@ -4,13 +4,21 @@ from lxml import etree
 from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
 from zeep.xsd import ListElement, builtins, visitor
-from zeep.xsd.schema import Schema
+from zeep.xsd.context import ParserContext
+from zeep.xsd.schema import SchemaDocument
 from zeep.xsd.types import UnresolvedType
 
 
 @pytest.fixture
 def schema_visitor():
-    schema = Schema()
+    parser_context = ParserContext()
+    node = etree.Element('{http://www.w3.org/2001/XMLSchema}Schema')
+    schema = SchemaDocument(
+        node=node,
+        transport=None,
+        location=None,
+        parser_context=parser_context,
+        base_url=None)
     return visitor.SchemaVisitor(schema)
 
 
@@ -334,18 +342,17 @@ def test_complex_content_extension(schema_visitor):
     """)
     schema_visitor.visit_schema(node)
     schema = schema_visitor.schema
-    schema._prefix_map['ns0'] = 'http://tests.python-zeep.org/'
 
-    record_type = schema.get_type('ns0:SubType1')
+    record_type = schema.get_type('{http://tests.python-zeep.org/}SubType1')
     child_attrs = [child.name for child in record_type._children]
     assert len(child_attrs) == 3
 
-    record_type = schema.get_type('ns0:SubType2')
+    record_type = schema.get_type('{http://tests.python-zeep.org/}SubType2')
     child_attrs = [child.name for child in record_type._children]
     assert len(child_attrs) == 4
 
-    xsd_element = schema.get_element('ns0:test')
-    xsd_type = schema.get_type('ns0:SubType2')
+    xsd_element = schema.get_element('{http://tests.python-zeep.org/}test')
+    xsd_type = schema.get_type('{http://tests.python-zeep.org/}SubType2')
 
     value = xsd_type(attr_a='a', attr_b='b', attr_c='c')
     node = render_node(xsd_element, value)
@@ -395,13 +402,12 @@ def test_simple_content_extension(schema_visitor):
     """)
     schema_visitor.visit_schema(node)
     schema = schema_visitor.schema
-    schema._prefix_map['ns0'] = 'http://tests.python-zeep.org/'
 
-    record_type = schema.get_type('ns0:SubType1')
+    record_type = schema.get_type('{http://tests.python-zeep.org/}SubType1')
     child_attrs = [child.name for child in record_type._children]
     assert len(child_attrs) == 3
 
-    record_type = schema.get_type('ns0:SubType2')
+    record_type = schema.get_type('{http://tests.python-zeep.org/}SubType2')
     child_attrs = [child.name for child in record_type._children]
     assert len(child_attrs) == 4
 

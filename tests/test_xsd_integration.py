@@ -765,6 +765,44 @@ def test_qualified_attribute():
     assert_nodes_equal(expected, node)
 
 
+def test_ref_attribute():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                attributeFormDefault="qualified"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="Address">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="foo" type="xsd:string" form="unqualified" />
+              </xsd:sequence>
+              <xsd:attribute ref="tns:id" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:attribute name="id" type="xsd:string" use="required" />
+        </xsd:schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    obj = address_type(foo='bar', id="hoi")
+
+    expected = """
+      <document>
+        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/" ns0:id="hoi">
+          <foo>bar</foo>
+        </ns0:Address>
+      </document>
+    """
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+
 def test_init_with_dicts():
     node = etree.fromstring("""
         <?xml version="1.0"?>

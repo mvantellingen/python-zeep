@@ -13,6 +13,7 @@ from zeep.utils import findall_multiple_ns
 from zeep.wsdl import definitions, http, soap
 from zeep.xsd import Schema
 from zeep.xsd.context import ParserContext
+from zeep.xsd.parser import parse_xml as xsd_parse_xml
 
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
@@ -62,7 +63,7 @@ class Document(object):
         root_definitions.resolve_imports()
 
         # Make the wsdl definitions public
-        self.schema = root_definitions.schema
+        self.types = root_definitions.types
         self.messages = root_definitions.messages
         self.port_types = root_definitions.port_types
         self.bindings = root_definitions.bindings
@@ -74,17 +75,17 @@ class Document(object):
     def dump(self):
         print('')
         print("Prefixes:")
-        for prefix, namespace in self.schema._prefix_map.items():
+        for prefix, namespace in self.types._prefix_map.items():
             print(' ' * 4, '%s: %s' % (prefix, namespace))
 
         print('')
         print("Global elements:")
-        for elm_obj in sorted(self.schema.elements, key=lambda k: six.text_type(k)):
+        for elm_obj in sorted(self.types.elements, key=lambda k: six.text_type(k)):
             print(' ' * 4, six.text_type(elm_obj))
 
         print('')
         print("Global types:")
-        for type_obj in sorted(self.schema.types, key=lambda k: six.text_type(k)):
+        for type_obj in sorted(self.types.types, key=lambda k: six.text_type(k)):
             print(' ' * 4, six.text_type(type_obj))
 
         print('')
@@ -111,21 +112,8 @@ class Document(object):
 
         """
         if hasattr(location, 'read'):
-            return self._parse_content(location.read())
-        return load_external(
-            location, self.transport, self._parser_context, self.location)
-
-    def _parse_content(self, content, base_url=None):
-        """Parse the content as XML and return the document.
-
-        :param content: content to parse as XML
-        :param content: string, file
-        :param base_url: base url for loading referenced documents
-        :param base_url: string
-
-        """
-        return parse_xml(
-            content, self.transport, self._parser_context, base_url)
+            return parse_xml(location.read(), self.transport)
+        return load_external(location, self.transport, self.location)
 
 
 class Definition(object):
@@ -135,7 +123,7 @@ class Definition(object):
         self.wsdl = wsdl
         self.location = location
 
-        self.schema = None
+        self.types = None
         self.port_types = {}
         self.messages = {}
         self.bindings = {}
@@ -151,7 +139,7 @@ class Definition(object):
         # Process the definitions
         self.parse_imports(doc)
 
-        self.schema = self.parse_types(doc)
+        self.types = self.parse_types(doc)
         self.messages = self.parse_messages(doc)
         self.port_types = self.parse_ports(doc)
         self.bindings = self.parse_binding(doc)
@@ -179,20 +167,21 @@ class Definition(object):
             return
         self._resolved_imports = True
 
-        # Create a reference to an imported schema if the definition has no
-        # schema of it's own.
-        if self.schema is None:
+        # Create a reference to an imported types definition if the
+        # definition has no types of it's own.
+        if self.types is None or self.types.is_empty:
             for definition in self.imports.values():
-                if definition.schema and not definition.schema.is_empty:
-                    self.schema = definition.schema
+                if definition.types and not definition.types.is_empty:
+                    self.types = definition.types
                     break
             else:
-                logger.debug(
-                    "No suitable main schema found for wsdl. " +
-                    "Creating an empty placeholder")
-                self.schema = Schema(
-                    None, self.wsdl.transport, self.location,
-                    self.wsdl._parser_context, self.location)
+                if self.types is None:
+                    logger.debug(
+                        "No suitable main schema found for wsdl. " +
+                        "Creating an empty placeholder")
+                    self.types = Schema(
+                        None, self.wsdl, self.location,
+                        self.wsdl._parser_context)
 
         for definition in self.imports.values():
             definition.resolve_imports()
@@ -238,16 +227,20 @@ class Definition(object):
                 if etree.QName(document.tag).localname == 'schema':
                     self.schema = Schema(
                         document, self.wsdl.transport, location,
-                        self.wsdl._parser_context, location)
+                        self.wsdl._parser_context)
                 else:
                     wsdl = Definition(self.wsdl, document, location)
                     self.imports[namespace] = wsdl
 
     def parse_types(self, doc):
-        """Return a `types.Schema` instance.
+        """Return an xsd.Schema() instance for the given wsdl:types element.
 
-        Note that a WSDL can contain multiple XSD schema's. The schemas can
-        reference each other using xsd:import statements.
+        If the wsdl:types contain multiple schema definitions then a new
+        wrapping xsd.Schema is defined with xsd:import statements linking them
+        together.
+
+        If the wsdl:types doesn't container an xml schema then an empty schema
+        is returned instead.
 
             <definitions .... >
                 <types>
@@ -260,31 +253,35 @@ class Definition(object):
 
         """
         namespace_sets = [
-            {'xsd': 'http://www.w3.org/2001/XMLSchema'},
-            {'xsd': 'http://www.w3.org/1999/XMLSchema'},
+            {
+                'xsd': 'http://www.w3.org/2001/XMLSchema',
+                'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
+            },
+            {
+                'xsd': 'http://www.w3.org/1999/XMLSchema',
+                'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
+            },
         ]
 
         # Find xsd:schema elements (wsdl:types/xsd:schema)
-        types = doc.find('wsdl:types', namespaces=NSMAP)
-        if types is None or len(types) == 0:
-            schema_nodes = []
-        else:
-            schema_nodes = findall_multiple_ns(
-                types, 'xsd:schema', namespace_sets)
+        schema_nodes = findall_multiple_ns(
+            doc, 'wsdl:types/xsd:schema', namespace_sets)
 
         if not schema_nodes:
-            return None
+            return Schema(
+                None, self.wsdl.transport, self.location,
+                self.wsdl._parser_context)
 
         # FIXME: This fixes `test_parse_types_nsmap_issues`, lame solution...
         schema_nodes = [
-            self.wsdl._parse_content(etree.tostring(schema_node), self.location)
+            xsd_parse_xml(etree.tostring(schema_node), self.location)
             for schema_node in schema_nodes
         ]
 
         if len(schema_nodes) == 1:
             return Schema(
                 schema_nodes[0], self.wsdl.transport, self.location,
-                self.wsdl._parser_context, self.location)
+                self.wsdl._parser_context)
 
         # A wsdl can contain multiple schema nodes. These can import each other
         # by simply referencing them by the namespace. To handle this in a way
@@ -306,6 +303,7 @@ class Definition(object):
         # Create a new schema node with xsd:import statements for all
         # schema's listed here.
         container = etree.Element('{http://www.w3.org/2001/XMLSchema}schema')
+        container.set('targetNamespace', 'http://www.python-zeep.org/Imports')
         for i, schema_node in enumerate(schema_nodes):
 
             # Create a new xsd:import element to import the schema
@@ -323,12 +321,10 @@ class Definition(object):
                 if not location and namespace in schema_ns:
                     import_node.set('schemaLocation', schema_ns[namespace])
 
-                container.append(deepcopy(import_node))
-
         schema_node = container
         return Schema(
             schema_node, self.wsdl.transport, self.location,
-            self.wsdl._parser_context, self.location)
+            self.wsdl._parser_context)
 
     def parse_messages(self, doc):
         """

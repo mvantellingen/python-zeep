@@ -1,12 +1,9 @@
-import itertools
-
 from collections import OrderedDict
 
 import six
 
 from zeep.xsd.elements import (
-    Any, Attribute, Choice, Element, GroupElement, ListElement, RefElement,
-    Sequence)
+    Any, Attribute, Choice, Element, GroupElement, ListElement, RefElement)
 from zeep.xsd.valueobjects import CompoundValue
 
 

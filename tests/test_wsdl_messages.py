@@ -160,7 +160,7 @@ def test_document_message_parse_with_header_other_message():
 
 
 def test_document_message_serializer():
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(soapaction='my-action')
     msg = messages.DocumentMessage(
         wsdl=wsdl,
@@ -202,7 +202,7 @@ def test_document_message_serializer():
 
 
 def test_document_message_serializer_header():
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(soapaction='my-action')
     msg = messages.DocumentMessage(
         wsdl=wsdl,
@@ -255,7 +255,7 @@ def test_document_message_serializer_header():
 
 
 def test_document_message_serializer_header_custom_elm():
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(soapaction='my-action', name='something')
     msg = messages.DocumentMessage(
         wsdl=wsdl,
@@ -310,7 +310,7 @@ def test_document_message_serializer_header_custom_elm():
 
 
 def test_document_message_serializer_header_custom_xml():
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(soapaction='my-action')
     msg = messages.DocumentMessage(
         wsdl=wsdl,
@@ -374,7 +374,7 @@ def test_document_message_deserializer():
           </mns:response>
         </SOAP-ENV:Body>
     """)  # noqa
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(soapaction='my-action', name='something')
 
     msg = messages.DocumentMessage(
@@ -449,7 +449,7 @@ def test_rpc_message_parse():
 
 
 def test_rpc_message_serializer(abstract_message_input):
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(soapaction='my-action', name='Operation')
 
     msg = messages.RpcMessage(
@@ -495,7 +495,7 @@ def test_rpc_message_deserializer(abstract_message_output):
           </mns:Response>
         </SOAP-ENV:Body>
     """)  # noqa
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(soapaction='my-action', name='something')
 
     msg = messages.RpcMessage(
@@ -516,7 +516,7 @@ def test_rpc_message_deserializer(abstract_message_output):
 
 
 def test_rpc_message_signature(abstract_message_input):
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(soapaction='my-action', name='something')
 
     msg = messages.RpcMessage(
@@ -533,7 +533,7 @@ def test_rpc_message_signature(abstract_message_input):
 
 
 def test_rpc_message_signature_output(abstract_message_output):
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(soapaction='my-action')
 
     msg = messages.RpcMessage(
@@ -553,7 +553,7 @@ def test_rpc_message_signature_output(abstract_message_output):
 # URLEncoded Message
 #
 def test_urlencoded_serialize(abstract_message_input):
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(location='my-action', name='foo')
 
     msg = messages.UrlEncoded(
@@ -573,7 +573,7 @@ def test_urlencoded_serialize(abstract_message_input):
 
 
 def test_urlencoded_signature(abstract_message_input):
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(location='my-action', name='foo')
 
     msg = messages.UrlEncoded(
@@ -592,7 +592,7 @@ def test_urlencoded_signature(abstract_message_input):
 # URLReplacement Message
 #
 def test_urlreplacement_serialize(abstract_message_input):
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(location='my-action/(arg1)/(arg2)/', name='foo')
 
     msg = messages.UrlReplacement(
@@ -612,7 +612,7 @@ def test_urlreplacement_serialize(abstract_message_input):
 
 
 def test_urlreplacement_signature(abstract_message_input):
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(location='my-action/(arg1)/(arg2)/', name='foo')
 
     msg = messages.UrlReplacement(
@@ -631,7 +631,7 @@ def test_urlreplacement_signature(abstract_message_input):
 # MimeContent Message
 #
 def test_mime_content_serialize_form_urlencoded(abstract_message_input):
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(location='my-action', name='foo')
 
     msg = messages.MimeContent(
@@ -655,7 +655,7 @@ def test_mime_content_serialize_form_urlencoded(abstract_message_input):
 
 
 def test_mime_content_serialize_xml():
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(location='my-action', name='foo')
 
     element_1 = xsd.Element('arg1', xsd.ComplexType([
@@ -692,7 +692,7 @@ def test_mime_content_serialize_xml():
 
 
 def test_mime_content_signature(abstract_message_input):
-    wsdl = stub(schema=stub(_prefix_map={}))
+    wsdl = stub(types=stub(_prefix_map={}))
     operation = stub(location='my-action', name='foo')
 
     msg = messages.MimeContent(

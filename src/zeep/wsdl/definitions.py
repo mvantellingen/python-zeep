@@ -58,9 +58,9 @@ class AbstractMessage(object):
             part_type = qname_attr(part, 'type', tns)
 
             if part_element is not None:
-                part_element = definitions.schema.get_element(part_element)
+                part_element = definitions.types.get_element(part_element)
             if part_type is not None:
-                part_type = definitions.schema.get_type(part_type)
+                part_type = definitions.types.get_type(part_type)
 
             msg.add_part(part_name, MessagePart(part_element, part_type))
         return msg

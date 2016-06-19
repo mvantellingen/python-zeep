@@ -3,11 +3,12 @@ import logging
 
 from lxml import etree
 
-from zeep.parser import absolute_location, load_external
+from zeep.parser import absolute_location
 from zeep.utils import as_qname, qname_attr
 from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import types as xsd_types
+from zeep.xsd.parser import load_external
 
 logger = logging.getLogger(__name__)
 
@@ -113,10 +114,13 @@ class SchemaVisitor(object):
         if not location:
             if namespace:
                 location = namespace
-                schema_node = self.parser_context.schema_nodes.get(namespace)
+                try:
+                    schema_node = self.parser_context.schema_nodes.get(namespace)
+                except KeyError:
+                    raise ValueError("No schema for namespace=%s" % namespace)
 
             if not schema_node:
-                raise NotImplementedError("schemaLocation is required")
+                raise ValueError("schemaLocation is required")
 
         # If a schemaLocation is defined then make the location absolute based
         # on the base url and see if the schema is already processed (for
