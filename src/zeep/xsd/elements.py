@@ -19,10 +19,19 @@ class Base(object):
 class Any(Base):
     _require_keyword_arg = False
 
-    def __init__(self, max_occurs=1, min_occurs=1):
+    def __init__(self, max_occurs=1, min_occurs=1, process_contents='strict'):
+        """
+
+        :param process_contents: Specifies how the XML processor should handle
+                                 validation against the elements specified by
+                                 this any element
+        :type process_contents: str (strict, lax, skip)
+
+        """
         self.name = 'any'
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
+        self.process_contents = process_contents
 
         # cyclic import
         from zeep.xsd.builtins import AnyType
@@ -44,6 +53,9 @@ class Any(Base):
             value.xsd_type.render(parent, value.value)
 
     def parse(self, xmlelement, schema):
+        if self.process_contents == 'skip':
+            return xmlelement
+
         xsd_type = xmlelement.get('{http://www.w3.org/2001/XMLSchema-instance}type')
         if xsd_type is not None:
             element_type = schema.get_type(xsd_type)

@@ -601,7 +601,10 @@ class SchemaVisitor(object):
             </any>
         """
         min_occurs, max_occurs = _process_occurs_attrs(node)
-        return xsd_elements.Any(max_occurs=max_occurs, min_occurs=min_occurs)
+        process_contents = node.get('processContents', 'strict')
+        return xsd_elements.Any(
+            max_occurs=max_occurs, min_occurs=min_occurs,
+            process_contents=process_contents)
 
     def visit_sequence(self, node, parent):
         """
