@@ -4,6 +4,7 @@ import pytest
 import requests_mock
 
 from zeep import client
+from zeep.exceptions import Error
 
 
 def test_bind():
@@ -112,5 +113,5 @@ def test_call_method_fault():
 
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response, status_code=500)
-        with pytest.raises(IOError):
+        with pytest.raises(Error):
             obj.service.GetLastTradePrice(tickerSymbol='foobar')

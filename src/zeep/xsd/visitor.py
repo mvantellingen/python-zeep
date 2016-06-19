@@ -556,13 +556,14 @@ class SchemaVisitor(object):
             </extension>
         """
         base_name = qname_attr(node, 'base')
-        try:
-            base = self.schema.get_type(base_name)
+
+        base = self.schema.get_type(base_name, default=None)
+        if base is not None:
             if isinstance(base, xsd_types.ComplexType):
                 children = base._children
             else:
                 children = [xsd_elements.Element(None, base)]
-        except KeyError:
+        else:
             children = [xsd_types.UnresolvedType(base_name, self.schema)]
 
         for child in node.iterchildren():
@@ -788,10 +789,10 @@ class SchemaVisitor(object):
         pass
 
     def _get_type(self, name):
-        try:
-            return self.schema.get_type(name)
-        except KeyError:
-            return xsd_types.UnresolvedType(name, self.schema)
+        retval = self.schema.get_type(name, default=None)
+        if retval is None:
+            retval = xsd_types.UnresolvedType(name, self.schema)
+        return retval
 
     def _pop_annotation(self, items):
         if not len(items):

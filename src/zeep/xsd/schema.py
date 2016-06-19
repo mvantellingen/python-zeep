@@ -3,6 +3,8 @@ from collections import OrderedDict
 
 from lxml import etree
 
+from zeep import exceptions
+from zeep.utils import NotSet
 from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd.context import ParserContext
 from zeep.xsd.visitor import SchemaVisitor
@@ -186,7 +188,7 @@ class SchemaDocument(object):
         logger.debug("register_attribute(%r, %r)", name, value)
         self._attributes[name] = value
 
-    def get_type(self, name):
+    def get_type(self, name, default=NotSet):
         name = self._create_qname(name)
 
         if name.text in xsd_builtins.default_types:
@@ -200,11 +202,14 @@ class SchemaDocument(object):
         if name.namespace in self._imports:
             return self._imports[name.namespace].get_type(name)
 
-        raise KeyError(
+        if default is not NotSet:
+            return default
+
+        raise exceptions.XMLParseError(
             "No such type: %r in %s (Only have %s)" % (
                 name.text, self, ', '.join(self._types)))
 
-    def get_element(self, name):
+    def get_element(self, name, default=NotSet):
         name = self._create_qname(name)
         self._check_namespace_reference(name)
 
@@ -214,11 +219,14 @@ class SchemaDocument(object):
         if name.namespace in self._imports:
             return self._imports[name.namespace].get_element(name)
 
-        raise KeyError(
+        if default is not NotSet:
+            return default
+
+        raise exceptions.XMLParseError(
             "No such element: %r (Only have %s) (from: %s)" % (
                 name.text, ', '.join(self._elements), self))
 
-    def get_attribute(self, name):
+    def get_attribute(self, name, default=NotSet):
         name = self._create_qname(name)
         if name in self._attributes:
             return self._attributes[name]
@@ -226,7 +234,10 @@ class SchemaDocument(object):
         if name.namespace in self._imports:
             return self._imports[name.namespace].get_attribute(name)
 
-        raise KeyError(
+        if default is not NotSet:
+            return default
+
+        raise exceptions.XMLParseError(
             "No such attribute: %r (Only have %s) (from: %s)" % (
                 name.text, ', '.join(self._attributes), self))
 
@@ -235,7 +246,7 @@ class SchemaDocument(object):
         ns = name.namespace
 
         if ns != self._target_namespace and ns not in self._imports.keys():
-            raise ValueError((
+            raise exceptions.XMLParseError((
                 "References from this schema (%r) to components in the " +
                 "namespace '%s' are not allowed, since not indicated by an "
                 "import statement."

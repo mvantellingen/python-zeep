@@ -1,12 +1,20 @@
-class XMLSyntaxError(IOError):
+class Error(Exception):
     pass
 
 
-class TransportError(IOError):
+class XMLSyntaxError(Error):
     pass
 
 
-class Fault(IOError):
+class XMLParseError(Error):
+    pass
+
+
+class TransportError(Error):
+    pass
+
+
+class Fault(Error):
     def __init__(self, message, code=None, actor=None, detail=None):
         super(Fault, self).__init__(message)
         self.message = message
