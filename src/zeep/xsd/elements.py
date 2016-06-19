@@ -52,7 +52,7 @@ class Any(Base):
         try:
             element_type = schema.get_element(xmlelement.tag)
             return element_type.parse(xmlelement, schema)
-        except KeyError:
+        except (ValueError, KeyError):
             return xmlelement
 
     def __call__(self, any_object):
