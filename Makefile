@@ -17,7 +17,7 @@ retest:
 	py.test -vvv --lf
 
 coverage:
-	py.test --cov=zeep --cov-report=term-missing
+	py.test --cov=zeep --cov-report=term-missing --cov-report=html
 
 docs:
 	$(MAKE) -C docs html

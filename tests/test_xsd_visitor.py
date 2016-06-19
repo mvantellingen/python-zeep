@@ -12,7 +12,13 @@ from zeep.xsd.types import UnresolvedType
 @pytest.fixture
 def schema_visitor():
     parser_context = ParserContext()
-    schema = SchemaDocument(parser_context=parser_context)
+    node = etree.Element('{http://www.w3.org/2001/XMLSchema}Schema')
+    schema = SchemaDocument(
+        node=node,
+        transport=None,
+        location=None,
+        parser_context=parser_context,
+        base_url=None)
     return visitor.SchemaVisitor(schema)
 
 

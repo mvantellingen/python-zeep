@@ -171,7 +171,13 @@ def test_parse_anytype_obj():
     )
 
     parser_context = ParserContext()
-    schema = SchemaDocument(parser_context=parser_context)
+    schema = SchemaDocument(
+        etree.Element('{http://www.w3.org/2001/XMLSchema}Schema'),
+        transport=None,
+        location=None,
+        parser_context=parser_context,
+        base_url=None)
+
     schema._target_namespace = 'http://tests.python-zeep.org/'
     schema.register_type('{http://tests.python-zeep.org/}something', value_type)
 

@@ -16,30 +16,36 @@ class Schema(object):
     def __init__(self, node=None, transport=None, location=None,
                  parser_context=None):
         self._parser_context = parser_context or ParserContext()
-        self._root = SchemaDocument(
-            node, transport, location, self._parser_context, location)
 
-        self._root.resolve()
+        self._schemas = OrderedDict()
+        self._root = None
+        self._prefix_map = {}
 
-        def _collect_imports_recursive(schema, target=None):
-            if target is None:
-                target = OrderedDict()
+        if node is not None:
+            self._root = SchemaDocument(
+                node, transport, location, self._parser_context, location)
 
-            target[schema._target_namespace] = schema
-            for ns, s in schema._imports.items():
-                if ns not in target:
-                    _collect_imports_recursive(s, target)
-            return target
+            self._root.resolve()
 
-        self._schemas = _collect_imports_recursive(self._root)
-        self._prefix_map = self._create_prefix_map()
+            def _collect_imports_recursive(schema, target=None):
+                if target is None:
+                    target = OrderedDict()
+
+                target[schema._target_namespace] = schema
+                for ns, s in schema._imports.items():
+                    if ns not in target:
+                        _collect_imports_recursive(s, target)
+                return target
+
+            self._schemas = _collect_imports_recursive(self._root)
+            self._prefix_map = self._create_prefix_map()
 
     def __repr__(self):
         return '<Schema(location=%r)>' % (self._root._location)
 
     @property
     def is_empty(self):
-        return self._root.is_empty
+        return self._root.is_empty if self._root else True
 
     @property
     def elements(self):
@@ -107,9 +113,9 @@ class Schema(object):
 
 
 class SchemaDocument(object):
-    def __init__(self, node=None, transport=None, location=None,
-                 parser_context=None, base_url=None):
+    def __init__(self, node, transport, location, parser_context, base_url):
         logger.debug("Init schema for %r", location)
+        assert node is not None
         assert parser_context
 
         # Internal
@@ -122,10 +128,10 @@ class SchemaDocument(object):
         self._elements = {}
         self._attributes = {}
         self._imports = OrderedDict()
-        self._xml_schema = None
         self._element_form = 'unqualified'
         self._attribute_form = 'unqualified'
         self._resolved = False
+        # self._xml_schema = None
 
         parser_context.schema_objects.add(self)
 

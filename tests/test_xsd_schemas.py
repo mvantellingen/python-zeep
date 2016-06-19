@@ -1,3 +1,4 @@
+import pytest
 from lxml import etree
 
 from zeep import xsd
@@ -103,6 +104,13 @@ def test_global_element_and_type():
                 schemaLocation="http://tests.python-zeep.org/b.xsd"
                 namespace="http://tests.python-zeep.org/b"/>
 
+            <xs:complexType name="refs">
+              <xs:sequence>
+                <xs:element ref="b:ref_elm"/>
+              </xs:sequence>
+              <xs:attribute ref="b:ref_attr"/>
+            </xs:complexType>
+
         </xs:schema>
     """.strip())
 
@@ -118,6 +126,9 @@ def test_global_element_and_type():
             <xs:import
                 schemaLocation="http://tests.python-zeep.org/c.xsd"
                 namespace="http://tests.python-zeep.org/c"/>
+
+            <xs:element name="ref_elm" type="xs:string"/>
+            <xs:attribute name="ref_attr" type="xs:string"/>
 
         </xs:schema>
     """.strip())
@@ -150,3 +161,35 @@ def test_global_element_and_type():
 
     elm = schema.get_element('{http://tests.python-zeep.org/c}item')
     elm('x')
+
+    elm = schema.get_type('{http://tests.python-zeep.org/a}refs')
+    elm(ref_elm='foo', ref_attr='bar')
+
+
+def test_schema_error_handling():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+        </xs:schema>
+    """.strip())
+    transport = DummyTransport()
+    schema = xsd.Schema(node_a, transport=transport)
+
+    with pytest.raises(ValueError):
+        schema.get_element('nonexisting:something')
+    with pytest.raises(ValueError):
+        schema.get_type('nonexisting:something')
+    with pytest.raises(ValueError):
+        schema.get_element('{nonexisting}something')
+    with pytest.raises(ValueError):
+        schema.get_type('{nonexisting}something')
+    with pytest.raises(KeyError):
+        schema.get_element('ns0:something')
+    with pytest.raises(KeyError):
+        schema.get_type('ns0:something')

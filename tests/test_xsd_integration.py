@@ -803,7 +803,6 @@ def test_ref_attribute():
     assert_nodes_equal(expected, node)
 
 
-
 def test_init_with_dicts():
     node = etree.fromstring("""
         <?xml version="1.0"?>
