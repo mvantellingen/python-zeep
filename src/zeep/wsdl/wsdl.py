@@ -321,8 +321,6 @@ class Definition(object):
                 if not location and namespace in schema_ns:
                     import_node.set('schemaLocation', schema_ns[namespace])
 
-                container.append(deepcopy(import_node))
-
         schema_node = container
         return Schema(
             schema_node, self.wsdl.transport, self.location,
