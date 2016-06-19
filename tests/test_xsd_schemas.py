@@ -87,3 +87,66 @@ def test_multiple_extension():
     schema = xsd.Schema(node_a, transport=transport)
     type_a = schema.get_type('ns0:type_a')
     type_a(wat='x')
+
+
+def test_global_element_and_type():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+            <xs:import
+                schemaLocation="http://tests.python-zeep.org/b.xsd"
+                namespace="http://tests.python-zeep.org/b"/>
+
+        </xs:schema>
+    """.strip())
+
+    node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            targetNamespace="http://tests.python-zeep.org/b"
+            xmlns:c="http://tests.python-zeep.org/c"
+            elementFormDefault="qualified">
+
+            <xs:import
+                schemaLocation="http://tests.python-zeep.org/c.xsd"
+                namespace="http://tests.python-zeep.org/c"/>
+
+        </xs:schema>
+    """.strip())
+
+    node_c = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/c"
+            targetNamespace="http://tests.python-zeep.org/c"
+            elementFormDefault="qualified">
+
+            <xs:complexType name="type_a">
+              <xs:sequence>
+                <xs:element name="item_a" type="xs:string"/>
+              </xs:sequence>
+            </xs:complexType>
+            <xs:element name="item" type="xs:string"/>
+        </xs:schema>
+    """.strip())
+    etree.XMLSchema(node_c)
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
+    transport.bind('http://tests.python-zeep.org/c.xsd', node_c)
+
+    schema = xsd.Schema(node_a, transport=transport)
+    type_a = schema.get_type('{http://tests.python-zeep.org/c}type_a')
+    type_a(item_a='x')
+
+    elm = schema.get_element('{http://tests.python-zeep.org/c}item')
+    elm('x')
