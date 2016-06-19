@@ -1,3 +1,14 @@
+0.10.0 (unreleased)
+-------------------
+ - Make global elements / types truly global by refactoring the Schema 
+   parsing. Previously the lookups where non-transitive, but this should only
+   be the case during parsing of the xml schema.
+ - Properly unwrap XML responses in soap.DocumentMessage when a choice is the
+   root element. (#80)
+ - Update exceptions structure, all zeep exceptions are now using 
+   zeep.exceptions.Error() as base class.
+
+
 0.9.1 (2016-06-17)
 ------------------
  - Quote the SOAPAction header value (Derek Harland)
