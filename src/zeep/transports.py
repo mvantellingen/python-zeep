@@ -1,8 +1,10 @@
+import pkg_resources
+
 import requests
 from six.moves.urllib.parse import urlparse
 
 from zeep.cache import SqliteCache
-from zeep.utils import NotSet
+from zeep.utils import NotSet, get_version
 
 
 class Transport(object):
@@ -16,6 +18,8 @@ class Transport(object):
         self.session = self.create_session()
         self.session.verify = verify
         self.session.auth = http_auth
+        self.session.headers['User-Agent'] = (
+            'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
     def create_session(self):
         return requests.Session()

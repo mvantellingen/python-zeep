@@ -49,6 +49,7 @@ def test_set_address():
         m.post('http://test.python-zeep.org/x', text=response)
         result = client_obj.service.GetLastTradePrice('foobar')
         assert result == 120.123
+        assert m.request_history[0].headers['User-Agent'].startswith('Zeep/')
         assert m.request_history[0].body.startswith(
             b"<?xml version='1.0' encoding='utf-8'?>")
 

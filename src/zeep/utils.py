@@ -1,3 +1,5 @@
+import pkg_resources
+
 from lxml import etree
 
 
@@ -35,3 +37,7 @@ def findall_multiple_ns(node, name, namespace_sets):
     for nsmap in namespace_sets:
         result.extend(node.findall(name, namespaces=nsmap))
     return result
+
+
+def get_version():
+    return pkg_resources.require('zeep')[0].version
