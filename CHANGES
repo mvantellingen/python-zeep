@@ -1,4 +1,4 @@
-0.10.0 (unreleased)
+0.10.0 (2016-06-22)
 -------------------
  - Make global elements / types truly global by refactoring the Schema 
    parsing. Previously the lookups where non-transitive, but this should only
