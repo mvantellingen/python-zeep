@@ -2,27 +2,11 @@ import base64
 import datetime
 import errno
 import os
+import pytz
 import sqlite3
 
 import appdirs
 import six
-
-
-class UTC(datetime.tzinfo):
-    '''UTC tzinfo implementation taken from Python documentation.'''
-    _zero = datetime.timedelta(0)
-
-    def __repr__(self):
-        return '<UTC>'
-
-    def utcoffset(self, dt):
-        return self._zero
-
-    def tzname(self, dt):
-        return 'UTC'
-
-    def dst(self, dt):
-        return self._zero
 
 
 class SqliteCache(object):
@@ -64,9 +48,9 @@ class SqliteCache(object):
         if rows:
             created, data = rows[0]
             offset = (
-                datetime.datetime.utcnow().replace(tzinfo=UTC()) -
+                datetime.datetime.utcnow().replace(tzinfo=pytz.utc) -
                 datetime.timedelta(seconds=self._timeout))
-            if not self._timeout or created.replace(tzinfo=UTC()) > offset:
+            if not self._timeout or created.replace(tzinfo=pytz.utc) > offset:
                 return self._decode_data(data)
 
     def _encode_data(self, data):
