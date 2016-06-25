@@ -1,7 +1,7 @@
 from defusedxml.lxml import fromstring
 from lxml import etree
-from six.moves.urllib.parse import urlparse
 
+from six.moves.urllib.parse import urlparse
 from zeep.exceptions import XMLSyntaxError
 from zeep.parser import absolute_location
 

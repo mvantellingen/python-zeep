@@ -215,7 +215,7 @@ class DocumentMessage(SoapMessage):
         if not item:
             return None
 
-        children = item._xsd_type.fields()
+        children = item._xsd_type.elements_all
         if len(children) == 1:
             item_name, item_element = children[0]
             retval = getattr(item, item_name)
@@ -243,8 +243,8 @@ class RpcMessage(SoapMessage):
         result = self.body.parse(value, self.wsdl.types)
 
         result = [
-            getattr(result, field.name)
-            for field in self.body.type._children
+            getattr(result, name)
+            for name, field in self.body.type.elements_all
         ]
         if len(result) > 1:
             return tuple(result)
@@ -281,10 +281,10 @@ class RpcMessage(SoapMessage):
             else:
                 tag_name = etree.QName(namespace, self.abstract.name.localname)
 
-            self.body = xsd.Element(tag_name, xsd.ComplexType(children=[
+            self.body = xsd.Element(tag_name, xsd.ComplexType(xsd.Sequence([
                 msg.element if msg.element else xsd.Element(name, msg.type)
                 for name, msg in parts.items()
-            ]))
+            ])))
 
 
 class HttpMessage(ConcreteMessage):
@@ -301,7 +301,7 @@ class HttpMessage(ConcreteMessage):
                 elm = xsd.Element(name, message.type)
             children.append(elm)
         self.body = xsd.Element(
-            self.operation.name, xsd.ComplexType(children=children))
+            self.operation.name, xsd.ComplexType(xsd.Sequence(children)))
 
 
 class UrlEncoded(HttpMessage):
@@ -410,7 +410,7 @@ class MimeMessage(ConcreteMessage):
             else:
                 elm = xsd.Element(self.part_name, message.type)
                 self.body = xsd.Element(
-                    self.operation.name, xsd.ComplexType(children=[elm]))
+                    self.operation.name, xsd.ComplexType(xsd.Sequence([elm])))
         else:
             children = []
             for name, message in self.abstract.parts.items():
@@ -420,7 +420,7 @@ class MimeMessage(ConcreteMessage):
                     elm = xsd.Element(name, message.type)
                 children.append(elm)
             self.body = xsd.Element(
-                self.operation.name, xsd.ComplexType(children=children))
+                self.operation.name, xsd.ComplexType(xsd.Sequence(children)))
 
 
 class MimeContent(MimeMessage):

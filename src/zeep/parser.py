@@ -2,8 +2,8 @@ import os
 
 from defusedxml.lxml import fromstring
 from lxml import etree
-from six.moves.urllib.parse import urljoin, urlparse
 
+from six.moves.urllib.parse import urljoin, urlparse
 from zeep.exceptions import XMLSyntaxError
 
 

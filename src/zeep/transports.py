@@ -1,8 +1,6 @@
-import pkg_resources
-
 import requests
-from six.moves.urllib.parse import urlparse
 
+from six.moves.urllib.parse import urlparse
 from zeep.cache import SqliteCache
 from zeep.utils import NotSet, get_version
 

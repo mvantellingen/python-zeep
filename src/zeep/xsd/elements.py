@@ -1,8 +1,11 @@
 import copy
+import operator
+from collections import defaultdict
 
 from lxml import etree
 
 from six.moves import zip_longest
+from zeep.xsd.utils import UniqueAttributeName, max_occurs_iter
 
 
 class Base(object):
@@ -12,12 +15,32 @@ class Base(object):
     def is_optional(self):
         return self.min_occurs == 0
 
-    def signature(self, name=None):
+    def signature(self):
         return ''
+
+    def parse_args(self, args):
+        result = {}
+        args = copy.copy(args)
+
+        if not args:
+            return result, args
+
+        value = args.pop(0)
+        return {self.name: value}, args
+
+    def parse_kwargs(self, kwargs, name=None):
+        value = None
+        name = name or self.name
+
+        if name in kwargs:
+            value = kwargs.pop(name)
+
+        return value, kwargs
 
 
 class Any(Base):
     _require_keyword_arg = False
+    name = None
 
     def __init__(self, max_occurs=1, min_occurs=1, process_contents='strict'):
         """
@@ -28,7 +51,6 @@ class Any(Base):
         :type process_contents: str (strict, lax, skip)
 
         """
-        self.name = 'any'
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
         self.process_contents = process_contents
@@ -42,8 +64,7 @@ class Any(Base):
 
     def render(self, parent, value):
         assert parent is not None
-        if value is None:
-            # not possible
+        if not value:
             return
 
         if isinstance(value.value, list):
@@ -67,14 +88,27 @@ class Any(Base):
         except (ValueError, KeyError):
             return xmlelement
 
+    def parse_xmlelements(self, xmlelements, schema, name=None):
+        result = []
+
+        for i in max_occurs_iter(self.max_occurs):
+            if xmlelements:
+                xmlelement = xmlelements.pop(0)
+                item = self.parse(xmlelement, schema)
+                result.append(item)
+            else:
+                break
+
+        if self.max_occurs == 1:
+            result = result[0] if result else None
+
+        return result
+
     def __call__(self, any_object):
         return any_object
 
-    def signature(self, name=None):
-        return '%s%s: %s' % (
-            name, '=None' if self.is_optional else '',
-            '[]' if self.max_occurs != 1 else ''
-        )
+    def signature(self):
+        return 'ANY'
 
 
 class Element(Base):
@@ -112,12 +146,10 @@ class Element(Base):
             self.__class__ == other.__class__ and
             self.__dict__ == other.__dict__)
 
-    def signature(self, name=None):
-        assert self.type, '%r has no type' % self
-        return '%s%s: %s%s' % (
-            name, '=None' if self.is_optional else '',
-            self.type.name, '[]' if self.max_occurs != 1 else ''
-        )
+    def signature(self):
+        if self.max_occurs != 1:
+            return '%s[]' % self.type.signature()
+        return self.type.signature()
 
     def clone(self, name):
         if not isinstance(name, etree.QName):
@@ -129,31 +161,62 @@ class Element(Base):
         return new
 
     def serialize(self, value):
-        return self.type.serialize(value)
+        if self.max_occurs == 1:
+            return self.type.serialize(value)
+        else:
+            if value:
+                return [self.type.serialize(val) for val in value]
+            return []
 
     def resolve_type(self):
         self.type = self.type.resolve()
 
+    def resolve(self):
+        self.resolve_type()
+        return self
+
     def render(self, parent, value):
         assert parent is not None
+        if self.max_occurs != 1 and isinstance(value, list):
+            for val in value:
+                self._render_value_item(parent, val)
+        else:
+            self._render_value_item(parent, value)
 
+    def _render_value_item(self, parent, value):
         if value is None:
             if not self.is_optional:
-                node = etree.SubElement(parent, self.qname)
+                etree.SubElement(parent, self.qname)
             return
 
         if self.name is None:
             return self.type.render(parent, value)
 
         node = etree.SubElement(parent, self.qname)
-
         xsd_type = getattr(value, '_xsd_type', self.type)
+
         if xsd_type != self.type:
             return value._xsd_type.render(node, value, xsd_type)
         return self.type.render(node, value)
 
-    def parse(self, value, schema):
-        return self.type.parse_xmlelement(value, schema)
+    def parse(self, xmlelement, schema):
+        return self.type.parse_xmlelement(xmlelement, schema)
+
+    def parse_xmlelements(self, xmlelements, schema, name=None):
+        result = []
+
+        for i in max_occurs_iter(self.max_occurs):
+            if xmlelements and xmlelements[0].tag == self.qname:
+                xmlelement = xmlelements.pop(0)
+                item = self.parse(xmlelement, schema)
+                result.append(item)
+            else:
+                break
+
+        if self.max_occurs == 1:
+            result = result[0] if result else None
+
+        return result
 
 
 class Attribute(Element):
@@ -179,50 +242,153 @@ class Attribute(Element):
 
 
 class ListElement(Element):
-
-    def __call__(self, *args, **kwargs):
-        return [self.type(*args, **kwargs)]
-
-    def serialize(self, value):
-        if value:
-            return [self.type.serialize(val) for val in value]
-        return []
-
-    def render(self, parent, value):
-        for val in value:
-            super(ListElement, self).render(parent, val)
+    pass
 
 
-class GroupElement(Element):
-    def __init__(self, *args, **kwargs):
-        self.children = kwargs.pop('children', [])
-        assert self.children
-        assert isinstance(self.children, list)
-        super(GroupElement, self).__init__(*args, **kwargs)
 
-    def __iter__(self, *args, **kwargs):
-        for item in self.children:
-            yield item
+class Group(Base):
+    """Groups a set of element declarations so that they can be incorporated as
+    a group into complex type definitions.
 
-    def properties(self):
-        return self.children
+    """
 
-    def signature(self, name):
-        return '%s%s: %s' % (
-            name, '=None' if self.is_optional else '',
-            '[]' if self.max_occurs != 1 else ''
-        )
-
-
-class Choice(Base):
-    _require_keyword_arg = False
-
-    def __init__(self, elements, max_occurs=1, min_occurs=1):
-        self.name = 'choice'
-        self.type = None
-        self.elements = elements
+    def __init__(self, name, child, max_occurs=1, min_occurs=1):
+        self.child = child
+        self.qname = name
+        self.name = name.localname
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
+
+    def __iter__(self, *args, **kwargs):
+        for item in self.child:
+            yield item
+
+    def resolve(self):
+        self.child = self.child.resolve()
+        return self
+
+    def signature(self):
+        return ''
+
+GroupElement = Group
+
+
+class Container(list):
+    name = None
+
+    def __init__(self, elements=None, min_occurs=1, max_occurs=1):
+        self.min_occurs = min_occurs
+        self.max_occurs = max_occurs
+
+        if elements is None:
+            super(Container, self).__init__()
+        else:
+            super(Container, self).__init__(elements)
+
+    @property
+    def elements(self):
+        """List of tuples containing the element name and the element"""
+        result = []
+        generator = UniqueAttributeName()
+        for elm in self:
+            name = elm.name if elm.name else generator.get_name()
+            result.append((name, elm))
+        return result
+
+    def __repr__(self):
+        return '<%s(%s)>' % (
+            self.__class__.__name__, super(Container, self).__repr__())
+
+    @property
+    def is_optional(self):
+        return self.min_occurs == 0
+
+    def signature(self):
+        part = ', '.join([
+            '%s: %s' % (name, element.signature())
+            for name, element in self.elements
+        ])
+
+        if self.max_occurs != 1:
+            return '[%s]' % (part)
+        return part
+
+    def serialize(self, value):
+        return value
+
+    def resolve(self):
+        for i, elm in enumerate(self):
+            if isinstance(elm, RefElement):
+                elm = elm._elm
+            self[i] = elm
+        return self
+
+    def render(self, parent, value):
+        for name, element in self.elements:
+            element_value = getattr(value, name, None)
+            element.render(parent, element_value)
+
+    def parse_args(self, args):
+        result = {}
+        args = copy.copy(args)
+
+        for name, element in self.elements:
+            if not args:
+                break
+            arg = args.pop(0)
+            # if element._require_keyword_arg:
+            #     raise TypeError(
+            #         "Any and Choice elements should be passed using a keyword argument")
+            result[name] = arg
+
+        return result, args
+
+    def parse_kwargs(self, kwargs, name=None):
+        result = {}
+
+        if name and name in kwargs:
+            item_kwargs = kwargs.pop(name)
+
+            for item_name, element in self.elements:
+                sub_result, item_kwargs = element.parse_kwargs(item_kwargs, item_name)
+                if sub_result is not None:
+                    result[item_name] = sub_result
+
+            result = {name: result}
+        else:
+
+            for name, element in self.elements:
+                sub_result, kwargs = element.parse_kwargs(kwargs, name)
+                if sub_result is not None:
+                    result[name] = sub_result
+
+        return result, kwargs
+
+
+class All(Container):
+    """Allows the elements in the group to appear (or not appear) in any order
+    in the containing element.
+
+    """
+    _require_keyword_arg = False
+
+    def parse_xmlelements(self, xmlelements, schema, name=None):
+        result = {}
+
+        values = defaultdict(list)
+        for elm in xmlelements:
+            values[elm.tag].append(elm)
+
+        for name, element in self.elements:
+            sub_elements = values.get(element.qname)
+            if sub_elements:
+                result[name] = element.parse_xmlelements(sub_elements, schema)
+
+        return result
+
+
+class Choice(Container):
+    _require_keyword_arg = False
 
     @property
     def is_optional(self):
@@ -232,14 +398,14 @@ class Choice(Base):
         # XXX Any elemetns?
         return ':'.join(elm.name for elm in self.elements)
 
-    def render(self, parent, name, value):
-        choice_metadata = getattr(value, name)
+    def render(self, parent, value):
+        choice_metadata = value
 
         if self.max_occurs == 1:
             choice_metadata = [choice_metadata]
 
         for item in choice_metadata:
-            choice_element = self.elements[item.index]
+            choice_element = self[item.index]
 
             if isinstance(choice_element, Element):
                 choice_value = item.values.get(choice_element.name)
@@ -252,61 +418,166 @@ class Choice(Base):
                 else:
                     choice_element.render(parent, choice_value)
             else:
-                for element in choice_element:
-                    value = item.values[element.name]
+                for element_name, element in choice_element.elements:
+                    value = item.values.get(element_name, None)
                     if isinstance(value, list):
                         for item in value:
                             element.render(parent, item)
                     else:
                         element.render(parent, value)
 
-    def signature(self, name):
-        part = ' | '.join([
-            '{%s}' % element.signature(element.name)
-            for element in self.elements
-        ])
+    def signature(self):
+
+        parts = []
+        for name, element in self.elements:
+            if isinstance(element, Container):
+                parts.append('%s: {%s}' % (name, element.signature()))
+            else:
+                parts.append('{%s: %s}' % (name, element.signature()))
+        part = ' | '.join(parts)
 
         if self.max_occurs != 1:
-            return '%s: [%s]' % (name, part)
-        return '%s: %s' % (name, part)
+            return '[%s]' % (part)
+        return part
 
-    def parse(self, elements, schema):
+    def parse_xmlelements(self, xmlelements, schema, name=None):
+        """
+
+        Sequence.parse_xmlelements() -> [{key: val, 'bar': 'dal'}]
+        Choice.parse_xmlelements() -> [{key: val, 'bar': 'dal'}]
+        Element.parse_xmlelements() -> [val1, val2, val3]
+
+
+        """
         result = []
-        i = 0
-        for choice_element in elements:
-            for iter_field in self.elements:
-                if isinstance(iter_field, Sequence):
-                    subresult = iter_field.parse(elements[i:], schema)
-                    if subresult:
-                        i += len(subresult)
-                        result.append(subresult)
+
+        local_xmlelements = copy.copy(xmlelements)
+
+        for node in local_xmlelements:
+
+            # Choose out of multiple
+            options = []
+            for name, element in self.elements:
+                sub_result = element.parse_xmlelements(local_xmlelements, schema)
+
+                if isinstance(element, Container):
+
+                    if element.max_occurs != 1:
+                        sub_result = {name: sub_result}
+                else:
+                    sub_result = {name: sub_result}
+
+                options.append((len(local_xmlelements), sub_result))
+
+            # Sort on least left
+            options = sorted(options, key=operator.itemgetter(0))
+            if options:
+                result.append(options[0][1])
+
+        return result
+
+    def parse_kwargs(self, kwargs, name):
+        """Processes the kwargs for this choice element.
+
+        Returns a tuple containing value, kwags.
+        The value is a list with multiple `utils.ChoiceItem` objects if
+        maxOccurs > 1 or simply one object if maxOccurs = 1.
+
+        This handles two distinct initialization methods:
+
+        1. Passing the choice elements directly to the kwargs (unnested)
+        2. Passing the choice elements into the `name` kwarg (_alue_1) (nested).
+           This case is required when multiple choice elements are given.
+
+        :param name: Name of the choice element (_value_1)
+        :type name: str
+        :param element: Choice element object
+        :type element: zeep.xsd.Choice
+        :param kwargs: dict (or list of dicts) of kwargs for initialization
+        :type kwargs: list / dict
+
+        """
+        result = []
+        kwargs = copy.copy(kwargs)
+        from zeep.xsd.valueobjects import ChoiceItem
+
+        if name and name in kwargs:
+            values = kwargs.pop(name)
+            if isinstance(values, dict):
+                values = [values]
+
+            for value in values:
+
+                options = []
+                for choice_index, (choice_name, choice) in enumerate(self.elements):
+
+                    sub_result, sub_kwargs = choice.parse_kwargs(value, choice_name)
+                    if sub_result is not None:
+
+                        if not isinstance(choice, Container):
+                            sub_result = {choice.name: sub_result}
+                        options.append(
+                            (
+                                len(sub_kwargs),
+                                ChoiceItem(choice_index, sub_result)
+                            )
+                        )
+
+                # Find the option which consumed most value items.
+                if options:
+                    options = sorted(options, key=operator.itemgetter(0))
+                    value = options[0][1]
+                    result.append(value)
+
+                else:
+                    raise TypeError(
+                        "No complete xsd:Sequence found for the xsd:Choice %r.\n"
+                        "The signature is: %s" % (name, self.signature()))
+
+        else:
+            # When choice elements are specified directly in the kwargs
+            for i in max_occurs_iter(self.max_occurs):
+
+                for choice_index, (name, choice) in enumerate(self.elements):
+
+                    sub_result, kwargs = choice.parse_kwargs(kwargs, name)
+                    if sub_result is not None:
+                        if not isinstance(choice, Container):
+                            sub_result = {choice.name: sub_result}
+
+                        result.append(
+                            ChoiceItem(choice_index, sub_result)
+                        )
                         break
                 else:
-                    if iter_field.qname == choice_element.tag:
-                        choice_result = iter_field.parse(choice_element, schema)
-                        result.append({
-                            iter_field.name: choice_result
-                        })
-                        i += 1
-                        break
+                    break
+        if self.max_occurs == 1:
+            if len(result) == 1:
+                result = result[0]
+            elif len(result) > 1:
+                raise TypeError("Number of items is larger then max_occurs")
+            else:
+                result = ChoiceItem(0, {})
 
-            if len(result) >= self.max_occurs:
+        return result, kwargs
+
+
+class Sequence(Container):
+    _require_keyword_arg = False
+
+    def parse_xmlelements(self, xmlelements, schema, name=None):
+        result = {}
+
+        for name, element in self.elements:
+            sub_result = element.parse_xmlelements(xmlelements, schema)
+            result[name] = sub_result
+
+            if not xmlelements:
                 break
 
         return result
 
-
-class Sequence(list):
-    name = 'sequence'
-    _require_keyword_arg = False
-
-    def signature(self, name):
-        return ', '.join([
-            element.signature(element.name) for element in self
-        ])
-
     def parse(self, elements, schema):
-
         result = {}
         for field, element in zip_longest(self, elements):
             if field is None:
@@ -333,14 +604,8 @@ class RefElement(object):
     def _elm(self):
         return self._schema.get_element(self._ref)
 
-    def __iter__(self, *args, **kwargs):
-        elm = self._elm
-
-        if isinstance(elm, (GroupElement, ListElement)):
-            for item in elm.properties():
-                yield item
-        else:
-            yield elm
+    def resolve(self):
+        return self._schema.get_element(self._ref)
 
     def __call__(self, *args, **kwargs):
         return self._elm(*args, **kwargs)
@@ -356,4 +621,7 @@ class RefAttribute(RefElement):
 
     @property
     def _elm(self):
+        return self._schema.get_attribute(self._ref)
+
+    def resolve(self):
         return self._schema.get_attribute(self._ref)

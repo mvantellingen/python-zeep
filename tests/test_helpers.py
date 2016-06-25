@@ -8,7 +8,7 @@ def test_serialize():
     custom_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'authentication'),
         xsd.ComplexType(
-            children=[
+            xsd.Sequence([
                 xsd.Element(
                     etree.QName('http://tests.python-zeep.org/', 'name'),
                     xsd.String()),
@@ -18,26 +18,26 @@ def test_serialize():
                 xsd.ListElement(
                     etree.QName('http://tests.python-zeep.org/', 'items'),
                     xsd.ComplexType(
-                        children=[
+                        xsd.Sequence([
                             xsd.Element(
                                 etree.QName('http://tests.python-zeep.org/', 'x'),
                                 xsd.String()),
                             xsd.Element(
                                 etree.QName('http://tests.python-zeep.org/', 'y'),
                                 xsd.ComplexType(
-                                    children=[
+                                    xsd.Sequence([
                                         xsd.Element(
                                             etree.QName('http://tests.python-zeep.org/', 'x'),
                                             xsd.String()),
-                                    ]
+                                    ])
                                 )
                             )
-                        ]
+                        ])
                     ),
                     max_occurs=2
                 )
 
-            ]
+            ])
         ))
 
     obj = custom_type(
