@@ -262,6 +262,10 @@ class Group(Base):
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
 
+    @property
+    def elements(self):
+        return self.child.elements
+
     def __iter__(self, *args, **kwargs):
         for item in self.child:
             yield item
@@ -294,8 +298,11 @@ class Container(list):
         result = []
         generator = UniqueAttributeName()
         for elm in self:
-            name = elm.name if elm.name else generator.get_name()
-            result.append((name, elm))
+            if isinstance(elm, Group):
+                result.extend(elm.elements)
+            else:
+                name = elm.name if elm.name else generator.get_name()
+                result.append((name, elm))
         return result
 
     def __repr__(self):

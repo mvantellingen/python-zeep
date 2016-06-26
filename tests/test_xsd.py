@@ -145,6 +145,41 @@ def test_invalid_kwarg_simple_type():
         elm(something='is-wrong')
 
 
+def test_group_mixed():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'username'),
+                    xsd.String()),
+                xsd.Group(
+                    etree.QName('http://tests.python-zeep.org/', 'groupie'),
+                    xsd.Sequence([
+                        xsd.Element(
+                            etree.QName('http://tests.python-zeep.org/', 'password'),
+                            xsd.String(),
+                        )
+                    ])
+                )
+            ])
+        ))
+    assert custom_type.signature()
+    obj = custom_type(username='foo', password='bar')
+
+    expected = """
+      <document>
+        <ns0:authentication xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:username>foo</ns0:username>
+          <ns0:password>bar</ns0:password>
+        </ns0:authentication>
+      </document>
+    """
+    node = etree.Element('document')
+    custom_type.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+
 def test_any():
     some_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'doei'),

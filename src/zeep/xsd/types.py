@@ -2,10 +2,7 @@ from collections import OrderedDict
 
 import six
 
-from zeep.xsd.elements import (
-    All, Any, Attribute, Choice, Container, Element, Group,
-    ListElement, Sequence)
-from zeep.xsd.utils import UniqueAttributeName
+from zeep.xsd.elements import Container, Element, Group, Sequence
 from zeep.xsd.valueobjects import CompoundValue
 
 
@@ -156,6 +153,13 @@ class ComplexType(Type):
 
         return self._value_class(*args, **kwargs)
 
+    def __str__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.signature())
+
+    @property
+    def name(self):
+        return self.__class__.__name__
+
     def properties(self):
         result = []
         if self._extension:
@@ -193,7 +197,10 @@ class ComplexType(Type):
                 result.extend(self._extension.elements)
 
         if self._element:
-            result.append(self._element)
+            if isinstance(self._element, Group):
+                result.append(self._element.child)
+            else:
+                result.append(self._element)
         return result
 
     @property
@@ -205,9 +212,6 @@ class ComplexType(Type):
             else:
                 result.append((element.name, element))
         return result
-
-    def iter_values(self):
-        pass
 
     def serialize(self, value):
         result = OrderedDict()
@@ -226,7 +230,6 @@ class ComplexType(Type):
         for attribute in self.attributes:
             attr_value = getattr(value, attribute.name, None)
             attribute.render(parent, attr_value)
-
 
         for element in self.elements:
             if isinstance(element, Element):
@@ -301,13 +304,6 @@ class ComplexType(Type):
             init_kwargs.update(result)
 
         return self(**init_kwargs)
-
-    @property
-    def name(self):
-        return self.__class__.__name__
-
-    def __str__(self):
-        return '%s(%s)' % (self.__class__.__name__, self.signature())
 
 
 class ListType(Type):
