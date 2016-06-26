@@ -103,14 +103,10 @@ def _process_signature(xsd_type, args, kwargs):
     # Process the named arguments (sequence/group/all/choice)
     for element in xsd_type.elements:
         values, kwargs = element.parse_kwargs(kwargs, None)
-        if isinstance(values, ChoiceItem):
-            values = values
-
-        else:
-            if values is not None:
-                for key, value in values.items():
-                    if key not in result:
-                        result[key] = value
+        if values is not None:
+            for key, value in values.items():
+                if key not in result:
+                    result[key] = value
 
     # Process the named arguments for attributes
     for attribute in xsd_type.attributes:
@@ -119,8 +115,13 @@ def _process_signature(xsd_type, args, kwargs):
 
     if kwargs:
         raise TypeError(
-            "__init__() got an unexpected keyword argument %r." % (
-                next(six.iterkeys(kwargs))))
+            (
+                "__init__() got an unexpected keyword argument %r. " +
+                "Valid keyword arguments are: %s"
+            ) % (
+                next(six.iterkeys(kwargs)),
+                ', '.join(item[0] for item in xsd_type.elements_all)
+            ))
 
     return result
 

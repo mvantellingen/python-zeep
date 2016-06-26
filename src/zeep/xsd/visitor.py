@@ -409,6 +409,8 @@ class SchemaVisitor(object):
 
             attributes = self._process_attributes(node, children)
             xsd_type = xsd_cls(element=element, attributes=attributes)
+        else:
+            xsd_type = xsd_elements.Any()
 
         if not is_anonymous:
             self.schema.register_type(qname, xsd_type)

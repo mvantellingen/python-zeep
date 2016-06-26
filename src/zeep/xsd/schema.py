@@ -170,6 +170,7 @@ class SchemaDocument(object):
 
     def register_type(self, name, value):
         assert not isinstance(value, type)
+        assert value is not None
 
         if isinstance(name, etree.QName):
             name = name.text

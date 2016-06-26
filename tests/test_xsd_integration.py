@@ -480,7 +480,6 @@ def test_custom_simple_type():
     assert_nodes_equal(expected, node)
 
 
-@pytest.mark.xfail
 def test_group():
     node = etree.fromstring("""
         <?xml version="1.0"?>

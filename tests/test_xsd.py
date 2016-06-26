@@ -224,7 +224,7 @@ def test_any_type_check():
         custom_type(_any_1=some_type)
 
 
-def test_choice():
+def test_choice_init():
     root = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'kies'),
         xsd.ComplexType(
@@ -242,7 +242,15 @@ def test_choice():
                     xsd.Element(
                         etree.QName('http://tests.python-zeep.org/', 'item_3'),
                         xsd.String()),
-                ], max_occurs=3),
+                    xsd.Sequence([
+                        xsd.Element(
+                            etree.QName('http://tests.python-zeep.org/', 'item_4_1'),
+                            xsd.String()),
+                        xsd.Element(
+                            etree.QName('http://tests.python-zeep.org/', 'item_4_2'),
+                            xsd.String()),
+                    ])
+                ], max_occurs=4),
                 xsd.Element(
                     etree.QName('http://tests.python-zeep.org/', 'post'),
                     xsd.String()),
@@ -250,7 +258,22 @@ def test_choice():
         )
     )
 
-    obj = root('foo', _value_1=[{'item_1': [20, 30]}, {'item_2': 'nyet'}])
+    obj = root(
+        'foo',
+        _value_1=[
+            {'item_1': 'value-1'},
+            {'item_2': 'value-2'},
+            {'item_1': 'value-3'},
+            {'item_4_1': 'value-4-1', 'item_4_2': 'value-4-2'},
+        ])
+
+    assert obj._value_1 == [
+        {'item_1': 'value-1'},
+        {'item_2': 'value-2'},
+        {'item_1': 'value-3'},
+        {'item_4_1': 'value-4-1', 'item_4_2': 'value-4-2'},
+    ]
+
     node = etree.Element('document')
     root.render(node, obj)
     assert etree.tostring(node)
@@ -259,9 +282,11 @@ def test_choice():
     <document>
       <ns0:kies xmlns:ns0="http://tests.python-zeep.org/">
         <ns0:pre>foo</ns0:pre>
-        <ns0:item_1>20</ns0:item_1>
-        <ns0:item_1>30</ns0:item_1>
-        <ns0:item_2>nyet</ns0:item_2>
+        <ns0:item_1>value-1</ns0:item_1>
+        <ns0:item_2>value-2</ns0:item_2>
+        <ns0:item_1>value-3</ns0:item_1>
+        <ns0:item_4_1>value-4-1</ns0:item_4_1>
+        <ns0:item_4_2>value-4-2</ns0:item_4_2>
         <ns0:post/>
       </ns0:kies>
     </document>

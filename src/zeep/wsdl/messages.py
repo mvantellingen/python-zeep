@@ -35,8 +35,8 @@ class ConcreteMessage(object):
         if as_output:
             if isinstance(self.body.type, xsd.ComplexType):
                 try:
-                    if len(self.body.type.properties()) == 1:
-                        return self.body.type.properties()[0].type.name
+                    if len(self.body.type.elements_all) == 1:
+                        return self.body.type.elements_all[0][1].type.name
                 except AttributeError:
                     return None
 
@@ -219,9 +219,6 @@ class DocumentMessage(SoapMessage):
         if len(children) == 1:
             item_name, item_element = children[0]
             retval = getattr(item, item_name)
-            if isinstance(item_element, xsd.Choice):
-                if item_element.max_occurs == 1:
-                    retval = retval[0]
             return retval
         return item
 

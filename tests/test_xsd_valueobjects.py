@@ -112,7 +112,7 @@ def test_choice():
     kwargs = {'item_2': 'value-2'}
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
-        '_value_1': valueobjects.ChoiceItem(1, {'item_2': 'value-2'})
+        '_value_1': {'item_2': 'value-2'}
     }
 
 
@@ -133,8 +133,8 @@ def test_choice_max_occurs_simple_interface():
     result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         '_value_1': [
-            valueobjects.ChoiceItem(0, {'item_1': 'foo'}),
-            valueobjects.ChoiceItem(1, {'item_2': 'bar'}),
+            {'item_1': 'foo'},
+            {'item_2': 'bar'},
         ]
     }
 
@@ -157,9 +157,9 @@ def test_choice_max_occurs():
     result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
         '_value_1': [
-            valueobjects.ChoiceItem(0, {'item_1': 'foo'}),
-            valueobjects.ChoiceItem(1, {'item_2': 'bar'}),
-            valueobjects.ChoiceItem(0, {'item_1': 'bla'}),
+            {'item_1': 'foo'},
+            {'item_2': 'bar'},
+            {'item_1': 'bla'},
         ]
     }
 
@@ -183,8 +183,8 @@ def test_choice_max_occurs_on_choice():
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
         '_value_1': [
-            valueobjects.ChoiceItem(0, {'item_1': ['foo', 'bar']}),
-            valueobjects.ChoiceItem(1, {'item_2': 'bla'})
+            {'item_1': ['foo', 'bar']},
+            {'item_2': 'bla'}
         ]
     }
 
@@ -204,7 +204,7 @@ def test_choice_mixed():
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
         'item_2': 'value-2',
-        '_value_1': valueobjects.ChoiceItem(0, {'item_1': 'value-1'})
+        '_value_1': {'item_1': 'value-1'}
     }
 
 
@@ -227,9 +227,7 @@ def test_choice_sequences_simple():
     kwargs = {'item_1': 'value-1', 'item_2': 'value-2'}
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
-        '_value_1': valueobjects.ChoiceItem(0, {
-            'item_1': 'value-1', 'item_2': 'value-2'
-        })
+        '_value_1': {'item_1': 'value-1', 'item_2': 'value-2'}
     }
 
 
@@ -308,8 +306,7 @@ def test_choice_sequences_optional_elms():
     kwargs = {'item_1': 'value-1'}
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
-        '_value_1': valueobjects.ChoiceItem(
-            0, {'item_1': 'value-1'})
+        '_value_1': {'item_1': 'value-1'}
     }
 
 
@@ -339,8 +336,8 @@ def test_choice_sequences_max_occur():
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
         '_value_1': [
-            valueobjects.ChoiceItem(0, {'item_1': 'value-1', 'item_2': 'value-2'}),
-            valueobjects.ChoiceItem(1, {'item_2': 'value-2', 'item_3': 'value-3'}),
+            {'item_1': 'value-1', 'item_2': 'value-2'},
+            {'item_2': 'value-2', 'item_3': 'value-3'},
         ]
     }
 
@@ -368,6 +365,6 @@ def test_choice_sequences_init_dict():
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
         '_value_1': [
-            valueobjects.ChoiceItem(0, {'item_1': 'value-1', 'item_2': 'value-2'})
+            {'item_1': 'value-1', 'item_2': 'value-2'}
         ]
     }

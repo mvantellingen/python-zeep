@@ -73,6 +73,9 @@ class Any(Base):
         else:
             value.xsd_type.render(parent, value.value)
 
+    def resolve(self):
+        return self
+
     def parse(self, xmlelement, schema):
         if self.process_contents == 'skip':
             return xmlelement
@@ -325,8 +328,29 @@ class Container(list):
 
     def render(self, parent, value):
         for name, element in self.elements:
-            element_value = getattr(value, name, None)
+            if isinstance(value, dict):
+                element_value = value.get(name)
+            else:
+                element_value = getattr(value, name, None)
             element.render(parent, element_value)
+
+    def accept(self, values):
+        required_keys = {
+            name for name, element in self.elements
+            if not element.is_optional
+        }
+        optional_keys = {
+            name for name, element in self.elements
+            if element.is_optional
+        }
+        values_keys = set(values.keys())
+
+        if (
+            values_keys <= (required_keys | optional_keys) and
+            required_keys <= values_keys
+        ):
+            return True
+        return False
 
     def parse_args(self, args):
         result = {}
@@ -399,32 +423,31 @@ class Choice(Container):
         return ':'.join(elm.name for elm in self.elements)
 
     def render(self, parent, value):
-        choice_metadata = value
-
         if self.max_occurs == 1:
-            choice_metadata = [choice_metadata]
+            value = [value]
 
-        for item in choice_metadata:
-            choice_element = self[item.index]
+        for item in value:
 
-            if isinstance(choice_element, Element):
-                choice_value = item.values.get(choice_element.name)
-                if choice_value is None and self.is_optional:
-                    return
+            # Find matching choice element
+            for name, element in self.elements:
 
-                if isinstance(choice_value, list):
-                    for item in choice_value:
-                        choice_element.render(parent, item)
+                if isinstance(element, Element):
+                    if name in item:
+                        choice_value = item.get(element.name)
+                        element.render(parent, choice_value)
+                        break
+
                 else:
-                    choice_element.render(parent, choice_value)
-            else:
-                for element_name, element in choice_element.elements:
-                    value = item.values.get(element_name, None)
-                    if isinstance(value, list):
-                        for item in value:
-                            element.render(parent, item)
+                    from zeep.xsd.valueobjects import CompoundValue
+                    if isinstance(item, CompoundValue):
+                        choice_value = getattr(item, name, item)
                     else:
-                        element.render(parent, value)
+                        choice_value = item[name] if name in item else item
+
+                    if element.accept(choice_value):
+                        element.render(parent, choice_value)
+                        break
+
 
     def signature(self):
 
@@ -480,8 +503,6 @@ class Choice(Container):
         """Processes the kwargs for this choice element.
 
         Returns a tuple containing value, kwags.
-        The value is a list with multiple `utils.ChoiceItem` objects if
-        maxOccurs > 1 or simply one object if maxOccurs = 1.
 
         This handles two distinct initialization methods:
 
@@ -499,7 +520,6 @@ class Choice(Container):
         """
         result = []
         kwargs = copy.copy(kwargs)
-        from zeep.xsd.valueobjects import ChoiceItem
 
         if name and name in kwargs:
             values = kwargs.pop(name)
@@ -507,33 +527,21 @@ class Choice(Container):
                 values = [values]
 
             for value in values:
-
-                options = []
-                for choice_index, (choice_name, choice) in enumerate(self.elements):
-
-                    sub_result, sub_kwargs = choice.parse_kwargs(value, choice_name)
-                    if sub_result is not None:
-
-                        if not isinstance(choice, Container):
-                            sub_result = {choice.name: sub_result}
-                        options.append(
-                            (
-                                len(sub_kwargs),
-                                ChoiceItem(choice_index, sub_result)
-                            )
-                        )
-
-                # Find the option which consumed most value items.
-                if options:
-                    options = sorted(options, key=operator.itemgetter(0))
-                    value = options[0][1]
-                    result.append(value)
-
+                for choice_name, choice in self.elements:
+                    if isinstance(choice, Container):
+                        choice_value = value[name] if name in value else value
+                        if choice.accept(choice_value):
+                            result.append(choice_value)
+                            break
+                    else:
+                        if choice_name in value:
+                            choice_value = value.get(choice.name)
+                            result.append({choice_name: choice_value})
+                            break
                 else:
                     raise TypeError(
                         "No complete xsd:Sequence found for the xsd:Choice %r.\n"
                         "The signature is: %s" % (name, self.signature()))
-
         else:
             # When choice elements are specified directly in the kwargs
             for i in max_occurs_iter(self.max_occurs):
@@ -544,10 +552,7 @@ class Choice(Container):
                     if sub_result is not None:
                         if not isinstance(choice, Container):
                             sub_result = {choice.name: sub_result}
-
-                        result.append(
-                            ChoiceItem(choice_index, sub_result)
-                        )
+                        result.append(sub_result)
                         break
                 else:
                     break
@@ -557,7 +562,7 @@ class Choice(Container):
             elif len(result) > 1:
                 raise TypeError("Number of items is larger then max_occurs")
             else:
-                result = ChoiceItem(0, {})
+                result = {}
 
         return result, kwargs
 
@@ -567,14 +572,11 @@ class Sequence(Container):
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = {}
-
         for name, element in self.elements:
             sub_result = element.parse_xmlelements(xmlelements, schema)
             result[name] = sub_result
-
             if not xmlelements:
                 break
-
         return result
 
     def parse(self, elements, schema):
