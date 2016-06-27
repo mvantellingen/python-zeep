@@ -262,7 +262,6 @@ def test_choice_sequences_no_match():
         assert False, "TypeError not raised"
 
 
-@pytest.mark.xfail
 def test_choice_sequences_no_match_nested():
     xsd_type = xsd.ComplexType(
         xsd.Sequence([

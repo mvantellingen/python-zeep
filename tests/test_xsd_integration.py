@@ -1077,7 +1077,6 @@ def test_choice_with_sequence_change():
     assert_nodes_equal(expected, node)
 
 
-@pytest.mark.xfail
 def test_choice_with_sequence_change_named():
     node = load_xml("""
         <?xml version="1.0"?>
@@ -1174,7 +1173,6 @@ def test_sequence_with_type():
     assert_nodes_equal(expected, node)
 
 
-@pytest.mark.xfail
 def test_sequence_in_sequence():
     node = load_xml("""
         <?xml version="1.0"?>
