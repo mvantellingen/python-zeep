@@ -409,12 +409,12 @@ def test_simple_content_extension(schema_visitor):
     schema.resolve()
 
     record_type = schema.get_type('{http://tests.python-zeep.org/}SubType1')
-    child_attrs = [child.name for child in record_type.properties()]
-    assert len(child_attrs) == 3
+    assert len(record_type.attributes) == 2
+    assert len(record_type.elements) == 1
 
     record_type = schema.get_type('{http://tests.python-zeep.org/}SubType2')
-    child_attrs = [child.name for child in record_type.properties()]
-    assert len(child_attrs) == 4
+    assert len(record_type.attributes) == 3
+    assert len(record_type.elements) == 1
 
 
 def test_list_type():

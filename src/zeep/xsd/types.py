@@ -160,24 +160,6 @@ class ComplexType(Type):
     def name(self):
         return self.__class__.__name__
 
-    def properties(self):
-        result = []
-        if self._extension:
-            if isinstance(self._extension, SimpleType):
-                result.append(Element(None, self._extension))
-            else:
-                result.extend(self._extension.properties())
-
-        # # Always all | group | choice | sequence. Unwrap it if maxOccurs == 1
-        if self._element:
-            # if isinstance(self._element, (All, Sequence)) and self._element.max_occurs == 1:
-            #     result.extend(self._element)
-            # else:
-            result.append(self._element)
-
-        result.extend(self._attributes)
-        return result
-
     @property
     def attributes(self):
         result = []
@@ -196,6 +178,7 @@ class ComplexType(Type):
             else:
                 result.extend(self._extension.elements)
 
+        # _element is one of All, Choice, Group, Sequence
         if self._element:
             if isinstance(self._element, Group):
                 result.append(self._element.child)
@@ -216,14 +199,14 @@ class ComplexType(Type):
     def serialize(self, value):
         result = OrderedDict()
 
-        for field in self.properties():
-            if isinstance(field, list):
-                for subfield in field:
+        for element in self.elements:
+            if isinstance(element, list):
+                for subfield in element:
                     field_value = getattr(value, subfield.name, None)
                     result[subfield.name] = subfield.serialize(field_value)
             else:
-                field_value = getattr(value, field.name, None)
-                result[field.name] = field.serialize(field_value)
+                field_value = getattr(value, element.name, None)
+                result[element.name] = element.serialize(field_value)
         return result
 
     def render(self, parent, value, xsd_type=None):
