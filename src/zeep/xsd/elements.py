@@ -244,10 +244,6 @@ class Attribute(Element):
         return self.type.pythonvalue(value)
 
 
-class ListElement(Element):
-    pass
-
-
 
 class Group(Base):
     """Groups a set of element declarations so that they can be incorporated as

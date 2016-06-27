@@ -15,7 +15,7 @@ def test_serialize():
                 xsd.Attribute(
                     etree.QName('http://tests.python-zeep.org/', 'attr'),
                     xsd.String()),
-                xsd.ListElement(
+                xsd.Element(
                     etree.QName('http://tests.python-zeep.org/', 'items'),
                     xsd.ComplexType(
                         xsd.Sequence([
