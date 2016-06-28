@@ -1,3 +1,8 @@
+import sys
+
+from six.moves import range
+
+
 class UniqueAttributeName(object):
     def __init__(self):
         self._num = 1
@@ -11,6 +16,6 @@ class UniqueAttributeName(object):
 def max_occurs_iter(max_occurs):
     assert max_occurs is not None
     if max_occurs == 'unbounded':
-        return enumerate(iter(int, 1))
+        return range(0, sys.maxint)
     else:
-        return enumerate(range(max_occurs))
+        return range(max_occurs)

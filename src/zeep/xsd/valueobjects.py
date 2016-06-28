@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 import six
 
-from zeep.xsd.elements import Container
+from zeep.xsd.elements import Choice, Container
 
 __all__ = ['AnyObject', 'CompoundValue']
 
@@ -22,12 +22,26 @@ class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
         # Set default values
-        for key, value in self._xsd_type.elements_all:
-            if value.max_occurs != 1:
-                value = []
-            else:
-                value = None
-            setattr(self, key, value)
+        for container_name, container in self._xsd_type.elements:
+            if isinstance(container, Choice):
+                continue
+
+            if isinstance(container, Container):
+                for name, element in container.elements:
+
+                    # XXX: element.default_value
+                    if element.max_occurs != 1:
+                        value = []
+                    else:
+                        value = None
+                    setattr(self, name, value)
+
+            elif container.name:
+                if container.max_occurs != 1:
+                    value = []
+                else:
+                    value = None
+                setattr(self, container.name, value)
 
         items = _process_signature(self._xsd_type, args, kwargs)
         fields = OrderedDict([(name, elm) for name, elm in self._xsd_type.elements_all])
@@ -39,30 +53,17 @@ class CompoundValue(object):
 
             setattr(self, key, value)
 
+    def __contains__(self, key):
+        return self.__dict__.__contains__(key)
+
     def __repr__(self):
         return pprint.pformat(self.__dict__, indent=4)
 
-
-class ChoiceItem(object):
-    def __init__(self, index, values):
-        self.index = index
-        self.values = values
-
-    def __repr__(self):
-        return '<%s(index=%r, values=%r)>' % (
-            self.__class__.__name__, self.index, self.values)
-
-    def __eq__(self, other):
-        return (
-            self.__class__ == other.__class__ and
-            self.__dict__ == other.__dict__)
-
     def __getitem__(self, key):
-
-        return self.values[key]
+        return self.__dict__[key]
 
     def __setitem__(self, key, value):
-        self.values[key] = value
+        self.__dict__[key] = value
 
 
 def _process_signature(xsd_type, args, kwargs):
@@ -85,7 +86,7 @@ def _process_signature(xsd_type, args, kwargs):
     num_args = len(args)
 
     # Process the positional arguments
-    for element in xsd_type.elements:
+    for element_name, element in xsd_type.elements:
         values, args = element.parse_args(args)
         if not values:
             break
@@ -101,13 +102,15 @@ def _process_signature(xsd_type, args, kwargs):
                 len(result), num_args))
 
     # Process the named arguments (sequence/group/all/choice)
-    for element in xsd_type.elements:
-        values, kwargs = element.parse_kwargs(kwargs, None)
+    for element_name, element in xsd_type.elements:
+        if element.accepts_multiple:
+            values, kwargs = element.parse_kwargs(kwargs, element_name)
+        else:
+            values, kwargs = element.parse_kwargs(kwargs, None)
         if values is not None:
             for key, value in values.items():
                 if key not in result:
                     result[key] = value
-
     # Process the named arguments for attributes
     for attribute in xsd_type.attributes:
         if attribute.name in kwargs:
@@ -117,12 +120,10 @@ def _process_signature(xsd_type, args, kwargs):
         raise TypeError(
             (
                 "__init__() got an unexpected keyword argument %r. " +
-                "Valid keyword arguments are: %s"
+                "Signature: (%s)"
             ) % (
-                next(six.iterkeys(kwargs)),
-                ', '.join(item[0] for item in xsd_type.elements_all)
+                next(six.iterkeys(kwargs)), xsd_type.signature()
             ))
-
     return result
 
 

@@ -2,7 +2,8 @@ from collections import OrderedDict
 
 import six
 
-from zeep.xsd.elements import Container, Element, Group, Sequence
+from zeep.xsd.elements import Element, Sequence
+from zeep.xsd.utils import UniqueAttributeName
 from zeep.xsd.valueobjects import CompoundValue
 
 
@@ -171,35 +172,34 @@ class ComplexType(Type):
     @property
     def elements(self):
         result = []
+        generator = UniqueAttributeName()
 
         if self._extension:
+            name = generator.get_name()
             if isinstance(self._extension, SimpleType):
-                result.append(Element('_value', self._extension))
+                result.append((name, Element(name, self._extension)))
             else:
                 result.extend(self._extension.elements)
 
         # _element is one of All, Choice, Group, Sequence
         if self._element:
-            if isinstance(self._element, Group):
-                result.append(self._element.child)
-            else:
-                result.append(self._element)
+            result.append((generator.get_name(), self._element))
         return result
 
     @property
     def elements_all(self):
         result = []
-        for element in self.elements:
-            if isinstance(element, Container):
-                result.extend(element.elements)
-            else:
+        for name, element in self.elements:
+            if isinstance(element, Element):
                 result.append((element.name, element))
+            else:
+                result.extend(element.elements_all)
         return result
 
     def serialize(self, value):
         result = OrderedDict()
 
-        for element in self.elements:
+        for name, element in self.elements:
             if isinstance(element, list):
                 for subfield in element:
                     field_value = getattr(value, subfield.name, None)
@@ -214,9 +214,9 @@ class ComplexType(Type):
             attr_value = getattr(value, attribute.name, None)
             attribute.render(parent, attr_value)
 
-        for element in self.elements:
+        for name, element in self.elements:
             if isinstance(element, Element):
-                element.type.render(parent, value._value)
+                element.type.render(parent, getattr(value, name))
             else:
                 element.render(parent, value)
 
@@ -248,7 +248,7 @@ class ComplexType(Type):
 
     def signature(self):
         parts = []
-        for element in self.elements:
+        for name, element in self.elements:
 
             # http://schemas.xmlsoap.org/soap/encoding/ contains cyclic type
             if isinstance(element, Element) and element.type == self:
@@ -282,8 +282,8 @@ class ComplexType(Type):
 
         # Parse elements
         children = xmlelement.getchildren()
-        for element in self.elements:
-            result = element.parse_xmlelements(children, schema)
+        for name, element in self.elements:
+            result = element.parse_xmlelements(children, schema, name)
             init_kwargs.update(result)
 
         return self(**init_kwargs)

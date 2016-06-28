@@ -294,7 +294,7 @@ def test_choice_init():
     )
 
     obj = root(
-        'foo',
+        pre='foo',
         _value_1=[
             {'item_1': 'value-1'},
             {'item_2': 'value-2'},
@@ -372,7 +372,6 @@ def test_choice_determinst():
     assert_nodes_equal(expected, node)
 
 
-@pytest.mark.xfail
 def test_sequence():
     root = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'container'),
@@ -400,7 +399,7 @@ def test_sequence():
         )
     )
     root(
-        _sequence_1=[
+        _value_1=[
             {
                 'item_1': 'foo',
                 'item_2': 'bar',
@@ -413,3 +412,56 @@ def test_sequence():
         item_3='foo',
         item_4='bar',
     )
+
+
+def test_mixed_choice():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                    xsd.String()),
+                xsd.Sequence([
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_3'),
+                        xsd.String()),
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_4'),
+                        xsd.String()),
+                ]),
+                xsd.Choice([
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_5'),
+                        xsd.String()),
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_6'),
+                        xsd.String()),
+                    xsd.Sequence([
+                        xsd.Element(
+                            etree.QName('http://tests.python-zeep.org/', 'item_7'),
+                            xsd.String()),
+                        xsd.Element(
+                            etree.QName('http://tests.python-zeep.org/', 'item_8'),
+                            xsd.String()),
+                    ])
+                ])
+            ])
+        ))
+
+    item = custom_type(
+        item_1='item-1',
+        item_2='item-2',
+        item_3='item-3',
+        item_4='item-4',
+        _value_1={'item_7': 'item-7', 'item_8': 'item-8'}
+    )
+
+    assert item.item_1 == 'item-1'
+    assert item.item_2 == 'item-2'
+    assert item.item_3 == 'item-3'
+    assert item.item_4 == 'item-4'
+    assert item._value_1 == {'item_7': 'item-7', 'item_8': 'item-8'}

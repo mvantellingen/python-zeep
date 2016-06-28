@@ -349,11 +349,11 @@ def test_complex_content_extension(schema_visitor):
 
     record_type = schema.get_type('{http://tests.python-zeep.org/}SubType1')
     assert len(record_type.attributes) == 2
-    assert len(record_type.elements[0]) == 1
+    assert len(record_type.elements) == 1
 
     record_type = schema.get_type('{http://tests.python-zeep.org/}SubType2')
     assert len(record_type.attributes) == 3
-    assert len(record_type.elements[0]) == 1
+    assert len(record_type.elements) == 1
 
     xsd_element = schema.get_element('{http://tests.python-zeep.org/}test')
     xsd_type = schema.get_type('{http://tests.python-zeep.org/}SubType2')

@@ -1,4 +1,3 @@
-import pytest
 import six
 
 from zeep import xsd
@@ -127,8 +126,7 @@ def test_choice_max_occurs_simple_interface():
     )
     args = tuple([])
     kwargs = {
-        'item_1': 'foo',
-        'item_2': 'bar',
+        '_value_1': [{'item_1': 'foo'}, {'item_2': 'bar'}]
     }
     result = valueobjects._process_signature(fields, args, kwargs)
     assert result == {
@@ -231,7 +229,6 @@ def test_choice_sequences_simple():
     }
 
 
-@pytest.mark.xfail
 def test_choice_sequences_no_match():
     xsd_type = xsd.ComplexType(
         xsd.Sequence([
@@ -253,11 +250,10 @@ def test_choice_sequences_no_match():
     try:
         valueobjects._process_signature(xsd_type, args, kwargs)
     except TypeError as exc:
-        raise
         assert six.text_type(exc) == (
-            "No complete xsd:Choice '_choice_1'.\n" +
-            "The signature is: _choice_1: {item_1: xsd:string, item_2: xsd:string} " +
-            "| {item_3: xsd:string, item_4: xsd:string}")
+            "__init__() got an unexpected keyword argument 'item_3'. " +
+            "Signature: (_value_1: ({item_1: xsd:string, item_2: xsd:string} | {item_3: xsd:string, item_4: xsd:string}))"  # noqa
+        )
     else:
         assert False, "TypeError not raised"
 
@@ -280,7 +276,7 @@ def test_choice_sequences_no_match_nested():
     except TypeError as exc:
         assert six.text_type(exc) == (
             "No complete xsd:Sequence found for the xsd:Choice '_value_1'.\n" +
-            "The signature is: _value_1: {item_1: xsd:string, item_2: xsd:string}")
+            "The signature is: ({item_1: xsd:string, item_2: xsd:string})")
     else:
         assert False, "TypeError not raised"
 
@@ -302,7 +298,7 @@ def test_choice_sequences_optional_elms():
         ])
     )
     args = tuple([])
-    kwargs = {'item_1': 'value-1'}
+    kwargs = {'_value_1': {'item_1': 'value-1'}}
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
         '_value_1': {'item_1': 'value-1'}

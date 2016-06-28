@@ -439,11 +439,11 @@ def test_document_message_deserializer_choice():
         ('body', definitions.MessagePart(
             element=xsd.Element(
                 etree.QName(namespace, 'response'),
-                xsd.ComplexType([
+                xsd.ComplexType(
                     xsd.Choice([
                         xsd.Element(etree.QName(namespace, 'return'), xsd.String()),
                     ])
-                ])
+                )
             ),
             type=None))
         ])
@@ -455,7 +455,7 @@ def test_document_message_deserializer_choice():
     }
 
     result = msg.deserialize(response_body)
-    assert result == {'return': 'foobar'}
+    assert result == 'foobar'
 
 
 ##

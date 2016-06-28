@@ -15,6 +15,10 @@ class Base(object):
     def is_optional(self):
         return self.min_occurs == 0
 
+    @property
+    def accepts_multiple(self):
+        return self.max_occurs != 1
+
     def signature(self):
         return ''
 
@@ -34,8 +38,8 @@ class Base(object):
 
         if name in kwargs:
             value = kwargs.pop(name)
-
-        return value, kwargs
+            return {name: value}, kwargs
+        return {}, kwargs
 
 
 class Any(Base):
@@ -244,7 +248,6 @@ class Attribute(Element):
         return self.type.pythonvalue(value)
 
 
-
 class Group(Base):
     """Groups a set of element declarations so that they can be incorporated as
     a group into complex type definitions.
@@ -262,6 +265,25 @@ class Group(Base):
     def elements(self):
         return self.child.elements
 
+    @property
+    def elements_all(self):
+        if self.max_occurs != 1:
+            return [('_value', self.child)]
+        return self.child.elements_all
+
+    def parse_args(self, args):
+        return self.child.parse_args(args)
+
+    def parse_kwargs(self, kwargs, name=None):
+        if self.max_occurs != 1:
+            if '_value' in kwargs:
+                item_kwargs = kwargs.pop('_value')
+                return self.child.parse_kwargs(item_kwargs)
+        return self.child.parse_kwargs(kwargs)
+
+    def render(self, *args, **kwargs):
+        return self.child.render(*args, **kwargs)
+
     def __iter__(self, *args, **kwargs):
         for item in self.child:
             yield item
@@ -273,10 +295,22 @@ class Group(Base):
     def signature(self):
         return ''
 
+    def parse_xmlelements(self, xmlelements, schema, name=None):
+        result = []
+
+        for i in range(1):
+            result.append(
+                self.child.parse_xmlelements(xmlelements, schema, name)
+            )
+        if self.max_occurs == 1 and result:
+            return result[0]
+        return {name: result}
+
+
 GroupElement = Group
 
 
-class Container(list):
+class Container(Base, list):
     name = None
 
     def __init__(self, elements=None, min_occurs=1, max_occurs=1):
@@ -292,14 +326,42 @@ class Container(list):
     def elements(self):
         """List of tuples containing the element name and the element"""
         result = []
-        generator = UniqueAttributeName()
-        for elm in self:
-            if isinstance(elm, Group):
+        for name, elm in self.elements_nested:
+            if name is None:
                 result.extend(elm.elements)
             else:
-                name = elm.name if elm.name else generator.get_name()
                 result.append((name, elm))
         return result
+
+    @property
+    def elements_nested(self):
+        """List of tuples containing the element name and the element"""
+        result = []
+        generator = UniqueAttributeName()
+        for elm in self:
+            if isinstance(elm, (All, Group, Sequence)):
+                if elm.accepts_multiple:
+                    result.append((generator.get_name(), elm))
+                else:
+                    result.append((None, elm))
+            elif isinstance(elm, (Any, Choice)):
+                result.append((generator.get_name(), elm))
+            else:
+                result.append((elm.name, elm))
+        return result
+
+    @property
+    def elements_all(self):
+        result = []
+        for element in self.elements:
+            if isinstance(element, Container) and self.max_occurs == 1:
+                result.extend(element.elements)
+            else:
+                result.append(element)
+
+        if self.max_occurs != 1:
+            return [('_value', self)]
+        return self.elements
 
     def __repr__(self):
         return '<%s(%s)>' % (
@@ -310,12 +372,17 @@ class Container(list):
         return self.min_occurs == 0
 
     def signature(self):
-        part = ', '.join([
-            '%s: %s' % (name, element.signature())
-            for name, element in self.elements
-        ])
+        parts = []
+        for name, element in self.elements_nested:
+            if name:
+                parts.append('%s: %s' % (name, element.signature()))
+            elif isinstance(element, Container):
+                parts.append('%s' % (element.signature()))
+            else:
+                parts.append('%s: %s' % (name, element.signature()))
+        part = ', '.join(parts)
 
-        if self.max_occurs != 1:
+        if self.accepts_multiple:
             return '[%s]' % (part)
         return part
 
@@ -330,12 +397,24 @@ class Container(list):
         return self
 
     def render(self, parent, value):
-        for name, element in self.elements:
-            if isinstance(value, dict):
-                element_value = value.get(name)
-            else:
-                element_value = getattr(value, name, None)
-            element.render(parent, element_value)
+        if not isinstance(value, list):
+            values = [value]
+        else:
+            values = value
+
+        for i, value in zip(max_occurs_iter(self.max_occurs), values):
+            for name, element in self.elements_nested:
+
+                if name:
+                    if isinstance(value, dict):
+                        element_value = value.get(name)
+                    else:
+                        element_value = getattr(value, name, None)
+                else:
+                    element_value = value
+
+                if element_value is not None or not element.is_optional:
+                    element.render(parent, element_value)
 
     def accept(self, values):
         required_keys = {
@@ -346,7 +425,13 @@ class Container(list):
             name for name, element in self.elements
             if element.is_optional
         }
-        values_keys = set(values.keys())
+
+        from zeep.xsd.valueobjects import CompoundValue
+        if isinstance(values, CompoundValue):
+            values_keys = set(values.__dict__.keys())
+            values_keys.remove('_xsd_elm')
+        else:
+            values_keys = set(values.keys())
 
         if (
             values_keys <= (required_keys | optional_keys) and
@@ -371,25 +456,54 @@ class Container(list):
         return result, args
 
     def parse_kwargs(self, kwargs, name=None):
-        result = {}
+        """Apply the given kwarg to the element.
+
+        Returns a tuple with two dictionaries, the first one being the result
+        and the second one the unparsed kwargs.
+
+        """
+        if self.accepts_multiple:
+            assert name
 
         if name and name in kwargs:
-            item_kwargs = kwargs.pop(name)
 
-            for item_name, element in self.elements:
-                sub_result, item_kwargs = element.parse_kwargs(item_kwargs, item_name)
-                if sub_result is not None:
-                    result[item_name] = sub_result
+            # Make sure we have a list, lame lame
+            item_kwargs = kwargs.get(name)
+            if not isinstance(item_kwargs, list):
+                item_kwargs = [item_kwargs]
 
-            result = {name: result}
+            result = []
+            for i, item_value in zip(max_occurs_iter(self.max_occurs), item_kwargs):
+                subresult = {}
+                for item_name, element in self.elements:
+                    value, item_value = element.parse_kwargs(item_value, item_name)
+                    if value is not None:
+                        subresult.update(value)
+
+                result.append(subresult)
+
+            if self.max_occurs == 1:
+                result = result[0] if result else None
+            else:
+                result = {name: result}
+
+            # All items consumed
+            if not filter(None, item_kwargs):
+                del kwargs[name]
+
+            return result, kwargs
+
         else:
-
-            for name, element in self.elements:
-                sub_result, kwargs = element.parse_kwargs(kwargs, name)
+            result = {}
+            for elm_name, element in self.elements:
+                sub_result, kwargs = element.parse_kwargs(kwargs, elm_name)
                 if sub_result is not None:
-                    result[name] = sub_result
+                    result.update(sub_result)
 
-        return result, kwargs
+            if name:
+                result = {name: result}
+
+            return result, kwargs
 
 
 class All(Container):
@@ -421,84 +535,82 @@ class Choice(Container):
     def is_optional(self):
         return True
 
-    def key(self):
-        # XXX Any elemetns?
-        return ':'.join(elm.name for elm in self.elements)
-
     def render(self, parent, value):
         if self.max_occurs == 1:
             value = [value]
+        from zeep.xsd.valueobjects import CompoundValue
 
         for item in value:
 
             # Find matching choice element
-            for name, element in self.elements:
-
+            for name, element in self.elements_nested:
                 if isinstance(element, Element):
-                    if name in item:
-                        choice_value = item.get(element.name)
+                    if element.name in item:
+                        if isinstance(item, CompoundValue):
+                            choice_value = getattr(item, element.name, item)
+                        else:
+                            choice_value = item.get(element.name)
                         element.render(parent, choice_value)
                         break
-
                 else:
-                    from zeep.xsd.valueobjects import CompoundValue
-                    if isinstance(item, CompoundValue):
-                        choice_value = getattr(item, name, item)
+                    if name is not None:
+                        if isinstance(item, CompoundValue):
+                            choice_value = getattr(item, name, item)
+                        else:
+                            choice_value = item[name] if name in item else item
                     else:
-                        choice_value = item[name] if name in item else item
+                        choice_value = item
 
                     if element.accept(choice_value):
                         element.render(parent, choice_value)
                         break
 
-
     def signature(self):
-
         parts = []
-        for name, element in self.elements:
+        for name, element in self.elements_nested:
             if isinstance(element, Container):
-                parts.append('%s: {%s}' % (name, element.signature()))
+                parts.append('{%s}' % (element.signature()))
             else:
                 parts.append('{%s: %s}' % (name, element.signature()))
-        part = ' | '.join(parts)
-
+        part = '(%s)' % ' | '.join(parts)
         if self.max_occurs != 1:
-            return '[%s]' % (part)
+            return '%s[]' % (part)
         return part
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
-        """
-
-        Sequence.parse_xmlelements() -> [{key: val, 'bar': 'dal'}]
-        Choice.parse_xmlelements() -> [{key: val, 'bar': 'dal'}]
-        Element.parse_xmlelements() -> [val1, val2, val3]
-
-
-        """
         result = []
 
-        local_xmlelements = copy.copy(xmlelements)
+        for i in max_occurs_iter(self.max_occurs):
+            for node in list(xmlelements):
 
-        for node in local_xmlelements:
+                # Choose out of multiple
+                options = []
+                for name, element in self.elements_nested:
 
-            # Choose out of multiple
-            options = []
-            for name, element in self.elements:
-                sub_result = element.parse_xmlelements(local_xmlelements, schema)
+                    local_xmlelements = copy.copy(xmlelements)
+                    sub_result = element.parse_xmlelements(local_xmlelements, schema)
 
-                if isinstance(element, Container):
-
-                    if element.max_occurs != 1:
+                    if isinstance(element, Container):
+                        if element.accepts_multiple:
+                            sub_result = {name: sub_result}
+                    else:
                         sub_result = {name: sub_result}
+
+                    num_consumed = len(xmlelements) - len(local_xmlelements)
+                    if num_consumed:
+                        options.append((num_consumed, sub_result))
+
+                # Sort on least left
+                options = sorted(options, key=operator.itemgetter(0))[::-1]
+                if options:
+                    result.append(options[0][1])
+                    for i in range(options[0][0]):
+                        xmlelements.pop(0)
                 else:
-                    sub_result = {name: sub_result}
+                    break
 
-                options.append((len(local_xmlelements), sub_result))
-
-            # Sort on least left
-            options = sorted(options, key=operator.itemgetter(0))
-            if options:
-                result.append(options[0][1])
+        if not self.accepts_multiple:
+            result = result[0] if result else None
 
         return result
 
@@ -530,43 +642,43 @@ class Choice(Container):
                 values = [values]
 
             for value in values:
-                for choice_name, choice in self.elements:
-                    if isinstance(choice, Container):
+                for element in self:
+
+                    # TODO: Use most greedy choice instead of first matching
+                    if isinstance(element, Container):
                         choice_value = value[name] if name in value else value
-                        if choice.accept(choice_value):
+                        if element.accept(choice_value):
                             result.append(choice_value)
                             break
                     else:
-                        if choice_name in value:
-                            choice_value = value.get(choice.name)
-                            result.append({choice_name: choice_value})
+                        if element.name in value:
+                            choice_value = value.get(element.name)
+                            result.append({element.name: choice_value})
                             break
                 else:
                     raise TypeError(
                         "No complete xsd:Sequence found for the xsd:Choice %r.\n"
                         "The signature is: %s" % (name, self.signature()))
+
+            if not self.accepts_multiple:
+                result = result[0] if result else None
         else:
+            # Direct use-case isn't supported when maxOccurs > 1
+            if self.accepts_multiple:
+                return {}, kwargs
+
             # When choice elements are specified directly in the kwargs
-            for i in max_occurs_iter(self.max_occurs):
-
-                for choice_index, (name, choice) in enumerate(self.elements):
-
-                    sub_result, kwargs = choice.parse_kwargs(kwargs, name)
-                    if sub_result is not None:
-                        if not isinstance(choice, Container):
-                            sub_result = {choice.name: sub_result}
-                        result.append(sub_result)
-                        break
-                else:
+            org_kwargs = kwargs
+            for choice in self:
+                result, kwargs = choice.parse_kwargs(org_kwargs)
+                if result:
                     break
-        if self.max_occurs == 1:
-            if len(result) == 1:
-                result = result[0]
-            elif len(result) > 1:
-                raise TypeError("Number of items is larger then max_occurs")
             else:
                 result = {}
+                kwargs = org_kwargs
 
+        if name:
+            result = {name: result}
         return result, kwargs
 
 
@@ -574,13 +686,19 @@ class Sequence(Container):
     _require_keyword_arg = False
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
-        result = {}
-        for name, element in self.elements:
-            sub_result = element.parse_xmlelements(xmlelements, schema)
-            result[name] = sub_result
-            if not xmlelements:
-                break
-        return result
+        result = []
+        for item in max_occurs_iter(self.max_occurs):
+            item_result = {}
+            for elm_name, element in self.elements:
+                item_result[elm_name] = element.parse_xmlelements(
+                    xmlelements, schema)
+                if not xmlelements:
+                    break
+            result.append(item_result)
+
+        if self.max_occurs == 1:
+            return result[0] if result else None
+        return {name: result}
 
     def parse(self, elements, schema):
         result = {}

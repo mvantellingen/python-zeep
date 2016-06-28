@@ -7,7 +7,7 @@ from zeep.xsd.context import ParserContext
 from zeep.xsd.schema import SchemaDocument
 
 
-def test_parse_basic():
+def test_sequence_parse_basic():
     custom_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'authentication'),
         xsd.ComplexType(
@@ -31,7 +31,7 @@ def test_parse_basic():
     assert obj.item_2 == 'bar'
 
 
-def test_parse_basic_with_attrs():
+def test_sequence_parse_basic_with_attrs():
     custom_element = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'authentication'),
         xsd.ComplexType(
@@ -61,7 +61,7 @@ def test_parse_basic_with_attrs():
     assert obj.attr_1 == 'x'
 
 
-def test_parse_with_optional():
+def test_sequence_parse_with_optional():
     custom_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'container'),
         xsd.ComplexType(
@@ -104,7 +104,7 @@ def test_parse_with_optional():
     assert obj.item_4 is None
 
 
-def test_parse_regression():
+def test_sequence_parse_regression():
     schema_doc = load_xml(b"""
         <?xml version="1.0" encoding="utf-8"?>
         <xsd:schema xmlns:tns="http://tests.python-zeep.org/attr"
@@ -146,7 +146,7 @@ def test_parse_regression():
     assert response.Result.id == 2
 
 
-def test_parse_anytype():
+def test_sequence_parse_anytype():
     custom_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'container'),
         xsd.ComplexType(
@@ -165,7 +165,7 @@ def test_parse_anytype():
     assert obj.item_1 == 'foo'
 
 
-def test_parse_anytype_obj():
+def test_sequence_parse_anytype_obj():
     value_type = xsd.ComplexType(
         xsd.Sequence([
             xsd.Element(
@@ -207,8 +207,7 @@ def test_parse_anytype_obj():
     assert obj.item_1.value == 100
 
 
-@pytest.mark.xfail
-def test_parse_choice():
+def test_sequence_parse_choice():
     schema_doc = load_xml(b"""
         <?xml version="1.0" encoding="utf-8"?>
         <schema
@@ -245,15 +244,11 @@ def test_parse_choice():
     schema = xsd.Schema(schema_doc)
     elm = schema.get_element('{http://tests.python-zeep.org/tst}container')
     result = elm.parse(xml, schema)
-    assert result.item_1 == 'blabla'
-    assert result._value_1 == [
-        {'item_1': 'blabla'}
-    ]
+    assert result._value_1 == {'item_1': 'blabla'}
     assert result.item_3 == 'haha'
 
 
-@pytest.mark.xfail
-def test_parse_choice_max_occurs():
+def test_sequence_parse_choice_max_occurs():
     schema_doc = load_xml(b"""
         <?xml version="1.0" encoding="utf-8"?>
         <schema
@@ -301,8 +296,7 @@ def test_parse_choice_max_occurs():
     assert result.item_3 == 'haha'
 
 
-@pytest.mark.xfail
-def test_parse_choice_sequence_max_occurs():
+def test_sequence_parse_choice_sequence_max_occurs():
     schema_doc = load_xml(b"""
         <?xml version="1.0" encoding="utf-8"?>
         <schema
@@ -354,7 +348,7 @@ def test_parse_choice_sequence_max_occurs():
     assert result.item_4 == 'text-4'
 
 
-def test_parse_anytype_regression_17():
+def test_sequence_parse_anytype_regression_17():
     schema_doc = load_xml(b"""
         <?xml version="1.0" encoding="utf-8"?>
         <schema
@@ -412,3 +406,129 @@ def test_parse_anytype_regression_17():
     )
     result = elm.parse(xml, schema)
     assert result.getCustomFieldReturn.value.content == 'Test Solution'
+
+
+def test_sequence_min_occurs_2():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                    xsd.String()),
+            ], min_occurs=2, max_occurs=2)
+        ))
+
+    # INIT
+    elm = custom_type(_value_1=[
+        {'item_1': 'foo-1', 'item_2': 'bar-1'},
+        {'item_1': 'foo-2', 'item_2': 'bar-2'},
+    ])
+
+    assert elm._value_1 == [
+        {'item_1': 'foo-1', 'item_2': 'bar-1'},
+        {'item_1': 'foo-2', 'item_2': 'bar-2'},
+    ]
+
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>bar</ns0:item_2>
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>bar</ns0:item_2>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj._value_1 == [
+        {
+            'item_1': 'foo',
+            'item_2': 'bar',
+        },
+        {
+            'item_1': 'foo',
+            'item_2': 'bar',
+        },
+    ]
+
+
+def test_all_basic():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.All([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                    xsd.String()),
+            ])
+        ))
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_2>bar</ns0:item_2>
+          <ns0:item_1>foo</ns0:item_1>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj.item_1 == 'foo'
+    assert obj.item_2 == 'bar'
+
+
+@pytest.mark.xfail
+def test_group_optional():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Group(
+                etree.QName('http://tests.python-zeep.org/', 'foobar'),
+                xsd.Sequence([
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                        xsd.String()),
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                        xsd.String()),
+                ]),
+                min_occurs=1)
+        ))
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj.item_1 is None
+    assert obj.item_2 is None
+
+
+@pytest.mark.xfail
+def test_group_min_occurs_2():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Group(
+                etree.QName('http://tests.python-zeep.org/', 'foobar'),
+                xsd.Sequence([
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                        xsd.String()),
+                    xsd.Element(
+                        etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                        xsd.String()),
+                ]),
+                min_occurs=2, max_occurs=2)
+        ))
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>bar</ns0:item_2>
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>bar</ns0:item_2>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj.item_1 is None
+    assert obj.item_2 is None

@@ -1,6 +1,5 @@
 import datetime
 
-import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml
@@ -521,7 +520,6 @@ def test_group():
     assert_nodes_equal(expected, node)
 
 
-@pytest.mark.xfail
 def test_group_for_type():
     node = etree.fromstring("""
         <?xml version="1.0"?>
@@ -901,7 +899,7 @@ def test_complex_with_simple():
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
-@pytest.mark.xfail
+
 def test_choice_element():
     node = etree.fromstring("""
         <?xml version="1.0"?>
@@ -1000,7 +998,7 @@ def test_choice_nested_element():
     address_type = schema.get_element('ns0:Address')
 
     assert address_type.type.signature() == (
-        'something: xsd:string, _value_1: {item_1: xsd:string} | {item_2: xsd:string} | {item_3: xsd:string}')  # noqa
+        'something: xsd:string, _value_1: ({item_1: xsd:string} | {item_2: xsd:string} | {item_3: xsd:string})')  # noqa
     address_type(item_1="foo")
 
 
@@ -1027,7 +1025,7 @@ def test_choice_with_sequence():
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:ElementName')
     assert element.type.signature() == (
-        '_value_1: {UniqueElement-1: xsd:string, UniqueElement-2: xsd:string}')
+        '({UniqueElement-1: xsd:string, UniqueElement-2: xsd:string})')
 
     element(**{'UniqueElement-1': 'foo', 'UniqueElement-2': 'bar'})
 
@@ -1047,6 +1045,11 @@ def test_choice_with_sequence_change():
                     <xsd:element name="UniqueElement-1" type="xsd:string"/>
                     <xsd:element name="UniqueElement-2" type="xsd:string"/>
                 </xsd:sequence>
+                <xsd:sequence>
+                    <xsd:element name="UniqueElement-3" type="xsd:string"/>
+                    <xsd:element name="UniqueElement-4" type="xsd:string"/>
+                </xsd:sequence>
+                <xsd:element name="nee" type="xsd:string"/>
               </xsd:choice>
             </xsd:complexType>
           </xsd:element>
@@ -1056,13 +1059,13 @@ def test_choice_with_sequence_change():
     element = schema.get_element('ns0:ElementName')
 
     elm = element(
-        _value_1={'UniqueElement-1': 'foo', 'UniqueElement-2': 'bar'}
+        **{'UniqueElement-1': 'foo', 'UniqueElement-2': 'bar'}
     )
-    assert elm._value_1['UniqueElement-1'] == 'foo'
-    assert elm._value_1['UniqueElement-2'] == 'bar'
+    assert elm['UniqueElement-1'] == 'foo'
+    assert elm['UniqueElement-2'] == 'bar'
 
-    elm._value_1['UniqueElement-1'] = 'bla-1'
-    elm._value_1['UniqueElement-2'] = 'bla-2'
+    elm['UniqueElement-1'] = 'bla-1'
+    elm['UniqueElement-2'] = 'bla-2'
 
     expected = """
       <document>
@@ -1092,6 +1095,7 @@ def test_choice_with_sequence_change_named():
                     <xsd:element name="UniqueElement-1" type="xsd:string"/>
                     <xsd:element name="UniqueElement-2" type="xsd:string"/>
                 </xsd:sequence>
+                <xsd:element name="UniqueElement-3" type="xsd:string"/>
               </xsd:choice>
             </xsd:complexType>
           </xsd:element>
@@ -1099,16 +1103,17 @@ def test_choice_with_sequence_change_named():
     """)
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:ElementName')
-
     elm = element(
-        _value_1={'UniqueElement-1': 'foo', 'UniqueElement-2': 'bar'}
+        **{'UniqueElement-3': 'foo'}
     )
+    elm = element(
+        **{'UniqueElement-1': 'foo', 'UniqueElement-2': 'bar'}
+    )
+    assert elm['UniqueElement-1'] == 'foo'
+    assert elm['UniqueElement-2'] == 'bar'
 
-    assert elm._value_1['UniqueElement-1'] == 'foo'
-    assert elm._value_1['UniqueElement-2'] == 'bar'
-
-    elm._value_1['UniqueElement-1'] = 'bla-1'
-    elm._value_1['UniqueElement-2'] = 'bla-2'
+    elm['UniqueElement-1'] = 'bla-1'
+    elm['UniqueElement-2'] = 'bla-2'
 
     expected = """
       <document>
@@ -1213,7 +1218,6 @@ def test_sequence_in_sequence():
     assert_nodes_equal(expected, node)
 
 
-@pytest.mark.xfail
 def test_sequence_in_sequence_many():
     node = load_xml("""
         <?xml version="1.0"?>
@@ -1238,10 +1242,15 @@ def test_sequence_in_sequence_many():
     """)
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:container')
-    value = element([
+    value = element(_value_1=[
         {'item_1': "value-1-1", 'item_2': "value-1-2"},
         {'item_1': "value-2-1", 'item_2': "value-2-2"},
     ])
+
+    assert value._value_1 == [
+        {'item_1': "value-1-1", 'item_2': "value-1-2"},
+        {'item_1': "value-2-1", 'item_2': "value-2-2"},
+    ]
 
     node = etree.Element('document')
     element.render(node, value)
