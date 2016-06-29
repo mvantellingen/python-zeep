@@ -488,7 +488,7 @@ class Container(Base, list):
                 result = {name: result}
 
             # All items consumed
-            if not filter(None, item_kwargs):
+            if not any(filter(None, item_kwargs)):
                 del kwargs[name]
 
             return result, kwargs

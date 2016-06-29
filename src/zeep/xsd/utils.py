@@ -16,6 +16,6 @@ class UniqueAttributeName(object):
 def max_occurs_iter(max_occurs):
     assert max_occurs is not None
     if max_occurs == 'unbounded':
-        return range(0, sys.maxint)
+        return range(0, 2**32)
     else:
         return range(max_occurs)
