@@ -263,23 +263,36 @@ class Group(Base):
 
     @property
     def elements(self):
+        if self.accepts_multiple:
+            return [('_value_1', self.child)]
         return self.child.elements
 
     @property
     def elements_all(self):
-        if self.max_occurs != 1:
-            return [('_value', self.child)]
+        if self.accepts_multiple:
+            return [('_value_1', self.child)]
         return self.child.elements_all
 
     def parse_args(self, args):
         return self.child.parse_args(args)
 
     def parse_kwargs(self, kwargs, name=None):
-        if self.max_occurs != 1:
-            if '_value' in kwargs:
-                item_kwargs = kwargs.pop('_value')
-                return self.child.parse_kwargs(item_kwargs)
-        return self.child.parse_kwargs(kwargs)
+        if self.accepts_multiple:
+            if name not in kwargs:
+                return {}, kwargs
+
+            item_kwargs = kwargs.pop(name)
+            result = []
+            sub_name = '_value_1' if self.child.accepts_multiple else None
+            for i, sub_kwargs in zip(max_occurs_iter(self.max_occurs), item_kwargs):
+                subresult, res_kwargs = self.child.parse_kwargs(sub_kwargs, sub_name)
+                if subresult:
+                    result.append(subresult)
+            if result:
+                result = {name: result}
+        else:
+            result, kwargs = self.child.parse_kwargs(kwargs, name)
+        return result, kwargs
 
     def render(self, *args, **kwargs):
         return self.child.render(*args, **kwargs)
@@ -298,7 +311,7 @@ class Group(Base):
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
 
-        for i in range(1):
+        for i in max_occurs_iter(self.max_occurs):
             result.append(
                 self.child.parse_xmlelements(xmlelements, schema, name)
             )
