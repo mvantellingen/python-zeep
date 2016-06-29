@@ -2,6 +2,7 @@ import base64
 import datetime
 import errno
 import os
+import pytz
 import sqlite3
 
 import appdirs
@@ -47,9 +48,9 @@ class SqliteCache(object):
         if rows:
             created, data = rows[0]
             offset = (
-                datetime.datetime.utcnow() -
+                datetime.datetime.utcnow().replace(tzinfo=pytz.utc) -
                 datetime.timedelta(seconds=self._timeout))
-            if not self._timeout or created > offset:
+            if not self._timeout or created.replace(tzinfo=pytz.utc) > offset:
                 return self._decode_data(data)
 
     def _encode_data(self, data):
