@@ -3,7 +3,7 @@ from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
-from zeep.xsd import ListElement, builtins, visitor
+from zeep.xsd import builtins, visitor
 from zeep.xsd.context import ParserContext
 from zeep.xsd.schema import SchemaDocument
 from zeep.xsd.types import UnresolvedType
@@ -119,10 +119,14 @@ def test_element_max_occurs(schema_visitor):
     schema_visitor.visit_schema(node)
     elements = {elm.name: elm for elm in schema_visitor.schema._elm_instances}
 
-    assert not isinstance(elements['e1'], ListElement)
-    assert not isinstance(elements['e2'], ListElement)
-    assert isinstance(elements['e3'], ListElement)
-    assert isinstance(elements['e4'], ListElement)
+    assert isinstance(elements['e1'], xsd.Element)
+    assert elements['e1'].max_occurs == 1
+    assert isinstance(elements['e2'], xsd.Element)
+    assert elements['e2'].max_occurs == 1
+    assert isinstance(elements['e3'], xsd.Element)
+    assert elements['e3'].max_occurs == 2
+    assert isinstance(elements['e4'], xsd.Element)
+    assert elements['e4'].max_occurs == 'unbounded'
 
 
 def test_simple_content(schema_visitor):
@@ -344,12 +348,12 @@ def test_complex_content_extension(schema_visitor):
     schema = schema_visitor.schema
 
     record_type = schema.get_type('{http://tests.python-zeep.org/}SubType1')
-    child_attrs = [child.name for child in record_type._children]
-    assert len(child_attrs) == 3
+    assert len(record_type.attributes) == 2
+    assert len(record_type.elements) == 1
 
     record_type = schema.get_type('{http://tests.python-zeep.org/}SubType2')
-    child_attrs = [child.name for child in record_type._children]
-    assert len(child_attrs) == 4
+    assert len(record_type.attributes) == 3
+    assert len(record_type.elements) == 1
 
     xsd_element = schema.get_element('{http://tests.python-zeep.org/}test')
     xsd_type = schema.get_type('{http://tests.python-zeep.org/}SubType2')
@@ -402,14 +406,15 @@ def test_simple_content_extension(schema_visitor):
     """)
     schema_visitor.visit_schema(node)
     schema = schema_visitor.schema
+    schema.resolve()
 
     record_type = schema.get_type('{http://tests.python-zeep.org/}SubType1')
-    child_attrs = [child.name for child in record_type._children]
-    assert len(child_attrs) == 3
+    assert len(record_type.attributes) == 2
+    assert len(record_type.elements) == 1
 
     record_type = schema.get_type('{http://tests.python-zeep.org/}SubType2')
-    child_attrs = [child.name for child in record_type._children]
-    assert len(child_attrs) == 4
+    assert len(record_type.attributes) == 3
+    assert len(record_type.elements) == 1
 
 
 def test_list_type():

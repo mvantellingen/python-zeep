@@ -170,6 +170,7 @@ class SchemaDocument(object):
 
     def register_type(self, name, value):
         assert not isinstance(value, type)
+        assert value is not None
 
         if isinstance(name, etree.QName):
             name = name.text
@@ -253,7 +254,14 @@ class SchemaDocument(object):
             ) % (self._target_namespace, ns))
 
     def _create_qname(self, name):
-        return etree.QName(name) if not isinstance(name, etree.QName) else name
+        if not isinstance(name, etree.QName):
+            name = etree.QName(name)
+
+        # Handle reserved namespace
+        if name.namespace == 'xml':
+            name = etree.QName(
+                'http://www.w3.org/XML/1998/namespace', name.localname)
+        return name
 
     @property
     def is_empty(self):

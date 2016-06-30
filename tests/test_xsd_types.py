@@ -75,6 +75,6 @@ def test_simpletype_str():
 
 
 def test_complextype_parse_xmlelement_no_childs():
-    node = etree.Element('foobar')
+    xmlelement = etree.Element('foobar')
     item = types.ComplexType()
-    assert item.parse_xmlelement(node, None)
+    assert item.parse_xmlelement(xmlelement, None) is None

@@ -1,10 +1,9 @@
-import copy
 import pprint
 from collections import OrderedDict
 
 import six
 
-from zeep.xsd.elements import Any, Choice, ListElement, Sequence
+from zeep.xsd.elements import Choice, Container, Group
 
 __all__ = ['AnyObject', 'CompoundValue']
 
@@ -22,18 +21,30 @@ class AnyObject(object):
 class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
-        fields = self._xsd_type.fields()
-
         # Set default values
-        for key, value in fields:
-            if isinstance(value, ListElement):
-                value = []
-            else:
-                value = None
-            setattr(self, key, value)
+        for container_name, container in self._xsd_type.elements_nested:
+            if isinstance(container, Choice):
+                continue
 
-        items = _process_signature(fields, args, kwargs)
-        fields = OrderedDict([(name, elm) for name, elm in fields])
+            if isinstance(container, (Container, Group)):
+                for name, element in container.elements:
+
+                    # XXX: element.default_value
+                    if element.accepts_multiple:
+                        value = []
+                    else:
+                        value = None
+                    setattr(self, name, value)
+
+            elif container.name:
+                if container.accepts_multiple:
+                    value = []
+                else:
+                    value = None
+                setattr(self, container.name, value)
+
+        items = _process_signature(self._xsd_type, args, kwargs)
+        fields = OrderedDict([(name, elm) for name, elm in self._xsd_type.elements])
         for key, value in items.items():
 
             if key in fields:
@@ -42,32 +53,20 @@ class CompoundValue(object):
 
             setattr(self, key, value)
 
+    def __contains__(self, key):
+        return self.__dict__.__contains__(key)
+
     def __repr__(self):
         return pprint.pformat(self.__dict__, indent=4)
 
-
-class ChoiceItem(object):
-    def __init__(self, index, values):
-        self.index = index
-        self.values = values
-
-    def __repr__(self):
-        return '<%s(index=%r, values=%r)>' % (
-            self.__class__.__name__, self.index, self.values)
-
-    def __eq__(self, other):
-        return (
-            self.__class__ == other.__class__ and
-            self.__dict__ == other.__dict__)
-
     def __getitem__(self, key):
-        return self.values[key]
+        return self.__dict__[key]
 
     def __setitem__(self, key, value):
-        self.values[key] = value
+        self.__dict__[key] = value
 
 
-def _process_signature(fields, args, kwargs):
+def _process_signature(xsd_type, args, kwargs):
     """Return a dict with the args/kwargs mapped to the field name.
 
     Special handling is done for Choice elements since we need to record which
@@ -83,161 +82,54 @@ def _process_signature(fields, args, kwargs):
 
     """
     result = {}
-
-    all_fields = fields
-    fields = list(fields)
     args = list(args)
-    kwargs = copy.copy(kwargs)
-
-    # Create a list of fields until field in any or choice
-
-    num_pos_args = 0
-    for name, element in fields:
-        if element._require_keyword_arg:
-            break
-        num_pos_args += 1
-
-    if len(args) > num_pos_args:
-        raise TypeError(
-            "__init__() takes at most %s positional arguments (%s given)" % (
-                num_pos_args, len(args)))
+    num_args = len(args)
 
     # Process the positional arguments
-    for name, element in list(fields):
-        if not args:
+    for element_name, element in xsd_type.elements_nested:
+        values, args = element.parse_args(args)
+        if not values:
             break
-        arg = args.pop(0)
-        if element._require_keyword_arg:
-            raise TypeError(
-                "Any and Choice elements should be passed using a keyword argument")
-        result[name] = arg
-        fields.pop(0)
+        result.update(values)
+
     if args:
-        assert False
+        for attribute in xsd_type.attributes:
+            result[attribute.name] = args.pop(0)
 
-    # Process the keyword arguments
-    for i, (name, element) in enumerate(fields):
-        if isinstance(element, Choice):
-            result[name] = _process_signature_choice(name, element, kwargs)
+    if args:
+        raise TypeError(
+            "__init__() takes at most %s positional arguments (%s given)" % (
+                len(result), num_args))
 
-        elif name in kwargs:
-            value = kwargs.pop(name)
-
-            if isinstance(element, Any) and not isinstance(value, AnyObject):
-                raise TypeError(
-                    "%s: expected AnyObject, %s found" % (
-                        name, type(value).__name__))
-
-            result[name] = value
+    # Process the named arguments (sequence/group/all/choice)
+    for element_name, element in xsd_type.elements_nested:
+        if element.accepts_multiple:
+            values, kwargs = element.parse_kwargs(kwargs, element_name)
+        else:
+            values, kwargs = element.parse_kwargs(kwargs, None)
+        if values is not None:
+            for key, value in values.items():
+                if key not in result:
+                    result[key] = value
+    # Process the named arguments for attributes
+    for attribute in xsd_type.attributes:
+        if attribute.name in kwargs:
+            result[attribute.name] = kwargs.pop(attribute.name)
 
     if kwargs:
         raise TypeError(
             (
-                "__init__() got an unexpected keyword argument %r, " +
-                "Valid keyword arguments are: %s"
-            ) % (next(six.iterkeys(kwargs)), ', '.join(x[0] for x in all_fields)))
-
-    return result
-
-
-def _process_signature_choice(name, element, kwargs):
-    """Processes the kwargs for given choice element.
-
-    Returns a list with multiple `utils.ChoiceItem` objects if maxOccurs > 1
-    or simply one object if maxOccurs = 0.
-
-    This handles two distinct initialization methods:
-
-    1. Passing the choice elements directly to the kwargs (unnested)
-    2. Passing the choice elements into the `name` kwarg (_choice_1) (nested).
-       This case is required when multiple choice elements are given.
-
-    :param name: Name of the choice element (_choice_1)
-    :type name: str
-    :param element: Choice element object
-    :type element: zeep.xsd.Choice
-    :param kwargs: dict (or list of dicts) of kwargs for initialization
-    :type kwargs: list / dict
-
-    """
-    result = []
-    if name in kwargs:
-        values = kwargs.pop(name)
-        if isinstance(values, dict):
-            values = [values]
-
-        for value in values:
-            for choice_index, choice in enumerate(element.elements):
-
-                if isinstance(choice, Sequence):
-                    match = all(
-                        child.name in value for child in choice
-                        if not child.is_optional
-                    )
-
-                    if match:
-                        result.append(ChoiceItem(choice_index, value))
-                        break
-                else:
-                    if choice.name in value:
-                        result.append(ChoiceItem(choice_index, value))
-                        break
-            else:
-                raise TypeError(
-                    "No complete xsd:Sequence found for the xsd:Choice %r.\n"
-                    "The signature is: %s" % (name, element.signature(name)))
-
-    else:
-
-        # When choice elements are specified directly in the kwargs
-        for choice_index, choice in enumerate(element.elements):
-
-            if isinstance(choice, Sequence):
-                match = all(
-                    child.name in kwargs for child in choice
-                    if not child.is_optional)
-
-                if match:
-                    item_values = {}
-                    for child in choice:
-                        if child.is_optional and child.name not in kwargs:
-                            item_values[child.name] = None
-                        else:
-                            item_values[child.name] = kwargs.pop(child.name)
-                    result.append(ChoiceItem(choice_index, item_values))
-                    break
-                elif any(
-                    child.name in kwargs for child in choice
-                    if not child.is_optional
-                 ):
-                    raise TypeError(
-                        "No complete xsd:Choice %r.\n"
-                        "The signature is: %s" % (name, element.signature(name)))
-
-            else:
-                if choice.name in kwargs:
-                    result.append(
-                        ChoiceItem(
-                            choice_index,
-                            {choice.name: kwargs.pop(choice.name)})
-                    )
-
-            if len(result) >= element.max_occurs:
-                break
-
-    if element.max_occurs == 1:
-        if len(result) == 1:
-            return result[0]
-        elif len(result) > 1:
-            raise TypeError("Number of items is larger then max_occurs")
-        else:
-            return ChoiceItem(0, {})
+                "__init__() got an unexpected keyword argument %r. " +
+                "Signature: (%s)"
+            ) % (
+                next(six.iterkeys(kwargs)), xsd_type.signature()
+            ))
     return result
 
 
 def _convert_value(field, value):
 
-    if isinstance(field, Choice):
+    if isinstance(field, Container):
         return value
 
     if isinstance(value, dict):
