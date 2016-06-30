@@ -491,7 +491,6 @@ class Container(Base, list):
         return part
 
 
-
 class All(Container):
     """Allows the elements in the group to appear (or not appear) in any order
     in the containing element.
@@ -667,22 +666,6 @@ class Choice(Container):
 
 
 class Sequence(Container):
-
-    def parse(self, elements, schema):
-        result = {}
-        for field, element in zip_longest(self, elements):
-            if field is None:
-                break
-
-            if element is None and field.is_optional:
-                result[field.name] = None
-            elif field.qname == element.tag:
-                result[field.name] = field.parse(element, schema)
-            elif field.is_optional:
-                result[field.name] = None
-            else:
-                return None
-        return result
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
