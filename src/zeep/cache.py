@@ -2,10 +2,10 @@ import base64
 import datetime
 import errno
 import os
-import pytz
 import sqlite3
 
 import appdirs
+import pytz
 import six
 
 
