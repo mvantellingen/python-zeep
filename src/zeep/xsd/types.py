@@ -59,7 +59,7 @@ class UnresolvedCustomType(Type):
 
     def resolve(self):
         base = self.base_qname
-        if isinstance(self.base_qname, UnresolvedType):
+        if isinstance(self.base_qname, (UnresolvedType, self.__class__)):
             base = base.resolve()
 
         cls_attributes = {

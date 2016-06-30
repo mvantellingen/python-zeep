@@ -548,4 +548,5 @@ default_types = {
 
     # Other
     '{http://www.w3.org/2001/XMLSchema}anyType': AnyType(),
+    '{http://www.w3.org/2001/XMLSchema}anySimpleType': AnyType(),
 }
