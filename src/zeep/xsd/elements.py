@@ -9,7 +9,6 @@ from zeep.xsd.utils import UniqueAttributeName, max_occurs_iter
 
 
 class Base(object):
-    _require_keyword_arg = False
 
     @property
     def is_optional(self):
@@ -43,7 +42,6 @@ class Base(object):
 
 
 class Any(Base):
-    _require_keyword_arg = False
     name = None
 
     def __init__(self, max_occurs=1, min_occurs=1, process_contents='strict'):
@@ -405,7 +403,7 @@ class Container(Base, list):
     def resolve(self):
         for i, elm in enumerate(self):
             if isinstance(elm, RefElement):
-                elm = elm._elm
+                elm = elm.resolve()
             self[i] = elm
         return self
 
@@ -461,9 +459,6 @@ class Container(Base, list):
             if not args:
                 break
             arg = args.pop(0)
-            # if element._require_keyword_arg:
-            #     raise TypeError(
-            #         "Any and Choice elements should be passed using a keyword argument")
             result[name] = arg
 
         return result, args
@@ -524,7 +519,6 @@ class All(Container):
     in the containing element.
 
     """
-    _require_keyword_arg = False
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = {}
@@ -542,7 +536,6 @@ class All(Container):
 
 
 class Choice(Container):
-    _require_keyword_arg = False
 
     @property
     def is_optional(self):
@@ -696,7 +689,6 @@ class Choice(Container):
 
 
 class Sequence(Container):
-    _require_keyword_arg = False
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
@@ -736,28 +728,11 @@ class RefElement(object):
         self._ref = ref
         self._schema = schema
 
-    @property
-    def _elm(self):
-        return self._schema.get_element(self._ref)
-
     def resolve(self):
         return self._schema.get_element(self._ref)
 
-    def __call__(self, *args, **kwargs):
-        return self._elm(*args, **kwargs)
-
-    def __getattr__(self, name):
-        if not name.startswith('_'):
-            return getattr(self._elm, name)
-
-        return getattr(self, name)
-
 
 class RefAttribute(RefElement):
-
-    @property
-    def _elm(self):
-        return self._schema.get_attribute(self._ref)
 
     def resolve(self):
         return self._schema.get_attribute(self._ref)
