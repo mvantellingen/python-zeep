@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import six
+from cached_property import threaded_cached_property
 
 from zeep.xsd.elements import Element, Sequence
 from zeep.xsd.utils import UniqueAttributeName
@@ -161,7 +162,7 @@ class ComplexType(Type):
     def name(self):
         return self.__class__.__name__
 
-    @property
+    @threaded_cached_property
     def attributes(self):
         result = []
         if self._extension:
@@ -169,7 +170,7 @@ class ComplexType(Type):
         result.extend(self._attributes)
         return result
 
-    @property
+    @threaded_cached_property
     def elements(self):
         """List of tuples containing the element name and the element"""
         result = []
@@ -180,7 +181,7 @@ class ComplexType(Type):
                 result.extend(element.elements)
         return result
 
-    @property
+    @threaded_cached_property
     def elements_nested(self):
         """List of tuples containing the element name and the element"""
         result = []

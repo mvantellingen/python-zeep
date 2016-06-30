@@ -2,6 +2,7 @@ import copy
 import operator
 from collections import defaultdict
 
+from cached_property import threaded_cached_property
 from lxml import etree
 
 from zeep.xsd.utils import UniqueAttributeName, max_occurs_iter
@@ -261,7 +262,7 @@ class Group(Base):
         for item in self.child:
             yield item
 
-    @property
+    @threaded_cached_property
     def elements(self):
         if self.accepts_multiple:
             return [('_value_1', self.child)]
@@ -326,7 +327,7 @@ class Container(Base, list):
         else:
             super(Container, self).__init__(elements)
 
-    @property
+    @threaded_cached_property
     def elements(self):
         """List of tuples containing the element name and the element"""
         result = []
@@ -337,7 +338,7 @@ class Container(Base, list):
                 result.append((name, elm))
         return result
 
-    @property
+    @threaded_cached_property
     def elements_nested(self):
         """List of tuples containing the element name and the element"""
         result = []
