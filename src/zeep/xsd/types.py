@@ -171,6 +171,18 @@ class ComplexType(Type):
 
     @property
     def elements(self):
+        """List of tuples containing the element name and the element"""
+        result = []
+        for name, element in self.elements_nested:
+            if isinstance(element, Element):
+                result.append((element.name, element))
+            else:
+                result.extend(element.elements)
+        return result
+
+    @property
+    def elements_nested(self):
+        """List of tuples containing the element name and the element"""
         result = []
         generator = UniqueAttributeName()
 
@@ -179,27 +191,16 @@ class ComplexType(Type):
             if isinstance(self._extension, SimpleType):
                 result.append((name, Element(name, self._extension)))
             else:
-                result.extend(self._extension.elements)
-
+                result.extend(self._extension.elements_nested)
         # _element is one of All, Choice, Group, Sequence
         if self._element:
             result.append((generator.get_name(), self._element))
         return result
 
-    @property
-    def elements_all(self):
-        result = []
-        for name, element in self.elements:
-            if isinstance(element, Element):
-                result.append((element.name, element))
-            else:
-                result.extend(element.elements_all)
-        return result
-
     def serialize(self, value):
         result = OrderedDict()
 
-        for name, element in self.elements:
+        for name, element in self.elements_nested:
             if isinstance(element, list):
                 for subfield in element:
                     field_value = getattr(value, subfield.name, None)
@@ -214,7 +215,7 @@ class ComplexType(Type):
             attr_value = getattr(value, attribute.name, None)
             attribute.render(parent, attr_value)
 
-        for name, element in self.elements:
+        for name, element in self.elements_nested:
             if isinstance(element, Element):
                 element.type.render(parent, getattr(value, name))
             else:
@@ -248,7 +249,7 @@ class ComplexType(Type):
 
     def signature(self):
         parts = []
-        for name, element in self.elements:
+        for name, element in self.elements_nested:
 
             # http://schemas.xmlsoap.org/soap/encoding/ contains cyclic type
             if isinstance(element, Element) and element.type == self:
@@ -282,7 +283,7 @@ class ComplexType(Type):
 
         # Parse elements
         children = xmlelement.getchildren()
-        for name, element in self.elements:
+        for name, element in self.elements_nested:
             result = element.parse_xmlelements(children, schema, name)
             init_kwargs.update(result)
 

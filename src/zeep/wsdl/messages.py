@@ -35,8 +35,8 @@ class ConcreteMessage(object):
         if as_output:
             if isinstance(self.body.type, xsd.ComplexType):
                 try:
-                    if len(self.body.type.elements_all) == 1:
-                        return self.body.type.elements_all[0][1].type.name
+                    if len(self.body.type.elements) == 1:
+                        return self.body.type.elements[0][1].type.name
                 except AttributeError:
                     return None
 
@@ -215,7 +215,7 @@ class DocumentMessage(SoapMessage):
         if not item:
             return None
 
-        children = item._xsd_type.elements_all
+        children = item._xsd_type.elements
         if len(children) == 1:
             item_name, item_element = children[0]
             retval = getattr(item, item_name)
@@ -241,7 +241,7 @@ class RpcMessage(SoapMessage):
 
         result = [
             getattr(result, name)
-            for name, field in self.body.type.elements_all
+            for name, field in self.body.type.elements
         ]
         if len(result) > 1:
             return tuple(result)

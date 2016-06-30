@@ -22,7 +22,7 @@ class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
         # Set default values
-        for container_name, container in self._xsd_type.elements:
+        for container_name, container in self._xsd_type.elements_nested:
             if isinstance(container, Choice):
                 continue
 
@@ -44,7 +44,7 @@ class CompoundValue(object):
                 setattr(self, container.name, value)
 
         items = _process_signature(self._xsd_type, args, kwargs)
-        fields = OrderedDict([(name, elm) for name, elm in self._xsd_type.elements_all])
+        fields = OrderedDict([(name, elm) for name, elm in self._xsd_type.elements])
         for key, value in items.items():
 
             if key in fields:
@@ -86,7 +86,7 @@ def _process_signature(xsd_type, args, kwargs):
     num_args = len(args)
 
     # Process the positional arguments
-    for element_name, element in xsd_type.elements:
+    for element_name, element in xsd_type.elements_nested:
         values, args = element.parse_args(args)
         if not values:
             break
@@ -102,7 +102,7 @@ def _process_signature(xsd_type, args, kwargs):
                 len(result), num_args))
 
     # Process the named arguments (sequence/group/all/choice)
-    for element_name, element in xsd_type.elements:
+    for element_name, element in xsd_type.elements_nested:
         if element.accepts_multiple:
             values, kwargs = element.parse_kwargs(kwargs, element_name)
         else:

@@ -265,12 +265,6 @@ class Group(Base):
             return [('_value_1', self.child)]
         return self.child.elements
 
-    @property
-    def elements_all(self):
-        if self.accepts_multiple:
-            return [('_value_1', self.child)]
-        return self.child.elements_all
-
     def parse_args(self, args):
         return self.child.parse_args(args)
 
@@ -324,6 +318,10 @@ GroupElement = Group
 class Container(Base, list):
     name = None
 
+    def __repr__(self):
+        return '<%s(%s)>' % (
+            self.__class__.__name__, super(Container, self).__repr__())
+
     def __init__(self, elements=None, min_occurs=1, max_occurs=1):
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs
@@ -360,23 +358,6 @@ class Container(Base, list):
             else:
                 result.append((elm.name, elm))
         return result
-
-    @property
-    def elements_all(self):
-        result = []
-        for element in self.elements:
-            if isinstance(element, Container) and self.max_occurs == 1:
-                result.extend(element.elements)
-            else:
-                result.append(element)
-
-        if self.max_occurs != 1:
-            return [('_value', self)]
-        return self.elements
-
-    def __repr__(self):
-        return '<%s(%s)>' % (
-            self.__class__.__name__, super(Container, self).__repr__())
 
     @property
     def is_optional(self):
