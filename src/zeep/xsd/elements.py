@@ -11,15 +11,12 @@ from zeep.xsd.utils import UniqueAttributeName, max_occurs_iter
 class Base(object):
 
     @property
-    def is_optional(self):
-        return self.min_occurs == 0
-
-    @property
     def accepts_multiple(self):
         return self.max_occurs != 1
 
-    def signature(self):
-        return ''
+    @property
+    def is_optional(self):
+        return self.min_occurs == 0
 
     def parse_args(self, args):
         result = {}
@@ -39,6 +36,9 @@ class Base(object):
             value = kwargs.pop(name)
             return {name: value}, kwargs
         return {}, kwargs
+
+    def signature(self):
+        return ''
 
 
 class Any(Base):
@@ -61,22 +61,11 @@ class Any(Base):
         from zeep.xsd.builtins import AnyType
         self.type = AnyType()
 
+    def __call__(self, any_object):
+        return any_object
+
     def __repr__(self):
         return '<%s(name=%r)>' % (self.__class__.__name__, self.name)
-
-    def render(self, parent, value):
-        assert parent is not None
-        if not value:
-            return
-
-        if isinstance(value.value, list):
-            for val in value.value:
-                value.xsd_type.render(parent, val)
-        else:
-            value.xsd_type.render(parent, value.value)
-
-    def resolve(self):
-        return self
 
     def parse(self, xmlelement, schema):
         if self.process_contents == 'skip':
@@ -106,11 +95,21 @@ class Any(Base):
 
         if self.max_occurs == 1:
             result = result[0] if result else None
-
         return result
 
-    def __call__(self, any_object):
-        return any_object
+    def render(self, parent, value):
+        assert parent is not None
+        if not value:
+            return
+
+        if isinstance(value.value, list):
+            for val in value.value:
+                value.xsd_type.render(parent, val)
+        else:
+            value.xsd_type.render(parent, value.value)
+
+    def resolve(self):
+        return self
 
     def signature(self):
         return 'ANY'
@@ -151,11 +150,6 @@ class Element(Base):
             self.__class__ == other.__class__ and
             self.__dict__ == other.__dict__)
 
-    def signature(self):
-        if self.max_occurs != 1:
-            return '%s[]' % self.type.signature()
-        return self.type.signature()
-
     def clone(self, name):
         if not isinstance(name, etree.QName):
             name = etree.QName(name)
@@ -165,20 +159,24 @@ class Element(Base):
         new.qname = name
         return new
 
-    def serialize(self, value):
+    def parse(self, xmlelement, schema):
+        return self.type.parse_xmlelement(xmlelement, schema)
+
+    def parse_xmlelements(self, xmlelements, schema, name=None):
+        result = []
+
+        for i in max_occurs_iter(self.max_occurs):
+            if xmlelements and xmlelements[0].tag == self.qname:
+                xmlelement = xmlelements.pop(0)
+                item = self.parse(xmlelement, schema)
+                result.append(item)
+            else:
+                break
+
         if self.max_occurs == 1:
-            return self.type.serialize(value)
-        else:
-            if value:
-                return [self.type.serialize(val) for val in value]
-            return []
+            result = result[0] if result else None
 
-    def resolve_type(self):
-        self.type = self.type.resolve()
-
-    def resolve(self):
-        self.resolve_type()
-        return self
+        return result
 
     def render(self, parent, value):
         assert parent is not None
@@ -204,24 +202,25 @@ class Element(Base):
             return value._xsd_type.render(node, value, xsd_type)
         return self.type.render(node, value)
 
-    def parse(self, xmlelement, schema):
-        return self.type.parse_xmlelement(xmlelement, schema)
+    def resolve_type(self):
+        self.type = self.type.resolve()
 
-    def parse_xmlelements(self, xmlelements, schema, name=None):
-        result = []
+    def resolve(self):
+        self.resolve_type()
+        return self
 
-        for i in max_occurs_iter(self.max_occurs):
-            if xmlelements and xmlelements[0].tag == self.qname:
-                xmlelement = xmlelements.pop(0)
-                item = self.parse(xmlelement, schema)
-                result.append(item)
-            else:
-                break
-
+    def serialize(self, value):
         if self.max_occurs == 1:
-            result = result[0] if result else None
+            return self.type.serialize(value)
+        else:
+            if value:
+                return [self.type.serialize(val) for val in value]
+            return []
 
-        return result
+    def signature(self):
+        if self.max_occurs != 1:
+            return '%s[]' % self.type.signature()
+        return self.type.signature()
 
 
 class Attribute(Element):
@@ -229,6 +228,9 @@ class Attribute(Element):
         super(Attribute, self).__init__(name=name, type_=type_)
         self.required = required
         self.default = default or ''
+
+    def parse(self, value, schema=None):
+        return self.type.pythonvalue(value)
 
     def render(self, parent, value):
         if value is None:
@@ -241,9 +243,6 @@ class Attribute(Element):
 
         value = self.type.xmlvalue(value)
         parent.set(self.qname, value)
-
-    def parse(self, value, schema=None):
-        return self.type.pythonvalue(value)
 
 
 class Group(Base):
@@ -258,6 +257,10 @@ class Group(Base):
         self.name = name.localname
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
+
+    def __iter__(self, *args, **kwargs):
+        for item in self.child:
+            yield item
 
     @property
     def elements(self):
@@ -286,20 +289,6 @@ class Group(Base):
             result, kwargs = self.child.parse_kwargs(kwargs, name)
         return result, kwargs
 
-    def render(self, *args, **kwargs):
-        return self.child.render(*args, **kwargs)
-
-    def __iter__(self, *args, **kwargs):
-        for item in self.child:
-            yield item
-
-    def resolve(self):
-        self.child = self.child.resolve()
-        return self
-
-    def signature(self):
-        return ''
-
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
 
@@ -311,8 +300,15 @@ class Group(Base):
             return result[0]
         return {name: result}
 
+    def render(self, *args, **kwargs):
+        return self.child.render(*args, **kwargs)
 
-GroupElement = Group
+    def resolve(self):
+        self.child = self.child.resolve()
+        return self
+
+    def signature(self):
+        return ''
 
 
 class Container(Base, list):
@@ -362,51 +358,6 @@ class Container(Base, list):
     @property
     def is_optional(self):
         return self.min_occurs == 0
-
-    def signature(self):
-        parts = []
-        for name, element in self.elements_nested:
-            if name:
-                parts.append('%s: %s' % (name, element.signature()))
-            elif isinstance(element, Container):
-                parts.append('%s' % (element.signature()))
-            else:
-                parts.append('%s: %s' % (name, element.signature()))
-        part = ', '.join(parts)
-
-        if self.accepts_multiple:
-            return '[%s]' % (part)
-        return part
-
-    def serialize(self, value):
-        return value
-
-    def resolve(self):
-        for i, elm in enumerate(self):
-            if isinstance(elm, RefElement):
-                elm = elm.resolve()
-            self[i] = elm
-        return self
-
-    def render(self, parent, value):
-        if not isinstance(value, list):
-            values = [value]
-        else:
-            values = value
-
-        for i, value in zip(max_occurs_iter(self.max_occurs), values):
-            for name, element in self.elements_nested:
-
-                if name:
-                    if isinstance(value, dict):
-                        element_value = value.get(name)
-                    else:
-                        element_value = getattr(value, name, None)
-                else:
-                    element_value = value
-
-                if element_value is not None or not element.is_optional:
-                    element.render(parent, element_value)
 
     def accept(self, values):
         required_keys = {
@@ -494,6 +445,52 @@ class Container(Base, list):
 
             return result, kwargs
 
+    def resolve(self):
+        for i, elm in enumerate(self):
+            if isinstance(elm, RefElement):
+                elm = elm.resolve()
+            self[i] = elm
+        return self
+
+    def render(self, parent, value):
+        if not isinstance(value, list):
+            values = [value]
+        else:
+            values = value
+
+        for i, value in zip(max_occurs_iter(self.max_occurs), values):
+            for name, element in self.elements_nested:
+
+                if name:
+                    if isinstance(value, dict):
+                        element_value = value.get(name)
+                    else:
+                        element_value = getattr(value, name, None)
+                else:
+                    element_value = value
+
+                if element_value is not None or not element.is_optional:
+                    element.render(parent, element_value)
+
+    def serialize(self, value):
+        return value
+
+    def signature(self):
+        parts = []
+        for name, element in self.elements_nested:
+            if name:
+                parts.append('%s: %s' % (name, element.signature()))
+            elif isinstance(element, Container):
+                parts.append('%s' % (element.signature()))
+            else:
+                parts.append('%s: %s' % (name, element.signature()))
+        part = ', '.join(parts)
+
+        if self.accepts_multiple:
+            return '[%s]' % (part)
+        return part
+
+
 
 class All(Container):
     """Allows the elements in the group to appear (or not appear) in any order
@@ -521,48 +518,6 @@ class Choice(Container):
     @property
     def is_optional(self):
         return True
-
-    def render(self, parent, value):
-        if self.max_occurs == 1:
-            value = [value]
-        from zeep.xsd.valueobjects import CompoundValue
-
-        for item in value:
-
-            # Find matching choice element
-            for name, element in self.elements_nested:
-                if isinstance(element, Element):
-                    if element.name in item:
-                        if isinstance(item, CompoundValue):
-                            choice_value = getattr(item, element.name, item)
-                        else:
-                            choice_value = item.get(element.name)
-                        element.render(parent, choice_value)
-                        break
-                else:
-                    if name is not None:
-                        if isinstance(item, CompoundValue):
-                            choice_value = getattr(item, name, item)
-                        else:
-                            choice_value = item[name] if name in item else item
-                    else:
-                        choice_value = item
-
-                    if element.accept(choice_value):
-                        element.render(parent, choice_value)
-                        break
-
-    def signature(self):
-        parts = []
-        for name, element in self.elements_nested:
-            if isinstance(element, Container):
-                parts.append('{%s}' % (element.signature()))
-            else:
-                parts.append('{%s: %s}' % (name, element.signature()))
-        part = '(%s)' % ' | '.join(parts)
-        if self.max_occurs != 1:
-            return '%s[]' % (part)
-        return part
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
@@ -668,23 +623,50 @@ class Choice(Container):
             result = {name: result}
         return result, kwargs
 
+    def render(self, parent, value):
+        if self.max_occurs == 1:
+            value = [value]
+        from zeep.xsd.valueobjects import CompoundValue
+
+        for item in value:
+
+            # Find matching choice element
+            for name, element in self.elements_nested:
+                if isinstance(element, Element):
+                    if element.name in item:
+                        if isinstance(item, CompoundValue):
+                            choice_value = getattr(item, element.name, item)
+                        else:
+                            choice_value = item.get(element.name)
+                        element.render(parent, choice_value)
+                        break
+                else:
+                    if name is not None:
+                        if isinstance(item, CompoundValue):
+                            choice_value = getattr(item, name, item)
+                        else:
+                            choice_value = item[name] if name in item else item
+                    else:
+                        choice_value = item
+
+                    if element.accept(choice_value):
+                        element.render(parent, choice_value)
+                        break
+
+    def signature(self):
+        parts = []
+        for name, element in self.elements_nested:
+            if isinstance(element, Container):
+                parts.append('{%s}' % (element.signature()))
+            else:
+                parts.append('{%s: %s}' % (name, element.signature()))
+        part = '(%s)' % ' | '.join(parts)
+        if self.max_occurs != 1:
+            return '%s[]' % (part)
+        return part
+
 
 class Sequence(Container):
-
-    def parse_xmlelements(self, xmlelements, schema, name=None):
-        result = []
-        for item in max_occurs_iter(self.max_occurs):
-            item_result = {}
-            for elm_name, element in self.elements:
-                item_result[elm_name] = element.parse_xmlelements(
-                    xmlelements, schema)
-                if not xmlelements:
-                    break
-            result.append(item_result)
-
-        if self.max_occurs == 1:
-            return result[0] if result else None
-        return {name: result}
 
     def parse(self, elements, schema):
         result = {}
@@ -701,6 +683,21 @@ class Sequence(Container):
             else:
                 return None
         return result
+
+    def parse_xmlelements(self, xmlelements, schema, name=None):
+        result = []
+        for item in max_occurs_iter(self.max_occurs):
+            item_result = {}
+            for elm_name, element in self.elements:
+                item_result[elm_name] = element.parse_xmlelements(
+                    xmlelements, schema)
+                if not xmlelements:
+                    break
+            result.append(item_result)
+
+        if self.max_occurs == 1:
+            return result[0] if result else None
+        return {name: result}
 
 
 class RefElement(object):
