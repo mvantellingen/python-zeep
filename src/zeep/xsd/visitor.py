@@ -279,18 +279,15 @@ class SchemaVisitor(object):
         else:
             name = etree.QName(node.get('name'))
 
-        xsd_type = None
-        for child in node.iterchildren():
-            if child.tag == tags.annotation:
-                continue
-
-            elif child.tag == tags.simpleType:
-                assert xsd_type is None
-                xsd_type = self.visit_simple_type(child, node)
-
-        if xsd_type is None:
+        annotation, items = self._pop_annotation(node.getchildren())
+        if items:
+            xsd_type = self.visit_simple_type(items[0], node)
+        else:
             node_type = qname_attr(node, 'type')
-            xsd_type = self._get_type(node_type)
+            if node_type:
+                xsd_type = self._get_type(node_type)
+            else:
+                xsd_type = xsd_builtins.AnyType()
 
         # TODO: We ignore 'prohobited' for now
         required = node.get('use') == 'required'
