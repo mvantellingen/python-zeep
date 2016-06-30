@@ -1,4 +1,3 @@
-import pytest
 from lxml import etree
 
 from tests.utils import load_xml

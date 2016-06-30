@@ -1,5 +1,3 @@
-import sys
-
 from six.moves import range
 
 

@@ -131,7 +131,6 @@ class SimpleType(Type):
             '%s.xmlvalue() not implemented' % self.__class__.__name__)
 
 
-
 class ComplexType(Type):
     name = None
 

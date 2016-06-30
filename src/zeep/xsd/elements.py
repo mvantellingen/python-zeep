@@ -4,7 +4,6 @@ from collections import defaultdict
 
 from lxml import etree
 
-from six.moves import zip_longest
 from zeep.xsd.utils import UniqueAttributeName, max_occurs_iter
 
 
