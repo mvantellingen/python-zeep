@@ -110,14 +110,14 @@ class SchemaVisitor(object):
 
         # Check if a schemaLocation is defined, if it isn't perhaps the
         # namespaces references to an internal xml schema. Otherwise we just
-        # raise an error for now.
+        # ignore the statement, seems to match libxml2 behaviour
         if not location:
             if namespace:
                 location = namespace
                 try:
                     schema_node = self.parser_context.schema_nodes.get(namespace)
                 except KeyError:
-                    raise ValueError("No schema for namespace=%s" % namespace)
+                    return  # ignore imports which we can't resolve
 
             if not schema_node:
                 raise ValueError("schemaLocation is required")
