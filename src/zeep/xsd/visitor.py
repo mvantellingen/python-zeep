@@ -755,8 +755,18 @@ class SchemaVisitor(object):
         return self._process_attributes(node, children)
 
     def visit_any_attribute(self, node, parent):
-        # TODO
-        pass
+        """
+            <anyAttribute
+              id = ID
+              namespace = ((##any | ##other) |
+                List of (anyURI | (##targetNamespace | ##local))) : ##any
+              processContents = (lax | skip | strict): strict
+              {any attributes with non-schema Namespace...}>
+            Content: (annotation?)
+            </anyAttribute>
+        """
+        process_contents = node.get('processContents', 'strict')
+        return xsd_elements.Any(process_contents=process_contents)
 
     def _get_type(self, name):
         retval = self.schema.get_type(name, default=None)
