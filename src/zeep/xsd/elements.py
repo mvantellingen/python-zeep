@@ -37,7 +37,7 @@ class Base(object):
             return {name: value}, kwargs
         return {}, kwargs
 
-    def signature(self):
+    def signature(self, depth=0):
         return ''
 
 
@@ -111,7 +111,7 @@ class Any(Base):
     def resolve(self):
         return self
 
-    def signature(self):
+    def signature(self, depth=0):
         return 'ANY'
 
 
@@ -217,10 +217,10 @@ class Element(Base):
                 return [self.type.serialize(val) for val in value]
             return []
 
-    def signature(self):
-        if self.max_occurs != 1:
-            return '%s[]' % self.type.signature()
-        return self.type.signature()
+    def signature(self, depth=0):
+        if self.accepts_multiple:
+            return '%s[]' % self.type.signature(depth)
+        return self.type.signature(depth)
 
 
 class Attribute(Element):
@@ -307,7 +307,7 @@ class Group(Base):
         self.child = self.child.resolve()
         return self
 
-    def signature(self):
+    def signature(self, depth=0):
         return ''
 
 
@@ -475,15 +475,16 @@ class Container(Base, list):
     def serialize(self, value):
         return value
 
-    def signature(self):
+    def signature(self, depth=0):
+        depth += 1
         parts = []
         for name, element in self.elements_nested:
             if name:
-                parts.append('%s: %s' % (name, element.signature()))
+                parts.append('%s: %s' % (name, element.signature(depth)))
             elif isinstance(element, Container):
                 parts.append('%s' % (element.signature()))
             else:
-                parts.append('%s: %s' % (name, element.signature()))
+                parts.append('%s: %s' % (name, element.signature(depth)))
         part = ', '.join(parts)
 
         if self.accepts_multiple:
@@ -652,13 +653,13 @@ class Choice(Container):
                         element.render(parent, choice_value)
                         break
 
-    def signature(self):
+    def signature(self, depth=0):
         parts = []
         for name, element in self.elements_nested:
             if isinstance(element, Container):
-                parts.append('{%s}' % (element.signature()))
+                parts.append('{%s}' % (element.signature(depth)))
             else:
-                parts.append('{%s: %s}' % (name, element.signature()))
+                parts.append('{%s: %s}' % (name, element.signature(depth)))
         part = '(%s)' % ' | '.join(parts)
         if self.max_occurs != 1:
             return '%s[]' % (part)

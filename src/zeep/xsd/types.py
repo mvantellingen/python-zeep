@@ -32,7 +32,7 @@ class Type(object):
         return []
 
     @classmethod
-    def signature(cls):
+    def signature(cls, depth=0):
         return ''
 
 
@@ -124,7 +124,7 @@ class SimpleType(Type):
         return value
 
     @classmethod
-    def signature(cls):
+    def signature(cls, depth=0):
         return cls.name
 
     def xmlvalue(self, value):
@@ -272,19 +272,21 @@ class ComplexType(Type):
                 result[element.name] = element.serialize(field_value)
         return result
 
-    def signature(self):
+    def signature(self, depth=0):
+        if depth > 5:
+            return '<recursive>'
         parts = []
-        for name, element in self.elements_nested:
 
+        for name, element in self.elements_nested:
             # http://schemas.xmlsoap.org/soap/encoding/ contains cyclic type
             if isinstance(element, Element) and element.type == self:
                 continue
 
-            part = element.signature()
+            part = element.signature(depth)
             parts.append(part)
 
         for attribute in self.attributes:
-            part = attribute.signature()
+            part = attribute.signature(depth)
             parts.append(part)
 
         return ', '.join(parts)
@@ -314,5 +316,5 @@ class UnionType(object):
         self.item_types = [item.resolve() for item in self.item_types]
         return self
 
-    def signature(self):
+    def signature(self, depth=0):
         return ''
