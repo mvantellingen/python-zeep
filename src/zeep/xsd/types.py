@@ -165,7 +165,7 @@ class ComplexType(Type):
     @threaded_cached_property
     def attributes(self):
         result = []
-        if self._extension:
+        if self._extension and hasattr(self._extension, 'attributes'):
             result.extend(self._extension.attributes)
         result.extend(self._attributes)
         return result
@@ -189,7 +189,7 @@ class ComplexType(Type):
 
         if self._extension:
             name = generator.get_name()
-            if isinstance(self._extension, SimpleType):
+            if not hasattr(self._extension, 'elements_nested'):
                 result.append((name, Element(name, self._extension)))
             else:
                 result.extend(self._extension.elements_nested)
