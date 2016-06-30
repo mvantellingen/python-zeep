@@ -72,34 +72,6 @@ class UnresolvedCustomType(Type):
 class SimpleType(Type):
     name = None
 
-    def __eq__(self, other):
-        return (
-            other is not None and
-            self.__class__ == other.__class__ and
-            self.__dict__ == other.__dict__)
-
-    def render(self, parent, value):
-        parent.text = self.xmlvalue(value)
-
-    def parse_xmlelement(self, xmlelement, schema=None):
-        if xmlelement.text is None:
-            return
-        return self.pythonvalue(xmlelement.text)
-
-    def xmlvalue(self, value):
-        raise NotImplementedError(
-            '%s.xmlvalue() not implemented' % self.__class__.__name__)
-
-    def pythonvalue(self, xmlvalue):
-        raise NotImplementedError(
-            '%s.pytonvalue() not implemented' % self.__class__.__name__)
-
-    def resolve(self):
-        return self
-
-    def serialize(self, value):
-        return value
-
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.
 
@@ -123,12 +95,41 @@ class SimpleType(Type):
         value = args[0] if args else kwargs['value']
         return self.xmlvalue(value)
 
+    def __eq__(self, other):
+        return (
+            other is not None and
+            self.__class__ == other.__class__ and
+            self.__dict__ == other.__dict__)
+
     def __str__(self):
         return self.name
+
+    def parse_xmlelement(self, xmlelement, schema=None):
+        if xmlelement.text is None:
+            return
+        return self.pythonvalue(xmlelement.text)
+
+    def pythonvalue(self, xmlvalue):
+        raise NotImplementedError(
+            '%s.pytonvalue() not implemented' % self.__class__.__name__)
+
+    def render(self, parent, value):
+        parent.text = self.xmlvalue(value)
+
+    def resolve(self):
+        return self
+
+    def serialize(self, value):
+        return value
 
     @classmethod
     def signature(cls):
         return cls.name
+
+    def xmlvalue(self, value):
+        raise NotImplementedError(
+            '%s.xmlvalue() not implemented' % self.__class__.__name__)
+
 
 
 class ComplexType(Type):
@@ -197,18 +198,30 @@ class ComplexType(Type):
             result.append((generator.get_name(), self._element))
         return result
 
-    def serialize(self, value):
-        result = OrderedDict()
+    def parse_xmlelement(self, xmlelement, schema):
+        init_kwargs = {}
 
+        elements = xmlelement.getchildren()
+        attributes = xmlelement.attrib
+        if not elements and not attributes:
+            return None  # object is nil
+
+        # Parse attributes
+        attr_map = {attr.name: attr for attr in self.attributes}
+        for key, value in attributes.items():
+            attr = attr_map.get(key)
+            if not attr:
+                continue
+            value = attr.parse(value, schema)
+            init_kwargs[key] = value
+
+        # Parse elements
+        children = xmlelement.getchildren()
         for name, element in self.elements_nested:
-            if isinstance(element, list):
-                for subfield in element:
-                    field_value = getattr(value, subfield.name, None)
-                    result[subfield.name] = subfield.serialize(field_value)
-            else:
-                field_value = getattr(value, element.name, None)
-                result[element.name] = element.serialize(field_value)
-        return result
+            result = element.parse_xmlelements(children, schema, name)
+            init_kwargs.update(result)
+
+        return self(**init_kwargs)
 
     def render(self, parent, value, xsd_type=None):
         for attribute in self.attributes:
@@ -244,8 +257,20 @@ class ComplexType(Type):
         for i, attribute in enumerate(self._attributes):
             self._attributes[i] = attribute.resolve()
             assert self._attributes[i] is not None
-
         return self
+
+    def serialize(self, value):
+        result = OrderedDict()
+
+        for name, element in self.elements_nested:
+            if isinstance(element, list):
+                for subfield in element:
+                    field_value = getattr(value, subfield.name, None)
+                    result[subfield.name] = subfield.serialize(field_value)
+            else:
+                field_value = getattr(value, element.name, None)
+                result[element.name] = element.serialize(field_value)
+        return result
 
     def signature(self):
         parts = []
@@ -264,35 +289,13 @@ class ComplexType(Type):
 
         return ', '.join(parts)
 
-    def parse_xmlelement(self, xmlelement, schema):
-        init_kwargs = {}
-
-        elements = xmlelement.getchildren()
-        attributes = xmlelement.attrib
-        if not elements and not attributes:
-            return None  # object is nil
-
-        # Parse attributes
-        attr_map = {attr.name: attr for attr in self.attributes}
-        for key, value in attributes.items():
-            attr = attr_map.get(key)
-            if not attr:
-                continue
-            value = attr.parse(value, schema)
-            init_kwargs[key] = value
-
-        # Parse elements
-        children = xmlelement.getchildren()
-        for name, element in self.elements_nested:
-            result = element.parse_xmlelements(children, schema, name)
-            init_kwargs.update(result)
-
-        return self(**init_kwargs)
-
 
 class ListType(Type):
     def __init__(self, item_type):
         self.item_type = item_type
+
+    def render(self, parent, value):
+        parent.text = self.xmlvalue(value)
 
     def resolve(self):
         self.item_type = self.item_type.resolve()
@@ -301,9 +304,6 @@ class ListType(Type):
     def xmlvalue(self, value):
         item_type = self.item_type
         return ' '.join(item_type.xmlvalue(v) for v in value)
-
-    def render(self, parent, value):
-        parent.text = self.xmlvalue(value)
 
 
 class UnionType(object):
