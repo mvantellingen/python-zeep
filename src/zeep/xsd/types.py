@@ -277,6 +277,7 @@ class ComplexType(Type):
             return '<recursive>'
         parts = []
 
+        depth += 1
         for name, element in self.elements_nested:
             # http://schemas.xmlsoap.org/soap/encoding/ contains cyclic type
             if isinstance(element, Element) and element.type == self:
@@ -289,7 +290,10 @@ class ComplexType(Type):
             part = attribute.signature(depth)
             parts.append(part)
 
-        return ', '.join(parts)
+        value = ', '.join(parts)
+        if depth > 2:
+            value = '{%s}' % value
+        return value
 
 
 class ListType(Type):

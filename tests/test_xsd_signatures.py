@@ -125,3 +125,63 @@ def test_signature_nested_sequences_multiple():
     assert custom_type.signature() == (
         'item_1: xsd:string, item_2: xsd:string, item_3: xsd:string, item_4: xsd:string, _value_1: ({item_5: xsd:string} | {item_6: xsd:string} | {item_5: xsd:string, item_6: xsd:string})[]'  # noqa
     )
+
+
+def test_signature_complex_type_any():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Choice([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.String()),
+                xsd.Any()
+            ])
+        ))
+    assert custom_type.signature() == '({item_1: xsd:string} | {_value_1: ANY})'
+    custom_type(item_1='foo')
+
+
+def test_signature_complex_type_sequence_with_any():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Choice([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                    xsd.ComplexType(
+                        xsd.Sequence([
+                            xsd.Any()
+                        ])
+                    )
+                )
+            ])
+        ))
+    assert custom_type.signature() == (
+        '({item_1: xsd:string} | {item_2: {_value_1: ANY}})')
+
+
+def test_signature_complex_type_sequence_with_anys():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Choice([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                    xsd.ComplexType(
+                        xsd.Sequence([
+                            xsd.Any(),
+                            xsd.Any(),
+                        ])
+                    )
+                )
+            ])
+        ))
+    assert custom_type.signature() == (
+        '({item_1: xsd:string} | {item_2: {_value_1: ANY, _value_2: ANY}})')

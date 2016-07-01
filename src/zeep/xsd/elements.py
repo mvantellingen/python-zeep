@@ -218,9 +218,11 @@ class Element(Base):
             return []
 
     def signature(self, depth=0):
+        depth += 1
         if self.accepts_multiple:
-            return '%s[]' % self.type.signature(depth)
-        return self.type.signature(depth)
+            value = '%s[]' % self.type.signature(depth)
+        value = self.type.signature(depth)
+        return value
 
 
 class Attribute(Element):
