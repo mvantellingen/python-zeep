@@ -254,13 +254,9 @@ class SchemaDocument(object):
             ) % (self._target_namespace, ns))
 
     def _create_qname(self, name):
+        # TODO: Remove me
         if not isinstance(name, etree.QName):
             name = etree.QName(name)
-
-        # Handle reserved namespace
-        if name.namespace == 'xml':
-            name = etree.QName(
-                'http://www.w3.org/XML/1998/namespace', name.localname)
         return name
 
     @property

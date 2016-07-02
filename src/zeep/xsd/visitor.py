@@ -50,6 +50,7 @@ class SchemaVisitor(object):
     def process_ref_attribute(self, node):
         ref = qname_attr(node, 'ref')
         if ref:
+            ref = self._create_qname(ref)
 
             # Some wsdl's reference to xs:schema, we ignore that for now. It
             # might be better in the future to process the actual schema file
@@ -771,10 +772,35 @@ class SchemaVisitor(object):
         return xsd_elements.Any(process_contents=process_contents)
 
     def _get_type(self, name):
+        name = self._create_qname(name)
         retval = self.schema.get_type(name, default=None)
         if retval is None:
             retval = xsd_types.UnresolvedType(name, self.schema)
         return retval
+
+    def _create_qname(self, name):
+        if not isinstance(name, etree.QName):
+            name = etree.QName(name)
+
+        # Handle reserved namespace
+        if name.namespace == 'xml':
+            name = etree.QName(
+                'http://www.w3.org/XML/1998/namespace', name.localname)
+
+        # Various xsd builders assume that some schema's are available by
+        # default (actually this is mostly just the soap-enc ns). So live with
+        # that fact and handle it by auto-importing the schema if it is
+        # referenced.
+        if (
+            name.namespace == 'http://schemas.xmlsoap.org/soap/encoding/' and
+            name.namespace not in self.schema._imports
+        ):
+            import_node = etree.Element(
+                tags.import_,
+                namespace=name.namespace, schemaLocation=name.namespace)
+            self.visit_import(import_node, None)
+
+        return name
 
     def _pop_annotation(self, items):
         if not len(items):
