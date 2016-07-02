@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import six
 
 from zeep.xsd.printer import PrettyPrinter
@@ -18,30 +20,45 @@ class AnyObject(object):
 class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
+        self.__ordered_dict__ = OrderedDict()
+
         # Set default values
         for container_name, container in self._xsd_type.elements_nested:
             values = container.default_value()
             for attr, value in values.items():
-                setattr(self, attr, value)
+                self.__ordered_dict__[attr] = value
 
         items = _process_signature(self._xsd_type, args, kwargs)
         for key, value in items.items():
-            setattr(self, key, value)
+            self.__ordered_dict__[key] = value
 
     def __contains__(self, key):
-        return self.__dict__.__contains__(key)
+        return self.__ordered_dict__.__contains__(key)
 
     def __iter__(self):
-        return self.__dict__.__iter__()
+        return self.__ordered_dict__.__iter__()
 
     def __repr__(self):
-        return PrettyPrinter().pformat(self.__dict__)
+        return PrettyPrinter().pformat(self.__ordered_dict__)
 
     def __getitem__(self, key):
-        return self.__dict__[key]
+        return self.__ordered_dict__[key]
 
     def __setitem__(self, key, value):
-        self.__dict__[key] = value
+        self.__ordered_dict__[key] = value
+
+    def __setattr__(self, key, value):
+        if key.startswith('__'):
+            return super(CompoundValue, self).__setattr__(key, value)
+        self.__ordered_dict__[key] = value
+
+    def __getattribute__(self, key):
+        if key.startswith('__') or key in ('_xsd_type',):
+            return super(CompoundValue, self).__getattribute__(key)
+        try:
+            return self.__ordered_dict__[key]
+        except KeyError:
+            raise AttributeError("Attribute not found")
 
 
 def _process_signature(xsd_type, args, kwargs):
@@ -59,7 +76,7 @@ def _process_signature(xsd_type, args, kwargs):
 
 
     """
-    result = {}
+    result = OrderedDict()
     args = list(args)
     num_args = len(args)
 

@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import six
 from cached_property import threaded_cached_property
 
@@ -197,7 +199,7 @@ class ComplexType(Type):
         return result
 
     def parse_xmlelement(self, xmlelement, schema):
-        init_kwargs = {}
+        init_kwargs = OrderedDict()
 
         elements = xmlelement.getchildren()
         attributes = xmlelement.attrib

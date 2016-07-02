@@ -1,6 +1,6 @@
 import copy
 import operator
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 
 from cached_property import threaded_cached_property
 
@@ -78,7 +78,7 @@ class Indicator(Base, list):
         return False
 
     def default_value(self):
-        result = {}
+        result = OrderedDict()
         for name, element in self.elements:
 
             # XXX: element.default_value
@@ -121,7 +121,7 @@ class Indicator(Base, list):
 
             result = []
             for i, item_value in zip(max_occurs_iter(self.max_occurs), item_kwargs):
-                subresult = {}
+                subresult = OrderedDict()
                 for item_name, element in self.elements:
                     value, item_value = element.parse_kwargs(item_value, item_name)
                     if value is not None:
@@ -141,7 +141,7 @@ class Indicator(Base, list):
             return result, kwargs
 
         else:
-            result = {}
+            result = OrderedDict()
             for elm_name, element in self.elements:
                 sub_result, kwargs = element.parse_kwargs(kwargs, elm_name)
                 if sub_result is not None:
@@ -203,7 +203,7 @@ class All(Indicator):
     """
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
-        result = {}
+        result = OrderedDict()
 
         values = defaultdict(list)
         for elm in xmlelements:
@@ -377,7 +377,7 @@ class Sequence(Indicator):
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
         for item in max_occurs_iter(self.max_occurs):
-            item_result = {}
+            item_result = OrderedDict()
             for elm_name, element in self.elements:
                 item_result[elm_name] = element.parse_xmlelements(
                     xmlelements, schema)
@@ -414,7 +414,7 @@ class Group(Base):
         return self.child.elements
 
     def default_value(self):
-        result = {}
+        result = OrderedDict()
         for name, element in self.elements:
 
             # XXX: element.default_value
