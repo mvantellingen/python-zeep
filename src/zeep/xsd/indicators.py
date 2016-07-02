@@ -177,9 +177,6 @@ class Indicator(Base, list):
                 if element_value is not None or not element.is_optional:
                     element.render(parent, element_value)
 
-    def serialize(self, value):
-        return value
-
     def signature(self, depth=0):
         depth += 1
         parts = []

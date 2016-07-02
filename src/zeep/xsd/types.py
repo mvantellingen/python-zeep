@@ -121,9 +121,6 @@ class SimpleType(Type):
     def resolve(self):
         return self
 
-    def serialize(self, value):
-        return value
-
     @classmethod
     def signature(cls, depth=0):
         return cls.name
@@ -259,19 +256,6 @@ class ComplexType(Type):
             self._attributes[i] = attribute.resolve()
             assert self._attributes[i] is not None
         return self
-
-    def serialize(self, value):
-        result = OrderedDict()
-
-        for name, element in self.elements_nested:
-            if isinstance(element, list):
-                for subfield in element:
-                    field_value = getattr(value, subfield.name, None)
-                    result[subfield.name] = subfield.serialize(field_value)
-            else:
-                field_value = getattr(value, element.name, None)
-                result[element.name] = element.serialize(field_value)
-        return result
 
     def signature(self, depth=0):
         if depth > 5:

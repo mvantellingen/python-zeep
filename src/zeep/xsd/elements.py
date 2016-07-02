@@ -210,14 +210,6 @@ class Element(Base):
         self.resolve_type()
         return self
 
-    def serialize(self, value):
-        if self.max_occurs == 1:
-            return self.type.serialize(value)
-        else:
-            if value:
-                return [self.type.serialize(val) for val in value]
-            return []
-
     def signature(self, depth=0):
         depth += 1
         if self.accepts_multiple:

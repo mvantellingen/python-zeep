@@ -6,6 +6,7 @@ from lxml import etree
 from lxml.builder import ElementMaker
 
 from zeep import xsd
+from zeep.helpers import serialize_object
 from zeep.utils import qname_attr
 from zeep.wsdl.utils import _soap_element
 
@@ -447,7 +448,7 @@ class MimeContent(MimeMessage):
 
         data = ''
         if self.content_type == 'application/x-www-form-urlencoded':
-            items = value._xsd_type.serialize(value)
+            items = serialize_object(value)
             data = six.moves.urllib.parse.urlencode(items)
         elif self.content_type == 'text/xml':
             document = etree.Element('root')
