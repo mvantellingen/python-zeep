@@ -3,7 +3,8 @@ from collections import OrderedDict
 import six
 from cached_property import threaded_cached_property
 
-from zeep.xsd.elements import Element, Sequence
+from zeep.xsd.elements import Element
+from zeep.xsd.indicators import Sequence
 from zeep.xsd.utils import UniqueAttributeName
 from zeep.xsd.valueobjects import CompoundValue
 

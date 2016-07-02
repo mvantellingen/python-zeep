@@ -7,6 +7,7 @@ from zeep.parser import absolute_location
 from zeep.utils import as_qname, qname_attr
 from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
+from zeep.xsd import indicators as xsd_indicators
 from zeep.xsd import types as xsd_types
 from zeep.xsd.parser import load_external
 
@@ -592,7 +593,7 @@ class SchemaVisitor(object):
             tags.group, tags.sequence
         ]
         min_occurs, max_occurs = _process_occurs_attrs(node)
-        result = xsd_elements.Sequence(
+        result = xsd_indicators.Sequence(
             min_occurs=min_occurs, max_occurs=max_occurs)
 
         annotation, items = self._pop_annotation(node.getchildren())
@@ -621,7 +622,7 @@ class SchemaVisitor(object):
         sub_types = [
             tags.annotation, tags.element
         ]
-        result = xsd_elements.All()
+        result = xsd_indicators.All()
 
         for child in node.iterchildren():
             assert child.tag in sub_types, child
@@ -659,7 +660,7 @@ class SchemaVisitor(object):
         child = children[0]
 
         item = self.process(child, parent)
-        elm = xsd_elements.Group(name=qname, child=item)
+        elm = xsd_indicators.Group(name=qname, child=item)
 
         if parent.tag == tags.schema:
             self.schema.register_element(qname, elm)
@@ -706,7 +707,7 @@ class SchemaVisitor(object):
         for child in children:
             elm = self.process(child, node)
             choices.append(elm)
-        return xsd_elements.Choice(
+        return xsd_indicators.Choice(
             choices, min_occurs=min_occurs, max_occurs=max_occurs)
 
     def visit_union(self, node, parent):

@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 import six
 
-from zeep.xsd.elements import Container
+from zeep.xsd.indicators import Container
 
 __all__ = ['AnyObject', 'CompoundValue']
 
