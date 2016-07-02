@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from six import StringIO
 
 
@@ -16,7 +18,10 @@ class PrettyPrinter(object):
         _repr = getattr(type(obj), '__repr__', None)
         write = stream.write
 
-        if isinstance(obj, dict) and _repr is dict.__repr__:
+        if (
+            (isinstance(obj, dict) and _repr is dict.__repr__) or
+            (isinstance(obj, OrderedDict) and _repr is OrderedDict.__repr__)
+        ):
             write('{\n')
             num = len(obj)
 
