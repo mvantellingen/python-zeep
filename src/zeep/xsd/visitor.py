@@ -32,6 +32,10 @@ for name in [
 
 
 class SchemaVisitor(object):
+    """Visitor which processes XSD files and registers global elements and
+    types in the given schema.
+
+    """
     def __init__(self, schema, parser_context=None):
         self.schema = schema
         self.parser_context = parser_context
@@ -555,7 +559,7 @@ class SchemaVisitor(object):
             Content: (appinfo | documentation)*
             </annotation>
         """
-        pass
+        return
 
     def visit_any(self, node, parent):
         """
@@ -775,8 +779,10 @@ class SchemaVisitor(object):
     def _pop_annotation(self, items):
         if not len(items):
             return None, []
+
         if items[0].tag == tags.annotation:
-            return items[0], items[1:]
+            annotation = self.visit_annotation(items[0], None)
+            return annotation, items[1:]
         return None, items
 
     def _process_attributes(self, node, items):
@@ -814,6 +820,7 @@ class SchemaVisitor(object):
 
 
 def _process_occurs_attrs(node):
+    """Process the min/max occurrence indicators"""
     max_occurs = node.get('maxOccurs', '1')
     min_occurs = int(node.get('minOccurs', '1'))
     if max_occurs == 'unbounded':
