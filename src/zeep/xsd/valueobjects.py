@@ -40,6 +40,9 @@ class CompoundValue(object):
     def __contains__(self, key):
         return self.__dict__.__contains__(key)
 
+    def __iter__(self):
+        return self.__dict__.__iter__()
+
     def __repr__(self):
         return pprint.pformat(self.__dict__, indent=4)
 

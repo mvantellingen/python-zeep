@@ -64,12 +64,9 @@ class Indicator(Base, list):
             if element.is_optional
         }
 
-        from zeep.xsd.valueobjects import CompoundValue
-        if isinstance(values, CompoundValue):
-            values_keys = set(values.__dict__.keys())
+        values_keys = set(values)
+        if '_xsd_elm' in values_keys:
             values_keys.remove('_xsd_elm')
-        else:
-            values_keys = set(values.keys())
 
         if (
             values_keys <= (required_keys | optional_keys) and
