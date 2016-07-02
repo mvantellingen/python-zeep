@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 import six
 
-from zeep.xsd.indicators import Container
+from zeep.xsd.indicators import Indicator
 
 __all__ = ['AnyObject', 'CompoundValue']
 
@@ -113,7 +113,7 @@ def _process_signature(xsd_type, args, kwargs):
 
 def _convert_value(field, value):
 
-    if isinstance(field, Container):
+    if isinstance(field, Indicator):
         return value
 
     if isinstance(value, dict):

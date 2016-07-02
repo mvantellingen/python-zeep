@@ -10,21 +10,21 @@ from zeep.xsd.utils import UniqueAttributeName, max_occurs_iter
 __all__ = ['All', 'Choice', 'Group', 'Sequence']
 
 
-class Container(Base, list):
+class Indicator(Base, list):
     name = None
 
     def __repr__(self):
         return '<%s(%s)>' % (
-            self.__class__.__name__, super(Container, self).__repr__())
+            self.__class__.__name__, super(Indicator, self).__repr__())
 
     def __init__(self, elements=None, min_occurs=1, max_occurs=1):
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs
 
         if elements is None:
-            super(Container, self).__init__()
+            super(Indicator, self).__init__()
         else:
-            super(Container, self).__init__(elements)
+            super(Indicator, self).__init__(elements)
 
     @threaded_cached_property
     def elements(self):
@@ -194,7 +194,7 @@ class Container(Base, list):
         for name, element in self.elements_nested:
             if name:
                 parts.append('%s: %s' % (name, element.signature(depth)))
-            elif isinstance(element, Container):
+            elif isinstance(element, Indicator):
                 parts.append('%s' % (element.signature()))
             else:
                 parts.append('%s: %s' % (name, element.signature(depth)))
@@ -205,7 +205,7 @@ class Container(Base, list):
         return part
 
 
-class All(Container):
+class All(Indicator):
     """Allows the elements in the group to appear (or not appear) in any order
     in the containing element.
 
@@ -226,7 +226,7 @@ class All(Container):
         return result
 
 
-class Choice(Container):
+class Choice(Indicator):
 
     @property
     def is_optional(self):
@@ -248,7 +248,7 @@ class Choice(Container):
                     local_xmlelements = copy.copy(xmlelements)
                     sub_result = element.parse_xmlelements(local_xmlelements, schema)
 
-                    if isinstance(element, Container):
+                    if isinstance(element, Indicator):
                         if element.accepts_multiple:
                             sub_result = {name: sub_result}
                     else:
@@ -304,7 +304,7 @@ class Choice(Container):
                 for element in self:
 
                     # TODO: Use most greedy choice instead of first matching
-                    if isinstance(element, Container):
+                    if isinstance(element, Indicator):
                         choice_value = value[name] if name in value else value
                         if element.accept(choice_value):
                             result.append(choice_value)
@@ -373,7 +373,7 @@ class Choice(Container):
     def signature(self, depth=0):
         parts = []
         for name, element in self.elements_nested:
-            if isinstance(element, Container):
+            if isinstance(element, Indicator):
                 parts.append('{%s}' % (element.signature(depth)))
             else:
                 parts.append('{%s: %s}' % (name, element.signature(depth)))
@@ -383,7 +383,7 @@ class Choice(Container):
         return part
 
 
-class Sequence(Container):
+class Sequence(Indicator):
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
