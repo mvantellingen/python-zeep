@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 import six
 
-from zeep.xsd.elements import Choice, Container, Group
+from zeep.xsd.elements import Container
 
 __all__ = ['AnyObject', 'CompoundValue']
 
@@ -23,25 +23,9 @@ class CompoundValue(object):
     def __init__(self, *args, **kwargs):
         # Set default values
         for container_name, container in self._xsd_type.elements_nested:
-            if isinstance(container, Choice):
-                continue
-
-            if isinstance(container, (Container, Group)):
-                for name, element in container.elements:
-
-                    # XXX: element.default_value
-                    if element.accepts_multiple:
-                        value = []
-                    else:
-                        value = None
-                    setattr(self, name, value)
-
-            elif container.name:
-                if container.accepts_multiple:
-                    value = []
-                else:
-                    value = None
-                setattr(self, container.name, value)
+            values = container.default_value()
+            for attr, value in values.items():
+                setattr(self, attr, value)
 
         items = _process_signature(self._xsd_type, args, kwargs)
         fields = OrderedDict([(name, elm) for name, elm in self._xsd_type.elements])

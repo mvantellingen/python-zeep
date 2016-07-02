@@ -159,6 +159,10 @@ class Element(Base):
         new.qname = name
         return new
 
+    def default_value(self):
+        value = [] if self.accepts_multiple else None
+        return {self.name: value}
+
     def parse(self, xmlelement, schema):
         return self.type.parse_xmlelement(xmlelement, schema)
 
@@ -270,10 +274,24 @@ class Group(Base):
             return [('_value_1', self.child)]
         return self.child.elements
 
+    def default_value(self):
+        result = {}
+        for name, element in self.elements:
+
+            # XXX: element.default_value
+            if element.accepts_multiple:
+                value = []
+            else:
+                value = None
+            result[name] = value
+
+        return result
+
     def parse_args(self, args):
         return self.child.parse_args(args)
 
     def parse_kwargs(self, kwargs, name=None):
+        print '%s.parse_kwargs(%r, %r)' % (self.__class__.__name__, kwargs, name)
         if self.accepts_multiple:
             if name not in kwargs:
                 return {}, kwargs
@@ -384,6 +402,19 @@ class Container(Base, list):
         ):
             return True
         return False
+
+    def default_value(self):
+        result = {}
+        for name, element in self.elements:
+
+            # XXX: element.default_value
+            if element.accepts_multiple:
+                value = []
+            else:
+                value = None
+            result[name] = value
+
+        return result
 
     def parse_args(self, args):
         result = {}
@@ -520,6 +551,9 @@ class Choice(Container):
     @property
     def is_optional(self):
         return True
+
+    def default_value(self):
+        return {}
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
