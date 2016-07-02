@@ -26,7 +26,6 @@ class Base(object):
         return {self.name: value}, args
 
     def parse_kwargs(self, kwargs, name=None):
-        print '%s.parse_kwargs(%r, %r)' % (self.__class__.__name__, kwargs, name)
         value = None
         name = name or self.name
 

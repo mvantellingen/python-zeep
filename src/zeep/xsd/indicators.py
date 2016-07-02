@@ -114,7 +114,6 @@ class Indicator(Base, list):
         and the second one the unparsed kwargs.
 
         """
-        print '%s.parse_kwargs(%r, %r)' % (self.__class__.__name__, kwargs, name)
         if self.accepts_multiple:
             assert name
 
@@ -291,7 +290,6 @@ class Choice(Indicator):
         :type kwargs: list / dict
 
         """
-        print '%s.parse_kwargs(%r, %r)' % (self.__class__.__name__, kwargs, name)
         result = []
         kwargs = copy.copy(kwargs)
 
@@ -441,7 +439,6 @@ class Group(Base):
         return self.child.parse_args(args)
 
     def parse_kwargs(self, kwargs, name=None):
-        print '%s.parse_kwargs(%r, %r)' % (self.__class__.__name__, kwargs, name)
         if self.accepts_multiple:
             if name not in kwargs:
                 return {}, kwargs
