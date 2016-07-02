@@ -1,4 +1,4 @@
-from cStringIO import StringIO
+from six import StringIO
 
 
 class PrettyPrinter(object):

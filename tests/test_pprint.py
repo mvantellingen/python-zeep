@@ -16,9 +16,7 @@ def test_dict():
             'y': [],
         }
     }
-    print
-    print pprint.pformat(data)
-    print
+    pprint.pformat(data)
 
 
 def test_list():
@@ -33,6 +31,4 @@ def test_list():
             'foo_2': 'bar',
         },
     ]
-    print
-    print pprint.pformat(data)
-    print
+    pprint.pformat(data)
