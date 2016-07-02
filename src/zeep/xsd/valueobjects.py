@@ -1,6 +1,6 @@
-import pprint
-
 import six
+
+from zeep.xsd.printer import PrettyPrinter
 
 __all__ = ['AnyObject', 'CompoundValue']
 
@@ -35,7 +35,7 @@ class CompoundValue(object):
         return self.__dict__.__iter__()
 
     def __repr__(self):
-        return pprint.pformat(self.__dict__, indent=4)
+        return PrettyPrinter().pformat(self.__dict__)
 
     def __getitem__(self, key):
         return self.__dict__[key]
