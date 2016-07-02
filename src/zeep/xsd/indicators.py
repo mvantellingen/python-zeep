@@ -54,10 +54,6 @@ class Indicator(Base, list):
                 result.append((elm.name, elm))
         return result
 
-    @property
-    def is_optional(self):
-        return self.min_occurs == 0
-
     def accept(self, values):
         required_keys = {
             name for name, element in self.elements
