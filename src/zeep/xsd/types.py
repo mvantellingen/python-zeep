@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import six
 from cached_property import threaded_cached_property
 
@@ -132,6 +130,8 @@ class SimpleType(Type):
 
 class ComplexType(Type):
     name = None
+    _xsd_name = None
+    _xsd_base = None
 
     def __init__(self, element=None, attributes=None,
                  restriction=None, extension=None):
@@ -232,7 +232,7 @@ class ComplexType(Type):
             else:
                 element.render(parent, value)
 
-        if xsd_type:
+        if xsd_type and xsd_type._xsd_name:
             parent.set(
                 '{http://www.w3.org/2001/XMLSchema-instance}type',
                 xsd_type._xsd_name)

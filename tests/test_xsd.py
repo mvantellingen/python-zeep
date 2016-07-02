@@ -465,3 +465,26 @@ def test_mixed_choice():
     assert item.item_3 == 'item-3'
     assert item.item_4 == 'item-4'
     assert item._value_1 == {'item_7': 'item-7', 'item_8': 'item-8'}
+
+
+def test_xsi():
+    org_type = xsd.Element(
+        '{https://tests.python-zeep.org/}original',
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element('username', xsd.String()),
+                xsd.Element('password', xsd.String()),
+            ])
+        )
+    )
+    alt_type = xsd.Element(
+        '{https://tests.python-zeep.org/}alternative',
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element('username', xsd.String()),
+                xsd.Element('password', xsd.String()),
+            ])
+        )
+    )
+    instance = alt_type(username='mvantellingen', password='geheim')
+    node = render_node(org_type, instance)
