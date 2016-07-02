@@ -1,9 +1,6 @@
 import pprint
-from collections import OrderedDict
 
 import six
-
-from zeep.xsd.indicators import Indicator
 
 __all__ = ['AnyObject', 'CompoundValue']
 
@@ -28,13 +25,7 @@ class CompoundValue(object):
                 setattr(self, attr, value)
 
         items = _process_signature(self._xsd_type, args, kwargs)
-        fields = OrderedDict([(name, elm) for name, elm in self._xsd_type.elements])
         for key, value in items.items():
-
-            if key in fields:
-                field = fields[key]
-                value = _convert_value(field, value)
-
             setattr(self, key, value)
 
     def __contains__(self, key):
@@ -112,17 +103,3 @@ def _process_signature(xsd_type, args, kwargs):
                 next(six.iterkeys(kwargs)), xsd_type.signature()
             ))
     return result
-
-
-def _convert_value(field, value):
-
-    if isinstance(field, Indicator):
-        return value
-
-    if isinstance(value, dict):
-        value = field(**value)
-
-    elif isinstance(value, list):
-        value = [_convert_value(field.type, v) for v in value]
-
-    return value

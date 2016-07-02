@@ -4,8 +4,9 @@ from collections import defaultdict
 
 from cached_property import threaded_cached_property
 
-from zeep.xsd.elements import Base, Element, Any, RefElement
+from zeep.xsd.elements import Any, Base, Element, RefElement
 from zeep.xsd.utils import UniqueAttributeName, max_occurs_iter
+from zeep.xsd.valueobjects import CompoundValue
 
 __all__ = ['All', 'Choice', 'Group', 'Sequence']
 
@@ -55,6 +56,7 @@ class Indicator(Base, list):
         return result
 
     def accept(self, values):
+        """Check if the current element accepts the given values."""
         required_keys = {
             name for name, element in self.elements
             if not element.is_optional
@@ -331,7 +333,6 @@ class Choice(Indicator):
     def render(self, parent, value):
         if self.max_occurs == 1:
             value = [value]
-        from zeep.xsd.valueobjects import CompoundValue
 
         for item in value:
 
