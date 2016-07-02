@@ -191,34 +191,46 @@ class SchemaDocument(object):
 
     def get_type(self, name, default=NotSet):
         name = self._create_qname(name)
-
         if name.text in xsd_builtins.default_types:
             return xsd_builtins.default_types[name]
 
         self._check_namespace_reference(name)
-
-        if name.text in self._types:
-            return self._types[name]
-
-        if name.namespace in self._imports:
-            return self._imports[name.namespace].get_type(name)
-
-        if default is not NotSet:
-            return default
-
-        raise exceptions.XMLParseError(
-            "No such type: %r in %s (Only have %s)" % (
-                name.text, self, ', '.join(self._types)))
+        if name.namespace == self._target_namespace:
+            if name.text in self._types:
+                return self._types[name]
+            elif default is not NotSet:
+                return default
+            else:
+                raise exceptions.XMLParseError(
+                    "Unable to resolve type with QName '%s'" % name.text)
+        else:
+            if name.namespace in self._imports:
+                return self._imports[name.namespace].get_type(name)
+            else:
+                raise exceptions.XMLParseError((
+                    "Unable to resolve type with QName '%s' "
+                    "(no schema imported with namespace '%s')"
+                ) % (name.text, name.namespace))
 
     def get_element(self, name, default=NotSet):
         name = self._create_qname(name)
         self._check_namespace_reference(name)
-
-        if name in self._elements:
-            return self._elements[name]
-
-        if name.namespace in self._imports:
-            return self._imports[name.namespace].get_element(name)
+        if name.namespace == self._target_namespace:
+            if name.text in self._elements:
+                return self._elements[name]
+            elif default is not NotSet:
+                return default
+            else:
+                raise exceptions.XMLParseError(
+                    "Unable to resolve element with QName '%s'" % name.text)
+        else:
+            if name.namespace in self._imports:
+                return self._imports[name.namespace].get_element(name)
+            else:
+                raise exceptions.XMLParseError((
+                    "Unable to resolve element with QName '%s' " +
+                    "(no schema imported with namespace '%s')"
+                ) % (name.text, name.namespace))
 
         if default is not NotSet:
             return default
