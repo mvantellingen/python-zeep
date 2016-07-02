@@ -1,5 +1,12 @@
 0.11.0 (unreleased)
 -------------------
+ - **backwards-incompatible**: The kwarg name for Any and Choice elements are
+   renamed to generic ``_value_N`` names.
+ - Auto-load the http://schemas.xmlsoap.org/soap/encoding/ schema if it is
+   referenced but not imported. Too many XSD's assume that the schema is always
+   available.
+ - Major refactoring of the XSD handling to correctly support nested 
+   xsd:sequence elements. 
 
 0.10.0 (2016-06-22)
 -------------------
