@@ -1,7 +1,7 @@
 .PHONY: install clean test retest coverage docs
 
 install:
-	pip install -e .[test]
+	pip install -e .[docs,test]
 
 lint:
 	flake8 src/ tests/

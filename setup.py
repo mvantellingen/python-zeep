@@ -11,6 +11,10 @@ install_requires = [
     'pytz',
 ]
 
+docs_require = [
+    'sphinx>=1.4.0',
+]
+
 tests_require = [
     'freezegun==0.3.7',
     'pretend==1.0.8',
@@ -36,8 +40,10 @@ setup(
 
     install_requires=install_requires,
     tests_require=tests_require,
-    extras_require={'test': tests_require},
-
+    extras_require={
+        'docs': docs_require,
+        'test': tests_require,
+    },
     entry_points={},
     package_dir={'': 'src'},
     packages=find_packages('src'),
