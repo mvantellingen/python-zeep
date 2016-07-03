@@ -161,9 +161,7 @@ class Indicator(Base, list):
 
     def resolve(self):
         for i, elm in enumerate(self):
-            if isinstance(elm, RefElement):
-                elm = elm.resolve()
-            self[i] = elm
+            self[i] = elm.resolve()
         return self
 
     def render(self, parent, value):
