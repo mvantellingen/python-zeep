@@ -131,15 +131,15 @@ class SimpleType(Type):
 
 
 class ComplexType(Type):
-    name = None
     _xsd_name = None
     _xsd_base = None
 
     def __init__(self, element=None, attributes=None,
-                 restriction=None, extension=None):
+                 restriction=None, extension=None, qname=None):
         if element and type(element) == list:
             element = Sequence(element)
 
+        self.name = self.__class__.__name__ if qname else None
         self._element = element
         self._attributes = attributes or []
         self._restriction = restriction
@@ -157,10 +157,6 @@ class ComplexType(Type):
 
     def __str__(self):
         return '%s(%s)' % (self.__class__.__name__, self.signature())
-
-    @property
-    def name(self):
-        return self.__class__.__name__
 
     @threaded_cached_property
     def attributes(self):

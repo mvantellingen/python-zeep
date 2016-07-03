@@ -616,7 +616,6 @@ def test_element_ref():
     assert_nodes_equal(expected, node)
 
 
-
 def test_element_ref_in_choice():
     node = etree.fromstring("""
         <?xml version="1.0"?>

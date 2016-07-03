@@ -368,13 +368,13 @@ class SchemaVisitor(object):
         base_type = '{http://www.w3.org/2001/XMLSchema}anyType'
 
         # If the complexType's parent is an element then this type is
-        # anonymous and should have no name defined.
+        # anonymous and should have no name defined. Otherwise it's global
         if parent.tag == tags.schema:
             name = node.get('name')
-            is_anonymous = False
+            is_global = True
         else:
             name = parent.get('name')
-            is_anonymous = True
+            is_global = False
 
         qname = as_qname(name, node.nsmap, self.schema._target_namespace)
         cls_attributes = {
@@ -392,7 +392,8 @@ class SchemaVisitor(object):
         if first_tag == tags.simpleContent:
             base_type, attributes = self.visit_simple_content(children[0], node)
             xsd_cls._xsd_base = base_type.__class__
-            xsd_type = xsd_cls(attributes=attributes, extension=base_type)
+            xsd_type = xsd_cls(
+                attributes=attributes, extension=base_type, qname=qname)
 
         elif first_tag == tags.complexContent:
             base_type, element, attributes = self.visit_complex_content(
@@ -401,7 +402,8 @@ class SchemaVisitor(object):
             # XXX
             xsd_cls._xsd_base = base_type.__class__
             xsd_type = xsd_cls(
-                element=element, attributes=attributes, extension=base_type)
+                element=element, attributes=attributes, extension=base_type,
+                qname=qname)
 
         elif first_tag:
             element = None
@@ -411,11 +413,12 @@ class SchemaVisitor(object):
                 element = self.process(child, node)
 
             attributes = self._process_attributes(node, children)
-            xsd_type = xsd_cls(element=element, attributes=attributes)
+            xsd_type = xsd_cls(
+                element=element, attributes=attributes, qname=qname)
         else:
             xsd_type = xsd_elements.Any()
 
-        if not is_anonymous:
+        if is_global:
             self.schema.register_type(qname, xsd_type)
         return xsd_type
 
