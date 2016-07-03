@@ -11,21 +11,23 @@ from zeep.xsd.valueobjects import CompoundValue
 __all__ = ['All', 'Choice', 'Group', 'Sequence']
 
 
-class Indicator(Base, list):
-    name = None
+class Indicator(Base):
 
     def __repr__(self):
         return '<%s(%s)>' % (
             self.__class__.__name__, super(Indicator, self).__repr__())
+
+class OrderIndicator(Indicator, list):
+    name = None
 
     def __init__(self, elements=None, min_occurs=1, max_occurs=1):
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs
 
         if elements is None:
-            super(Indicator, self).__init__()
+            super(OrderIndicator, self).__init__()
         else:
-            super(Indicator, self).__init__(elements)
+            super(OrderIndicator, self).__init__(elements)
 
     @threaded_cached_property
     def elements(self):
@@ -190,7 +192,7 @@ class Indicator(Base, list):
         for name, element in self.elements_nested:
             if name:
                 parts.append('%s: %s' % (name, element.signature(depth)))
-            elif isinstance(element, Indicator):
+            elif isinstance(element, OrderIndicator):
                 parts.append('%s' % (element.signature()))
             else:
                 parts.append('%s: %s' % (name, element.signature(depth)))
@@ -201,7 +203,7 @@ class Indicator(Base, list):
         return part
 
 
-class All(Indicator):
+class All(OrderIndicator):
     """Allows the elements in the group to appear (or not appear) in any order
     in the containing element.
 
@@ -222,7 +224,7 @@ class All(Indicator):
         return result
 
 
-class Choice(Indicator):
+class Choice(OrderIndicator):
 
     @property
     def is_optional(self):
@@ -244,7 +246,7 @@ class Choice(Indicator):
                     local_xmlelements = copy.copy(xmlelements)
                     sub_result = element.parse_xmlelements(local_xmlelements, schema)
 
-                    if isinstance(element, Indicator):
+                    if isinstance(element, OrderIndicator):
                         if element.accepts_multiple:
                             sub_result = {name: sub_result}
                     else:
@@ -299,7 +301,7 @@ class Choice(Indicator):
                 for element in self:
 
                     # TODO: Use most greedy choice instead of first matching
-                    if isinstance(element, Indicator):
+                    if isinstance(element, OrderIndicator):
                         choice_value = value[name] if name in value else value
                         if element.accept(choice_value):
                             result.append(choice_value)
@@ -367,7 +369,7 @@ class Choice(Indicator):
     def signature(self, depth=0):
         parts = []
         for name, element in self.elements_nested:
-            if isinstance(element, Indicator):
+            if isinstance(element, OrderIndicator):
                 parts.append('{%s}' % (element.signature(depth)))
             else:
                 parts.append('{%s: %s}' % (name, element.signature(depth)))
@@ -377,7 +379,7 @@ class Choice(Indicator):
         return part
 
 
-class Sequence(Indicator):
+class Sequence(OrderIndicator):
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
@@ -395,7 +397,7 @@ class Sequence(Indicator):
         return {name: result}
 
 
-class Group(Base):
+class Group(Indicator):
     """Groups a set of element declarations so that they can be incorporated as
     a group into complex type definitions.
 
