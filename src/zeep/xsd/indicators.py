@@ -129,10 +129,10 @@ class Indicator(Base, list):
 
                 result.append(subresult)
 
-            if self.max_occurs == 1:
-                result = result[0] if result else None
-            else:
+            if self.accepts_multiple:
                 result = {name: result}
+            else:
+                result = result[0] if result else None
 
             # All items consumed
             if not any(filter(None, item_kwargs)):
@@ -343,7 +343,7 @@ class Choice(Indicator):
                         if isinstance(item, CompoundValue):
                             choice_value = getattr(item, element.name, item)
                         else:
-                            choice_value = item.get(element.name)
+                            choice_value = item.get(element.name, item)
                         element.render(parent, choice_value)
                         break
                 else:
@@ -351,7 +351,7 @@ class Choice(Indicator):
                         if isinstance(item, CompoundValue):
                             choice_value = getattr(item, name, item)
                         else:
-                            choice_value = item[name] if name in item else item
+                            choice_value = item.get(name, item)
                     else:
                         choice_value = item
 
