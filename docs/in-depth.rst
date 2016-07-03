@@ -86,7 +86,7 @@ difficult. Zeep tries to solve this using two methods:
 
   1. Accepting the elements in the xsd:choice element as kwargs. This only 
      works for simple xsd:choice definitions.
-  2. Using the special kwarg ``_choice_x`` where the x is the number of the
+  2. Using the special kwarg ``_value_N`` where the N is the number of the
      choice in the parent type. This method allows you to pass a list of 
      dicts (when maxOccurs != 1) or a dict directly.
 
@@ -120,8 +120,8 @@ Simple method
     obj = element(item_1='foo')
 
 
-Nested using _choice_1
-~~~~~~~~~~~~~~~~~~~~~~
+Nested using _value_1
+~~~~~~~~~~~~~~~~~~~~~
 .. code-block:: xml
 
     <?xml version="1.0"?>
@@ -144,11 +144,11 @@ Nested using _choice_1
 .. code-block:: python
 
     element = client.get_element('ns0:ElementName')
-    obj = element(_choice_1={'item_1_a': 'foo', 'item_1_b': 'bar'})
+    obj = element(_value_1={'item_1_a': 'foo', 'item_1_b': 'bar'})
 
 
-Nested list using _choice_1
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Nested list using _value_1
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. code-block:: xml
 
     <?xml version="1.0"?>
@@ -168,7 +168,7 @@ Nested list using _choice_1
 .. code-block:: python
 
     element = client.get_element('ns0:ElementName')
-    obj = element(_choice_1=[{'item_1': 'foo'}, {'item_2': 'bar'})
+    obj = element(_value_1=[{'item_1': 'foo'}, {'item_2': 'bar'})
 
 
 Any objects
@@ -185,5 +185,5 @@ Zeep offers full support for xsd:any elements.
     order_type = client.get_element('ns0:Order')
     order = xsd.AnyObject(
       order_type, order_type(number='1234', price=99))
-    client.service.submit_something(user_id=1, _any_1=order)
+    client.service.submit_something(user_id=1, _value_1=order)
 
