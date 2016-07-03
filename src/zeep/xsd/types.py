@@ -216,13 +216,9 @@ class ComplexType(Type):
             return None  # object is nil
 
         # Parse attributes
-        attr_map = dict(self.attributes)
-        for key, value in attributes.items():
-            attr = attr_map.get(key)
-            if not attr:
-                continue
-            value = attr.parse(value, schema)
-            init_kwargs[key] = value
+        for name, attribute in self.attributes:
+            value = attributes.get(attribute.qname.text)
+            init_kwargs[name] = attribute.parse(value)
 
         # Parse elements
         children = xmlelement.getchildren()

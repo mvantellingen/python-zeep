@@ -495,7 +495,7 @@ def test_xsi():
 
 def test_duplicate_element_names():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName('http://tests.python-zeep.org/', 'container'),
         xsd.ComplexType(
             xsd.Sequence([
                 xsd.Element(
@@ -515,10 +515,22 @@ def test_duplicate_element_names():
     assert custom_type.signature() == expected
     obj = custom_type(item='foo', item__1='bar', item__2='lala')
 
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item>foo</ns0:item>
+          <ns0:item>bar</ns0:item>
+          <ns0:item>lala</ns0:item>
+        </ns0:container>
+      </document>
+    """
+    node = render_node(custom_type, obj)
+    assert_nodes_equal(expected, node)
+
 
 def test_element_attribute_name_conflict():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName('http://tests.python-zeep.org/', 'container'),
         xsd.ComplexType(
             xsd.Sequence([
                 xsd.Element(
@@ -526,16 +538,27 @@ def test_element_attribute_name_conflict():
                     xsd.String()),
             ]),
             [
-                xsd.Attribute(
-                    etree.QName('http://tests.python-zeep.org/', 'foo'),
-                    xsd.String()),
-                xsd.Attribute(
-                    etree.QName('http://tests.python-zeep.org/', 'item'),
-                    xsd.String()),
+                xsd.Attribute('foo', xsd.String()),
+                xsd.Attribute('item', xsd.String()),
             ]
         ))
 
     # sequences
     expected = 'item: xsd:string, foo: xsd:string, attr__item: xsd:string'
     assert custom_type.signature() == expected
-    obj = custom_type(item='foo', foo='x')
+    obj = custom_type(item='foo', foo='x', attr__item='bar')
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" foo="x" item="bar">
+          <ns0:item>foo</ns0:item>
+        </ns0:container>
+      </document>
+    """
+    node = render_node(custom_type, obj)
+    assert_nodes_equal(expected, node)
+
+    obj = custom_type.parse(node.getchildren()[0], None)
+    assert obj.item == 'foo'
+    assert obj.foo == 'x'
+    assert obj.attr__item == 'bar'

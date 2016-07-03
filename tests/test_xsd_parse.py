@@ -46,10 +46,11 @@ def test_sequence_parse_basic_with_attrs():
                 xsd.Attribute(
                     etree.QName('http://tests.python-zeep.org/', 'attr_1'),
                     xsd.String()),
+                xsd.Attribute('attr_2', xsd.String()),
             ]
         ))
     expected = etree.fromstring("""
-        <ns0:authentication xmlns:ns0="http://tests.python-zeep.org/" attr_1="x">
+        <ns0:authentication xmlns:ns0="http://tests.python-zeep.org/" ns0:attr_1="x" attr_2="y">
           <ns0:item_1>foo</ns0:item_1>
           <ns0:item_2>bar</ns0:item_2>
         </ns0:authentication>
@@ -58,6 +59,7 @@ def test_sequence_parse_basic_with_attrs():
     assert obj.item_1 == 'foo'
     assert obj.item_2 == 'bar'
     assert obj.attr_1 == 'x'
+    assert obj.attr_2 == 'y'
 
 
 def test_sequence_parse_with_optional():
