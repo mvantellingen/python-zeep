@@ -167,7 +167,16 @@ class ComplexType(Type):
         result = []
         if self._extension and hasattr(self._extension, 'attributes'):
             result.extend(self._extension.attributes)
-        result.extend(self._attributes)
+
+        elm_names = {name for name, elm in self.elements if name is not None}
+        attrs = []
+        for attr in self._attributes:
+            if attr.name in elm_names:
+                name = 'attr__%s' % attr.name
+            else:
+                name = attr.name
+            attrs.append((name, attr))
+        result.extend(attrs)
         return result
 
     @threaded_cached_property
@@ -207,7 +216,7 @@ class ComplexType(Type):
             return None  # object is nil
 
         # Parse attributes
-        attr_map = {attr.name: attr for attr in self.attributes}
+        attr_map = dict(self.attributes)
         for key, value in attributes.items():
             attr = attr_map.get(key)
             if not attr:
@@ -224,8 +233,8 @@ class ComplexType(Type):
         return self(**init_kwargs)
 
     def render(self, parent, value, xsd_type=None):
-        for attribute in self.attributes:
-            attr_value = getattr(value, attribute.name, None)
+        for name, attribute in self.attributes:
+            attr_value = getattr(value, name, None)
             attribute.render(parent, attr_value)
 
         for name, element in self.elements_nested:
@@ -273,8 +282,8 @@ class ComplexType(Type):
             part = element.signature(depth)
             parts.append(part)
 
-        for attribute in self.attributes:
-            part = attribute.signature(depth)
+        for name, attribute in self.attributes:
+            part = '%s: %s' % (name, attribute.signature(depth))
             parts.append(part)
 
         value = ', '.join(parts)

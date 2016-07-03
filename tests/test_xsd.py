@@ -35,15 +35,18 @@ def test_create_node():
                 xsd.Element(
                     etree.QName('http://tests.python-zeep.org/', 'password'),
                     xsd.String()),
-            ])
+            ]),
+            [
+                xsd.Attribute('attr', xsd.String()),
+            ]
         ))
 
     # sequences
-    obj = custom_type(username='foo', password='bar')
+    obj = custom_type(username='foo', password='bar', attr='x')
 
     expected = """
       <document>
-        <ns0:authentication xmlns:ns0="http://tests.python-zeep.org/">
+        <ns0:authentication xmlns:ns0="http://tests.python-zeep.org/" attr="x">
           <ns0:username>foo</ns0:username>
           <ns0:password>bar</ns0:password>
         </ns0:authentication>
@@ -488,3 +491,51 @@ def test_xsi():
     )
     instance = alt_type(username='mvantellingen', password='geheim')
     node = render_node(org_type, instance)
+
+
+def test_duplicate_element_names():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item'),
+                    xsd.String()),
+            ])
+        ))
+
+    # sequences
+    expected = 'item: xsd:string, item__1: xsd:string, item__2: xsd:string'
+    assert custom_type.signature() == expected
+    obj = custom_type(item='foo', item__1='bar', item__2='lala')
+
+
+def test_element_attribute_name_conflict():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item'),
+                    xsd.String()),
+            ]),
+            [
+                xsd.Attribute(
+                    etree.QName('http://tests.python-zeep.org/', 'foo'),
+                    xsd.String()),
+                xsd.Attribute(
+                    etree.QName('http://tests.python-zeep.org/', 'item'),
+                    xsd.String()),
+            ]
+        ))
+
+    # sequences
+    expected = 'item: xsd:string, foo: xsd:string, attr__item: xsd:string'
+    assert custom_type.signature() == expected
+    obj = custom_type(item='foo', foo='x')

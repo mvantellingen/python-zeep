@@ -58,7 +58,9 @@ class CompoundValue(object):
         try:
             return self.__ordered_dict__[key]
         except KeyError:
-            raise AttributeError("Attribute not found")
+            raise AttributeError(
+                "%s instance has no attribute '%s'" % (
+                    self.__class__.__name__, key))
 
 
 def _process_signature(xsd_type, args, kwargs):
@@ -107,9 +109,9 @@ def _process_signature(xsd_type, args, kwargs):
                 if key not in result:
                     result[key] = value
     # Process the named arguments for attributes
-    for attribute in xsd_type.attributes:
-        if attribute.name in kwargs:
-            result[attribute.name] = kwargs.pop(attribute.name)
+    for attribute_name, attribute in xsd_type.attributes:
+        if attribute_name in kwargs:
+            result[attribute_name] = kwargs.pop(attribute_name)
 
     if kwargs:
         raise TypeError(

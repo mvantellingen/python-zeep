@@ -43,6 +43,7 @@ class Indicator(Base, list):
         """List of tuples containing the element name and the element"""
         result = []
         generator = UniqueAttributeName()
+        unique_count = {}
         for elm in self:
             if isinstance(elm, (All, Group, Sequence)):
                 if elm.accepts_multiple:
@@ -52,7 +53,13 @@ class Indicator(Base, list):
             elif isinstance(elm, (Any, Choice)):
                 result.append((generator.get_name(), elm))
             else:
-                result.append((elm.name, elm))
+                name = elm.name
+                if name in unique_count:
+                    unique_count[name] += 1
+                    name = '%s__%d' % (name, unique_count[name])
+                else:
+                    unique_count[name] = 0
+                result.append((name, elm))
         return result
 
     def accept(self, values):
