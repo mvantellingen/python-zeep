@@ -104,6 +104,8 @@ class Schema(object):
     def _create_prefix_map(self):
         prefix_map = {}
         for i, namespace in enumerate(self._schemas.keys()):
+            if namespace is None:
+                continue
             prefix_map['ns%d' % i] = namespace
         return prefix_map
 
