@@ -1,3 +1,5 @@
+import logging
+
 import requests
 
 from six.moves.urllib.parse import urlparse
@@ -12,6 +14,7 @@ class Transport(object):
         self.timeout = timeout
         self.verify = verify
         self.http_auth = http_auth
+        self.logger = logging.getLogger(__name__)
 
         self.session = self.create_session()
         self.session.verify = verify
@@ -50,7 +53,11 @@ class Transport(object):
             return fh.read()
 
     def post(self, address, message, headers):
+        self.logger.debug("HTTP Post to %s:\n%s", address, message)
         response = self.session.post(address, data=message, headers=headers)
+        self.logger.debug(
+            "HTTP Response from %s (status: %d):\n%s",
+            address, response.status_code, response.content)
         return response
 
     def get(self, address, params, headers):

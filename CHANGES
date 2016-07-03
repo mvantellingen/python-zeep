@@ -7,6 +7,9 @@
    available.
  - Major refactoring of the XSD handling to correctly support nested 
    xsd:sequence elements. 
+ - Add ``logger.debug()`` calls around Transport.post() to allow capturing the
+   content send/received from the server
+
 
 0.10.0 (2016-06-22)
 -------------------

@@ -8,7 +8,7 @@ from lxml.builder import ElementMaker
 from zeep import xsd
 from zeep.helpers import serialize_object
 from zeep.utils import qname_attr
-from zeep.wsdl.utils import _soap_element
+from zeep.wsdl.utils import _soap_element, etree_to_string
 
 SerializedMessage = namedtuple('SerializedMessage', ['path', 'headers', 'content'])
 
@@ -453,9 +453,7 @@ class MimeContent(MimeMessage):
         elif self.content_type == 'text/xml':
             document = etree.Element('root')
             self.body.render(document, value)
-            data = etree.tostring(
-                document.getchildren()[0],
-                pretty_print=True, xml_declaration=True, encoding='utf-8')
+            data = etree_to_string(document.getchildren()[0])
 
         return SerializedMessage(
             path=self.operation.location, headers=headers, content=data)

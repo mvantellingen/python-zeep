@@ -6,7 +6,7 @@ from zeep.exceptions import Fault, TransportError
 from zeep.utils import qname_attr
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
-from zeep.wsdl.utils import _soap_element
+from zeep.wsdl.utils import _soap_element, etree_to_string
 
 
 class SoapBinding(Binding):
@@ -88,10 +88,8 @@ class SoapBinding(Binding):
         if client.wsse:
             envelope, http_headers = client.wsse.sign(envelope, headers)
 
-        response = client.transport.post(
-            options['address'],
-            etree.tostring(envelope, xml_declaration=True, encoding='utf-8'),
-            headers)
+        content = etree_to_string(envelope)
+        response = client.transport.post(options['address'], content, headers)
 
         return self.process_reply(client, operation_obj, response)
 
@@ -190,7 +188,7 @@ class Soap11Binding(SoapBinding):
                 message='Unknown fault occured',
                 code=None,
                 actor=None,
-                detail=etree.tostring(doc))
+                detail=etree_to_string(doc))
 
         def get_text(name):
             child = fault_node.find(name)
@@ -222,7 +220,7 @@ class Soap12Binding(SoapBinding):
                 message='Unknown fault occured',
                 code=None,
                 actor=None,
-                detail=etree.tostring(doc))
+                detail=etree_to_string(doc))
 
         def get_text(name):
             child = fault_node.find(name)
