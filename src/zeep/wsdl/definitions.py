@@ -191,7 +191,7 @@ class Binding(object):
         self._operations[operation.name] = operation
 
     def __str__(self):
-        return self.__class__.__name__
+        return '%s: %s' % (self.__class__.__name__, self.name.text)
 
     def __repr__(self):
         return '<%s(name=%r, port_type=%r)>' % (
@@ -286,10 +286,6 @@ class Port(object):
 
     def __str__(self):
         return u'Port: %s (%s)' % (self.name, self.binding)
-
-    def send(self, client, operation, args, kwargs):
-        return self.binding.send(
-            client, self.binding_options, operation, args, kwargs)
 
     @classmethod
     def parse(cls, wsdl, xmlelement):

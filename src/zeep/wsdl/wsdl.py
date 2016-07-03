@@ -88,6 +88,11 @@ class Document(object):
             print(' ' * 4, six.text_type(type_obj))
 
         print('')
+        print("Bindings:")
+        for binding_obj in sorted(self.bindings.values(), key=lambda k: six.text_type(k)):
+            print(' ' * 4, six.text_type(binding_obj))
+
+        print('')
         for service in self.services.values():
             print(six.text_type(service))
             for port in service.ports.values():

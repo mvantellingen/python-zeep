@@ -19,15 +19,16 @@ class OperationProxy(object):
         self._op_name = operation_name
 
     def __call__(self, *args, **kwargs):
-        return self._proxy._port.send(
-            self._proxy._client, self._op_name, args, kwargs)
+        return self._proxy._binding.send(
+            self._proxy._client, self._proxy._binding_options,
+            self._op_name, args, kwargs)
 
 
 class ServiceProxy(object):
-    def __init__(self, client, port):
+    def __init__(self, client, binding, **binding_options):
         self._client = client
-        self._port = port
-        self._binding = port.binding
+        self._binding_options = binding_options
+        self._binding = binding
 
     def __getattr__(self, key):
         return self[key]
@@ -50,10 +51,28 @@ class Client(object):
         self.transport = transport or Transport()
         self.wsdl = Document(wsdl, self.transport)
         self.wsse = wsse
-        self.service = self.bind(service_name=service_name, port_name=port_name)
+
+        self._default_service = None
+        self._default_service_name = service_name
+        self._default_port_name = port_name
+
+    @property
+    def service(self):
+        """The default ServiceProxy instance"""
+        if self._default_service:
+            return self._default_service
+
+        self._default_service = self.bind(
+            service_name=self._default_service_name,
+            port_name=self._default_port_name)
+        if not self._default_service:
+            raise ValueError(
+                "There is no default service defined. This is usually due to "
+                "missing wsdl:service definitions in the WSDL")
+        return self._default_service
 
     def bind(self, service_name=None, port_name=None):
-        """Create a new ServiceProxy for the given service_name and port_name
+        """Create a new ServiceProxy for the given service_name and port_name.
 
         The default ServiceProxy instance (`self.service`) always referes to
         the first service/port in the wsdl Document.  Use this when a specific
@@ -61,15 +80,14 @@ class Client(object):
 
         """
         if not self.wsdl.services:
-            raise ValueError(
-                "No services found in the WSDL. Are you using the correct URL?")
+            return
 
         if service_name:
             service = self.wsdl.services.get(service_name)
             if not service:
                 raise ValueError("Service not found")
         else:
-            service = list(self.wsdl.services.values())[0]
+            service = next(iter(self.wsdl.services.values()), None)
 
         if port_name:
             port = service.ports.get(port_name)
@@ -77,29 +95,22 @@ class Client(object):
                 raise ValueError("Port not found")
         else:
             port = list(service.ports.values())[0]
-        return ServiceProxy(self, port)
+        return ServiceProxy(self, port.binding, **port.binding_options)
 
-    def set_address(self, service_name, port_name, address):
-        """Override the default port address for the given `service_name`
-        `port_name` combination.
+    def create_service(self, binding_name, address):
+        """Create a new ServiceProxy for the given binding name and address.
 
-        :param service_name: Name of the service
-        :type address: string
-        :param port_name: Name of the port within the service
-        :type address: string
-        :param address: URL of the server
-        :type address: string
+        :param binding_name: The QName of the binding
+        :param address: The address of the endpoint
 
         """
-        service = self.wsdl.services.get(service_name)
-        if not service:
-            raise ValueError("Service not found")
-
-        port = service.ports.get(port_name)
-        if not port:
-            raise ValueError("Port not found")
-
-        port.binding_options['address'] = address
+        try:
+            binding = self.wsdl.bindings[binding_name]
+        except KeyError:
+            raise ValueError(
+                "No binding found with the given QName. Available bindings "
+                "are: %s" % (', '.join(self.wsdl.bindings.keys())))
+        return ServiceProxy(self, binding, address=address)
 
     def get_type(self, name):
         return self.wsdl.types.get_type(name)

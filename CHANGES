@@ -2,6 +2,8 @@
 -------------------
  - **backwards-incompatible**: The kwarg name for Any and Choice elements are
    renamed to generic ``_value_N`` names.
+ - **backwards-incompatible**: Client.set_address() is replaced with the 
+   Client.create_service() call
  - Auto-load the http://schemas.xmlsoap.org/soap/encoding/ schema if it is
    referenced but not imported. Too many XSD's assume that the schema is always
    available.

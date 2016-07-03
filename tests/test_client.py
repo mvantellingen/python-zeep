@@ -26,10 +26,11 @@ def test_bind_service_port():
 
 
 @pytest.mark.requests
-def test_set_address():
+def test_create_service():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
-    client_obj.set_address(
-        'StockQuoteService', 'StockQuotePort', 'http://test.python-zeep.org/x')
+    service = client_obj.create_service(
+        '{http://example.com/stockquote.wsdl}StockQuoteBinding',
+        'http://test.python-zeep.org/x')
 
     response = """
     <?xml version="1.0"?>
@@ -47,7 +48,7 @@ def test_set_address():
 
     with requests_mock.mock() as m:
         m.post('http://test.python-zeep.org/x', text=response)
-        result = client_obj.service.GetLastTradePrice('foobar')
+        result = service.GetLastTradePrice('foobar')
         assert result == 120.123
         assert m.request_history[0].headers['User-Agent'].startswith('Zeep/')
         assert m.request_history[0].body.startswith(

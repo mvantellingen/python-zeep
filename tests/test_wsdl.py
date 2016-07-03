@@ -45,8 +45,9 @@ def test_parse_soap_wsdl():
         ).type()
         country.name = 'The Netherlands'
         country.code = 'NL'
-        result = port.send(
+        result = port.binding.send(
             client=client,
+            options={'address': 'http://example.com/stockquote'},
             operation='GetLastTradePrice',
             args=[],
             kwargs={'tickerSymbol': 'foobar', 'account': account, 'country': country})
@@ -108,8 +109,9 @@ def test_parse_soap_header_wsdl():
 
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response)
-        result = port.send(
+        result = port.binding.send(
             client=client,
+            options={'address': 'http://example.com/stockquote'},
             operation='GetLastTradePrice',
             args=[],
             kwargs={
