@@ -10,6 +10,8 @@ from zeep.xsd.valueobjects import CompoundValue
 
 
 class Type(object):
+    name = None
+
     def __init__(self):
         self._resolved = False
 
@@ -72,7 +74,6 @@ class UnresolvedCustomType(Type):
 
 @six.python_2_unicode_compatible
 class SimpleType(Type):
-    name = None
 
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.
@@ -287,6 +288,7 @@ class ComplexType(Type):
 class ListType(Type):
     def __init__(self, item_type):
         self.item_type = item_type
+        super(ListType, self).__init__()
 
     def render(self, parent, value):
         parent.text = self.xmlvalue(value)
@@ -300,9 +302,11 @@ class ListType(Type):
         return ' '.join(item_type.xmlvalue(v) for v in value)
 
 
-class UnionType(object):
+class UnionType(Type):
+
     def __init__(self, item_types):
         self.item_types = item_types
+        super(UnionType, self).__init__()
 
     def resolve(self):
         self.item_types = [item.resolve() for item in self.item_types]
