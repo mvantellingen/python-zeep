@@ -331,7 +331,7 @@ class Choice(Indicator):
         return result, kwargs
 
     def render(self, parent, value):
-        if self.max_occurs == 1:
+        if not self.accepts_multiple:
             value = [value]
 
         for item in value:
@@ -367,7 +367,7 @@ class Choice(Indicator):
             else:
                 parts.append('{%s: %s}' % (name, element.signature(depth)))
         part = '(%s)' % ' | '.join(parts)
-        if self.max_occurs != 1:
+        if self.accepts_multiple:
             return '%s[]' % (part)
         return part
 
@@ -385,7 +385,7 @@ class Sequence(Indicator):
                     break
             result.append(item_result)
 
-        if self.max_occurs == 1:
+        if not self.accepts_multiple:
             return result[0] if result else None
         return {name: result}
 
@@ -454,7 +454,7 @@ class Group(Base):
             result.append(
                 self.child.parse_xmlelements(xmlelements, schema, name)
             )
-        if self.max_occurs == 1 and result:
+        if not self.accepts_multiple and result:
             return result[0]
         return {name: result}
 
