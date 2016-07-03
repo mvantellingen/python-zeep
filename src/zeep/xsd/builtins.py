@@ -76,7 +76,7 @@ class String(SimpleType):
     name = 'xsd:string'
 
     def xmlvalue(self, value):
-        return six.text_type(value)
+        return six.text_type(value if value is not None else '')
 
     def pythonvalue(self, value):
         return value

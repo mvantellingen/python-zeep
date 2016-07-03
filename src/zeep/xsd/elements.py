@@ -12,6 +12,10 @@ class Base(object):
         return self.max_occurs != 1
 
     @property
+    def default_value(self):
+        return None
+
+    @property
     def is_optional(self):
         return self.min_occurs == 0
 
@@ -114,7 +118,7 @@ class Any(Base):
 
 class Element(Base):
     def __init__(self, name, type_=None, min_occurs=1, max_occurs=1,
-                 nillable=False):
+                 nillable=False, default=None):
         if name and not isinstance(name, etree.QName):
             name = etree.QName(name)
 
@@ -124,6 +128,7 @@ class Element(Base):
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs
         self.nillable = nillable
+        self.default = default
         # assert type_
 
     def __str__(self):
@@ -147,6 +152,11 @@ class Element(Base):
             self.__class__ == other.__class__ and
             self.__dict__ == other.__dict__)
 
+    @property
+    def default_value(self):
+        value = [] if self.accepts_multiple else self.default
+        return value
+
     def clone(self, name):
         if not isinstance(name, etree.QName):
             name = etree.QName(name)
@@ -155,10 +165,6 @@ class Element(Base):
         new.name = name.localname
         new.qname = name
         return new
-
-    def default_value(self):
-        value = [] if self.accepts_multiple else None
-        return {self.name: value}
 
     def parse(self, xmlelement, schema):
         return self.type.parse_xmlelement(xmlelement, schema)
@@ -223,21 +229,15 @@ class Element(Base):
 
 class Attribute(Element):
     def __init__(self, name, type_=None, required=False, default=None):
-        super(Attribute, self).__init__(name=name, type_=type_)
+        super(Attribute, self).__init__(name=name, type_=type_, default=default)
         self.required = required
-        self.default = default or ''
 
     def parse(self, value, schema=None):
         return self.type.pythonvalue(value)
 
     def render(self, parent, value):
-        if value is None:
-            if self.default:
-                value = self.default
-            elif not self.required:
-                return
-            else:
-                value = ""  # XXX Throw exception?
+        if value is None and not self.required:
+            return
 
         value = self.type.xmlvalue(value)
         parent.set(self.qname, value)

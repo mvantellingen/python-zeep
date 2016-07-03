@@ -847,6 +847,44 @@ def test_ref_attribute():
     assert_nodes_equal(expected, node)
 
 
+def test_defaults():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="foo" type="xsd:string" default="hoi"/>
+              </xsd:sequence>
+              <xsd:attribute name="bar" type="xsd:string" default="hoi"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+    container_type = schema.get_element(
+        '{http://tests.python-zeep.org/}container')
+    obj = container_type()
+    assert obj.foo == "hoi"
+    assert obj.bar == "hoi"
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" bar="hoi">
+          <ns0:foo>hoi</ns0:foo>
+        </ns0:container>
+      </document>
+    """
+    node = etree.Element('document')
+    container_type.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+
 def test_init_with_dicts():
     node = etree.fromstring("""
         <?xml version="1.0"?>

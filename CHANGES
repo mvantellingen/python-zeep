@@ -11,6 +11,7 @@
    xsd:sequence elements. 
  - Add ``logger.debug()`` calls around Transport.post() to allow capturing the
    content send/received from the server
+ - Add proper support for default values on attributes and elements.
 
 
 0.10.0 (2016-06-22)

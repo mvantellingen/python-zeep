@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import six
 
+from zeep.xsd.indicators import Indicator
 from zeep.xsd.printer import PrettyPrinter
 
 __all__ = ['AnyObject', 'CompoundValue']
@@ -24,9 +25,14 @@ class CompoundValue(object):
 
         # Set default values
         for container_name, container in self._xsd_type.elements_nested:
-            values = container.default_value()
-            for attr, value in values.items():
-                self.__ordered_dict__[attr] = value
+            values = container.default_value
+            if isinstance(container, Indicator):
+                self.__ordered_dict__.update(values)
+            else:
+                self.__ordered_dict__[container_name] = values
+
+        for attribute_name, attribute in self._xsd_type.attributes:
+            self.__ordered_dict__[attribute_name] = attribute.default_value
 
         items = _process_signature(self._xsd_type, args, kwargs)
         for key, value in items.items():

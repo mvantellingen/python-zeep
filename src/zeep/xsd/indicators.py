@@ -4,9 +4,8 @@ from collections import OrderedDict, defaultdict
 
 from cached_property import threaded_cached_property
 
-from zeep.xsd.elements import Any, Base, Element, RefElement
+from zeep.xsd.elements import Any, Base, Element
 from zeep.xsd.utils import UniqueAttributeName, max_occurs_iter
-from zeep.xsd.valueobjects import CompoundValue
 
 __all__ = ['All', 'Choice', 'Group', 'Sequence']
 
@@ -16,6 +15,14 @@ class Indicator(Base):
     def __repr__(self):
         return '<%s(%s)>' % (
             self.__class__.__name__, super(Indicator, self).__repr__())
+
+    @property
+    def default_value(self):
+        result = OrderedDict()
+        for name, element in self.elements:
+            result[name] = element.default_value
+        return result
+
 
 class OrderIndicator(Indicator, list):
     name = None
@@ -85,19 +92,6 @@ class OrderIndicator(Indicator, list):
         ):
             return True
         return False
-
-    def default_value(self):
-        result = OrderedDict()
-        for name, element in self.elements:
-
-            # XXX: element.default_value
-            if element.accepts_multiple:
-                value = []
-            else:
-                value = None
-            result[name] = value
-
-        return result
 
     def parse_args(self, args):
         result = {}
@@ -230,6 +224,7 @@ class Choice(OrderIndicator):
     def is_optional(self):
         return True
 
+    @property
     def default_value(self):
         return {}
 
@@ -347,18 +342,18 @@ class Choice(OrderIndicator):
             for name, element in self.elements_nested:
                 if isinstance(element, Element):
                     if element.name in item:
-                        if isinstance(item, CompoundValue):
-                            choice_value = getattr(item, element.name, item)
-                        else:
-                            choice_value = item.get(element.name, item)
+                        try:
+                            choice_value = item[element.name]
+                        except KeyError:
+                            choice_value = item
                         element.render(parent, choice_value)
                         break
                 else:
                     if name is not None:
-                        if isinstance(item, CompoundValue):
-                            choice_value = getattr(item, name, item)
-                        else:
-                            choice_value = item.get(name, item)
+                        try:
+                            choice_value = item[name]
+                        except KeyError:
+                            choice_value = item
                     else:
                         choice_value = item
 
@@ -419,19 +414,6 @@ class Group(Indicator):
         if self.accepts_multiple:
             return [('_value_1', self.child)]
         return self.child.elements
-
-    def default_value(self):
-        result = OrderedDict()
-        for name, element in self.elements:
-
-            # XXX: element.default_value
-            if element.accepts_multiple:
-                value = []
-            else:
-                value = None
-            result[name] = value
-
-        return result
 
     def parse_args(self, args):
         return self.child.parse_args(args)

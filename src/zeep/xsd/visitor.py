@@ -4,7 +4,7 @@ import logging
 from lxml import etree
 
 from zeep.parser import absolute_location
-from zeep.utils import as_qname, qname_attr
+from zeep.utils import NotSet, as_qname, qname_attr
 from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import indicators as xsd_indicators
@@ -241,9 +241,11 @@ class SchemaVisitor(object):
             min_occurs = 1
 
         nillable = node.get('nillable') == 'true'
+        default = node.get('default')
         element = xsd_elements.Element(
             name=qname, type_=xsd_type,
-            min_occurs=min_occurs, max_occurs=max_occurs, nillable=nillable)
+            min_occurs=min_occurs, max_occurs=max_occurs, nillable=nillable,
+            default=default)
 
         self.schema._elm_instances.append(element)
 
