@@ -20,7 +20,7 @@ class PrettyPrinter(object):
 
         if (
             (isinstance(obj, dict) and _repr is dict.__repr__) or
-            (isinstance(obj, OrderedDict) and _repr is OrderedDict.__repr__)
+            (isinstance(obj, OrderedDict) and _repr == OrderedDict.__repr__)
         ):
             write('{\n')
             num = len(obj)
