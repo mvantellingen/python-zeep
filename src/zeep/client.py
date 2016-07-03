@@ -30,6 +30,9 @@ class ServiceProxy(object):
         self._binding = port.binding
 
     def __getattr__(self, key):
+        return self[key]
+
+    def __getitem__(self, key):
         try:
             self._binding.get(key)
         except KeyError:
