@@ -1,5 +1,8 @@
 0.12.0 (unreleased)
 -------------------
+ - **backwards-incompatible**: Choice elements are now unwrapped if 
+   maxOccurs=1. This results in easier operation definitions when choices are
+   used. 
  
 
 0.11.0 (2016-07-03)
