@@ -59,7 +59,7 @@ class SchemaVisitor(object):
                 return
             return xsd_elements.RefAttribute(node.tag, ref, self.schema)
 
-    def process_ref_element(self, node):
+    def process_ref_element(self, node, **kwargs):
         ref = qname_attr(node, 'ref')
         if ref:
 
@@ -68,7 +68,7 @@ class SchemaVisitor(object):
             # so that it is handled correctly
             if ref.namespace == 'http://www.w3.org/2001/XMLSchema':
                 return
-            return xsd_elements.RefElement(node.tag, ref, self.schema)
+            return xsd_elements.RefElement(node.tag, ref, self.schema, **kwargs)
 
     def visit_schema(self, node):
         """
@@ -198,11 +198,19 @@ class SchemaVisitor(object):
         """
         is_global = parent.tag == tags.schema
 
+        # minOccurs / maxOccurs are not allowed on global elements
+        if not is_global:
+            min_occurs, max_occurs = _process_occurs_attrs(node)
+        else:
+            max_occurs = 1
+            min_occurs = 1
+
         # If the elment has a ref attribute then all other attributes cannot
         # be present. Short circuit that here.
         # Ref is prohibited on global elements (parent = schema)
         if not is_global:
-            result = self.process_ref_element(node)
+            result = self.process_ref_element(
+                node, min_occurs=min_occurs, max_occurs=max_occurs)
             if result:
                 return result
 
@@ -232,13 +240,6 @@ class SchemaVisitor(object):
                 xsd_type = self._get_type(node_type.text)
             else:
                 xsd_type = xsd_builtins.AnyType()
-
-        # minOccurs / maxOccurs are not allowed on global elements
-        if not is_global:
-            min_occurs, max_occurs = _process_occurs_attrs(node)
-        else:
-            max_occurs = 1
-            min_occurs = 1
 
         nillable = node.get('nillable') == 'true'
         default = node.get('default')

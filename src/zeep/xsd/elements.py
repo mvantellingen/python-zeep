@@ -158,13 +158,15 @@ class Element(Base):
         value = [] if self.accepts_multiple else self.default
         return value
 
-    def clone(self, name):
+    def clone(self, name, min_occurs=1, max_occurs=1):
         if not isinstance(name, etree.QName):
             name = etree.QName(name)
 
         new = copy.copy(self)
         new.name = name.localname
         new.qname = name
+        new.min_occurs = min_occurs
+        new.max_occurs = max_occurs
         return new
 
     def parse(self, xmlelement, schema):
@@ -188,7 +190,8 @@ class Element(Base):
 
     def render(self, parent, value):
         assert parent is not None
-        if self.max_occurs != 1 and isinstance(value, list):
+
+        if self.accepts_multiple and isinstance(value, list):
             for val in value:
                 self._render_value_item(parent, val)
         else:
@@ -246,12 +249,16 @@ class Attribute(Element):
 
 class RefElement(object):
 
-    def __init__(self, tag, ref, schema):
+    def __init__(self, tag, ref, schema, min_occurs=1, max_occurs=1):
         self._ref = ref
         self._schema = schema
+        self.min_occurs = min_occurs
+        self.max_occurs = max_occurs
 
     def resolve(self):
-        return self._schema.get_element(self._ref)
+        elm = self._schema.get_element(self._ref)
+        return elm.clone(
+            elm.qname, min_occurs=self.min_occurs, max_occurs=self.max_occurs)
 
 
 class RefAttribute(RefElement):

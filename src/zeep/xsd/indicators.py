@@ -24,6 +24,12 @@ class Indicator(Base):
             result[name] = element.default_value
         return result
 
+    def clone(self, name, min_occurs=1, max_occurs=1):
+        new = copy.copy(self)
+        new.min_occurs = min_occurs
+        new.max_occurs = max_occurs
+        return new
+
 
 class OrderIndicator(Indicator, list):
     name = None

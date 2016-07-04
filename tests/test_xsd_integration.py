@@ -616,6 +616,47 @@ def test_element_ref():
     assert_nodes_equal(expected, node)
 
 
+def test_element_ref_occurs():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="qualified">
+          <element name="foo" type="string"/>
+          <element name="bar">
+            <complexType>
+              <sequence>
+                <element ref="tns:foo" minOccurs="0"/>
+                <element name="bar" type="string"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+
+    foo_type = schema.get_element('{http://tests.python-zeep.org/}foo')
+    assert isinstance(foo_type.type, xsd.String)
+
+    custom_type = schema.get_element('{http://tests.python-zeep.org/}bar')
+    custom_type.signature()
+    obj = custom_type(bar='foo')
+
+    node = etree.Element('document')
+    custom_type.render(node, obj)
+    expected = """
+        <document>
+            <ns0:bar xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:bar>foo</ns0:bar>
+            </ns0:bar>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+
 def test_element_any():
     node = etree.fromstring("""
         <?xml version="1.0"?>
