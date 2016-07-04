@@ -579,3 +579,157 @@ def test_group_min_occurs_2_sequence_min_occurs_2():
         ]},
     ]
     assert not hasattr(obj, 'foobar')
+
+
+def test_nested_complex_type():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                    xsd.ComplexType(
+                        xsd.Sequence([
+                            xsd.Element(
+                                '{http://tests.python-zeep.org/}item_2a',
+                                xsd.String()),
+                            xsd.Element(
+                                '{http://tests.python-zeep.org/}item_2b',
+                                xsd.String()),
+                        ])
+                    )
+                )
+            ])
+        ))
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>
+            <ns0:item_2a>2a</ns0:item_2a>
+            <ns0:item_2b>2b</ns0:item_2b>
+          </ns0:item_2>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj.item_1 == 'foo'
+    assert obj.item_2.item_2a == '2a'
+    assert obj.item_2.item_2b == '2b'
+
+
+def test_nested_complex_type_optional():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                    xsd.ComplexType(
+                        xsd.Sequence([
+                            xsd.Choice([
+                                xsd.Element(
+                                    '{http://tests.python-zeep.org/}item_2a1',
+                                    xsd.String()),
+                                xsd.Element(
+                                    '{http://tests.python-zeep.org/}item_2a2',
+                                    xsd.String()),
+                            ]),
+                            xsd.Element(
+                                '{http://tests.python-zeep.org/}item_2b',
+                                xsd.String()),
+                        ])
+                    ),
+                    min_occurs=0, max_occurs='unbounded'
+                )
+            ])
+        ))
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj.item_1 == 'foo'
+    assert obj.item_2 == []
+
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2/>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj.item_1 == 'foo'
+    assert obj.item_2 == []
+
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>
+            <ns0:item_2a1>x</ns0:item_2a1>
+          </ns0:item_2>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj.item_1 == 'foo'
+    assert obj.item_2[0]._value_1 == {'item_2a1': 'x'}
+    assert obj.item_2[0].item_2b is None
+
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>
+            <ns0:item_2a1>x</ns0:item_2a1>
+            <ns0:item_2b/>
+          </ns0:item_2>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj.item_1 == 'foo'
+    assert obj.item_2[0]._value_1 == {'item_2a1': 'x'}
+    assert obj.item_2[0].item_2b is None
+
+
+def test_nested_choice_optional():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.String()),
+                xsd.Choice([
+                        xsd.Element(
+                            '{http://tests.python-zeep.org/}item_2',
+                            xsd.String()),
+                        xsd.Element(
+                            '{http://tests.python-zeep.org/}item_3',
+                            xsd.String()),
+                    ],
+                    min_occurs=0, max_occurs=1
+                ),
+            ])
+        ))
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>bar</ns0:item_2>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj.item_1 == 'foo'
+    assert obj._value_1 == {'item_2': 'bar'}
+
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj.item_1 == 'foo'
+    assert obj._value_1 == {}

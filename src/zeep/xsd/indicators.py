@@ -288,7 +288,7 @@ class Choice(OrderIndicator):
         kwargs = copy.copy(kwargs)
 
         if name and name in kwargs:
-            values = kwargs.pop(name)
+            values = kwargs.pop(name) or []
             if isinstance(values, dict):
                 values = [values]
 
@@ -385,7 +385,8 @@ class Sequence(OrderIndicator):
                     xmlelements, schema)
                 if not xmlelements:
                     break
-            result.append(item_result)
+            if item_result:
+                result.append(item_result)
 
         if not self.accepts_multiple:
             return result[0] if result else None

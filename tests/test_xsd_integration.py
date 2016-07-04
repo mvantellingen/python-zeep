@@ -1348,3 +1348,31 @@ def test_sequence_in_sequence_many():
       </document>
     """
     assert_nodes_equal(expected, node)
+
+
+def test_choice_optional_values():
+    schema = load_xml("""
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+          <xsd:complexType name="Transport">
+            <xsd:sequence>
+                <xsd:choice minOccurs="0" maxOccurs="1">
+                    <xsd:element name="item" type="xsd:string"/>
+                </xsd:choice>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:schema>
+    """)
+    schema = xsd.Schema(schema)
+
+    node = load_xml("""
+        <document>
+            <Transport>
+            </Transport>
+        </document>
+    """)
+    elm = schema.get_type('ns0:Transport')
+    elm.parse_xmlelement(node, schema)

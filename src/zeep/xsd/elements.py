@@ -90,11 +90,12 @@ class Any(Base):
             if xmlelements:
                 xmlelement = xmlelements.pop(0)
                 item = self.parse(xmlelement, schema)
-                result.append(item)
+                if item is not None:
+                    result.append(item)
             else:
                 break
 
-        if self.max_occurs == 1:
+        if not self.accepts_multiple:
             result = result[0] if result else None
         return result
 
@@ -176,13 +177,13 @@ class Element(Base):
             if xmlelements and xmlelements[0].tag == self.qname:
                 xmlelement = xmlelements.pop(0)
                 item = self.parse(xmlelement, schema)
-                result.append(item)
+                if item is not None:
+                    result.append(item)
             else:
                 break
 
-        if self.max_occurs == 1:
+        if not self.accepts_multiple:
             result = result[0] if result else None
-
         return result
 
     def render(self, parent, value):
