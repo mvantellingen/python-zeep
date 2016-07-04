@@ -80,7 +80,7 @@ def test_signature_nested_sequences():
         ))
 
     assert custom_type.signature() == (
-        'item_1: xsd:string, item_2: xsd:string, item_3: xsd:string, item_4: xsd:string, _value_1: ({item_5: xsd:string} | {item_6: xsd:string} | {item_5: xsd:string, item_6: xsd:string})'  # noqa
+        'item_1: xsd:string, item_2: xsd:string, item_3: xsd:string, item_4: xsd:string, ({item_5: xsd:string} | {item_6: xsd:string} | {item_5: xsd:string, item_6: xsd:string})'  # noqa
     )
 
 

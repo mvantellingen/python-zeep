@@ -110,9 +110,7 @@ def test_choice():
     args = tuple([])
     kwargs = {'item_2': 'value-2'}
     result = valueobjects._process_signature(xsd_type, args, kwargs)
-    assert result == {
-        '_value_1': {'item_2': 'value-2'}
-    }
+    assert result == {'item_2': 'value-2'}
 
 
 def test_choice_max_occurs_simple_interface():
@@ -197,12 +195,15 @@ def test_choice_mixed():
             xsd.Element('item_2', xsd.String())
         ])
     )
+    expected = '({item_1: xsd:string} | {item_2: xsd:string}), item_2__1: xsd:string'
+    assert xsd_type.signature() == expected
+
     args = tuple([])
-    kwargs = {'item_1': 'value-1', 'item_2': 'value-2'}
+    kwargs = {'item_1': 'value-1', 'item_2__1': 'value-2'}
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
-        'item_2': 'value-2',
-        '_value_1': {'item_1': 'value-1'}
+        'item_1': 'value-1',
+        'item_2__1': 'value-2',
     }
 
 
@@ -225,7 +226,8 @@ def test_choice_sequences_simple():
     kwargs = {'item_1': 'value-1', 'item_2': 'value-2'}
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
-        '_value_1': {'item_1': 'value-1', 'item_2': 'value-2'}
+        'item_1': 'value-1',
+        'item_2': 'value-2',
     }
 
 
@@ -246,16 +248,11 @@ def test_choice_sequences_no_match():
     )
     args = tuple([])
     kwargs = {'item_1': 'value-1', 'item_3': 'value-3'}
-
-    try:
-        valueobjects._process_signature(xsd_type, args, kwargs)
-    except TypeError as exc:
-        assert six.text_type(exc) == (
-            "__init__() got an unexpected keyword argument 'item_3'. " +
-            "Signature: (_value_1: ({item_1: xsd:string, item_2: xsd:string} | {item_3: xsd:string, item_4: xsd:string}))"  # noqa
-        )
-    else:
-        assert False, "TypeError not raised"
+    value = valueobjects._process_signature(xsd_type, args, kwargs)
+    assert value == {
+        'item_1': 'value-1',
+        'item_3': 'value-3',
+    }
 
 
 def test_choice_sequences_no_match_nested():
@@ -270,15 +267,9 @@ def test_choice_sequences_no_match_nested():
         ])
     )
     args = tuple([])
-    kwargs = {'_value_1': {'item_1': 'value-1'}}
-    try:
-        valueobjects._process_signature(xsd_type, args, kwargs)
-    except TypeError as exc:
-        assert six.text_type(exc) == (
-            "No complete xsd:Sequence found for the xsd:Choice '_value_1'.\n" +
-            "The signature is: ({item_1: xsd:string, item_2: xsd:string})")
-    else:
-        assert False, "TypeError not raised"
+    kwargs = {'item_1': 'value-1'}
+    value = valueobjects._process_signature(xsd_type, args, kwargs)
+    assert value == {'item_1': 'value-1'}
 
 
 def test_choice_sequences_optional_elms():
@@ -298,10 +289,10 @@ def test_choice_sequences_optional_elms():
         ])
     )
     args = tuple([])
-    kwargs = {'_value_1': {'item_1': 'value-1'}}
+    kwargs = {'item_1': 'value-1'}
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
-        '_value_1': {'item_1': 'value-1'}
+        'item_1': 'value-1'
     }
 
 

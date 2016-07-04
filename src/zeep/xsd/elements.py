@@ -220,7 +220,7 @@ class Element(Base):
     def signature(self, depth=0):
         depth += 1
         if self.type.name:
-            value = self.type.name
+            value = self.type.signature(depth)
         else:
             value = self.type.signature(depth)
         if self.accepts_multiple:

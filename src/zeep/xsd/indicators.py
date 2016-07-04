@@ -5,7 +5,8 @@ from collections import OrderedDict, defaultdict
 from cached_property import threaded_cached_property
 
 from zeep.xsd.elements import Any, Base, Element
-from zeep.xsd.utils import UniqueAttributeName, max_occurs_iter
+from zeep.xsd.utils import (
+    NamePrefixGenerator, UniqueNameGenerator, max_occurs_iter)
 
 __all__ = ['All', 'Choice', 'Group', 'Sequence']
 
@@ -51,28 +52,28 @@ class OrderIndicator(Indicator, list):
     def elements_nested(self):
         """List of tuples containing the element name and the element"""
         result = []
-        generator = UniqueAttributeName()
-        unique_count = {}
+        generator = NamePrefixGenerator()
+        generator_2 = UniqueNameGenerator()
+
         for elm in self:
-            if isinstance(elm, (All, Group, Sequence)):
+            if isinstance(elm, (All, Choice, Group, Sequence)):
                 if elm.accepts_multiple:
                     result.append((generator.get_name(), elm))
                 else:
+                    for sub_name, sub_elm in elm.elements:
+                        sub_name = generator_2.create_name(sub_name)
                     result.append((None, elm))
             elif isinstance(elm, (Any, Choice)):
                 result.append((generator.get_name(), elm))
             else:
-                name = elm.name
-                if name in unique_count:
-                    unique_count[name] += 1
-                    name = '%s__%d' % (name, unique_count[name])
-                else:
-                    unique_count[name] = 0
+                name = generator_2.create_name(elm.name)
                 result.append((name, elm))
         return result
 
     def accept(self, values):
         """Check if the current element accepts the given values."""
+        values = {k for k in values if values[k] is not None}
+
         required_keys = {
             name for name, element in self.elements
             if not element.is_optional
@@ -227,6 +228,7 @@ class Choice(OrderIndicator):
         return {}
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
+        """Return a dictionary"""
         result = []
 
         for i in max_occurs_iter(self.max_occurs):
@@ -234,16 +236,16 @@ class Choice(OrderIndicator):
 
                 # Choose out of multiple
                 options = []
-                for name, element in self.elements_nested:
+                for element_name, element in self.elements_nested:
 
                     local_xmlelements = copy.copy(xmlelements)
                     sub_result = element.parse_xmlelements(local_xmlelements, schema)
 
                     if isinstance(element, OrderIndicator):
                         if element.accepts_multiple:
-                            sub_result = {name: sub_result}
+                            sub_result = {element_name: sub_result}
                     else:
-                        sub_result = {name: sub_result}
+                        sub_result = {element_name: sub_result}
 
                     num_consumed = len(xmlelements) - len(local_xmlelements)
                     if num_consumed:
@@ -258,9 +260,10 @@ class Choice(OrderIndicator):
                 else:
                     break
 
-        if not self.accepts_multiple:
-            result = result[0] if result else None
-
+        if self.accepts_multiple:
+            result = {name: result}
+        else:
+            result = result[0] if result else {}
         return result
 
     def parse_kwargs(self, kwargs, name):
@@ -282,17 +285,16 @@ class Choice(OrderIndicator):
         :type kwargs: list / dict
 
         """
-        result = []
         kwargs = copy.copy(kwargs)
-
         if name and name in kwargs:
             values = kwargs.pop(name) or []
+            result = []
+
             if isinstance(values, dict):
                 values = [values]
 
             for value in values:
                 for element in self:
-
                     # TODO: Use most greedy choice instead of first matching
                     if isinstance(element, OrderIndicator):
                         choice_value = value[name] if name in value else value
@@ -316,36 +318,49 @@ class Choice(OrderIndicator):
             if self.accepts_multiple:
                 return {}, kwargs
 
+            result = {}
+            for choice_name, choice in self.elements:
+                result[choice_name] = None
+
             # When choice elements are specified directly in the kwargs
             org_kwargs = kwargs
             for choice in self:
-                result, kwargs = choice.parse_kwargs(org_kwargs)
-                if result:
+                subresult, kwargs = choice.parse_kwargs(org_kwargs)
+                if subresult:
+                    result.update(subresult)
                     break
             else:
                 result = {}
                 kwargs = org_kwargs
 
-        if name:
+        if name and self.accepts_multiple:
             result = {name: result}
         return result, kwargs
 
     def render(self, parent, value):
+        """Render the value to the parent element tree node.
+
+        This is a bit more complex then the order render methods since we need
+        to search for the best matching choice element.
+
+        """
         if not self.accepts_multiple:
             value = [value]
-
         for item in value:
 
             # Find matching choice element
             for name, element in self.elements_nested:
+
                 if isinstance(element, Element):
                     if element.name in item:
                         try:
                             choice_value = item[element.name]
                         except KeyError:
                             choice_value = item
-                        element.render(parent, choice_value)
-                        break
+
+                        if choice_value is not None:
+                            element.render(parent, choice_value)
+                            break
                 else:
                     if name is not None:
                         try:
@@ -379,8 +394,14 @@ class Sequence(OrderIndicator):
         for item in max_occurs_iter(self.max_occurs):
             item_result = OrderedDict()
             for elm_name, element in self.elements:
-                item_result[elm_name] = element.parse_xmlelements(
-                    xmlelements, schema)
+                item_subresult = element.parse_xmlelements(xmlelements, schema, name)
+
+                # Unwrap if allowed
+                if isinstance(element, OrderIndicator):
+                    item_result.update(item_subresult)
+                else:
+                    item_result[elm_name] = item_subresult
+
                 if not xmlelements:
                     break
             if item_result:
@@ -388,6 +409,7 @@ class Sequence(OrderIndicator):
 
         if not self.accepts_multiple:
             return result[0] if result else None
+
         return {name: result}
 
 

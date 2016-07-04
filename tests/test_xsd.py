@@ -359,7 +359,7 @@ def test_choice_determinst():
         )
     )
 
-    obj = root(_value_1={'item_1': 'item-1', 'item_2': 'item-2'})
+    obj = root(item_1='item-1', item_2='item-2')
     node = etree.Element('document')
     root.render(node, obj)
     assert etree.tostring(node)
@@ -460,14 +460,16 @@ def test_mixed_choice():
         item_2='item-2',
         item_3='item-3',
         item_4='item-4',
-        _value_1={'item_7': 'item-7', 'item_8': 'item-8'}
+        item_7='item-7',
+        item_8='item-8',
     )
 
     assert item.item_1 == 'item-1'
     assert item.item_2 == 'item-2'
     assert item.item_3 == 'item-3'
     assert item.item_4 == 'item-4'
-    assert item._value_1 == {'item_7': 'item-7', 'item_8': 'item-8'}
+    assert item.item_7 == 'item-7'
+    assert item.item_8 == 'item-8'
 
 
 def test_xsi():

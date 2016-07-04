@@ -245,7 +245,7 @@ def test_sequence_parse_choice():
     schema = xsd.Schema(schema_doc)
     elm = schema.get_element('{http://tests.python-zeep.org/tst}container')
     result = elm.parse(xml, schema)
-    assert result._value_1 == {'item_1': 'blabla'}
+    assert result.item_1 == 'blabla'
     assert result.item_3 == 'haha'
 
 
@@ -280,9 +280,9 @@ def test_sequence_parse_choice_max_occurs():
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:tst="http://tests.python-zeep.org/tst">
-          <tst:item_1>blabla</tst:item_1>
-          <tst:item_1>blabla</tst:item_1>
-          <tst:item_3>haha</tst:item_3>
+          <tst:item_1>item-1-1</tst:item_1>
+          <tst:item_1>item-1-2</tst:item_1>
+          <tst:item_3>item-3</tst:item_3>
         </tst:container>
     """)
 
@@ -290,11 +290,11 @@ def test_sequence_parse_choice_max_occurs():
     elm = schema.get_element('{http://tests.python-zeep.org/tst}container')
     result = elm.parse(xml, schema)
     assert result._value_1 == [
-        {'item_1': 'blabla'},
-        {'item_1': 'blabla'},
+        {'item_1': 'item-1-1'},
+        {'item_1': 'item-1-2'},
     ]
 
-    assert result.item_3 == 'haha'
+    assert result.item_3 == 'item-3'
 
 
 def test_sequence_parse_choice_sequence_max_occurs():
@@ -677,7 +677,7 @@ def test_nested_complex_type_optional():
     """)
     obj = custom_type.parse(expected, None)
     assert obj.item_1 == 'foo'
-    assert obj.item_2[0]._value_1 == {'item_2a1': 'x'}
+    assert obj.item_2[0].item_2a1 == 'x'
     assert obj.item_2[0].item_2b is None
 
     expected = etree.fromstring("""
@@ -691,7 +691,7 @@ def test_nested_complex_type_optional():
     """)
     obj = custom_type.parse(expected, None)
     assert obj.item_1 == 'foo'
-    assert obj.item_2[0]._value_1 == {'item_2a1': 'x'}
+    assert obj.item_2[0].item_2a1 == 'x'
     assert obj.item_2[0].item_2b is None
 
 
@@ -723,7 +723,7 @@ def test_nested_choice_optional():
     """)
     obj = custom_type.parse(expected, None)
     assert obj.item_1 == 'foo'
-    assert obj._value_1 == {'item_2': 'bar'}
+    assert obj.item_2 == 'bar'
 
     expected = etree.fromstring("""
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
@@ -732,4 +732,5 @@ def test_nested_choice_optional():
     """)
     obj = custom_type.parse(expected, None)
     assert obj.item_1 == 'foo'
-    assert obj._value_1 == {}
+    assert obj.item_2 is None
+    assert obj.item_3 is None

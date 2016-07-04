@@ -5,7 +5,7 @@ from cached_property import threaded_cached_property
 
 from zeep.xsd.elements import Element
 from zeep.xsd.indicators import Sequence
-from zeep.xsd.utils import UniqueAttributeName
+from zeep.xsd.utils import NamePrefixGenerator
 from zeep.xsd.valueobjects import CompoundValue
 
 
@@ -191,7 +191,7 @@ class ComplexType(Type):
     def elements_nested(self):
         """List of tuples containing the element name and the element"""
         result = []
-        generator = UniqueAttributeName()
+        generator = NamePrefixGenerator()
 
         if self._extension:
             name = generator.get_name()
@@ -221,7 +221,8 @@ class ComplexType(Type):
         children = xmlelement.getchildren()
         for name, element in self.elements_nested:
             result = element.parse_xmlelements(children, schema, name)
-            init_kwargs.update(result)
+            if result:
+                init_kwargs.update(result)
 
         return self(**init_kwargs)
 
@@ -234,7 +235,10 @@ class ComplexType(Type):
             if isinstance(element, Element):
                 element.type.render(parent, getattr(value, name))
             else:
-                element.render(parent, value)
+                if element.accepts_multiple:
+                    element.render(parent, getattr(value, name))
+                else:
+                    element.render(parent, value)
 
         if xsd_type and xsd_type._xsd_name:
             parent.set(
