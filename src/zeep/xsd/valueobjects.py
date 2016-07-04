@@ -21,48 +21,48 @@ class AnyObject(object):
 class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
-        self.__ordered_dict__ = OrderedDict()
+        self.__values__ = OrderedDict()
 
         # Set default values
         for container_name, container in self._xsd_type.elements_nested:
             values = container.default_value
             if isinstance(container, Indicator):
-                self.__ordered_dict__.update(values)
+                self.__values__.update(values)
             else:
-                self.__ordered_dict__[container_name] = values
+                self.__values__[container_name] = values
 
         for attribute_name, attribute in self._xsd_type.attributes:
-            self.__ordered_dict__[attribute_name] = attribute.default_value
+            self.__values__[attribute_name] = attribute.default_value
 
         items = _process_signature(self._xsd_type, args, kwargs)
         for key, value in items.items():
-            self.__ordered_dict__[key] = value
+            self.__values__[key] = value
 
     def __contains__(self, key):
-        return self.__ordered_dict__.__contains__(key)
+        return self.__values__.__contains__(key)
 
     def __iter__(self):
-        return self.__ordered_dict__.__iter__()
+        return self.__values__.__iter__()
 
     def __repr__(self):
-        return PrettyPrinter().pformat(self.__ordered_dict__)
+        return PrettyPrinter().pformat(self.__values__)
 
     def __getitem__(self, key):
-        return self.__ordered_dict__[key]
+        return self.__values__[key]
 
     def __setitem__(self, key, value):
-        self.__ordered_dict__[key] = value
+        self.__values__[key] = value
 
     def __setattr__(self, key, value):
-        if key.startswith('__'):
+        if key.startswith('__') or key in ('_xsd_type', '_xsd_elm'):
             return super(CompoundValue, self).__setattr__(key, value)
-        self.__ordered_dict__[key] = value
+        self.__values__[key] = value
 
     def __getattribute__(self, key):
-        if key.startswith('__') or key in ('_xsd_type',):
+        if key.startswith('__') or key in ('_xsd_type', '_xsd_elm'):
             return super(CompoundValue, self).__getattribute__(key)
         try:
-            return self.__ordered_dict__[key]
+            return self.__values__[key]
         except KeyError:
             raise AttributeError(
                 "%s instance has no attribute '%s'" % (
@@ -110,6 +110,7 @@ def _process_signature(xsd_type, args, kwargs):
             values, kwargs = element.parse_kwargs(kwargs, element_name)
         else:
             values, kwargs = element.parse_kwargs(kwargs, None)
+
         if values is not None:
             for key, value in values.items():
                 if key not in result:

@@ -83,8 +83,6 @@ class OrderIndicator(Indicator, list):
         }
 
         values_keys = set(values)
-        if '_xsd_elm' in values_keys:
-            values_keys.remove('_xsd_elm')
 
         if (
             values_keys <= (required_keys | optional_keys) and
