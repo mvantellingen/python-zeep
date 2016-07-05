@@ -227,6 +227,9 @@ class ComplexType(Type):
         return self(**init_kwargs)
 
     def render(self, parent, value, xsd_type=None):
+        if not self.elements_nested and not self.attributes:
+            return
+
         for name, attribute in self.attributes:
             attr_value = getattr(value, name, None)
             attribute.render(parent, attr_value)

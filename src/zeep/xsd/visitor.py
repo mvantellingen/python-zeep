@@ -419,7 +419,7 @@ class SchemaVisitor(object):
             xsd_type = xsd_cls(
                 element=element, attributes=attributes, qname=qname)
         else:
-            xsd_type = xsd_elements.Any()
+            xsd_type = xsd_cls(qname=qname)
 
         if is_global:
             self.schema.register_type(qname, xsd_type)

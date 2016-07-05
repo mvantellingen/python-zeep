@@ -656,7 +656,6 @@ def test_element_ref_occurs():
     assert_nodes_equal(expected, node)
 
 
-
 def test_element_any():
     node = etree.fromstring("""
         <?xml version="1.0"?>
@@ -731,6 +730,42 @@ def test_element_any_parse():
 
     elm = schema.get_element('ns0:container')
     elm.parse(node, schema)
+
+
+def test_element_any_type():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="something" type="anyType"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = container_elm(something='bar')
+
+    node = etree.Element('document')
+    container_elm.render(node, obj)
+    expected = """
+        <document>
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:something>bar</ns0:something>
+            </ns0:container>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+    item = container_elm.parse(node.getchildren()[0], schema)
+    assert item.something == 'bar'
 
 
 def test_unqualified():
@@ -1118,3 +1153,40 @@ def test_sequence_in_sequence_many():
       </document>
     """
     assert_nodes_equal(expected, node)
+
+
+def test_complex_type_empty():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <complexType name="empty"/>
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="something" type="tns:empty"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = container_elm()
+
+    node = etree.Element('document')
+    container_elm.render(node, obj)
+    expected = """
+        <document>
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:something/>
+            </ns0:container>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+    item = container_elm.parse(node.getchildren()[0], schema)
+    assert item.something is None
