@@ -38,6 +38,9 @@ class Base(object):
             return {name: value}, kwargs
         return {}, kwargs
 
+    def parse_xmlelements(self, xmlelements, schema, name=None):
+        raise NotImplementedError()
+
     def signature(self, depth=0):
         return ''
 
