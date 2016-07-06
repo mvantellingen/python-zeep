@@ -193,3 +193,35 @@ def test_schema_error_handling():
         schema.get_element('ns0:something')
     with pytest.raises(KeyError):
         schema.get_type('ns0:something')
+
+
+def test_schema_import_xmlsoap():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+          <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+        </xsd:schema>
+    """.strip())
+    transport = DummyTransport()
+    xsd.Schema(node_a, transport=transport)
+
+
+def test_schema_import_unresolved():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+          <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+        </xsd:schema>
+    """.strip())
+    transport = DummyTransport()
+    xsd.Schema(node_a, transport=transport)
