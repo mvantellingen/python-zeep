@@ -19,7 +19,7 @@ class Type(object):
     def accept(self, value):
         raise NotImplementedError
 
-    def parse_xmlelement(self, xmlelement, schema=None):
+    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True):
         raise NotImplementedError
 
     def parsexml(self, xml, schema=None):
@@ -108,7 +108,7 @@ class SimpleType(Type):
     def __str__(self):
         return self.name
 
-    def parse_xmlelement(self, xmlelement, schema=None):
+    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True):
         if xmlelement.text is None:
             return
         return self.pythonvalue(xmlelement.text)
@@ -208,13 +208,25 @@ class ComplexType(Type):
             result.append((generator.get_name(), self._element))
         return result
 
-    def parse_xmlelement(self, xmlelement, schema):
-        init_kwargs = OrderedDict()
+    def parse_xmlelement(self, xmlelement, schema, allow_none=True):
+
+        # If this is an empty complexType (<xsd:complexType name="x"/>)
+        if not self.attributes and not self.elements:
+            return None
 
         elements = xmlelement.getchildren()
         attributes = copy.copy(xmlelement.attrib)
-        if not elements and not attributes:
-            return None  # object is nil
+        if allow_none and len(elements) == 0 and len(attributes) == 0:
+            return
+
+        init_kwargs = OrderedDict()
+
+        # Parse elements. These are always indicator elements (all, choice,
+        # group, sequence)
+        for name, element in self.elements_nested:
+            result = element.parse_xmlelements(elements, schema, name)
+            if result:
+                init_kwargs.update(result)
 
         # Parse attributes
         for name, attribute in self.attributes:
@@ -223,13 +235,6 @@ class ComplexType(Type):
                 init_kwargs[name] = attribute.parse(value)
             else:
                 init_kwargs[name] = attribute.parse(attributes)
-
-        # Parse elements
-        children = xmlelement.getchildren()
-        for name, element in self.elements_nested:
-            result = element.parse_xmlelements(children, schema, name)
-            if result:
-                init_kwargs.update(result)
 
         return self(**init_kwargs)
 

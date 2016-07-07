@@ -445,7 +445,7 @@ class AnyType(SimpleType):
         else:
             parent.text = self.xmlvalue(value)
 
-    def parse_xmlelement(self, xmlelement, schema=None):
+    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True):
         xsi_type = qname_attr(
             xmlelement,
             '{http://www.w3.org/2001/XMLSchema-instance}type')

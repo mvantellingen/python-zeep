@@ -188,8 +188,9 @@ class Element(Base):
         new.max_occurs = max_occurs
         return new
 
-    def parse(self, xmlelement, schema):
-        return self.type.parse_xmlelement(xmlelement, schema)
+    def parse(self, xmlelement, schema, allow_none=False):
+        return self.type.parse_xmlelement(
+            xmlelement, schema, allow_none=allow_none)
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
@@ -197,7 +198,7 @@ class Element(Base):
         for i in max_occurs_iter(self.max_occurs):
             if xmlelements and xmlelements[0].tag == self.qname:
                 xmlelement = xmlelements.pop(0)
-                item = self.parse(xmlelement, schema)
+                item = self.parse(xmlelement, schema, allow_none=True)
                 if item is not None:
                     result.append(item)
             else:
