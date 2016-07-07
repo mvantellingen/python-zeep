@@ -30,13 +30,7 @@ class Base(object):
         return {self.name: value}, args
 
     def parse_kwargs(self, kwargs, name=None):
-        value = None
-        name = name or self.name
-
-        if name in kwargs:
-            value = kwargs.pop(name)
-            return {name: value}, kwargs
-        return {}, kwargs
+        raise NotImplementedError()
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         raise NotImplementedError()
@@ -85,6 +79,12 @@ class Any(Base):
             return element_type.parse(xmlelement, schema)
         except (ValueError, KeyError):
             return xmlelement
+
+    def parse_kwargs(self, kwargs, name=None):
+        if name in kwargs:
+            value = kwargs.pop(name)
+            return {name: value}, kwargs
+        return {}, kwargs
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []
@@ -191,6 +191,9 @@ class Element(Base):
     def parse(self, xmlelement, schema, allow_none=False):
         return self.type.parse_xmlelement(
             xmlelement, schema, allow_none=allow_none)
+
+    def parse_kwargs(self, kwargs, name=None):
+        return self.type.parse_kwargs(kwargs, name or self.name)
 
     def parse_xmlelements(self, xmlelements, schema, name=None):
         result = []

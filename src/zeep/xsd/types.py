@@ -19,6 +19,15 @@ class Type(object):
     def accept(self, value):
         raise NotImplementedError
 
+    def parse_kwargs(self, kwargs, name=None):
+        value = None
+        name = name or self.name
+
+        if name in kwargs:
+            value = kwargs.pop(name)
+            return {name: value}, kwargs
+        return {}, kwargs
+
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True):
         raise NotImplementedError
 
