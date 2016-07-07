@@ -324,11 +324,10 @@ class SchemaVisitor(object):
 
         if parent.tag == tags.schema:
             name = node.get('name')
-            is_anonymous = False
+            is_global = True
         else:
             name = parent.get('name', 'Anonymous')
-            is_anonymous = True
-
+            is_global = False
         base_type = '{http://www.w3.org/2001/XMLSchema}string'
 
         annotation, items = self._pop_annotation(node.getchildren())
@@ -346,7 +345,7 @@ class SchemaVisitor(object):
             raise AssertionError("Unexpected child: %r" % child.tag)
 
         assert xsd_type is not None
-        if not is_anonymous:
+        if is_global:
             qname = as_qname(name, node.nsmap, self.schema._target_namespace)
             self.schema.register_type(qname, xsd_type)
         return xsd_type
