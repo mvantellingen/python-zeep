@@ -104,19 +104,35 @@ class Any(Base):
 
     def render(self, parent, value):
         assert parent is not None
+        if self.accepts_multiple and isinstance(value, list):
+            for val in value:
+                self._render_value_item(parent, val)
+        else:
+            self._render_value_item(parent, value)
+
+    def _render_value_item(self, parent, value):
         if not value:
             return
 
+        from zeep.xsd.valueobjects import AnyObject  # cyclic import / FIXME
+
+        if not isinstance(value, AnyObject):
+            raise TypeError(
+                "Received object of type %r, expected xsd.AnyObject" % (
+                    type(value).__name__))
+
         if isinstance(value.value, list):
             for val in value.value:
-                value.xsd_type.render(parent, val)
+                value.xsd_elm.render(parent, val)
         else:
-            value.xsd_type.render(parent, value.value)
+            value.xsd_elm.render(parent, value.value)
 
     def resolve(self):
         return self
 
     def signature(self, depth=0):
+        if self.accepts_multiple:
+            return 'ANY[]'
         return 'ANY'
 
 

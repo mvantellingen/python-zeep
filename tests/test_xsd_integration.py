@@ -748,7 +748,6 @@ def test_element_any_type():
           </element>
         </schema>
     """.strip())
-
     schema = xsd.Schema(node)
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
@@ -766,6 +765,68 @@ def test_element_any_type():
     assert_nodes_equal(expected, node)
     item = container_elm.parse(node.getchildren()[0], schema)
     assert item.something == 'bar'
+
+
+def test_any_in_nested_sequence():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/"
+        >
+          <xsd:element name="something" type="xsd:date"/>
+          <xsd:element name="foobar" type="xsd:boolean"/>
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="items" minOccurs="0">
+                  <xsd:complexType>
+                    <xsd:sequence>
+                      <xsd:any namespace="##any" processContents="lax"/>
+                    </xsd:sequence>
+                  </xsd:complexType>
+                </xsd:element>
+                <xsd:element name="version" type="xsd:string"/>
+                <xsd:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """))
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    assert container_elm.signature() == (
+        'items: {_value_1: ANY}, version: xsd:string, _value_1: ANY[]')
+
+    something = schema.get_element('{http://tests.python-zeep.org/}something')
+    foobar = schema.get_element('{http://tests.python-zeep.org/}foobar')
+
+    any_1 = xsd.AnyObject(something, datetime.date(2016, 7, 4))
+    any_2 = xsd.AnyObject(foobar, True)
+    obj = container_elm(
+        items={'_value_1': any_1}, version='str1234', _value_1=[any_1, any_2])
+
+    node = etree.Element('document')
+    container_elm.render(node, obj)
+    expected = """
+        <document>
+          <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+            <ns0:items>
+              <ns0:something>2016-07-04</ns0:something>
+            </ns0:items>
+            <ns0:version>str1234</ns0:version>
+            <ns0:something>2016-07-04</ns0:something>
+            <ns0:foobar>true</ns0:foobar>
+          </ns0:container>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+    item = container_elm.parse(node.getchildren()[0], schema)
+    assert item.items._value_1 == datetime.date(2016, 7, 4)
+    assert item.version == 'str1234'
+    assert item._value_1 == [datetime.date(2016, 7, 4), True]
 
 
 def test_unqualified():
