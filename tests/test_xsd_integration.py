@@ -829,6 +829,49 @@ def test_any_in_nested_sequence():
     assert item.version == 'str1234'
     assert item._value_1 == [datetime.date(2016, 7, 4), True]
 
+def test_attribute_list_type():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <simpleType name="list">
+            <list itemType="int"/>
+          </simpleType>
+
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="foo" type="xsd:string" />
+              </sequence>
+              <xsd:attribute name="lijst" type="tns:list"/>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    assert container_elm.signature() == ('foo: xsd:string, lijst: xsd:int[]')
+    obj = container_elm(foo='bar', lijst=[1, 2, 3])
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" lijst="1 2 3">
+          <ns0:foo>bar</ns0:foo>
+        </ns0:container>
+      </document>
+    """
+
+    node = etree.Element('document')
+    container_elm.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+    item = container_elm.parse(node.getchildren()[0], schema)
+    assert item.lijst == [1, 2, 3]
+    assert item.foo == 'bar'
+
 
 def test_anyattribute():
     node = etree.fromstring("""

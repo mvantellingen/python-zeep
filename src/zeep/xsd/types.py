@@ -315,6 +315,15 @@ class ListType(Type):
         item_type = self.item_type
         return ' '.join(item_type.xmlvalue(v) for v in value)
 
+    def pythonvalue(self, value):
+        if not value:
+            return []
+        item_type = self.item_type
+        return [item_type.pythonvalue(v) for v in value.split()]
+
+    def signature(self, depth=0):
+        return self.item_type.signature() + '[]'
+
 
 class UnionType(Type):
 
