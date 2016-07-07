@@ -207,7 +207,7 @@ class SchemaDocument(object):
                     "Unable to resolve type with QName '%s'" % name.text)
         else:
             if name.namespace in self._imports:
-                return self._imports[name.namespace].get_type(name,default)
+                return self._imports[name.namespace].get_type(name, default)
             else:
                 raise exceptions.XMLParseError((
                     "Unable to resolve type with QName '%s' "

@@ -492,7 +492,7 @@ def test_xsi():
         )
     )
     instance = alt_type(username='mvantellingen', password='geheim')
-    node = render_node(org_type, instance)
+    render_node(org_type, instance)
 
 
 def test_duplicate_element_names():

@@ -795,7 +795,7 @@ def test_any_in_nested_sequence():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """))
+    """))   # noqa
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
     assert container_elm.signature() == (
