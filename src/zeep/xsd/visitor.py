@@ -9,6 +9,7 @@ from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import indicators as xsd_indicators
 from zeep.xsd import types as xsd_types
+from zeep.exceptions import XMLParseError
 from zeep.xsd.parser import load_external
 
 logger = logging.getLogger(__name__)
@@ -110,37 +111,68 @@ class SchemaVisitor(object):
             Content: (annotation?)
             </import>
         """
+        schema_node = None
         namespace = node.get('namespace')
         location = node.get('schemaLocation')
-        schema_node = None
-
-        # Check if a schemaLocation is defined, if it isn't perhaps the
-        # namespaces references to an internal xml schema. Otherwise we just
-        # ignore the statement, seems to match libxml2 behaviour
-        if not location:
-            if namespace:
-                location = namespace
-                try:
-                    schema_node = self.parser_context.schema_nodes.get(namespace)
-                except KeyError:
-                    return  # ignore imports which we can't resolve
-
-            if not schema_node:
-                raise ValueError("schemaLocation is required")
-
-        # If a schemaLocation is defined then make the location absolute based
-        # on the base url and see if the schema is already processed (for
-        # cyclic schema references). Otherwise load the data.
-        else:
+        if location:
             location = absolute_location(location, self.schema._base_url)
-            schema = self.parser_context.schema_objects.get(location)
-            if schema:
-                logger.debug("Returning existing schema: %r", location)
-                self.schema._imports[namespace] = schema
-                return schema
 
-            schema_node = load_external(
-                location, self.schema._transport, self.parser_context)
+        if not namespace and not self.schema._target_namespace:
+            raise XMLParseError(
+                "The attribute 'namespace' must be existent if the "
+                "importing schema has no target namespace.")
+
+        # Check if the schema is already imported before based on the
+        # namespace. Schema's without namespace are registered as 'None'
+        schema = self.parser_context.schema_objects.get(namespace)
+        if schema:
+            if location and schema._location != location:
+                # Raise same error message as libxml2
+                raise XMLParseError((
+                    "Conflicting import of schema located at %r " +
+                    "for the namespace %r, since the namespace was " +
+                    "already imported with the schema located at %r"
+                    ) % (location, namespace or '(null)', schema._location))
+                return
+            logger.debug("Returning existing schema: %r", location)
+            self.schema._imports[namespace] = schema
+            return schema
+
+        # Check if if the namespace references an internal schema. Internal
+        # schema's are created for multiple xsd:schema definitions in a wsdl
+        try:
+            schema_node = self.parser_context.schema_nodes.get(namespace)
+        except KeyError:
+            pass
+
+        # Silently ignore import statements which we can't resolve via the
+        # namespace and doesn't have a schemaLocation attribute.
+        if not location:
+            logger.debug(
+                "Ignoring import statement for namespace %r " +
+                "(missing schemaLocation)", namespace)
+            return
+
+        # Load the XML
+        schema_node = load_external(
+            location, self.schema._transport, self.parser_context)
+
+        # Check if the xsd:import namespace matches the targetNamespace. If
+        # the xsd:import statement didn't specify a namespace then make sure
+        # that the targetNamespace wasn't declared by another schema yet.
+        schema_tns = schema_node.get('targetNamespace')
+        if namespace and schema_tns and namespace != schema_tns:
+            raise XMLParseError((
+                "The namespace defined on the xsd:import doesn't match the "
+                "imported targetNamespace located at %r "
+                ) % (location))
+        elif schema_tns in self.parser_context.schema_objects:
+            schema = self.parser_context.schema_objects.get(schema_tns)
+            raise XMLParseError((
+                "Conflicting import of schema located at %r " +
+                "for the namespace %r, since the namespace was " +
+                "already imported with the schema located at %r"
+                ) % (location, namespace or '(null)', schema._location))
 
         # If this schema location is 'internal' then retrieve the original
         # location since that is used as base url for sub include/imports

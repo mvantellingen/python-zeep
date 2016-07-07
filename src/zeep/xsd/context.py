@@ -1,22 +1,24 @@
 class SchemaRepository(object):
-    """Mapping between schema location and schema object"""
+    """Mapping between schema target namespace and schema object"""
     def __init__(self):
         self._schemas = {}
 
     def add(self, schema):
-        if schema._location:
-            self._schemas[schema._location] = schema
+        self._schemas[schema._target_namespace] = schema
 
-    def get(self, location):
-        if location in self._schemas:
-            return self._schemas[location]
+    def get(self, namespace):
+        if namespace in self._schemas:
+            return self._schemas[namespace]
+
+    def __contains__(self, namespace):
+        return namespace in self._schemas
 
     def __len__(self):
         return len(self._schemas)
 
 
 class SchemaNodeRepository(object):
-    """Mapping between schema namespace and lxml node"""
+    """Mapping between schema target namespace and lxml node"""
     def __init__(self):
         self._nodes = {}
 

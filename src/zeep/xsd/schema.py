@@ -74,7 +74,6 @@ class Schema(object):
 
     def get_type(self, qname):
         qname = self._create_qname(qname)
-
         if qname.text in xsd_builtins.default_types:
             return xsd_builtins.default_types[qname]
 
@@ -126,7 +125,8 @@ class SchemaDocument(object):
         self._base_url = base_url or location
         self._location = location
         self._transport = transport
-        self._target_namespace = None
+        self._target_namespace = (
+            node.get('targetNamespace') if node is not None else None)
         self._elm_instances = []
         self._types = {}
         self._elements = {}

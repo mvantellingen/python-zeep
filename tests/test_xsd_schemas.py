@@ -2,6 +2,7 @@ import pytest
 from lxml import etree
 
 from zeep import xsd
+from zeep.exceptions import XMLParseError
 
 
 class DummyTransport(object):
@@ -214,7 +215,7 @@ def test_cyclic_imports():
     transport.bind('http://tests.python-zeep.org/a.xsd', schema_a)
     transport.bind('http://tests.python-zeep.org/b.xsd', schema_b)
     transport.bind('http://tests.python-zeep.org/c.xsd', schema_c)
-    xsd.Schema(schema_a, transport=transport)
+    xsd.Schema(schema_a, transport=transport, location='http://tests.python-zeep.org/a.xsd')
 
 
 def test_get_type_through_import():
@@ -253,6 +254,110 @@ def test_get_type_through_import():
     transport.bind('http://tests.python-zeep.org/a.xsd', schema_a)
     transport.bind('http://tests.python-zeep.org/b.xsd', schema_b)
     xsd.Schema(schema_a, transport=transport)
+
+
+def test_duplicate_target_namespace():
+    schema_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            elementFormDefault="qualified">
+
+            <xs:import
+                schemaLocation="http://tests.python-zeep.org/b.xsd"
+                namespace="http://tests.python-zeep.org/duplicate"/>
+            <xs:import
+                schemaLocation="http://tests.python-zeep.org/c.xsd"
+                namespace="http://tests.python-zeep.org/duplicate"/>
+        </xs:schema>
+    """.strip())
+
+    schema_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/duplicate"
+            elementFormDefault="qualified">
+        </xsd:schema>
+    """.strip())
+
+    schema_c = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/duplicate"
+            elementFormDefault="qualified">
+        </xsd:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/a.xsd', schema_a)
+    transport.bind('http://tests.python-zeep.org/b.xsd', schema_b)
+    transport.bind('http://tests.python-zeep.org/c.xsd', schema_c)
+
+    with pytest.raises(XMLParseError):
+        xsd.Schema(schema_a, transport=transport)
+
+
+def test_multiple_no_namespace():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            elementFormDefault="qualified">
+
+          <xsd:import schemaLocation="http://tests.python-zeep.org/b.xsd"/>
+          <xsd:import schemaLocation="http://tests.python-zeep.org/c.xsd"/>
+        </xsd:schema>
+    """.strip())
+
+    node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            elementFormDefault="qualified">
+        </xsd:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
+    transport.bind('http://tests.python-zeep.org/c.xsd', node_b)
+    with pytest.raises(XMLParseError):
+        xsd.Schema(node_a, transport=transport)
+
+
+def test_multiple_only_target_ns():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            elementFormDefault="qualified">
+
+          <xsd:import schemaLocation="http://tests.python-zeep.org/b.xsd"/>
+          <xsd:import schemaLocation="http://tests.python-zeep.org/c.xsd"/>
+        </xsd:schema>
+    """.strip())
+
+    node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/duplicate-ns">
+        </xsd:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
+    transport.bind('http://tests.python-zeep.org/c.xsd', node_b)
+    with pytest.raises(XMLParseError):
+        xsd.Schema(node_a, transport=transport)
 
 
 def test_schema_error_handling():
@@ -313,4 +418,40 @@ def test_schema_import_unresolved():
         </xsd:schema>
     """.strip())
     transport = DummyTransport()
+    xsd.Schema(node_a, transport=transport)
+
+
+def test_no_target_namespace():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            elementFormDefault="qualified">
+
+          <xsd:import schemaLocation="http://tests.python-zeep.org/b.xsd"/>
+
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element ref="bla"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+
+        </xsd:schema>
+    """.strip())
+
+    node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            elementFormDefault="qualified">
+            <xsd:element name="bla" type="xsd:string"/>
+        </xsd:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
     xsd.Schema(node_a, transport=transport)
