@@ -129,7 +129,6 @@ def test_global_element_and_type():
 
             <xs:element name="ref_elm" type="xs:string"/>
             <xs:attribute name="ref_attr" type="xs:string"/>
-
         </xs:schema>
     """.strip())
 
@@ -164,6 +163,58 @@ def test_global_element_and_type():
 
     elm = schema.get_type('{http://tests.python-zeep.org/a}refs')
     elm(ref_elm='foo', ref_attr='bar')
+
+
+def test_cyclic_imports():
+    schema_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+            <xs:import
+                schemaLocation="http://tests.python-zeep.org/b.xsd"
+                namespace="http://tests.python-zeep.org/b"/>
+        </xs:schema>
+    """.strip())
+
+    schema_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            targetNamespace="http://tests.python-zeep.org/b"
+            xmlns:c="http://tests.python-zeep.org/c"
+            elementFormDefault="qualified">
+
+            <xs:import
+                schemaLocation="http://tests.python-zeep.org/c.xsd"
+                namespace="http://tests.python-zeep.org/c"/>
+        </xs:schema>
+    """.strip())
+
+    schema_c = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/c"
+            targetNamespace="http://tests.python-zeep.org/c"
+            elementFormDefault="qualified">
+
+            <xs:import
+                schemaLocation="http://tests.python-zeep.org/a.xsd"
+                namespace="http://tests.python-zeep.org/a"/>
+        </xs:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/a.xsd', schema_a)
+    transport.bind('http://tests.python-zeep.org/b.xsd', schema_b)
+    transport.bind('http://tests.python-zeep.org/c.xsd', schema_c)
+    xsd.Schema(schema_a, transport=transport)
 
 
 def test_get_type_through_import():
