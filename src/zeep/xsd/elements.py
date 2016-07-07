@@ -116,12 +116,16 @@ class Any(Base):
 
         from zeep.xsd.valueobjects import AnyObject  # cyclic import / FIXME
 
-        if not isinstance(value, AnyObject):
-            raise TypeError(
-                "Received object of type %r, expected xsd.AnyObject" % (
-                    type(value).__name__))
+        if not isinstance(value, (etree._Element, AnyObject)):
+            raise TypeError((
+                "Received object of type %r, " +
+                "expected xsd.AnyObject or etree.Element"
+            ) % (type(value).__name__))
 
-        if isinstance(value.value, list):
+        if isinstance(value, etree._Element):
+            parent.append(value)
+
+        elif isinstance(value.value, list):
             for val in value.value:
                 value.xsd_elm.render(parent, val)
         else:
