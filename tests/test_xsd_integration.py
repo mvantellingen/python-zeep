@@ -1,4 +1,5 @@
 import datetime
+from collections import OrderedDict
 
 from lxml import etree
 
@@ -827,6 +828,50 @@ def test_any_in_nested_sequence():
     assert item.items._value_1 == datetime.date(2016, 7, 4)
     assert item.version == 'str1234'
     assert item._value_1 == [datetime.date(2016, 7, 4), True]
+
+
+def test_anyattribute():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="foo" type="xsd:string" />
+              </sequence>
+              <xsd:anyAttribute processContents="lax"/>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    assert container_elm.signature() == (
+        'foo: xsd:string, _attr_1: {}')
+    obj = container_elm(foo='bar', _attr_1=OrderedDict([
+        ('hiep', 'hoi'), ('hoi', 'hiep')
+    ]))
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" hiep="hoi" hoi="hiep">
+          <ns0:foo>bar</ns0:foo>
+        </ns0:container>
+      </document>
+    """
+
+    node = etree.Element('document')
+    container_elm.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+    item = container_elm.parse(node.getchildren()[0], schema)
+    assert item._attr_1 == {'hiep': 'hoi', 'hoi': 'hiep'}
+    assert item.foo == 'bar'
 
 
 def test_unqualified():

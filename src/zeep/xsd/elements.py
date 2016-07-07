@@ -266,6 +266,26 @@ class Attribute(Element):
         parent.set(self.qname, value)
 
 
+class AnyAttribute(Base):
+    name = None
+
+    def __init__(self, process_contents='strict'):
+        self.process_contents = process_contents
+
+    def parse(self, attributes):
+        return attributes
+
+    def resolve(self):
+        return self
+
+    def render(self, parent, value):
+        for name, val in value.items():
+            parent.set(name, val)
+
+    def signature(self, depth=0):
+        return '{}'
+
+
 class RefElement(object):
 
     def __init__(self, tag, ref, schema, min_occurs=1, max_occurs=1):

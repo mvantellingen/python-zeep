@@ -774,7 +774,7 @@ class SchemaVisitor(object):
             </anyAttribute>
         """
         process_contents = node.get('processContents', 'strict')
-        return xsd_elements.Any(process_contents=process_contents)
+        return xsd_elements.AnyAttribute(process_contents=process_contents)
 
     def _get_type(self, name):
         name = self._create_qname(name)

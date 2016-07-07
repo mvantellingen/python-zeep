@@ -1,3 +1,4 @@
+import copy
 from collections import OrderedDict
 
 import six
@@ -161,6 +162,7 @@ class ComplexType(Type):
 
     @threaded_cached_property
     def attributes(self):
+        generator = NamePrefixGenerator(prefix='_attr_')
         result = []
         if self._extension and hasattr(self._extension, 'attributes'):
             result.extend(self._extension.attributes)
@@ -168,7 +170,9 @@ class ComplexType(Type):
         elm_names = {name for name, elm in self.elements if name is not None}
         attrs = []
         for attr in self._attributes:
-            if attr.name in elm_names:
+            if attr.name is None:
+                name = generator.get_name()
+            elif attr.name in elm_names:
                 name = 'attr__%s' % attr.name
             else:
                 name = attr.name
@@ -208,14 +212,17 @@ class ComplexType(Type):
         init_kwargs = OrderedDict()
 
         elements = xmlelement.getchildren()
-        attributes = xmlelement.attrib
+        attributes = copy.copy(xmlelement.attrib)
         if not elements and not attributes:
             return None  # object is nil
 
         # Parse attributes
         for name, attribute in self.attributes:
-            value = attributes.get(attribute.qname.text)
-            init_kwargs[name] = attribute.parse(value)
+            if attribute.name:
+                value = attributes.pop(attribute.qname.text, None)
+                init_kwargs[name] = attribute.parse(value)
+            else:
+                init_kwargs[name] = attribute.parse(attributes)
 
         # Parse elements
         children = xmlelement.getchildren()
