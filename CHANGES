@@ -3,6 +3,10 @@
  - **backwards-incompatible**: Choice elements are now unwrapped if 
    maxOccurs=1. This results in easier operation definitions when choices are
    used. 
+ - **backwards-incompatible**: The _soapheader kwarg is renamed to _soapheaders
+   and now requires a nested dictionary with the header name as key or a list
+   of values (value object or lxml.etree.Element object). Please see the 
+   call signature of the function using ``python -mzeep <wsdl>``.
  
 
 0.11.0 (2016-07-03)
