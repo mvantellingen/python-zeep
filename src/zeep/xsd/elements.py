@@ -2,6 +2,7 @@ import copy
 
 from lxml import etree
 
+from zeep.utils import qname_attr
 from zeep.xsd.utils import max_occurs_iter
 
 
@@ -193,7 +194,18 @@ class Element(Base):
         return new
 
     def parse(self, xmlelement, schema, allow_none=False):
-        return self.type.parse_xmlelement(
+        """Process the given xmlelement. If it has an xsi:type attribute then
+        use that for further processing. This should only be done for subtypes
+        of the defined type but for now we just accept everything.
+
+        """
+        instance_type = qname_attr(
+            xmlelement, '{http://www.w3.org/2001/XMLSchema-instance}type')
+        if instance_type:
+            xsd_type = schema.get_type(instance_type)
+        else:
+            xsd_type = self.type
+        return xsd_type.parse_xmlelement(
             xmlelement, schema, allow_none=allow_none)
 
     def parse_kwargs(self, kwargs, name=None):

@@ -540,7 +540,7 @@ def test_rpc_message_deserializer(abstract_message_output):
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
           <mns:Response xmlns:mns="http://test.python-zeep.org/tests/rpc"
                 SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-            <result xsi:type="xsd:string">foobar</result>
+            <result>foobar</result>
           </mns:Response>
         </SOAP-ENV:Body>
     """)  # noqa

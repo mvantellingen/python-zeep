@@ -412,6 +412,51 @@ def test_complex_type_with_extension():
     assert_nodes_equal(expected, node)
 
 
+def test_complex_type_with_extension_nested():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+
+          <xs:element name="container" type="tns:baseResponse"/>
+          <xs:complexType name="baseResponse">
+            <xs:sequence>
+              <xs:element name="item-1" type="xs:string"/>
+              <xs:element name="item-2" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <xs:complexType name="response">
+            <xs:complexContent>
+              <xs:extension base="tns:baseResponse">
+                <xs:sequence>
+                  <xs:element name="item-3" type="xs:string"/>
+                </xs:sequence>
+              </xs:extension>
+            </xs:complexContent>
+          </xs:complexType>
+        </xs:schema>
+    """))
+    elm_cls = schema.get_element('{http://tests.python-zeep.org/}container')
+
+    node = load_xml("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/"
+                       xmlns:i="http://www.w3.org/2001/XMLSchema-instance"
+                       i:type="ns0:response">
+            <ns0:item-1>item-1</ns0:item-1>
+            <ns0:item-2>item-2</ns0:item-2>
+            <ns0:item-3>item-3</ns0:item-3>
+        </ns0:container>
+    """)
+    data = elm_cls.parse(node, schema)
+    assert data['item-1'] == 'item-1'
+    assert data['item-2'] == 'item-2'
+    assert data['item-3'] == 'item-3'
+
+
 def test_complex_type_simple_content():
     node = etree.fromstring("""
         <?xml version="1.0"?>
