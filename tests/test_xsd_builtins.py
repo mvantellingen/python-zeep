@@ -314,6 +314,7 @@ class TestInteger:
     def test_pythonvalue(self):
         instance = builtins.Integer()
         assert instance.pythonvalue('100') == 100
+        assert instance.pythonvalue(None) is None
 
 
 class TestAnyType:
