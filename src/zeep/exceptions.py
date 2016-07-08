@@ -10,6 +10,10 @@ class XMLParseError(Error):
     pass
 
 
+class WsdlSyntaxError(Error):
+    pass
+
+
 class TransportError(Error):
     pass
 

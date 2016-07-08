@@ -161,7 +161,7 @@ class Definition(object):
             container = getattr(definition, name)
             if key in container:
                 return container[key]
-        raise IndexError("No definition %r found" % name)
+        raise IndexError("No definition %r in %r found" % (key, name))
 
     def resolve_imports(self):
         """Resolve all root elements (types, messages, etc)."""
