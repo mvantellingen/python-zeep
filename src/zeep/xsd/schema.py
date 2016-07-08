@@ -63,9 +63,14 @@ class Schema(object):
 
     def get_element(self, qname):
         qname = self._create_qname(qname)
-        schema = self._get_schema_document(qname.namespace)
         try:
+            schema = self._get_schema_document(qname.namespace)
             return schema._elements[qname]
+        except ValueError:
+            raise KeyError((
+                "Unable to resolve element %s. " +
+                "No schema available for the namespace %r."
+            ) % (qname.text, qname.namespace))
         except KeyError:
             known_elements = ', '.join(schema._elements.keys())
             raise KeyError(
@@ -77,9 +82,14 @@ class Schema(object):
         if qname.text in xsd_builtins.default_types:
             return xsd_builtins.default_types[qname]
 
-        schema = self._get_schema_document(qname.namespace)
         try:
+            schema = self._get_schema_document(qname.namespace)
             return schema._types[qname]
+        except ValueError:
+            raise KeyError((
+                "Unable to resolve type %s. " +
+                "No schema available for the namespace %r."
+            ) % (qname.text, qname.namespace))
         except KeyError:
             known_types = ', '.join(schema._types.keys())
             raise KeyError(

@@ -379,9 +379,9 @@ def test_schema_error_handling():
         schema.get_element('nonexisting:something')
     with pytest.raises(ValueError):
         schema.get_type('nonexisting:something')
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         schema.get_element('{nonexisting}something')
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         schema.get_type('{nonexisting}something')
     with pytest.raises(KeyError):
         schema.get_element('ns0:something')
