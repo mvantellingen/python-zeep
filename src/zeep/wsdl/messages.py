@@ -4,9 +4,8 @@ import six
 from defusedxml.lxml import fromstring
 from lxml import etree
 from lxml.builder import ElementMaker
-from zeep import exceptions
 
-from zeep import xsd
+from zeep import exceptions, xsd
 from zeep.helpers import serialize_object
 from zeep.utils import as_qname
 from zeep.wsdl.utils import _soap_element, etree_to_string

@@ -1,4 +1,5 @@
 import io
+
 import pytest
 import requests_mock
 from pretend import stub
