@@ -3,13 +3,13 @@ import logging
 
 from lxml import etree
 
+from zeep.exceptions import XMLParseError
 from zeep.parser import absolute_location
 from zeep.utils import as_qname, qname_attr
 from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import indicators as xsd_indicators
 from zeep.xsd import types as xsd_types
-from zeep.exceptions import XMLParseError
 from zeep.xsd.parser import load_external
 
 logger = logging.getLogger(__name__)
