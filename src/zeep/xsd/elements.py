@@ -143,7 +143,7 @@ class Any(Base):
 
 class Element(Base):
     def __init__(self, name, type_=None, min_occurs=1, max_occurs=1,
-                 nillable=False, default=None):
+                 nillable=False, default=None, is_global=False):
         if name and not isinstance(name, etree.QName):
             name = etree.QName(name)
 
@@ -153,6 +153,7 @@ class Element(Base):
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs
         self.nillable = nillable
+        self.is_global = is_global
         self.default = default
         # assert type_
 
@@ -260,11 +261,10 @@ class Element(Base):
         return self
 
     def signature(self, depth=0):
-        depth += 1
-        if self.type.name:
-            value = self.type.signature(depth)
-        else:
-            value = self.type.signature(depth)
+        if depth > 0 and self.is_global:
+            return self.name + '()'
+
+        value = self.type.signature(depth)
         if self.accepts_multiple:
             return '%s[]' % value
         return value

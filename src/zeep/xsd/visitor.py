@@ -278,7 +278,7 @@ class SchemaVisitor(object):
         element = xsd_elements.Element(
             name=qname, type_=xsd_type,
             min_occurs=min_occurs, max_occurs=max_occurs, nillable=nillable,
-            default=default)
+            default=default, is_global=is_global)
 
         self.schema._elm_instances.append(element)
 
@@ -427,7 +427,8 @@ class SchemaVisitor(object):
             base_type, attributes = self.visit_simple_content(children[0], node)
             xsd_cls._xsd_base = base_type.__class__
             xsd_type = xsd_cls(
-                attributes=attributes, extension=base_type, qname=qname)
+                attributes=attributes, extension=base_type, qname=qname,
+                is_global=is_global)
 
         elif first_tag == tags.complexContent:
             base_type, element, attributes = self.visit_complex_content(
@@ -437,7 +438,7 @@ class SchemaVisitor(object):
             xsd_cls._xsd_base = base_type.__class__
             xsd_type = xsd_cls(
                 element=element, attributes=attributes, extension=base_type,
-                qname=qname)
+                qname=qname, is_global=is_global)
 
         elif first_tag:
             element = None
@@ -448,7 +449,8 @@ class SchemaVisitor(object):
 
             attributes = self._process_attributes(node, children)
             xsd_type = xsd_cls(
-                element=element, attributes=attributes, qname=qname)
+                element=element, attributes=attributes, qname=qname,
+                is_global=is_global)
         else:
             xsd_type = xsd_cls(qname=qname)
 

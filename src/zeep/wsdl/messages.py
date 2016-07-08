@@ -8,7 +8,7 @@ from zeep import exceptions
 
 from zeep import xsd
 from zeep.helpers import serialize_object
-from zeep.utils import qname_attr, as_qname
+from zeep.utils import as_qname
 from zeep.wsdl.utils import _soap_element, etree_to_string
 
 SerializedMessage = namedtuple('SerializedMessage', ['path', 'headers', 'content'])

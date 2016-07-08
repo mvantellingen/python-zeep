@@ -96,7 +96,7 @@ def test_parse_with_header():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.headers.signature() == 'RequestHeader: xsd:string'
+    assert operation.input.headers.signature() == 'RequestHeader: RequestHeader()'
     assert operation.input.body.signature() == 'xsd:string'
 
 
@@ -145,8 +145,28 @@ def test_parse_with_header_other_message():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.headers.signature() == 'RequestHeader: xsd:string'
+    assert operation.input.headers.signature() == 'RequestHeader: RequestHeader()'
     assert operation.input.body.signature() == 'xsd:string'
+
+    header = root.types.get_element(
+        '{http://tests.python-zeep.org/tns}RequestHeader'
+    )('foo')
+    serialized = operation.input.serialize(
+        'ah1', _soapheaders={'RequestHeader': header})
+    expected = """
+        <?xml version="1.0"?>
+        <soap-env:Envelope
+            xmlns:ns0="http://tests.python-zeep.org/tns"
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap-env:Header>
+            <ns0:RequestHeader>foo</ns0:RequestHeader>
+          </soap-env:Header>
+          <soap-env:Body>
+            <ns0:Request>ah1</ns0:Request>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """
+    assert_nodes_equal(expected, serialized.content)
 
 
 def test_serialize():

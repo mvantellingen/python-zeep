@@ -13,6 +13,7 @@ __all__ = ['All', 'Choice', 'Group', 'Sequence']
 
 class Indicator(Base):
 
+
     def __repr__(self):
         return '<%s(%s)>' % (
             self.__class__.__name__, super(Indicator, self).__repr__())
@@ -191,8 +192,8 @@ class OrderIndicator(Indicator, list):
         for name, element in self.elements_nested:
             if name:
                 parts.append('%s: %s' % (name, element.signature(depth)))
-            elif isinstance(element, OrderIndicator):
-                parts.append('%s' % (element.signature()))
+            elif isinstance(element,  Indicator):
+                parts.append('%s' % (element.signature(depth)))
             else:
                 parts.append('%s: %s' % (name, element.signature(depth)))
         part = ', '.join(parts)
@@ -432,6 +433,9 @@ class Group(Indicator):
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
 
+    def __str__(self):
+        return '%s(%s)' % (self.name, self.signature())
+
     def __iter__(self, *args, **kwargs):
         for item in self.child:
             yield item
@@ -482,4 +486,4 @@ class Group(Indicator):
         return self
 
     def signature(self, depth=0):
-        return ''
+        return self.child.signature(depth)

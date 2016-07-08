@@ -13,8 +13,9 @@ from zeep.xsd.valueobjects import CompoundValue
 class Type(object):
     name = None
 
-    def __init__(self):
+    def __init__(self, is_global=False):
         self._resolved = False
+        self.is_global = is_global
 
     def accept(self, value):
         raise NotImplementedError
@@ -146,7 +147,7 @@ class ComplexType(Type):
     _xsd_base = None
 
     def __init__(self, element=None, attributes=None,
-                 restriction=None, extension=None, qname=None):
+                 restriction=None, extension=None, qname=None, is_global=False):
         if element and type(element) == list:
             element = Sequence(element)
 
@@ -155,8 +156,7 @@ class ComplexType(Type):
         self._attributes = attributes or []
         self._restriction = restriction
         self._extension = extension
-
-        super(ComplexType, self).__init__()
+        super(ComplexType, self).__init__(is_global=is_global)
 
     def __call__(self, *args, **kwargs):
         if not hasattr(self, '_value_class'):
@@ -290,10 +290,10 @@ class ComplexType(Type):
         return self
 
     def signature(self, depth=0):
-        if depth > 5:
-            return '<recursive>'
-        parts = []
+        if depth > 0 and self.is_global:
+            return self.name
 
+        parts = []
         depth += 1
         for name, element in self.elements_nested:
             # http://schemas.xmlsoap.org/soap/encoding/ contains cyclic type
@@ -308,7 +308,7 @@ class ComplexType(Type):
             parts.append(part)
 
         value = ', '.join(parts)
-        if depth > 2:
+        if depth > 1:
             value = '{%s}' % value
         return value
 
@@ -336,7 +336,7 @@ class ListType(Type):
         return [item_type.pythonvalue(v) for v in value.split()]
 
     def signature(self, depth=0):
-        return self.item_type.signature() + '[]'
+        return self.item_type.signature(depth) + '[]'
 
 
 class UnionType(Type):
