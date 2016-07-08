@@ -393,6 +393,8 @@ class Long(Integer):
     name = 'xsd:long'
 
     def pythonvalue(self, value):
+        if value is None:
+            return None
         return long(value) if six.PY2 else int(value)
 
 
