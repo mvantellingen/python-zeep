@@ -1,3 +1,4 @@
+import io
 import pytest
 import requests_mock
 from pretend import stub
@@ -223,12 +224,17 @@ def test_parse_types_nsmap_issues():
 @pytest.mark.requests
 def test_parse_soap_import_wsdl():
     client = stub(transport=Transport(), wsse=None)
+    content = io.open(
+        'tests/wsdl_files/soap-enc.xsd', 'r', encoding='utf-8').read()
 
-    obj = wsdl.Document(
-        'tests/wsdl_files/soap_import_main.wsdl', transport=client.transport)
-    assert len(obj.services) == 1
-    assert obj.types.is_empty is False
-    obj.dump()
+    with requests_mock.mock() as m:
+        m.get('http://schemas.xmlsoap.org/soap/encoding/', text=content)
+
+        obj = wsdl.Document(
+            'tests/wsdl_files/soap_import_main.wsdl', transport=client.transport)
+        assert len(obj.services) == 1
+        assert obj.types.is_empty is False
+        obj.dump()
 
 
 def test_multiple_extension():
