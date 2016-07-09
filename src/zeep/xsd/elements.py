@@ -291,7 +291,7 @@ class Attribute(Element):
         super(Attribute, self).__init__(name=name, type_=type_, default=default)
         self.required = required
 
-    def parse(self, value, schema=None, context=None):
+    def parse(self, value):
         return self.type.pythonvalue(value)
 
     def render(self, parent, value):

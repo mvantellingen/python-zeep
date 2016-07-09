@@ -874,6 +874,7 @@ def test_any_in_nested_sequence():
     assert item.version == 'str1234'
     assert item._value_1 == [datetime.date(2016, 7, 4), True]
 
+
 def test_attribute_list_type():
     node = etree.fromstring("""
         <?xml version="1.0"?>
@@ -1110,6 +1111,38 @@ def test_defaults():
     node = etree.Element('document')
     container_type.render(node, obj)
     assert_nodes_equal(expected, node)
+
+
+def test_defaults_parse():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="foo" type="xsd:string" default="hoi" minOccurs="0"/>
+              </xsd:sequence>
+              <xsd:attribute name="bar" type="xsd:string" default="hoi"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+    container_elm = schema.get_element(
+        '{http://tests.python-zeep.org/}container')
+
+    node = load_xml("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:foo>hoi</ns0:foo>
+        </ns0:container>
+    """)
+    item = container_elm.parse(node, schema)
+    assert item.bar == 'hoi'
 
 
 def test_init_with_dicts():

@@ -221,7 +221,7 @@ class ComplexType(Type):
 
     def parse_xmlelement(self, xmlelement, schema, allow_none=True,
                          context=None):
-
+        """Consume matching xmlelements and call parse() on each"""
         # If this is an empty complexType (<xsd:complexType name="x"/>)
         if not self.attributes and not self.elements:
             return None
@@ -244,10 +244,11 @@ class ComplexType(Type):
         # Parse attributes
         for name, attribute in self.attributes:
             if attribute.name:
-                value = attributes.pop(attribute.qname.text, None)
-                init_kwargs[name] = attribute.parse(value, context=context)
+                if attribute.qname.text in attributes:
+                    value = attributes.pop(attribute.qname.text)
+                    init_kwargs[name] = attribute.parse(value)
             else:
-                init_kwargs[name] = attribute.parse(attributes, context=context)
+                init_kwargs[name] = attribute.parse(attributes)
 
         return self(**init_kwargs)
 
@@ -318,6 +319,8 @@ class ComplexType(Type):
 
 
 class ListType(Type):
+    """Space separated list of simpleType values"""
+
     def __init__(self, item_type):
         self.item_type = item_type
         super(ListType, self).__init__()
