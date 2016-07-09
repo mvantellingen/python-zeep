@@ -29,7 +29,8 @@ class Type(object):
             return {name: value}, kwargs
         return {}, kwargs
 
-    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True):
+    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
+                         context=None):
         raise NotImplementedError
 
     def parsexml(self, xml, schema=None):
@@ -118,7 +119,8 @@ class SimpleType(Type):
     def __str__(self):
         return self.name
 
-    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True):
+    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
+                         context=None):
         if xmlelement.text is None:
             return
         return self.pythonvalue(xmlelement.text)
@@ -217,7 +219,8 @@ class ComplexType(Type):
             result.append((generator.get_name(), self._element))
         return result
 
-    def parse_xmlelement(self, xmlelement, schema, allow_none=True):
+    def parse_xmlelement(self, xmlelement, schema, allow_none=True,
+                         context=None):
 
         # If this is an empty complexType (<xsd:complexType name="x"/>)
         if not self.attributes and not self.elements:
@@ -233,7 +236,8 @@ class ComplexType(Type):
         # Parse elements. These are always indicator elements (all, choice,
         # group, sequence)
         for name, element in self.elements_nested:
-            result = element.parse_xmlelements(elements, schema, name)
+            result = element.parse_xmlelements(
+                elements, schema, name, context=context)
             if result:
                 init_kwargs.update(result)
 
@@ -241,9 +245,9 @@ class ComplexType(Type):
         for name, attribute in self.attributes:
             if attribute.name:
                 value = attributes.pop(attribute.qname.text, None)
-                init_kwargs[name] = attribute.parse(value)
+                init_kwargs[name] = attribute.parse(value, context=context)
             else:
-                init_kwargs[name] = attribute.parse(attributes)
+                init_kwargs[name] = attribute.parse(attributes, context=context)
 
         return self(**init_kwargs)
 

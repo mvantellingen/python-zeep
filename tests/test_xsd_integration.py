@@ -1384,3 +1384,47 @@ def test_complex_type_empty():
     assert_nodes_equal(expected, node)
     item = container_elm.parse(node.getchildren()[0], schema)
     assert item.something is None
+
+
+def test_schema_as_payload():
+    schema = xsd.Schema(load_xml("""
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element ref="xsd:schema"/>
+                <xsd:any/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """))
+    elm_class = schema.get_element('{http://tests.python-zeep.org/}container')
+
+    node = load_xml("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/"
+                       xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <xsd:schema
+              targetNamespace="http://tests.python-zeep.org/inline-schema"
+              elementFormDefault="qualified">
+            <xsd:element name="sub-element">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="item-1" type="xsd:string"/>
+                  <xsd:element name="item-2" type="xsd:string"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:schema>
+          <ns1:sub-element xmlns:ns1="http://tests.python-zeep.org/inline-schema">
+            <ns1:item-1>value-1</ns1:item-1>
+            <ns1:item-2>value-2</ns1:item-2>
+          </ns1:sub-element>
+        </ns0:container>
+    """)
+    value = elm_class.parse(node, schema)
+    assert value._value_1['item-1'] == 'value-1'
+    assert value._value_1['item-2'] == 'value-2'

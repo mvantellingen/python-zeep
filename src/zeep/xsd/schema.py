@@ -63,6 +63,9 @@ class Schema(object):
 
     def get_element(self, qname):
         qname = self._create_qname(qname)
+        if qname.text in xsd_builtins.default_elements:
+            return xsd_builtins.default_elements[qname]
+
         try:
             schema = self._get_schema_document(qname.namespace)
             return schema._elements[qname]
@@ -226,6 +229,9 @@ class SchemaDocument(object):
 
     def get_element(self, name, default=NotSet):
         name = self._create_qname(name)
+        if name.text in xsd_builtins.default_elements:
+            return xsd_builtins.default_elements[name]
+
         self._check_namespace_reference(name)
         if name.namespace == self._target_namespace:
             if name.text in self._elements:

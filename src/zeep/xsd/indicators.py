@@ -13,7 +13,6 @@ __all__ = ['All', 'Choice', 'Group', 'Sequence']
 
 class Indicator(Base):
 
-
     def __repr__(self):
         return '<%s(%s)>' % (
             self.__class__.__name__, super(Indicator, self).__repr__())
@@ -209,7 +208,7 @@ class All(OrderIndicator):
 
     """
 
-    def parse_xmlelements(self, xmlelements, schema, name=None):
+    def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         result = OrderedDict()
 
         values = defaultdict(list)
@@ -219,7 +218,8 @@ class All(OrderIndicator):
         for name, element in self.elements:
             sub_elements = values.get(element.qname)
             if sub_elements:
-                result[name] = element.parse_xmlelements(sub_elements, schema)
+                result[name] = element.parse_xmlelements(
+                    sub_elements, schema, context=context)
 
         return result
 
@@ -234,7 +234,7 @@ class Choice(OrderIndicator):
     def default_value(self):
         return {}
 
-    def parse_xmlelements(self, xmlelements, schema, name=None):
+    def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Return a dictionary"""
         result = []
 
@@ -246,7 +246,8 @@ class Choice(OrderIndicator):
                 for element_name, element in self.elements_nested:
 
                     local_xmlelements = copy.copy(xmlelements)
-                    sub_result = element.parse_xmlelements(local_xmlelements, schema)
+                    sub_result = element.parse_xmlelements(
+                        local_xmlelements, schema, context=context)
 
                     if isinstance(element, OrderIndicator):
                         if element.accepts_multiple:
@@ -396,12 +397,13 @@ class Choice(OrderIndicator):
 
 class Sequence(OrderIndicator):
 
-    def parse_xmlelements(self, xmlelements, schema, name=None):
+    def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         result = []
         for item in max_occurs_iter(self.max_occurs):
             item_result = OrderedDict()
             for elm_name, element in self.elements:
-                item_subresult = element.parse_xmlelements(xmlelements, schema, name)
+                item_subresult = element.parse_xmlelements(
+                    xmlelements, schema, name, context=context)
 
                 # Unwrap if allowed
                 if isinstance(element, OrderIndicator):
@@ -467,12 +469,13 @@ class Group(Indicator):
             result, kwargs = self.child.parse_kwargs(kwargs, name)
         return result, kwargs
 
-    def parse_xmlelements(self, xmlelements, schema, name=None):
+    def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         result = []
 
         for i in max_occurs_iter(self.max_occurs):
             result.append(
-                self.child.parse_xmlelements(xmlelements, schema, name)
+                self.child.parse_xmlelements(
+                    xmlelements, schema, name, context=context)
             )
         if not self.accepts_multiple and result:
             return result[0]

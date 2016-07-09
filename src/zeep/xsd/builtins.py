@@ -61,6 +61,7 @@ import pytz
 import six
 
 from zeep.utils import qname_attr
+from zeep.xsd.elements import Base
 from zeep.xsd.types import SimpleType
 from zeep.xsd.valueobjects import AnyObject
 
@@ -445,13 +446,15 @@ class AnyType(SimpleType):
         else:
             parent.text = self.xmlvalue(value)
 
-    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True):
+    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
+                         context=None):
         xsi_type = qname_attr(
             xmlelement,
             '{http://www.w3.org/2001/XMLSchema-instance}type')
         if xsi_type and schema:
             xsd_type = schema.get_type(xsi_type)
-            return xsd_type.parse_xmlelement(xmlelement, schema)
+            return xsd_type.parse_xmlelement(
+                xmlelement, schema, context=context)
 
         if xmlelement.text is None:
             return
@@ -549,4 +552,35 @@ default_types = {
     # Other
     '{http://www.w3.org/2001/XMLSchema}anyType': AnyType(),
     '{http://www.w3.org/2001/XMLSchema}anySimpleType': AnyType(),
+}
+
+
+class Schema(Base):
+    name = 'schema'
+    qname = '{http://www.w3.org/2001/XMLSchema}schema'
+
+    def clone(self, qname, min_occurs=1, max_occurs=1):
+        return self.__class__()
+
+    def parse_kwargs(self, kwargs, name=None):
+        if name in kwargs:
+            value = kwargs.pop(name)
+            return {name: value}, kwargs
+        return {}, kwargs
+
+    def parse(self, xmlelement, schema, context=None):
+        from zeep.xsd.schema import Schema
+        schema = Schema(xmlelement, schema._root._transport)
+        context.schemas.add(schema._root)
+        return schema
+
+    def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
+        if xmlelements[0].tag == self.qname:
+            xmlelement = xmlelements.pop(0)
+            result = self.parse(xmlelement, schema, context=context)
+            return result
+
+
+default_elements = {
+    '{http://www.w3.org/2001/XMLSchema}schema': Schema(),
 }

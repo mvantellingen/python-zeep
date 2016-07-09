@@ -63,12 +63,6 @@ class SchemaVisitor(object):
     def process_ref_element(self, node, **kwargs):
         ref = qname_attr(node, 'ref')
         if ref:
-
-            # Some wsdl's reference to xs:schema, we ignore that for now. It
-            # might be better in the future to process the actual schema file
-            # so that it is handled correctly
-            if ref.namespace == 'http://www.w3.org/2001/XMLSchema':
-                return
             return xsd_elements.RefElement(node.tag, ref, self.schema, **kwargs)
 
     def visit_schema(self, node):
@@ -237,7 +231,7 @@ class SchemaVisitor(object):
             max_occurs = 1
             min_occurs = 1
 
-        # If the elment has a ref attribute then all other attributes cannot
+        # If the element has a ref attribute then all other attributes cannot
         # be present. Short circuit that here.
         # Ref is prohibited on global elements (parent = schema)
         if not is_global:

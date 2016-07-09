@@ -33,9 +33,17 @@ class SchemaNodeRepository(object):
 
 
 class ParserContext(object):
+    """Parser context when parsing wsdl/xsd files"""
     def __init__(self):
         self.schema_nodes = SchemaNodeRepository()
         self.schema_objects = SchemaRepository()
 
         # Mapping between internal nodes and original location
         self.schema_locations = {}
+
+
+class XmlParserContext(object):
+    """Parser context when parsing XML elements"""
+
+    def __init__(self):
+        self.schemas = SchemaRepository()

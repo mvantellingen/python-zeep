@@ -3,6 +3,7 @@ import copy
 from lxml import etree
 
 from zeep.utils import qname_attr
+from zeep.xsd.context import XmlParserContext
 from zeep.xsd.utils import max_occurs_iter
 
 
@@ -33,7 +34,8 @@ class Base(object):
     def parse_kwargs(self, kwargs, name=None):
         raise NotImplementedError()
 
-    def parse_xmlelements(self, xmlelements, schema, name=None):
+    def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
+        """Consume matching xmlelements and call parse() on each of them"""
         raise NotImplementedError()
 
     def signature(self, depth=0):
@@ -66,18 +68,22 @@ class Any(Base):
     def __repr__(self):
         return '<%s(name=%r)>' % (self.__class__.__name__, self.name)
 
-    def parse(self, xmlelement, schema):
+    def parse(self, xmlelement, schema, context=None):
         if self.process_contents == 'skip':
             return xmlelement
+
+        qname = etree.QName(xmlelement.tag)
+        if qname.namespace in context.schemas:
+            schema = context.schemas.get(qname.namespace)
 
         xsd_type = xmlelement.get('{http://www.w3.org/2001/XMLSchema-instance}type')
         if xsd_type is not None:
             element_type = schema.get_type(xsd_type)
-            return element_type.parse(xmlelement, schema)
+            return element_type.parse(xmlelement, schema, context=context)
 
         try:
             element_type = schema.get_element(xmlelement.tag)
-            return element_type.parse(xmlelement, schema)
+            return element_type.parse(xmlelement, schema, context=context)
         except (ValueError, KeyError):
             return xmlelement
 
@@ -87,13 +93,14 @@ class Any(Base):
             return {name: value}, kwargs
         return {}, kwargs
 
-    def parse_xmlelements(self, xmlelements, schema, name=None):
+    def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
+        """Consume matching xmlelements and call parse() on each of them"""
         result = []
 
         for i in max_occurs_iter(self.max_occurs):
             if xmlelements:
                 xmlelement = xmlelements.pop(0)
-                item = self.parse(xmlelement, schema)
+                item = self.parse(xmlelement, schema, context=context)
                 if item is not None:
                     result.append(item)
             else:
@@ -194,12 +201,13 @@ class Element(Base):
         new.max_occurs = max_occurs
         return new
 
-    def parse(self, xmlelement, schema, allow_none=False):
+    def parse(self, xmlelement, schema, allow_none=False, context=None):
         """Process the given xmlelement. If it has an xsi:type attribute then
         use that for further processing. This should only be done for subtypes
         of the defined type but for now we just accept everything.
 
         """
+        context = context or XmlParserContext()
         instance_type = qname_attr(
             xmlelement, '{http://www.w3.org/2001/XMLSchema-instance}type')
         if instance_type:
@@ -207,18 +215,20 @@ class Element(Base):
         else:
             xsd_type = self.type
         return xsd_type.parse_xmlelement(
-            xmlelement, schema, allow_none=allow_none)
+            xmlelement, schema, allow_none=allow_none, context=context)
 
     def parse_kwargs(self, kwargs, name=None):
         return self.type.parse_kwargs(kwargs, name or self.name)
 
-    def parse_xmlelements(self, xmlelements, schema, name=None):
+    def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
+        """Consume matching xmlelements and call parse() on each of them"""
         result = []
 
         for i in max_occurs_iter(self.max_occurs):
             if xmlelements and xmlelements[0].tag == self.qname:
                 xmlelement = xmlelements.pop(0)
-                item = self.parse(xmlelement, schema, allow_none=True)
+                item = self.parse(
+                    xmlelement, schema, allow_none=True, context=context)
                 if item is not None:
                     result.append(item)
             else:
@@ -229,6 +239,11 @@ class Element(Base):
         return result
 
     def render(self, parent, value):
+        """Render the value(s) on the parent lxml.Element.
+
+        This actually just calls _render_value_item for each value.
+
+        """
         assert parent is not None
 
         if self.accepts_multiple and isinstance(value, list):
@@ -238,6 +253,7 @@ class Element(Base):
             self._render_value_item(parent, value)
 
     def _render_value_item(self, parent, value):
+        """Render the value on the parent lxml.Element"""
         if value is None:
             if not self.is_optional:
                 etree.SubElement(parent, self.qname)
@@ -275,7 +291,7 @@ class Attribute(Element):
         super(Attribute, self).__init__(name=name, type_=type_, default=default)
         self.required = required
 
-    def parse(self, value, schema=None):
+    def parse(self, value, schema=None, context=None):
         return self.type.pythonvalue(value)
 
     def render(self, parent, value):
@@ -292,7 +308,7 @@ class AnyAttribute(Base):
     def __init__(self, process_contents='strict'):
         self.process_contents = process_contents
 
-    def parse(self, attributes):
+    def parse(self, attributes, context=None):
         return attributes
 
     def resolve(self):
