@@ -1,4 +1,4 @@
-0.12.0 (unreleased)
+0.12.0 (2016-07-09)
 -------------------
  - **backwards-incompatible**: Choice elements are now unwrapped if 
    maxOccurs=1. This results in easier operation definitions when choices are
@@ -7,6 +7,10 @@
    and now requires a nested dictionary with the header name as key or a list
    of values (value object or lxml.etree.Element object). Please see the 
    call signature of the function using ``python -mzeep <wsdl>``.
+ - Support the element ref's to xsd:schema elements.
+ - Improve the signature() output of element and type definitions
+ - Accept lxml.etree.Element objects as value for Any elements.
+ - And various other fixes
  
 
 0.11.0 (2016-07-03)
