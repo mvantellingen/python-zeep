@@ -1,12 +1,16 @@
 import base64
 import datetime
 import errno
+import logging
 import os
 import sqlite3
 
 import appdirs
 import pytz
 import six
+
+
+logger = logging.getLogger(__name__)
 
 
 class SqliteCache(object):
@@ -33,6 +37,7 @@ class SqliteCache(object):
         self._db.commit()
 
     def add(self, url, content):
+        logger.debug("Caching contents of %s", url)
         data = self._encode_data(content)
         cursor = self._db.cursor()
         cursor.execute("DELETE FROM request WHERE url = ?", (url,))
@@ -52,7 +57,9 @@ class SqliteCache(object):
                 datetime.datetime.utcnow().replace(tzinfo=pytz.utc) -
                 datetime.timedelta(seconds=self._timeout))
             if not self._timeout or created.replace(tzinfo=pytz.utc) > offset:
+                logger.debug("Cache HIT for %s", url)
                 return self._decode_data(data)
+        logger.debug("Cache MISS for %s", url)
 
     def _encode_data(self, data):
         data = base64.b64encode(data)
