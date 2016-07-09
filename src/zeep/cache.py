@@ -30,6 +30,7 @@ class SqliteCache(object):
                 CREATE TABLE IF NOT EXISTS request
                 (created timestamp, url text, content text)
             """)
+        self._db.commit()
 
     def add(self, url, content):
         data = self._encode_data(content)
