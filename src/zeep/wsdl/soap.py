@@ -110,7 +110,8 @@ class SoapBinding(Binding):
                 % response.status_code)
 
         try:
-            doc = fromstring(response.content)
+            parser = etree.XMLParser(recover=True)
+            doc = fromstring(response.content, parser)
         except etree.XMLSyntaxError:
             raise TransportError(
                 u'Server returned HTTP status %d (%s)'
