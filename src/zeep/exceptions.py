@@ -25,3 +25,7 @@ class Fault(Error):
         self.code = code
         self.actor = actor
         self.detail = detail
+
+
+class ZeepWarning(RuntimeWarning):
+    pass

@@ -1,9 +1,10 @@
 import keyword
 import logging
+import warnings
 
 from lxml import etree
 
-from zeep.exceptions import XMLParseError
+from zeep.exceptions import XMLParseError, ZeepWarning
 from zeep.parser import absolute_location
 from zeep.utils import as_qname, qname_attr
 from zeep.xsd import builtins as xsd_builtins
@@ -121,12 +122,14 @@ class SchemaVisitor(object):
         schema = self.parser_context.schema_objects.get(namespace)
         if schema:
             if location and schema._location != location:
-                # Raise same error message as libxml2
-                raise XMLParseError((
-                    "Conflicting import of schema located at %r " +
+                # Use same warning message as libxml2
+                message = (
+                    "Skipping import of schema located at %r " +
                     "for the namespace %r, since the namespace was " +
                     "already imported with the schema located at %r"
-                    ) % (location, namespace or '(null)', schema._location))
+                    ) % (location, namespace or '(null)', schema._location)
+                warnings.warn(message, ZeepWarning, stacklevel=6)
+
                 return
             logger.debug("Returning existing schema: %r", location)
             self.schema._imports[namespace] = schema
@@ -162,11 +165,12 @@ class SchemaVisitor(object):
                 ) % (location))
         elif schema_tns in self.parser_context.schema_objects:
             schema = self.parser_context.schema_objects.get(schema_tns)
-            raise XMLParseError((
-                "Conflicting import of schema located at %r " +
+            message = (
+                "Skipping import of schema located at %r " +
                 "for the namespace %r, since the namespace was " +
                 "already imported with the schema located at %r"
-                ) % (location, namespace or '(null)', schema._location))
+                ) % (location, namespace or '(null)', schema._location)
+            warnings.warn(message, ZeepWarning, stacklevel=6)
 
         # If this schema location is 'internal' then retrieve the original
         # location since that is used as base url for sub include/imports

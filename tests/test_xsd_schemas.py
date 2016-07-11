@@ -2,7 +2,7 @@ import pytest
 from lxml import etree
 
 from zeep import xsd
-from zeep.exceptions import XMLParseError
+from zeep.exceptions import XMLParseError, ZeepWarning
 
 
 class DummyTransport(object):
@@ -296,8 +296,7 @@ def test_duplicate_target_namespace():
     transport.bind('http://tests.python-zeep.org/a.xsd', schema_a)
     transport.bind('http://tests.python-zeep.org/b.xsd', schema_b)
     transport.bind('http://tests.python-zeep.org/c.xsd', schema_c)
-
-    with pytest.raises(XMLParseError):
+    with pytest.warns(ZeepWarning):
         xsd.Schema(schema_a, transport=transport)
 
 
@@ -326,7 +325,7 @@ def test_multiple_no_namespace():
     transport = DummyTransport()
     transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
     transport.bind('http://tests.python-zeep.org/c.xsd', node_b)
-    with pytest.raises(XMLParseError):
+    with pytest.warns(ZeepWarning):
         xsd.Schema(node_a, transport=transport)
 
 
@@ -356,7 +355,7 @@ def test_multiple_only_target_ns():
     transport = DummyTransport()
     transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
     transport.bind('http://tests.python-zeep.org/c.xsd', node_b)
-    with pytest.raises(XMLParseError):
+    with pytest.warns(ZeepWarning):
         xsd.Schema(node_a, transport=transport)
 
 
