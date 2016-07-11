@@ -47,21 +47,25 @@ class Schema(object):
 
     @property
     def is_empty(self):
+        """Boolean to indicate if this schema contains any types or elements"""
         return self._root.is_empty if self._root else True
 
     @property
     def elements(self):
+        """Yield all globla xsd.Type objects"""
         for schema in self._schemas.values():
             for element in schema._elements.values():
                 yield element
 
     @property
     def types(self):
+        """Yield all globla xsd.Type objects"""
         for schema in self._schemas.values():
             for type_ in schema._types.values():
                 yield type_
 
     def get_element(self, qname):
+        """Return a global xsd.Element object with the given qname"""
         qname = self._create_qname(qname)
         if qname.text in xsd_builtins.default_elements:
             return xsd_builtins.default_elements[qname]
@@ -81,6 +85,7 @@ class Schema(object):
                     qname.localname, qname.namespace, known_elements or ' - '))
 
     def get_type(self, qname):
+        """Return a global xsd.Type object with the given qname"""
         qname = self._create_qname(qname)
         if qname.text in xsd_builtins.default_types:
             return xsd_builtins.default_types[qname]
@@ -100,6 +105,11 @@ class Schema(object):
                     qname.localname, qname.namespace, known_types or ' - '))
 
     def _create_qname(self, name):
+        """Create an `lxml.etree.QName()` object for the given qname string.
+
+        This also expands the shorthand notation.
+
+        """
         if isinstance(name, etree.QName):
             return name
 
@@ -205,6 +215,10 @@ class SchemaDocument(object):
         self._attributes[name] = value
 
     def get_type(self, name, default=NotSet):
+        """Return a xsd.Type object from this schema or one of the imported
+        schemas.
+
+        """
         name = self._create_qname(name)
         if name.text in xsd_builtins.default_types:
             return xsd_builtins.default_types[name]
@@ -228,6 +242,10 @@ class SchemaDocument(object):
                 ) % (name.text, name.namespace))
 
     def get_element(self, name, default=NotSet):
+        """Return a xsd.Element object from this schema or one of the imported
+        schemas.
+
+        """
         name = self._create_qname(name)
         if name.text in xsd_builtins.default_elements:
             return xsd_builtins.default_elements[name]
@@ -258,6 +276,10 @@ class SchemaDocument(object):
                 name.text, ', '.join(self._elements), self))
 
     def get_attribute(self, name, default=NotSet):
+        """Return a xsd.Attribute object from this schema or one of the
+        imported schemas.
+
+        """
         name = self._create_qname(name)
         if name in self._attributes:
             return self._attributes[name]
