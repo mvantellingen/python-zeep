@@ -2,6 +2,11 @@
 -------------------
  - Use warnings.warn() for duplicate target namespaces instead of raising an
    exception. This better matches with what lxml does.
+ - **backwards-incompatible**: The ``persistent`` kwarg is removed from the
+   SqliteCache.__init__() call. Use the new InMemoryCache() instead when you
+   don't want to persist data. This was required to make the SqliteCache 
+   backend thread-safe since we now open/close the db when writing/reading 
+   from it (with an additional lock).
 
 
 0.12.0 (2016-07-09)

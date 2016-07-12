@@ -5,7 +5,7 @@ import logging
 import logging.config
 import time
 
-from zeep.cache import SqliteCache
+from zeep.cache import SqliteCache, InMemoryCache
 from zeep.client import Client
 from zeep.transports import Transport
 
@@ -58,7 +58,7 @@ def main(args):
         profile = cProfile.Profile()
         profile.enable()
 
-    cache = SqliteCache(persistent=args.cache)
+    cache = SqliteCache() if args.cache else InMemoryCache()
     transport_kwargs = {'cache': cache}
 
     if args.no_verify:
