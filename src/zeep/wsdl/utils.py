@@ -30,6 +30,19 @@ def combine_schemas(schema_nodes, location, parser_context):
     need to copy the schema imports the newyl created container schema.
 
     """
+    # Merge schema's which have no targetNamespace
+    empty_schemas = [
+        node for node in schema_nodes if node.get('targetNamespace') is None
+    ]
+    if len(empty_schemas) > 1:
+        for schema_node in empty_schemas[1:]:
+            for node in schema_node.getchildren():
+                empty_schemas[0].append(node)
+            schema_nodes.remove(schema_node)
+
+    if len(schema_nodes) == 1:
+        return schema_nodes[0]
+
     schema_ns = {}
     for i, schema_node in enumerate(schema_nodes):
         ns = schema_node.get('targetNamespace')

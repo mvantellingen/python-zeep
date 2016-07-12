@@ -2,10 +2,12 @@ import io
 
 import pytest
 import requests_mock
+from lxml import etree
 from pretend import stub
 from six import StringIO
 
 from tests.utils import assert_nodes_equal
+from tests.utils import DummyTransport
 from zeep import wsdl
 from zeep.transports import Transport
 
@@ -301,3 +303,56 @@ def test_multiple_extension():
 
     type_a = document.types.get_type('ns1:type_a')
     type_a(wat='x')
+
+
+def test_create_import_schema(recwarn):
+    content = StringIO("""
+    <?xml version="1.0"?>
+    <wsdl:definitions
+      xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+      xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+      xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/">
+
+      <wsdl:types>
+        <xsd:schema>
+          <xsd:import namespace="http://tests.python-zeep.org/a"
+                      schemaLocation="a.xsd"/>
+        </xsd:schema>
+        <xsd:schema>
+          <xsd:import namespace="http://tests.python-zeep.org/b"
+                      schemaLocation="b.xsd"/>
+        </xsd:schema>
+      </wsdl:types>
+    </wsdl:definitions>
+    """.strip())
+
+    schema_node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+        </xsd:schema>
+    """.strip())
+
+    schema_node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            targetNamespace="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+            <xsd:element name="global" type="xsd:string"/>
+        </xsd:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('a.xsd', schema_node_a)
+    transport.bind('b.xsd', schema_node_b)
+
+    document = wsdl.Document(content, transport)
+    assert len(recwarn) == 0
+    assert document.types.get_element('{http://tests.python-zeep.org/b}global')
