@@ -154,6 +154,7 @@ class ComplexType(Type):
             element = Sequence(element)
 
         self.name = self.__class__.__name__ if qname else None
+        self.qname = qname
         self._element = element
         self._attributes = attributes or []
         self._restriction = restriction
