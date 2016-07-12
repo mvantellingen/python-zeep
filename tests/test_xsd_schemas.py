@@ -1,19 +1,9 @@
 import pytest
 from lxml import etree
 
+from tests.utils import DummyTransport
 from zeep import xsd
 from zeep.exceptions import XMLParseError, ZeepWarning
-
-
-class DummyTransport(object):
-    def __init__(self):
-        self._items = {}
-
-    def bind(self, url, node):
-        self._items[url] = node
-
-    def load(self, url):
-        return etree.tostring(self._items[url])
 
 
 def test_multiple_extension():

@@ -22,3 +22,15 @@ def render_node(element, value):
     node = etree.Element('document')
     element.render(node, value)
     return node
+
+
+class DummyTransport(object):
+    def __init__(self):
+        self._items = {}
+
+    def bind(self, url, node):
+        self._items[url] = node
+
+    def load(self, url):
+        return etree.tostring(self._items[url])
+

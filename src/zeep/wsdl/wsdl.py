@@ -9,6 +9,7 @@ from lxml import etree
 
 from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
+from zeep.wsdl.utils import combine_schemas
 from zeep.wsdl import definitions, http, soap
 from zeep.xsd import Schema
 from zeep.xsd.context import ParserContext
@@ -282,50 +283,14 @@ class Definition(object):
             for schema_node in schema_nodes
         ]
 
-        if len(schema_nodes) == 1:
-            return Schema(
-                schema_nodes[0], self.wsdl.transport, self.location,
-                self.wsdl._parser_context)
+        # If there are multiple xsd:schema's defined in the wsdl then we
+        # combine them
+        if len(schema_nodes) > 1:
+            schema_node = combine_schemas(
+                schema_nodes, self.location, self.wsdl._parser_context)
+        else:
+            schema_node = schema_nodes[0]
 
-        # A wsdl can contain multiple schema nodes. These can import each other
-        # by simply referencing them by the namespace. To handle this in a way
-        # that lxml schema can also handle it we create a new container schema
-        # which imports the other schemas.  Since imports are non-transitive we
-        # need to copy the schema imports the newyl created container schema.
-
-        # Create namespace mapping (namespace -> internal location)
-        schema_ns = {}
-        for i, schema_node in enumerate(schema_nodes):
-            ns = schema_node.get('targetNamespace')
-            int_name = schema_ns[ns] = 'intschema:xsd%d' % i
-            self.wsdl._parser_context.schema_nodes.add(schema_ns[ns], schema_node)
-            self.wsdl._parser_context.schema_locations[int_name] = self.location
-
-        # Only handle the import statements from the 2001 xsd's for now
-        import_tag = '{http://www.w3.org/2001/XMLSchema}import'
-
-        # Create a new schema node with xsd:import statements for all
-        # schema's listed here.
-        container = etree.Element('{http://www.w3.org/2001/XMLSchema}schema')
-        container.set('targetNamespace', 'http://www.python-zeep.org/Imports')
-        for i, schema_node in enumerate(schema_nodes):
-
-            # Create a new xsd:import element to import the schema
-            import_node = etree.Element(import_tag)
-            import_node.set('schemaLocation', 'intschema:xsd%d' % i)
-            if schema_node.get('targetNamespace'):
-                import_node.set('namespace', schema_node.get('targetNamespace'))
-            container.append(import_node)
-
-            # Add the namespace mapping created earlier here to the import
-            # statements.
-            for import_node in schema_node.findall(import_tag):
-                location = import_node.get('schemaLocation')
-                namespace = import_node.get('namespace')
-                if not location and namespace in schema_ns:
-                    import_node.set('schemaLocation', schema_ns[namespace])
-
-        schema_node = container
         return Schema(
             schema_node, self.wsdl.transport, self.location,
             self.wsdl._parser_context)
