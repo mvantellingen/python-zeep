@@ -135,13 +135,6 @@ class SchemaVisitor(object):
             self.schema._imports[namespace] = schema
             return schema
 
-        # Check if if the namespace references an internal schema. Internal
-        # schema's are created for multiple xsd:schema definitions in a wsdl
-        try:
-            schema_node = self.parser_context.schema_nodes.get(namespace)
-        except KeyError:
-            pass
-
         # Silently ignore import statements which we can't resolve via the
         # namespace and doesn't have a schemaLocation attribute.
         if not location:
