@@ -104,6 +104,8 @@ class Decimal(SimpleType):
         return str(value)
 
     def pythonvalue(self, value):
+        if value is None:
+            return None
         return _Decimal(value)
 
 
@@ -114,6 +116,8 @@ class Float(SimpleType):
         return str(value).upper()
 
     def pythonvalue(self, value):
+        if value is None:
+            return None
         return float(value)
 
 
@@ -124,6 +128,8 @@ class Double(SimpleType):
         return str(value)
 
     def pythonvalue(self, value):
+        if value is None:
+            return None
         return float(value)
 
 
@@ -379,6 +385,8 @@ class Integer(Decimal):
         return str(value)
 
     def pythonvalue(self, value):
+        if value is None:
+            return None
         return int(value)
 
 
@@ -394,6 +402,8 @@ class Long(Integer):
     name = 'xsd:long'
 
     def pythonvalue(self, value):
+        if value is None:
+            return None
         return long(value) if six.PY2 else int(value)
 
 

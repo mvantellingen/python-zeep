@@ -55,6 +55,7 @@ class TestDecimal:
         assert instance.pythonvalue('10.001') == D('10.001')
         assert instance.pythonvalue('+10.001') == D('10.001')
         assert instance.pythonvalue('-10.001') == D('-10.001')
+        assert instance.pythonvalue(None) is None
 
 
 class TestFloat:
@@ -80,6 +81,7 @@ class TestFloat:
         assert instance.pythonvalue('-0') == float(0)
         assert instance.pythonvalue('0') == float(0)
         assert instance.pythonvalue('INF') == float('inf')
+        assert instance.pythonvalue(None) is None
 
 
 class TestDouble:
@@ -96,6 +98,7 @@ class TestDouble:
         assert instance.pythonvalue('12') == float(12)
         assert instance.pythonvalue('-0') == float(0)
         assert instance.pythonvalue('0') == float(0)
+        assert instance.pythonvalue(None) is None
 
 
 class TestDuration:
@@ -314,6 +317,7 @@ class TestInteger:
     def test_pythonvalue(self):
         instance = builtins.Integer()
         assert instance.pythonvalue('100') == 100
+        assert instance.pythonvalue(None) is None
 
 
 class TestAnyType:
