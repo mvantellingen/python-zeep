@@ -122,7 +122,9 @@ class SoapBinding(Binding):
         if response.status_code != 200:
             return self.process_error(doc)
 
-        return operation.process_reply(doc)
+        body = doc.find('soap-env:Body', namespaces=self.nsmap)
+        assert body is not None, "No {%s}Body found" % (self.nsmap['soap-env'])
+        return operation.process_reply(body)
 
     def process_error(self, doc):
         raise NotImplementedError
@@ -244,9 +246,8 @@ class SoapOperation(Operation):
         self.soapaction = soapaction
         self.style = style
 
-    def process_reply(self, envelope):
-        node = envelope.find('soap-env:Body', namespaces=self.nsmap)
-        return self.output.deserialize(node)
+    def process_reply(self, body):
+        return self.output.deserialize(body)
 
     @classmethod
     def parse(cls, definitions, xmlelement, binding, nsmap):
