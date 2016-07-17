@@ -2,6 +2,7 @@ from lxml import etree
 
 from zeep import xsd
 from zeep.helpers import serialize_object
+from tests.utils import load_xml
 
 
 def test_serialize_simple():
@@ -56,7 +57,6 @@ def test_serialize_nested_complex_type():
                     ),
                     max_occurs=2
                 )
-
             ])
         ))
 
@@ -79,3 +79,35 @@ def test_serialize_nested_complex_type():
             {'x': 'foo', 'y': {'x': 'deeper'}},
         ]
     }
+
+
+def test_nested_complex_types():
+    schema = xsd.Schema(load_xml("""
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="item" type="tns:item"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:complexType name="item">
+            <xsd:sequence>
+              <xsd:element name="item_1" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:schema>
+    """))
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    item_type = schema.get_type('{http://tests.python-zeep.org/}item')
+
+    instance = container_elm(item=item_type(item_1='foo'))
+    result = serialize_object(instance)
+    assert isinstance(result, dict), type(result)
+    assert isinstance(result['item'], dict), type(result['item'])
+    assert result['item']['item_1'] == 'foo'
+

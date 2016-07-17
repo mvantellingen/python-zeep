@@ -11,8 +11,8 @@ def serialize_object(obj):
 
     result = OrderedDict()
     for key in obj:
-        if key == '_xsd_elm':
-            continue
-
-        result[key] = getattr(obj, key)
+        value = obj[key]
+        if hasattr(value, '__iter__'):
+            value = serialize_object(value)
+        result[key] = value
     return result
