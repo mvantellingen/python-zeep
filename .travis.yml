@@ -11,8 +11,9 @@ python:
     - 'pypy'
 
 
-allow_failures:
-    - python: 'nightly'
+matrix:
+    allow_failures:
+        - python: 'nightly'
 
 before_install:
     - pip install codecov
