@@ -352,12 +352,14 @@ class SchemaVisitor(object):
             name = parent.get('name', 'Anonymous')
             is_global = False
         base_type = '{http://www.w3.org/2001/XMLSchema}string'
+        qname = as_qname(name, node.nsmap, self.schema._target_namespace)
 
         annotation, items = self._pop_annotation(node.getchildren())
         child = items[0]
         if child.tag == tags.restriction:
             base_type = self.visit_restriction_simple_type(child, node)
-            xsd_type = xsd_types.UnresolvedCustomType(name, base_type, self.schema)
+            xsd_type = xsd_types.UnresolvedCustomType(
+                qname, base_type, self.schema)
 
         elif child.tag == tags.list:
             xsd_type = self.visit_list(child, node)
@@ -369,7 +371,6 @@ class SchemaVisitor(object):
 
         assert xsd_type is not None
         if is_global:
-            qname = as_qname(name, node.nsmap, self.schema._target_namespace)
             self.schema.register_type(qname, xsd_type)
         return xsd_type
 

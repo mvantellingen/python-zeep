@@ -70,3 +70,57 @@ def test_simple_type_optional():
 
     item = item_cls.parse(node.getchildren()[0], schema)
     assert item.something is None
+
+
+def test_restriction_global():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <simpleType name="foo">
+            <restriction base="integer">
+              <minInclusive value="0"/>
+              <maxInclusive value="100"/>
+            </restriction>
+          </simpleType>
+        </schema>
+    """))
+
+    type_cls = schema.get_type('{http://tests.python-zeep.org/}foo')
+    assert type_cls.qname.text == '{http://tests.python-zeep.org/}foo'
+
+
+def test_restriction_anon():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="something">
+            <simpleType>
+              <restriction base="integer">
+                <minInclusive value="0"/>
+                <maxInclusive value="100"/>
+              </restriction>
+            </simpleType>
+          </element>
+        </schema>
+    """))
+
+    element_cls = schema.get_element('{http://tests.python-zeep.org/}something')
+    assert element_cls.type.qname == etree.QName(
+        '{http://tests.python-zeep.org/}something')
+
+    obj = element_cls(75)
+
+    node = etree.Element('document')
+    element_cls.render(node, obj)
+    expected = """
+        <document>
+            <ns0:something xmlns:ns0="http://tests.python-zeep.org/">75</ns0:something>
+        </document>
+    """
+    assert_nodes_equal(expected, node)

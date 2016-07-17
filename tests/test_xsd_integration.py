@@ -492,38 +492,6 @@ def test_complex_type_simple_content():
     assert_nodes_equal(expected, node)
 
 
-def test_custom_simple_type():
-    node = etree.fromstring("""
-        <?xml version="1.0"?>
-        <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                xmlns:tns="http://tests.python-zeep.org/"
-                targetNamespace="http://tests.python-zeep.org/"
-                elementFormDefault="qualified">
-          <element name="something">
-            <simpleType>
-              <restriction base="integer">
-                <minInclusive value="0"/>
-                <maxInclusive value="100"/>
-              </restriction>
-            </simpleType>
-          </element>
-        </schema>
-    """.strip())
-
-    schema = xsd.Schema(node)
-
-    custom_type = schema.get_element('{http://tests.python-zeep.org/}something')
-    obj = custom_type(75)
-
-    node = etree.Element('document')
-    custom_type.render(node, obj)
-    expected = """
-        <document>
-            <ns0:something xmlns:ns0="http://tests.python-zeep.org/">75</ns0:something>
-        </document>
-    """
-    assert_nodes_equal(expected, node)
-
 
 def test_group():
     node = etree.fromstring("""

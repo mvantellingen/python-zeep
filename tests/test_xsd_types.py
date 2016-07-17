@@ -71,7 +71,7 @@ def test_simpletype_call_wrong_kwarg():
 def test_simpletype_str():
     item = types.SimpleType()
     item.name = u'foobar'
-    assert six.text_type(item) == u'foobar'
+    assert six.text_type(item) == 'SimpleType(value)'
 
 
 def test_complextype_parse_xmlelement_no_childs():

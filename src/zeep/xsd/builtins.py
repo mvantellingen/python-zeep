@@ -59,6 +59,7 @@ from decimal import Decimal as _Decimal
 import isodate
 import pytz
 import six
+from lxml import etree
 
 from zeep.utils import qname_attr
 from zeep.xsd.elements import Base
@@ -70,11 +71,20 @@ class ParseError(ValueError):
     pass
 
 
+class _BuiltinType(SimpleType):
+    def __init__(self, qname=None, is_global=False):
+        super(_BuiltinType, self).__init__(
+            qname or etree.QName(self._default_qname), is_global)
+
+    def signature(self, depth=0):
+        return 'xsd:%s' % self.name
+
 ##
 # Primitive types
 
-class String(SimpleType):
-    name = 'xsd:string'
+
+class String(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}string'
 
     def xmlvalue(self, value):
         return six.text_type(value if value is not None else '')
@@ -83,8 +93,8 @@ class String(SimpleType):
         return value
 
 
-class Boolean(SimpleType):
-    name = 'xsd:boolean'
+class Boolean(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}boolean'
 
     def xmlvalue(self, value):
         return 'true' if value else 'false'
@@ -97,8 +107,8 @@ class Boolean(SimpleType):
         return value in ('true', '1')
 
 
-class Decimal(SimpleType):
-    name = 'xsd:decimal'
+class Decimal(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}decimal'
 
     def xmlvalue(self, value):
         return str(value)
@@ -107,8 +117,8 @@ class Decimal(SimpleType):
         return _Decimal(value)
 
 
-class Float(SimpleType):
-    name = 'xsd:float'
+class Float(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}float'
 
     def xmlvalue(self, value):
         return str(value).upper()
@@ -117,8 +127,8 @@ class Float(SimpleType):
         return float(value)
 
 
-class Double(SimpleType):
-    name = 'xsd:double'
+class Double(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}double'
 
     def xmlvalue(self, value):
         return str(value)
@@ -127,8 +137,8 @@ class Double(SimpleType):
         return float(value)
 
 
-class Duration(SimpleType):
-    name = 'xsd:duration'
+class Duration(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}duration'
 
     def xmlvalue(self, value):
         return isodate.duration_isoformat(value)
@@ -137,8 +147,8 @@ class Duration(SimpleType):
         return isodate.parse_duration(value)
 
 
-class DateTime(SimpleType):
-    name = 'xsd:dateTime'
+class DateTime(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}dateTime'
 
     def xmlvalue(self, value):
         return isodate.isostrf.strftime(value, '%Y-%m-%dT%H:%M:%S%Z')
@@ -147,8 +157,8 @@ class DateTime(SimpleType):
         return isodate.parse_datetime(value)
 
 
-class Time(SimpleType):
-    name = 'xsd:time'
+class Time(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}time'
 
     def xmlvalue(self, value):
         return isodate.isostrf.strftime(value, '%H:%M:%S%Z')
@@ -157,8 +167,8 @@ class Time(SimpleType):
         return isodate.parse_time(value)
 
 
-class Date(SimpleType):
-    name = 'xsd:date'
+class Date(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}date'
 
     def xmlvalue(self, value):
         return isodate.isostrf.strftime(value, '%Y-%m-%d')
@@ -167,14 +177,14 @@ class Date(SimpleType):
         return isodate.parse_date(value)
 
 
-class gYearMonth(SimpleType):
+class gYearMonth(_BuiltinType):
     """gYearMonth represents a specific gregorian month in a specific gregorian
     year.
 
     Lexical representation: CCYY-MM
 
     """
-    name = 'xsd:gYearMonth'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}gYearMonth'
     _pattern = re.compile(
         r'^(?P<year>-?\d{4,})-(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
@@ -192,13 +202,13 @@ class gYearMonth(SimpleType):
             _parse_timezone(group['timezone']))
 
 
-class gYear(SimpleType):
+class gYear(_BuiltinType):
     """gYear represents a gregorian calendar year.
 
     Lexical representation: CCYY
 
     """
-    name = 'xsd:gYear'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}gYear'
     _pattern = re.compile(r'^(?P<year>-?\d{4,})(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
     def xmlvalue(self, value):
@@ -213,7 +223,7 @@ class gYear(SimpleType):
         return (int(group['year']), _parse_timezone(group['timezone']))
 
 
-class gMonthDay(SimpleType):
+class gMonthDay(_BuiltinType):
     """gMonthDay is a gregorian date that recurs, specifically a day of the
     year such as the third of May.
 
@@ -221,7 +231,7 @@ class gMonthDay(SimpleType):
 
     """
 
-    name = 'xsd:gMonthDay'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}gMonthDay'
     _pattern = re.compile(
         r'^--(?P<month>\d\d)-(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
@@ -240,14 +250,14 @@ class gMonthDay(SimpleType):
             _parse_timezone(group['timezone']))
 
 
-class gDay(SimpleType):
+class gDay(_BuiltinType):
     """gDay is a gregorian day that recurs, specifically a day of the month
     such as the 5th of the month
 
     Lexical representation: ---DD
 
     """
-    name = 'xsd:gDay'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}gDay'
     _pattern = re.compile(r'^---(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
     def xmlvalue(self, value):
@@ -262,13 +272,13 @@ class gDay(SimpleType):
         return (int(group['day']), _parse_timezone(group['timezone']))
 
 
-class gMonth(SimpleType):
+class gMonth(_BuiltinType):
     """gMonth is a gregorian month that recurs every year.
 
     Lexical representation: --MM
 
     """
-    name = 'xsd:gMonth'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}gMonth'
     _pattern = re.compile(r'^--(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
     def xmlvalue(self, value):
@@ -283,8 +293,8 @@ class gMonth(SimpleType):
         return (int(group['month']), _parse_timezone(group['timezone']))
 
 
-class HexBinary(SimpleType):
-    name = 'xsd:hexBinary'
+class HexBinary(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}hexBinary'
 
     def xmlvalue(self, value):
         return value
@@ -293,8 +303,8 @@ class HexBinary(SimpleType):
         return value
 
 
-class Base64Binary(SimpleType):
-    name = 'xsd:base64Binary'
+class Base64Binary(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}base64Binary'
 
     def xmlvalue(self, value):
         return base64.b64encode(value)
@@ -303,8 +313,8 @@ class Base64Binary(SimpleType):
         return base64.b64decode(value)
 
 
-class AnyURI(SimpleType):
-    name = 'xsd:anyURI'
+class AnyURI(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}anyURI'
 
     def xmlvalue(self, value):
         return value
@@ -313,67 +323,67 @@ class AnyURI(SimpleType):
         return value
 
 
-class QName(SimpleType):
-    name = 'xsd:QName'
+class QName(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}QName'
 
 
-class Notation(SimpleType):
-    name = 'xsd:NOTATION'
+class Notation(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}NOTATION'
 
 
 ##
 # Derived datatypes
 
 class NormalizedString(String):
-    name = 'xsd:normalizedString'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}normalizedString'
 
 
 class Token(NormalizedString):
-    name = 'xsd:token'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}token'
 
 
 class Language(Token):
-    name = 'xsd:language'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}language'
 
 
 class NmToken(Token):
-    name = 'xsd:NMTOKEN'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}NMTOKEN'
 
 
 class NmTokens(NmToken):
-    name = 'xsd:NMTOKENS'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}NMTOKENS'
 
 
 class Name(Token):
-    name = 'xsd:Name'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}Name'
 
 
 class NCName(Name):
-    name = 'xsd:NCName'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}NCName'
 
 
 class ID(NCName):
-    name = 'xsd:ID'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}ID'
 
 
 class IDREF(NCName):
-    name = 'xsd:IDREF'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}IDREF'
 
 
 class IDREFS(IDREF):
-    name = 'xsd:IDREFS'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}IDREFS'
 
 
 class Entity(NCName):
-    name = 'xsd:ENTITY'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}ENTITY'
 
 
 class Entities(Entity):
-    name = 'xsd:ENTITIES'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}ENTITIES'
 
 
 class Integer(Decimal):
-    name = 'xsd:integer'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}integer'
 
     def xmlvalue(self, value):
         return str(value)
@@ -383,62 +393,62 @@ class Integer(Decimal):
 
 
 class NonPositiveInteger(Integer):
-    name = 'xsd:nonPositiveInteger'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}nonPositiveInteger'
 
 
 class NegativeInteger(Integer):
-    name = 'xsd:negativeInteger'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}negativeInteger'
 
 
 class Long(Integer):
-    name = 'xsd:long'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}long'
 
     def pythonvalue(self, value):
         return long(value) if six.PY2 else int(value)
 
 
 class Int(Long):
-    name = 'xsd:int'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}int'
 
 
 class Short(Int):
-    name = 'xsd:short'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}short'
 
 
 class Byte(Short):
     """A signed 8-bit integer"""
-    name = 'xsd:byte'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}byte'
 
 
 class NonNegativeInteger(Integer):
-    name = 'xsd:nonNegativeInteger'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}nonNegativeInteger'
 
 
 class UnsignedLong(NonNegativeInteger):
-    name = 'xsd:unsignedLong'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}unsignedLong'
 
 
 class UnsignedInt(UnsignedLong):
-    name = 'xsd:unsignedInt'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}unsignedInt'
 
 
 class UnsignedShort(UnsignedInt):
-    name = 'xsd:unsignedShort'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}unsignedShort'
 
 
 class UnsignedByte(UnsignedShort):
-    name = 'xsd:unsignedByte'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}unsignedByte'
 
 
 class PositiveInteger(NonNegativeInteger):
-    name = 'xsd:positiveInteger'
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}positiveInteger'
 
 
 ##
 # Other
 
-class AnyType(SimpleType):
-    name = 'xsd:anyType'
+class AnyType(_BuiltinType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}anyType'
 
     def render(self, parent, value):
         if isinstance(value, AnyObject):
@@ -465,6 +475,10 @@ class AnyType(SimpleType):
 
     def pythonvalue(self, value, schema=None):
         return value
+
+
+class AnySimpleType(AnyType):
+    _default_qname = '{http://www.w3.org/2001/XMLSchema}anySimpleType'
 
 
 def _parse_timezone(val):
@@ -500,58 +514,59 @@ def _unparse_timezone(tzinfo):
 
 
 default_types = {
+    cls._default_qname: cls() for cls in [
+        # Primitive
+        String,
+        Boolean,
+        Decimal,
+        Float,
+        Double,
+        Duration,
+        DateTime,
+        Time,
+        Date,
+        gYearMonth,
+        gYear,
+        gMonthDay,
+        gDay,
+        gMonth,
+        HexBinary,
+        Base64Binary,
+        AnyURI,
+        QName,
+        Notation,
 
-    # Primitive
-    '{http://www.w3.org/2001/XMLSchema}string': String(),
-    '{http://www.w3.org/2001/XMLSchema}boolean': Boolean(),
-    '{http://www.w3.org/2001/XMLSchema}decimal': Decimal(),
-    '{http://www.w3.org/2001/XMLSchema}float': Float(),
-    '{http://www.w3.org/2001/XMLSchema}double': Double(),
-    '{http://www.w3.org/2001/XMLSchema}duration': Duration(),
-    '{http://www.w3.org/2001/XMLSchema}dateTime': DateTime(),
-    '{http://www.w3.org/2001/XMLSchema}time': Time(),
-    '{http://www.w3.org/2001/XMLSchema}date': Date(),
-    '{http://www.w3.org/2001/XMLSchema}gYearMonth': gYearMonth(),
-    '{http://www.w3.org/2001/XMLSchema}gYear': gYear(),
-    '{http://www.w3.org/2001/XMLSchema}gMonthDay': gMonthDay(),
-    '{http://www.w3.org/2001/XMLSchema}gDay': gDay(),
-    '{http://www.w3.org/2001/XMLSchema}gMonth': gMonth(),
-    '{http://www.w3.org/2001/XMLSchema}hexBinary': HexBinary(),
-    '{http://www.w3.org/2001/XMLSchema}base64Binary': Base64Binary(),
-    '{http://www.w3.org/2001/XMLSchema}anyURI': AnyURI(),
-    '{http://www.w3.org/2001/XMLSchema}QName': QName(),
-    '{http://www.w3.org/2001/XMLSchema}NOTATION': Notation(),
+        # Derived
+        NormalizedString,
+        Token,
+        Language,
+        NmToken,
+        NmTokens,
+        Name,
+        NCName,
+        ID,
+        IDREF,
+        IDREFS,
+        Entity,
+        Entities,
+        Integer,
+        NonPositiveInteger,  # noqa
+        NegativeInteger,
+        Long,
+        Int,
+        Short,
+        Byte,
+        NonNegativeInteger,  # noqa
+        UnsignedByte,
+        UnsignedInt,
+        UnsignedLong,
+        UnsignedShort,
+        PositiveInteger,
 
-    # Derived
-    '{http://www.w3.org/2001/XMLSchema}normalizedString': ID(),
-    '{http://www.w3.org/2001/XMLSchema}token': ID(),
-    '{http://www.w3.org/2001/XMLSchema}language': ID(),
-    '{http://www.w3.org/2001/XMLSchema}NMTOKEN': ID(),
-    '{http://www.w3.org/2001/XMLSchema}NMTOKENS': ID(),
-    '{http://www.w3.org/2001/XMLSchema}Name': ID(),
-    '{http://www.w3.org/2001/XMLSchema}NCName': ID(),
-    '{http://www.w3.org/2001/XMLSchema}ID': ID(),
-    '{http://www.w3.org/2001/XMLSchema}IDREF': IDREF(),
-    '{http://www.w3.org/2001/XMLSchema}IDREFS': IDREFS(),
-    '{http://www.w3.org/2001/XMLSchema}ENTITY': Entity(),
-    '{http://www.w3.org/2001/XMLSchema}ENTITIES': Entities(),
-    '{http://www.w3.org/2001/XMLSchema}integer': Integer(),
-    '{http://www.w3.org/2001/XMLSchema}nonPositiveInteger': NonPositiveInteger(),  # noqa
-    '{http://www.w3.org/2001/XMLSchema}negativeInteger': NegativeInteger(),
-    '{http://www.w3.org/2001/XMLSchema}long': Long(),
-    '{http://www.w3.org/2001/XMLSchema}int': Int(),
-    '{http://www.w3.org/2001/XMLSchema}short': Short(),
-    '{http://www.w3.org/2001/XMLSchema}byte': Byte(),
-    '{http://www.w3.org/2001/XMLSchema}nonNegativeInteger': NonNegativeInteger(),  # noqa
-    '{http://www.w3.org/2001/XMLSchema}unsignedByte': String(),
-    '{http://www.w3.org/2001/XMLSchema}unsignedInt': UnsignedInt(),
-    '{http://www.w3.org/2001/XMLSchema}unsignedLong': UnsignedLong(),
-    '{http://www.w3.org/2001/XMLSchema}unsignedShort': UnsignedShort(),
-    '{http://www.w3.org/2001/XMLSchema}positiveInteger': PositiveInteger(),
-
-    # Other
-    '{http://www.w3.org/2001/XMLSchema}anyType': AnyType(),
-    '{http://www.w3.org/2001/XMLSchema}anySimpleType': AnyType(),
+        # Other
+        AnyType,
+        AnySimpleType,
+    ]
 }
 
 

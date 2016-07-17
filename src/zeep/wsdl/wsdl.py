@@ -90,7 +90,7 @@ class Document(object):
 
         print('')
         print("Global types:")
-        for type_obj in sorted(self.types.types, key=lambda k: six.text_type(k)):
+        for type_obj in sorted(self.types.types, key=lambda k: k.qname):
             value = six.text_type(type_obj)
             if hasattr(type_obj, 'qname') and type_obj.qname.namespace:
                 value = '%s:%s' % (namespaces[type_obj.qname.namespace], value)

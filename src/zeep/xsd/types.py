@@ -11,9 +11,10 @@ from zeep.xsd.valueobjects import CompoundValue
 
 
 class Type(object):
-    name = None
 
-    def __init__(self, is_global=False):
+    def __init__(self, qname=None, is_global=False):
+        self.qname = qname
+        self.name = qname.localname if qname else None
         self._resolved = False
         self.is_global = is_global
 
@@ -66,22 +67,23 @@ class UnresolvedType(Type):
 
 class UnresolvedCustomType(Type):
 
-    def __init__(self, name, base_qname, schema):
-        assert name is not None
-        self.name = name
+    def __init__(self, qname, base_type, schema):
+        assert qname is not None
+        self.qname = qname
+        self.name = str(qname.localname)
         self.schema = schema
-        self.base_qname = base_qname
+        self.base_type = base_type
 
     def resolve(self):
-        base = self.base_qname
-        if isinstance(self.base_qname, (UnresolvedType, self.__class__)):
+        base = self.base_type
+        if isinstance(self.base_type, (UnresolvedType, self.__class__)):
             base = base.resolve()
 
         cls_attributes = {
             '__module__': 'zeep.xsd.dynamic_types',
         }
         xsd_type = type(self.name, (base.__class__,), cls_attributes)
-        return xsd_type()
+        return xsd_type(self.qname)
 
 
 @six.python_2_unicode_compatible
@@ -90,8 +92,9 @@ class SimpleType(Type):
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.
 
-        The args, kwargs handling is done here manually so that we can return
-        readable error messages instead of only '__call__ takes x arguments'
+        Expects only one argument 'value'.  The args, kwargs handling is done
+        here manually so that we can return readable error messages instead of
+        only '__call__ takes x arguments'
 
         """
         num_args = len(args) + len(kwargs)
@@ -117,7 +120,7 @@ class SimpleType(Type):
             self.__dict__ == other.__dict__)
 
     def __str__(self):
-        return self.name
+        return '%s(value)' % (self.__class__.__name__)
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
                          context=None):
@@ -135,9 +138,8 @@ class SimpleType(Type):
     def resolve(self):
         return self
 
-    @classmethod
-    def signature(cls, depth=0):
-        return cls.name
+    def signature(self, depth=0):
+        return self.name
 
     def xmlvalue(self, value):
         raise NotImplementedError(
@@ -154,12 +156,11 @@ class ComplexType(Type):
             element = Sequence(element)
 
         self.name = self.__class__.__name__ if qname else None
-        self.qname = qname
         self._element = element
         self._attributes = attributes or []
         self._restriction = restriction
         self._extension = extension
-        super(ComplexType, self).__init__(is_global=is_global)
+        super(ComplexType, self).__init__(qname=qname, is_global=is_global)
 
     def __call__(self, *args, **kwargs):
         if not hasattr(self, '_value_class'):
@@ -324,7 +325,7 @@ class ListType(Type):
 
     def __init__(self, item_type):
         self.item_type = item_type
-        super(ListType, self).__init__()
+        super(ListType, self).__init__(None)
 
     def render(self, parent, value):
         parent.text = self.xmlvalue(value)
@@ -351,7 +352,7 @@ class UnionType(Type):
 
     def __init__(self, item_types):
         self.item_types = item_types
-        super(UnionType, self).__init__()
+        super(UnionType, self).__init__(None)
 
     def resolve(self):
         self.item_types = [item.resolve() for item in self.item_types]

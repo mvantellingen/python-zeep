@@ -6,6 +6,12 @@ from zeep import xsd
 from zeep.exceptions import ZeepWarning
 
 
+def test_default_types():
+    schema = xsd.Schema()
+    xsd_string = schema.get_type('{http://www.w3.org/2001/XMLSchema}string')
+    assert xsd_string == xsd.String()
+
+
 def test_multiple_extension():
     node_a = etree.fromstring("""
         <?xml version="1.0"?>
@@ -146,6 +152,8 @@ def test_global_element_and_type():
     transport.bind('http://tests.python-zeep.org/c.xsd', node_c)
 
     schema = xsd.Schema(node_a, transport=transport)
+    type_a = schema.get_type('{http://tests.python-zeep.org/c}type_a')
+
     type_a = schema.get_type('{http://tests.python-zeep.org/c}type_a')
     type_a(item_a='x')
 

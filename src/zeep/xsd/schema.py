@@ -124,7 +124,9 @@ class Schema(object):
             return etree.QName(name)
 
     def _create_prefix_map(self):
-        prefix_map = {}
+        prefix_map = {
+            'xsd': 'http://www.w3.org/2001/XMLSchema',
+        }
         for i, namespace in enumerate(self._schemas.keys()):
             if namespace is None:
                 continue
@@ -297,7 +299,6 @@ class SchemaDocument(object):
     def _check_namespace_reference(self, name):
         """See https://www.w3.org/TR/xmlschema-1/#src-resolve"""
         ns = name.namespace
-
         if ns != self._target_namespace and ns not in self._imports.keys():
             raise exceptions.XMLParseError((
                 "References from this schema (%r) to components in the " +

@@ -37,11 +37,11 @@ class ConcreteMessage(object):
             if isinstance(self.body.type, xsd.ComplexType):
                 try:
                     if len(self.body.type.elements) == 1:
-                        return self.body.type.elements[0][1].type.name
+                        return self.body.type.elements[0][1].type.signature()
                 except AttributeError:
                     return None
 
-            return self.body.type.name
+            return self.body.type.signature()
 
         parts = [self.body.type.signature()]
         if getattr(self, 'headers', None):
