@@ -8,7 +8,7 @@ from lxml.builder import ElementMaker
 from zeep import exceptions, xsd
 from zeep.helpers import serialize_object
 from zeep.utils import as_qname
-from zeep.wsdl.utils import _soap_element, etree_to_string
+from zeep.wsdl.utils import etree_to_string
 
 SerializedMessage = namedtuple('SerializedMessage', ['path', 'headers', 'content'])
 
@@ -173,7 +173,7 @@ class SoapMessage(ConcreteMessage):
         # parse soap:body
         # <soap:body parts="nmtokens"? use="literal|encoded"?
         #   encodingStyle="uri-list"? namespace="uri"?>
-        body = _soap_element(xmlelement, 'body')
+        body = xmlelement.find('soap:body', namespaces=operation.binding.nsmap)
         if body is not None:
             info['body'] = {
                 'part': body.get('part'),
@@ -183,11 +183,13 @@ class SoapMessage(ConcreteMessage):
             }
 
         # Parse soap:header (multiple)
-        elements = _soap_element(xmlelement, 'header', multiple=True)
+        elements = xmlelement.findall(
+            'soap:header', namespaces=operation.binding.nsmap)
         info['header'] = cls._parse_header(elements, tns)
 
         # Parse soap:headerfault (multiple)
-        elements = _soap_element(xmlelement, 'headerfault', multiple=True)
+        elements = xmlelement.findall(
+            'soap:headerfault', namespaces=operation.binding.nsmap)
         if elements is not None:
             info['headerfault'] = cls._parse_header(elements, tns)
 

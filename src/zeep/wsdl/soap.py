@@ -2,11 +2,11 @@ import six
 from defusedxml.lxml import fromstring
 from lxml import etree
 
-from zeep.exceptions import Fault, TransportError
+from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.utils import qname_attr
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
-from zeep.wsdl.utils import _soap_element, etree_to_string
+from zeep.wsdl.utils import etree_to_string
 
 
 class SoapBinding(Binding):
@@ -122,15 +122,13 @@ class SoapBinding(Binding):
         if response.status_code != 200:
             return self.process_error(doc)
 
-        body = doc.find('soap-env:Body', namespaces=self.nsmap)
-        assert body is not None, "No {%s}Body found" % (self.nsmap['soap-env'])
-        return operation.process_reply(body)
+        return operation.process_reply(doc)
 
     def process_error(self, doc):
         raise NotImplementedError
 
     def process_service_port(self, xmlelement):
-        address_node = _soap_element(xmlelement, 'address')
+        address_node = xmlelement.find('soap:address', namespaces=self.nsmap)
         return {
             'address': address_node.get('location')
         }
@@ -159,7 +157,7 @@ class SoapBinding(Binding):
 
         # The soap:binding element contains the transport method and
         # default style attribute for the operations.
-        soap_node = _soap_element(xmlelement, 'binding')
+        soap_node = xmlelement.find('soap:binding', namespaces=cls.nsmap)
         transport = soap_node.get('transport')
         if transport != 'http://schemas.xmlsoap.org/soap/http':
             raise NotImplementedError("Only soap/http is supported for now")
@@ -239,6 +237,7 @@ class Soap12Binding(SoapBinding):
 
 
 class SoapOperation(Operation):
+    """Represent's an operation within a specific binding."""
 
     def __init__(self, name, binding, nsmap, soapaction, style):
         super(SoapOperation, self).__init__(name, binding)
@@ -246,7 +245,16 @@ class SoapOperation(Operation):
         self.soapaction = soapaction
         self.style = style
 
-    def process_reply(self, body):
+    def process_reply(self, envelope):
+        envelope_qname = etree.QName(self.nsmap['soap-env'], 'Envelope')
+        if envelope.tag != envelope_qname:
+            raise XMLSyntaxError((
+                "The XML returned by the server does not contain a valid " +
+                "{%s}Envelope root element. The root element found is %s "
+            ) % (envelope_qname, envelope.tag))
+
+        body = envelope.find('soap-env:Body', namespaces=self.nsmap)
+        assert body is not None, "No {%s}Body element found" % (self.nsmap['soap-env'])
         return self.output.deserialize(body)
 
     @classmethod
@@ -285,7 +293,7 @@ class SoapOperation(Operation):
 
         # The soap:operation element is required for soap/http bindings
         # and may be omitted for other bindings.
-        soap_node = _soap_element(xmlelement, 'operation')
+        soap_node = xmlelement.find('soap:operation', namespaces=binding.nsmap)
         action = None
         if soap_node is not None:
             action = soap_node.get('soapAction')

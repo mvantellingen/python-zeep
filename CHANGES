@@ -8,6 +8,8 @@
    backend thread-safe since we now open/close the db when writing/reading 
    from it (with an additional lock).
  - Fix zeep.helpers.serialize_object() for nested objects (#123)
+ - Remove fallback between soap 1.1 and soap 1.2 namespaces during the parsing
+   of the wsdl. This should not be required.
 
 
 0.12.0 (2016-07-09)
