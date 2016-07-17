@@ -12,7 +12,7 @@ python:
 
 
 allow_failures:
-    - python: 'pypy'
+    - python: 'nightly'
 
 before_install:
     - pip install codecov
