@@ -89,7 +89,7 @@ difficult. Zeep tries to solve this using two methods:
      dicts (when maxOccurs != 1) or a dict directly.
 
 
-The following examples should better illustrate this.
+The following examples should illustrate this better.
 
 
 
