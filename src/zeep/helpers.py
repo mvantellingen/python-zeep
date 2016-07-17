@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from zeep.xsd.valueobjects import CompoundValue
 
 
 def serialize_object(obj):
@@ -12,7 +13,7 @@ def serialize_object(obj):
     result = OrderedDict()
     for key in obj:
         value = obj[key]
-        if hasattr(value, '__iter__'):
+        if isinstance(value, CompoundValue):
             value = serialize_object(value)
         result[key] = value
     return result
