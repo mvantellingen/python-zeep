@@ -1,8 +1,8 @@
 from lxml import etree
 
+from tests.utils import load_xml
 from zeep import xsd
 from zeep.helpers import serialize_object
-from tests.utils import load_xml
 
 
 def test_serialize_simple():
@@ -110,4 +110,3 @@ def test_nested_complex_types():
     assert isinstance(result, dict), type(result)
     assert isinstance(result['item'], dict), type(result['item'])
     assert result['item']['item_1'] == 'foo'
-

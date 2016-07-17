@@ -5,7 +5,7 @@ import logging
 import logging.config
 import time
 
-from zeep.cache import SqliteCache, InMemoryCache
+from zeep.cache import InMemoryCache, SqliteCache
 from zeep.client import Client
 from zeep.transports import Transport
 

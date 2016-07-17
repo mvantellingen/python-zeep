@@ -4,13 +4,12 @@ import errno
 import logging
 import os
 import sqlite3
-from contextlib import contextmanager
 import threading
+from contextlib import contextmanager
 
 import appdirs
 import pytz
 import six
-
 
 logger = logging.getLogger(__name__)
 

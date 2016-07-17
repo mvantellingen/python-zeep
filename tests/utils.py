@@ -33,4 +33,3 @@ class DummyTransport(object):
 
     def load(self, url):
         return etree.tostring(self._items[url])
-

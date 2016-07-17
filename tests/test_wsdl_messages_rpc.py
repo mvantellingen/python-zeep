@@ -1,13 +1,7 @@
-
-from collections import OrderedDict
-
-from lxml import etree
-from pretend import stub
 from six import StringIO
 
 from tests.utils import assert_nodes_equal, load_xml
-from zeep import xsd
-from zeep.wsdl import definitions, messages, soap, wsdl
+from zeep.wsdl import wsdl
 
 
 def test_serialize():

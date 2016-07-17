@@ -3,7 +3,7 @@ from lxml import etree
 
 from tests.utils import DummyTransport
 from zeep import xsd
-from zeep.exceptions import XMLParseError, ZeepWarning
+from zeep.exceptions import ZeepWarning
 
 
 def test_multiple_extension():

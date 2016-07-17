@@ -6,8 +6,7 @@ from lxml import etree
 from pretend import stub
 from six import StringIO
 
-from tests.utils import assert_nodes_equal
-from tests.utils import DummyTransport
+from tests.utils import DummyTransport, assert_nodes_equal
 from zeep import wsdl
 from zeep.transports import Transport
 

@@ -9,8 +9,8 @@ from lxml import etree
 
 from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
-from zeep.wsdl.utils import combine_schemas
 from zeep.wsdl import definitions, http, soap
+from zeep.wsdl.utils import combine_schemas
 from zeep.xsd import Schema
 from zeep.xsd.context import ParserContext
 from zeep.xsd.parser import parse_xml as xsd_parse_xml
