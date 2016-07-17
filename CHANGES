@@ -1,4 +1,4 @@
-0.13.0 (unreleased)
+0.13.0 (2016-07-17)
 -------------------
  - Use warnings.warn() for duplicate target namespaces instead of raising an
    exception. This better matches with what lxml does.
