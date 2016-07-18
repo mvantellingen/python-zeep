@@ -1,7 +1,7 @@
 import logging
 
 import requests
-
+from zeep.wsdl.utils import etree_to_string
 from six.moves.urllib.parse import urlparse
 from zeep.cache import SqliteCache
 from zeep.utils import NotSet, get_version
@@ -15,7 +15,6 @@ class Transport(object):
         self.verify = verify
         self.http_auth = http_auth
         self.logger = logging.getLogger(__name__)
-
         self.session = self.create_session()
         self.session.verify = verify
         self.session.auth = http_auth
@@ -59,6 +58,17 @@ class Transport(object):
             "HTTP Response from %s (status: %d):\n%s",
             address, response.status_code, response.content)
         return response
+
+    def post_xml(self, address, envelope, headers):
+        """Post the envelope xml element to the given address with the headers.
+
+        This method is intended to be overriden if you want to customize the
+        serialization of the xml element. By default the body is formatted
+        and encoded as utf-8. See ``zeep.wsdl.utils.etree_to_string``.
+
+        """
+        message = etree_to_string(envelope)
+        return self.post(address, message, headers)
 
     def get(self, address, params, headers):
         response = self.session.get(address, params=params, headers=headers)
