@@ -306,7 +306,7 @@ class SchemaVisitor(object):
 
         attribute_form = node.get('form', self.schema._attribute_form)
         qname = qname_attr(node, 'name', self.schema._target_namespace)
-        if attribute_form == 'qualified':
+        if attribute_form == 'qualified' or is_global:
             name = qname
         else:
             name = etree.QName(node.get('name'))

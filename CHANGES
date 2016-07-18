@@ -1,5 +1,6 @@
 0.14.0 (unreleased)
 -------------------
+ - Global attributes are now always correctly handled as qualified. (#129)
 
 0.13.0 (2016-07-17)
 -------------------

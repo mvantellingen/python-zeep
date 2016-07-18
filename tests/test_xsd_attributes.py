@@ -123,6 +123,37 @@ def test_ref_attribute_qualified():
     assert_nodes_equal(expected, node)
 
 
+def test_ref_attribute_unqualified():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                attributeFormDefault="unqualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:attribute ref="tns:attr" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:attribute name="attr" type="xsd:string" />
+        </xsd:schema>
+    """))
+
+    elm_cls = schema.get_element('{http://tests.python-zeep.org/}container')
+    instance = elm_cls(attr="hoi")
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" ns0:attr="hoi"/>
+      </document>
+    """
+
+    node = etree.Element('document')
+    elm_cls.render(node, instance)
+    assert_nodes_equal(expected, node)
+
+
 def test_complex_type_with_attributes():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
