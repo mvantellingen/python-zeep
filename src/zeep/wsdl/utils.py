@@ -2,7 +2,6 @@ from lxml import etree
 
 
 def etree_to_string(node, pretty_print=True):
-    print pretty_print
     return etree.tostring(
         node, pretty_print=pretty_print, xml_declaration=True, encoding='utf-8')
 
