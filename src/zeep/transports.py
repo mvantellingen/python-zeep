@@ -1,7 +1,7 @@
 import logging
 
 import requests
-
+from zeep.wsdl.utils import etree_to_string
 from six.moves.urllib.parse import urlparse
 from zeep.cache import SqliteCache
 from zeep.utils import NotSet, get_version
@@ -9,13 +9,13 @@ from zeep.utils import NotSet, get_version
 
 class Transport(object):
 
-    def __init__(self, cache=NotSet, timeout=300, verify=True, http_auth=None):
+    def __init__(self, cache=NotSet, timeout=300, verify=True, http_auth=None, **post_xml_format_options):
         self.cache = SqliteCache() if cache is NotSet else cache
         self.timeout = timeout
         self.verify = verify
         self.http_auth = http_auth
         self.logger = logging.getLogger(__name__)
-
+        self.post_xml_format_options = post_xml_format_options
         self.session = self.create_session()
         self.session.verify = verify
         self.session.auth = http_auth
@@ -59,6 +59,10 @@ class Transport(object):
             "HTTP Response from %s (status: %d):\n%s",
             address, response.status_code, response.content)
         return response
+
+    def post_xml(self, address, message, headers):
+        message = etree_to_string(message, **self.post_xml_format_options)
+        return self.post(address, message, headers)
 
     def get(self, address, params, headers):
         response = self.session.get(address, params=params, headers=headers)

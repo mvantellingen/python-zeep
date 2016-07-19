@@ -56,7 +56,7 @@ class SoapBinding(Binding):
         serialized = operation.create(*args, **kwargs)
         return serialized.content
 
-    def send(self, client, options, operation, args, kwargs, pretty_print=True):
+    def send(self, client, options, operation, args, kwargs):
         """Called from the service
 
         :param client: The client with which the operation was called
@@ -69,8 +69,6 @@ class SoapBinding(Binding):
         :type args: tuple
         :param kwargs: The **kwargs to pass to the operation
         :type kwargs: dict
-        :param pretty_print: Whether or not operation data should be sent in pretty XML or flat XML
-        :type pretty_print: bool
         """
         operation_obj = self.get(operation)
         if not operation_obj:
@@ -89,8 +87,7 @@ class SoapBinding(Binding):
         if client.wsse:
             envelope, http_headers = client.wsse.sign(envelope, headers)
 
-        content = etree_to_string(envelope, pretty_print=pretty_print)
-        response = client.transport.post(options['address'], content, headers)
+        response = client.transport.post_xml(options['address'], envelope, headers)
 
         return self.process_reply(client, operation_obj, response)
 

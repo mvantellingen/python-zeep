@@ -19,10 +19,9 @@ class OperationProxy(object):
         self._op_name = operation_name
 
     def __call__(self, *args, **kwargs):
-        pretty_print = kwargs.pop('pretty_print', True)
         return self._proxy._binding.send(
             self._proxy._client, self._proxy._binding_options,
-            self._op_name, args, kwargs, pretty_print=pretty_print)
+            self._op_name, args, kwargs)
 
 
 class ServiceProxy(object):

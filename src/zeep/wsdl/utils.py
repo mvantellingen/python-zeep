@@ -1,10 +1,9 @@
 from lxml import etree
 
 
-def etree_to_string(node, pretty_print=True):
-    print pretty_print
+def etree_to_string(node, pretty_print=True, xml_declaration=True, encoding='utf-8', **formatting_options):
     return etree.tostring(
-        node, pretty_print=pretty_print, xml_declaration=True, encoding='utf-8')
+        node, pretty_print=pretty_print, xml_declaration=xml_declaration, encoding=encoding, **formatting_options)
 
 
 def combine_schemas(schema_nodes, location, parser_context):
