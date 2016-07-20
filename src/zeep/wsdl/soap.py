@@ -69,7 +69,6 @@ class SoapBinding(Binding):
         :type args: tuple
         :param kwargs: The **kwargs to pass to the operation
         :type kwargs: dict
-
         """
         operation_obj = self.get(operation)
         if not operation_obj:
@@ -88,8 +87,7 @@ class SoapBinding(Binding):
         if client.wsse:
             envelope, http_headers = client.wsse.sign(envelope, headers)
 
-        content = etree_to_string(envelope)
-        response = client.transport.post(options['address'], content, headers)
+        response = client.transport.post_xml(options['address'], envelope, headers)
 
         return self.process_reply(client, operation_obj, response)
 
