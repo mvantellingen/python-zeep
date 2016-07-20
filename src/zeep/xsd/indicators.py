@@ -239,6 +239,8 @@ class Choice(OrderIndicator):
         result = []
 
         for i in max_occurs_iter(self.max_occurs):
+            if len(xmlelements) < 1:
+                break
             for node in list(xmlelements):
 
                 # Choose out of multiple
