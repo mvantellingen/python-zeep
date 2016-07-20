@@ -1228,3 +1228,60 @@ def test_schema_as_payload():
     value = elm_class.parse(node, schema)
     assert value._value_1['item-1'] == 'value-1'
     assert value._value_1['item-2'] == 'value-2'
+
+
+def test_complex_simple_content():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+          <xsd:element name="value" type="tns:UUID"/>
+
+          <xsd:complexType name="UUID">
+            <xsd:simpleContent>
+              <xsd:extension base="tns:UUID.Content">
+                <xsd:attribute name="schemeID">
+                  <xsd:simpleType>
+                    <xsd:restriction base="xsd:token">
+                      <xsd:maxLength value="60"/>
+                      <xsd:minLength value="1"/>
+                    </xsd:restriction>
+                  </xsd:simpleType>
+                </xsd:attribute>
+                <xsd:attribute name="schemeAgencyID">
+                  <xsd:simpleType>
+                    <xsd:restriction base="xsd:token">
+                      <xsd:maxLength value="60"/>
+                      <xsd:minLength value="1"/>
+                    </xsd:restriction>
+                  </xsd:simpleType>
+                </xsd:attribute>
+              </xsd:extension>
+            </xsd:simpleContent>
+          </xsd:complexType>
+          <xsd:simpleType name="UUID.Content">
+            <xsd:restriction base="xsd:token">
+              <xsd:maxLength value="36"/>
+              <xsd:minLength value="36"/>
+              <xsd:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"/>
+            </xsd:restriction>
+          </xsd:simpleType>
+        </xsd:schema>
+    """))
+    value_elm = schema.get_element('ns0:value')
+    value = value_elm('00163e0c-0ea1-1ed6-93af-e818529bc1f1')
+
+    node = etree.Element('document')
+    value_elm.render(node, value)
+    expected = """
+      <document>
+        <ns0:value xmlns:ns0="http://tests.python-zeep.org/">00163e0c-0ea1-1ed6-93af-e818529bc1f1</ns0:value>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    item = value_elm.parse(node.getchildren()[0], schema)
+    assert item._value_1 == '00163e0c-0ea1-1ed6-93af-e818529bc1f1'

@@ -228,22 +228,31 @@ class ComplexType(Type):
         if not self.attributes and not self.elements:
             return None
 
-        elements = xmlelement.getchildren()
-        attributes = copy.copy(xmlelement.attrib)
-        if allow_none and len(elements) == 0 and len(attributes) == 0:
-            return
-
+        attributes = xmlelement.attrib
         init_kwargs = OrderedDict()
 
-        # Parse elements. These are always indicator elements (all, choice,
-        # group, sequence)
-        for name, element in self.elements_nested:
-            result = element.parse_xmlelements(
-                elements, schema, name, context=context)
-            if result:
-                init_kwargs.update(result)
+        # If this complexType extends a simpleType then we have no nested
+        # elements. Parse it directly via the type object. This is the case
+        # for xsd:simpleContent
+        if isinstance(self._extension, SimpleType):
+            name, element = self.elements_nested[0]
+            init_kwargs[name] = element.type.parse_xmlelement(
+                xmlelement, schema, name, context=context)
+        else:
+            elements = xmlelement.getchildren()
+            if allow_none and len(elements) == 0 and len(attributes) == 0:
+                return
+
+            # Parse elements. These are always indicator elements (all, choice,
+            # group, sequence)
+            for name, element in self.elements_nested:
+                result = element.parse_xmlelements(
+                    elements, schema, name, context=context)
+                if result:
+                    init_kwargs.update(result)
 
         # Parse attributes
+        attributes = copy.copy(attributes)
         for name, attribute in self.attributes:
             if attribute.name:
                 if attribute.qname.text in attributes:
