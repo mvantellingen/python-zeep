@@ -166,7 +166,7 @@ class Time(_BuiltinType):
     def pythonvalue(self, value):
         try:
             return isodate.parse_time(value)
-        except ISO8601Error:
+        except isodate.isoerror.ISO8601Error:
             return None
 
 
