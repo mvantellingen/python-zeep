@@ -1,5 +1,4 @@
 import datetime
-from collections import OrderedDict
 
 from lxml import etree
 
@@ -453,7 +452,6 @@ def test_complex_type_simple_content():
         </document>
     """
     assert_nodes_equal(expected, node)
-
 
 
 def test_group():
@@ -1270,7 +1268,7 @@ def test_complex_simple_content():
             </xsd:restriction>
           </xsd:simpleType>
         </xsd:schema>
-    """))
+    """))  # noqa
     value_elm = schema.get_element('ns0:value')
     value = value_elm('00163e0c-0ea1-1ed6-93af-e818529bc1f1')
 
@@ -1280,7 +1278,7 @@ def test_complex_simple_content():
       <document>
         <ns0:value xmlns:ns0="http://tests.python-zeep.org/">00163e0c-0ea1-1ed6-93af-e818529bc1f1</ns0:value>
       </document>
-    """
+    """  # noqa
     assert_nodes_equal(expected, node)
 
     item = value_elm.parse(node.getchildren()[0], schema)

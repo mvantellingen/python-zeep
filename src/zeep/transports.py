@@ -1,10 +1,11 @@
 import logging
 
 import requests
-from zeep.wsdl.utils import etree_to_string
+
 from six.moves.urllib.parse import urlparse
 from zeep.cache import SqliteCache
 from zeep.utils import NotSet, get_version
+from zeep.wsdl.utils import etree_to_string
 
 
 class Transport(object):
