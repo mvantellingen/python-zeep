@@ -164,6 +164,9 @@ class Time(_BuiltinType):
         return isodate.isostrf.strftime(value, '%H:%M:%S%Z')
 
     def pythonvalue(self, value):
+
+        # Handle invalid time values gracefully by returning None
+
         try:
             return isodate.parse_time(value)
         except isodate.isoerror.ISO8601Error:
