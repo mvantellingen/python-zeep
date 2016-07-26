@@ -537,7 +537,18 @@ class SchemaVisitor(object):
         """
         base_name = qname_attr(node, 'base')
         base_type = self._get_type(base_name)
-        return base_type, None, []
+        annotation, children = self._pop_annotation(node.getchildren())
+
+        element = None
+        attributes = []
+
+        if children:
+            child = children[0]
+            if child.tag in (tags.group, tags.all, tags.choice, tags.sequence):
+                children.pop(0)
+                element = self.process(child, node)
+            attributes = self._process_attributes(node, children)
+        return base_type, element, attributes
 
     def visit_extension_complex_content(self, node, parent):
         """
