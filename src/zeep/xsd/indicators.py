@@ -270,6 +270,10 @@ class Choice(OrderIndicator):
                     if num_consumed:
                         options.append((num_consumed, sub_result))
 
+                if not options:
+                    xmlelements = []
+                    break
+
                 # Sort on least left
                 options = sorted(options, key=operator.itemgetter(0))[::-1]
                 if options:
