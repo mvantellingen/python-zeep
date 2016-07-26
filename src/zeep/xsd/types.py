@@ -251,6 +251,10 @@ class ComplexType(Type):
                 if result:
                     init_kwargs.update(result)
 
+            # Check if all children are consumed (parsed)
+            if elements:
+                raise XMLParseError("Unexpected element: %s" % elements[0].tag)
+
         # Parse attributes
         attributes = copy.copy(attributes)
         for name, attribute in self.attributes:
