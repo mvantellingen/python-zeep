@@ -24,8 +24,7 @@ class Transport(object):
 
     def create_session(self, cert=None):
         _session = requests.Session()
-        if cert:
-            _session.cert = cert
+        _session.cert = cert or None
         return _session
 
     def load(self, url):
