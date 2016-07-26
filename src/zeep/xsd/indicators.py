@@ -210,10 +210,18 @@ class All(OrderIndicator):
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         result = OrderedDict()
+        expected_tags = {element.qname for __, element in self.elements}
+        consumed_tags = set()
 
         values = defaultdict(list)
-        for elm in xmlelements:
-            values[elm.tag].append(elm)
+        for i, elm in enumerate(xmlelements):
+            if elm.tag in expected_tags:
+                consumed_tags.add(i)
+                values[elm.tag].append(elm)
+
+        # Remove the consumed tags from the xmlelements
+        for i in sorted(consumed_tags, reverse=True):
+            del xmlelements[i]
 
         for name, element in self.elements:
             sub_elements = values.get(element.qname)
