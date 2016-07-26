@@ -255,8 +255,15 @@ class Element(Base):
     def _render_value_item(self, parent, value):
         """Render the value on the parent lxml.Element"""
         if value is None:
-            if not self.is_optional:
-                etree.SubElement(parent, self.qname)
+            if self.is_optional:
+                return
+
+            elm = etree.SubElement(parent, self.qname)
+            if self.nillable:
+                elm.set(
+                    '{http://www.w3.org/2001/XMLSchema-instance}nil',
+                    'true'
+                )
             return
 
         if self.name is None:

@@ -1283,3 +1283,37 @@ def test_complex_simple_content():
 
     item = value_elm.parse(node.getchildren()[0], schema)
     assert item._value_1 == '00163e0c-0ea1-1ed6-93af-e818529bc1f1'
+
+
+def test_nill():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="foo" type="string" nillable="true"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """))
+
+    address_type = schema.get_element('ns0:container')
+    obj = address_type()
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:foo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+        </ns0:container>
+      </document>
+    """
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    etree.cleanup_namespaces(node)
+
+    assert_nodes_equal(expected, node)

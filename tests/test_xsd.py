@@ -110,15 +110,16 @@ def test_nil_elements():
     expected = """
       <document>
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
-          <ns0:item_1/>
-          <ns0:item_2/>
+          <ns0:item_1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+          <ns0:item_2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
           <ns0:item_4>
-            <ns0:item_4_1/>
+            <ns0:item_4_1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
           </ns0:item_4>
         </ns0:container>
       </document>
     """
     node = render_node(custom_type, obj)
+    etree.cleanup_namespaces(node)
     assert_nodes_equal(expected, node)
 
 
