@@ -4,6 +4,7 @@ from collections import OrderedDict
 import six
 from cached_property import threaded_cached_property
 
+from zeep.exceptions import XMLParseError
 from zeep.xsd.elements import Element
 from zeep.xsd.indicators import Sequence
 from zeep.xsd.utils import NamePrefixGenerator

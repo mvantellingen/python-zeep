@@ -4,6 +4,7 @@ from collections import OrderedDict, defaultdict
 
 from cached_property import threaded_cached_property
 
+from zeep.exceptions import XMLParseError
 from zeep.xsd.elements import Any, Base, Element
 from zeep.xsd.utils import (
     NamePrefixGenerator, UniqueNameGenerator, max_occurs_iter)

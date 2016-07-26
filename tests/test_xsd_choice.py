@@ -3,6 +3,7 @@ from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml
 from zeep import xsd
+from zeep.exceptions import XMLParseError
 from zeep.helpers import serialize_object
 
 
@@ -198,12 +199,7 @@ def test_choice_optional_values():
     """)
     schema = xsd.Schema(schema)
 
-    node = load_xml("""
-        <document>
-            <Transport>
-            </Transport>
-        </document>
-    """)
+    node = load_xml("<Transport></Transport>")
     elm = schema.get_type('ns0:Transport')
     elm.parse_xmlelement(node, schema)
 
@@ -545,3 +541,99 @@ def test_element_ref_in_choice():
         </document>
     """
     assert_nodes_equal(expected, node)
+
+
+def test_parse_dont_loop():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+              <xsd:choice maxOccurs="unbounded">
+                <xsd:element name="item_1" type="xsd:string"/>
+                <xsd:element name="item_2" type="xsd:string"/>
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """))
+
+    element = schema.get_element('ns0:container')
+    expected = load_xml("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>bar</ns0:item_2>
+          <ns0:item_3>foo</ns0:item_3>
+          <ns0:item_4>bar</ns0:item_4>
+        </ns0:container>
+    """)
+    with pytest.raises(XMLParseError):
+        element.parse(expected, schema)
+
+
+def test_parse_check_unexpected():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+              <xsd:choice maxOccurs="unbounded">
+                <xsd:element name="item_1" type="xsd:string"/>
+                <xsd:element name="item_2" type="xsd:string"/>
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """))
+
+    element = schema.get_element('ns0:container')
+    expected = load_xml("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>bar</ns0:item_2>
+          <ns0:item_3>foo</ns0:item_3>
+        </ns0:container>
+    """)
+    with pytest.raises(XMLParseError):
+        element.parse(expected, schema)
+
+
+def test_parse_check_mixed():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+              <xsd:sequence>
+                <xsd:choice maxOccurs="unbounded">
+                  <xsd:element name="item_1" type="xsd:string"/>
+                  <xsd:element name="item_2" type="xsd:string"/>
+                </xsd:choice>
+                <xsd:element name="item_3" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """))
+
+    element = schema.get_element('ns0:container')
+    expected = load_xml("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>bar</ns0:item_2>
+          <ns0:item_3>foo</ns0:item_3>
+        </ns0:container>
+    """)
+    data = element.parse(expected, schema)
