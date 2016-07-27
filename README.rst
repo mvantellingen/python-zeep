@@ -4,8 +4,8 @@ Zeep: Python SOAP client
 
 A fast and hip Python SOAP client ;-)
 
-Website: http://docs.python-zeep.org/
-IRC: #python-zeep on Freenode
+| Website: http://docs.python-zeep.org/
+| IRC: #python-zeep on Freenode
 
 Highlights:
  * Modern codebase compatible with Python 2.7, 3.3, 3.4, 3.5 and PyPy
