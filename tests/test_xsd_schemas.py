@@ -452,3 +452,57 @@ def test_no_target_namespace():
     transport = DummyTransport()
     transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
     xsd.Schema(node_a, transport=transport)
+
+
+def test_include_recursion():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+            <xs:import
+                schemaLocation="http://tests.python-zeep.org/b.xsd"
+                namespace="http://tests.python-zeep.org/b"/>
+
+        </xs:schema>
+    """.strip())
+
+    node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            targetNamespace="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+            <xs:include schemaLocation="http://tests.python-zeep.org/c.xsd"/>
+            <xs:element name="bar" type="xs:string"/>
+        </xs:schema>
+    """.strip())
+
+    node_c = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            targetNamespace="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+            <xs:include schemaLocation="http://tests.python-zeep.org/b.xsd"/>
+
+            <xs:element name="foo" type="xs:string"/>
+        </xs:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
+    transport.bind('http://tests.python-zeep.org/c.xsd', node_c)
+
+    schema = xsd.Schema(node_a, transport=transport)
+    schema.get_element('{http://tests.python-zeep.org/b}foo')
+    schema.get_element('{http://tests.python-zeep.org/b}bar')
+

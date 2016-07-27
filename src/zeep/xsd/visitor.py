@@ -1,3 +1,4 @@
+from collections import defaultdict
 import keyword
 import logging
 import warnings
@@ -41,6 +42,7 @@ class SchemaVisitor(object):
     def __init__(self, schema, parser_context=None):
         self.schema = schema
         self.parser_context = parser_context
+        self._includes = set()
 
     def process(self, node, parent):
         visit_func = self.visitors.get(node.tag)
@@ -192,9 +194,14 @@ class SchemaVisitor(object):
             raise NotImplementedError("schemaLocation is required")
         location = node.get('schemaLocation')
 
+        if location in self._includes:
+            return
+
         schema_node = load_external(
             location, self.schema._transport, self.parser_context,
             base_url=self.schema._base_url)
+        self._includes.add(location)
+
         return self.visit_schema(schema_node)
 
     def visit_element(self, node, parent):
