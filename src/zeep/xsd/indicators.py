@@ -1,10 +1,11 @@
+from __future__ import print_function
+
 import copy
 import operator
 from collections import OrderedDict, defaultdict
 
 from cached_property import threaded_cached_property
 
-from zeep.exceptions import XMLParseError
 from zeep.xsd.elements import Any, Base, Element
 from zeep.xsd.utils import (
     NamePrefixGenerator, UniqueNameGenerator, max_occurs_iter)
@@ -375,7 +376,6 @@ class Choice(OrderIndicator):
         to search for the best matching choice element.
 
         """
-        print "Render(%r, %r)" % (parent, value)
         if not self.accepts_multiple:
             value = [value]
         for item in value:
