@@ -167,19 +167,27 @@ class OrderIndicator(Indicator, list):
         return self
 
     def render(self, parent, value):
+        """Create subelements in the given parent object.
+
+        To make sure we render values only once the value items are copied
+        and the rendered attribute is removed from it once it is rendered.
+
+        """
         if not isinstance(value, list):
             values = [value]
         else:
             values = value
 
         for i, value in zip(max_occurs_iter(self.max_occurs), values):
-            for name, element in self.elements_nested:
+            value = copy.copy(value)
 
+            for name, element in self.elements_nested:
                 if name:
-                    if isinstance(value, dict):
-                        element_value = value.get(name)
+                    if name in value:
+                        element_value = value[name]
+                        del value[name]
                     else:
-                        element_value = getattr(value, name, None)
+                        element_value = None
                 else:
                     element_value = value
 
@@ -367,6 +375,7 @@ class Choice(OrderIndicator):
         to search for the best matching choice element.
 
         """
+        print "Render(%r, %r)" % (parent, value)
         if not self.accepts_multiple:
             value = [value]
         for item in value:

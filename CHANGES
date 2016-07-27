@@ -3,6 +3,8 @@
  - Global attributes are now always correctly handled as qualified. (#129)
  - Fix parsing xml data containing simpleContent types (#136). 
  - Set xsi:nil attribute when serializing objects to xml (#141)
+ - Fix rendering choice elements when the element is mixed with other elements
+   in a sequence (#150)
 
 
 0.13.0 (2016-07-17)

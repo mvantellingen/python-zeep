@@ -41,11 +41,17 @@ class CompoundValue(object):
     def __contains__(self, key):
         return self.__values__.__contains__(key)
 
+    def __len__(self):
+        return self.__values__.__len__()
+
     def __iter__(self):
         return self.__values__.__iter__()
 
     def __repr__(self):
         return PrettyPrinter().pformat(self.__values__)
+
+    def __delitem__(self, key):
+        return self.__values__.__delitem__(key)
 
     def __getitem__(self, key):
         return self.__values__[key]

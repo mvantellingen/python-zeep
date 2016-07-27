@@ -41,8 +41,8 @@ def test_parse_soap_wsdl():
 
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response)
-        account = obj.types.get_type('{http://example.com/stockquote.xsd}account')
-        account.id = 100
+        account_type = obj.types.get_type('{http://example.com/stockquote.xsd}account')
+        account = account_type(id=100)
         country = obj.types.get_element(
             '{http://example.com/stockquote.xsd}country'
         ).type()
