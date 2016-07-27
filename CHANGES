@@ -5,6 +5,7 @@
  - Set xsi:nil attribute when serializing objects to xml (#141)
  - Fix rendering choice elements when the element is mixed with other elements
    in a sequence (#150)
+ - Fix maximum recursion error for recursive xsd:include elements
 
 
 0.13.0 (2016-07-17)
