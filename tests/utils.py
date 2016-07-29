@@ -33,6 +33,6 @@ class DummyTransport(object):
 
     def load(self, url):
         data = self._items[url]
-        if isinstance(data, basestring):
+        if isinstance(data, string_types):
             return data
         return etree.tostring(data)
