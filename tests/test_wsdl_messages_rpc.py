@@ -59,6 +59,53 @@ def test_serialize():
     assert_nodes_equal(expected, serialized.content)
 
 
+def test_serialize_empty_input():
+    wsdl_content = StringIO("""
+    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                 xmlns:tns="http://tests.python-zeep.org/tns"
+                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://tests.python-zeep.org/tns">
+
+      <portType name="TestPortType">
+        <operation name="TestOperation">
+          <input message="tns:TestOperationRequests"/>
+        </operation>
+      </portType>
+
+      <message name="TestOperationRequests"/>
+
+      <binding name="TestBinding" type="tns:TestPortType">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="TestOperation">
+          <soap:operation soapAction=""/>
+          <input>
+            <soap:body use="encoded"
+                       namespace="http://test.python-zeep.org/tests/rpc"/>
+          </input>
+        </operation>
+      </binding>
+    </definitions>
+    """.strip())
+
+    root = wsdl.Document(wsdl_content, None)
+
+    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
+    operation = binding.get('TestOperation')
+
+    serialized = operation.input.serialize()
+    expected = """
+        <?xml version="1.0"?>
+        <soap-env:Envelope
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap-env:Body>
+            <ns0:TestOperation xmlns:ns0="http://test.python-zeep.org/tests/rpc"/>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """
+    assert_nodes_equal(expected, serialized.content)
+
+
 def test_deserialize():
     wsdl_content = StringIO("""
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"

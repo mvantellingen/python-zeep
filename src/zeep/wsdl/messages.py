@@ -290,7 +290,7 @@ class RpcMessage(SoapMessage):
 
         # If this message has no parts then we have nothing to do. This might
         # happen for output messages which don't return anything.
-        if not self.abstract.parts:
+        if not self.abstract.parts and self.type != 'input':
             return
 
         parts = OrderedDict(self.abstract.parts)
