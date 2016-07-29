@@ -355,3 +355,228 @@ def test_create_import_schema(recwarn):
     document = wsdl.Document(content, transport)
     assert len(recwarn) == 0
     assert document.types.get_element('{http://tests.python-zeep.org/b}global')
+
+
+def test_wsdl_import(recwarn):
+    wsdl_main = StringIO("""
+        <?xml version="1.0"?>
+        <wsdl:definitions
+          xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+          xmlns:tns="http://tests.python-zeep.org/xsd-main"
+          xmlns:sec="http://tests.python-zeep.org/wsdl-secondary"
+          xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+          xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+          targetNamespace="http://tests.python-zeep.org/xsd-main">
+          <wsdl:import namespace="http://tests.python-zeep.org/wsdl-secondary" location="http://tests.python-zeep.org/schema-2.wsdl"/>
+          <wsdl:types>
+            <xsd:schema
+                targetNamespace="http://tests.python-zeep.org/xsd-main"
+                xmlns:tns="http://tests.python-zeep.org/xsd-main">
+              <xsd:element name="input" type="xsd:string"/>
+            </xsd:schema>
+          </wsdl:types>
+          <wsdl:message name="message-1">
+            <wsdl:part name="response" element="tns:input"/>
+          </wsdl:message>
+
+          <wsdl:portType name="TestPortType">
+            <wsdl:operation name="TestOperation1">
+              <wsdl:input message="message-1"/>
+            </wsdl:operation>
+            <wsdl:operation name="TestOperation2">
+              <wsdl:input message="sec:message-2"/>
+            </wsdl:operation>
+          </wsdl:portType>
+
+          <wsdl:binding name="TestBinding" type="tns:TestPortType">
+            <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+            <wsdl:operation name="TestOperation1">
+              <soap:operation soapAction=""/>
+              <wsdl:input>
+                <soap:body use="literal"/>
+              </wsdl:input>
+            </wsdl:operation>
+            <wsdl:operation name="TestOperation2">
+              <soap:operation soapAction=""/>
+              <wsdl:input>
+                <soap:body use="literal"/>
+              </wsdl:input>
+            </wsdl:operation>
+          </wsdl:binding>
+          <wsdl:service name="TestService">
+            <wsdl:documentation>Test service</wsdl:documentation>
+            <wsdl:port name="TestPortType" binding="tns:TestBinding">
+              <soap:address location="http://tests.python-zeep.org/test"/>
+            </wsdl:port>
+          </wsdl:service>
+        </wsdl:definitions>
+    """.strip())
+
+    wsdl_2 = ("""
+        <?xml version="1.0"?>
+        <wsdl:definitions
+          xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+          xmlns:tns="http://tests.python-zeep.org/wsdl-secondary"
+          xmlns:mine="http://tests.python-zeep.org/xsd-secondary"
+          xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+          targetNamespace="http://tests.python-zeep.org/wsdl-secondary">
+          <wsdl:types>
+            <xsd:schema
+                targetNamespace="http://tests.python-zeep.org/xsd-secondary"
+                xmlns:tns="http://tests.python-zeep.org/xsd-secondary">
+              <xsd:element name="input2" type="xsd:string"/>
+            </xsd:schema>
+          </wsdl:types>
+          <wsdl:message name="message-2">
+            <wsdl:part name="response" element="mine:input2"/>
+          </wsdl:message>
+        </wsdl:definitions>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/schema-2.wsdl', wsdl_2)
+    document = wsdl.Document(wsdl_main, transport)
+    document.dump()
+
+def test_wsdl_import_transitive(recwarn):
+    wsdl_main = StringIO("""
+        <?xml version="1.0"?>
+        <wsdl:definitions
+          xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+          xmlns:tns="http://tests.python-zeep.org/xsd-main"
+          xmlns:sec="http://tests.python-zeep.org/wsdl-2"
+          xmlns:third="http://tests.python-zeep.org/wsdl-3"
+          xmlns:fourth="http://tests.python-zeep.org/wsdl-4"
+          xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+          xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+          targetNamespace="http://tests.python-zeep.org/xsd-main">
+          <wsdl:import namespace="http://tests.python-zeep.org/wsdl-2" location="http://tests.python-zeep.org/schema-2.wsdl"/>
+          <wsdl:types>
+            <xsd:schema
+                targetNamespace="http://tests.python-zeep.org/xsd-main"
+                xmlns:tns="http://tests.python-zeep.org/xsd-main">
+              <xsd:element name="input" type="xsd:string"/>
+            </xsd:schema>
+          </wsdl:types>
+          <wsdl:message name="message-1">
+            <wsdl:part name="response" element="tns:input"/>
+          </wsdl:message>
+
+          <wsdl:portType name="TestPortType">
+            <wsdl:operation name="TestOperation1">
+              <wsdl:input message="message-1"/>
+            </wsdl:operation>
+            <wsdl:operation name="TestOperation2">
+              <wsdl:input message="sec:message-2"/>
+            </wsdl:operation>
+            <wsdl:operation name="TestOperation3">
+              <wsdl:input message="third:message-3"/>
+            </wsdl:operation>
+            <wsdl:operation name="TestOperation4">
+              <wsdl:input message="fourth:message-4"/>
+            </wsdl:operation>
+          </wsdl:portType>
+
+          <wsdl:binding name="TestBinding" type="tns:TestPortType">
+            <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+            <wsdl:operation name="TestOperation1">
+              <soap:operation soapAction=""/>
+              <wsdl:input>
+                <soap:body use="literal"/>
+              </wsdl:input>
+            </wsdl:operation>
+            <wsdl:operation name="TestOperation2">
+              <soap:operation soapAction=""/>
+              <wsdl:input>
+                <soap:body use="literal"/>
+              </wsdl:input>
+            </wsdl:operation>
+            <wsdl:operation name="TestOperation3">
+              <soap:operation soapAction=""/>
+              <wsdl:input>
+                <soap:body use="literal"/>
+              </wsdl:input>
+            </wsdl:operation>
+          </wsdl:binding>
+          <wsdl:service name="TestService">
+            <wsdl:documentation>Test service</wsdl:documentation>
+            <wsdl:port name="TestPortType" binding="tns:TestBinding">
+              <soap:address location="http://tests.python-zeep.org/test"/>
+            </wsdl:port>
+          </wsdl:service>
+        </wsdl:definitions>
+    """.strip())
+
+    wsdl_2 = ("""
+        <?xml version="1.0"?>
+        <wsdl:definitions
+          xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+          xmlns:tns="http://tests.python-zeep.org/wsdl-2"
+          xmlns:mine="http://tests.python-zeep.org/xsd-2"
+          xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+          targetNamespace="http://tests.python-zeep.org/wsdl-2">
+          <wsdl:import namespace="http://tests.python-zeep.org/wsdl-3" location="http://tests.python-zeep.org/schema-3.wsdl"/>
+          <wsdl:types>
+            <xsd:schema
+                targetNamespace="http://tests.python-zeep.org/xsd-2"
+                xmlns:tns="http://tests.python-zeep.org/xsd-2">
+              <xsd:element name="input2" type="xsd:string"/>
+            </xsd:schema>
+          </wsdl:types>
+          <wsdl:message name="message-2">
+            <wsdl:part name="response" element="mine:input2"/>
+          </wsdl:message>
+        </wsdl:definitions>
+    """.strip())
+
+    wsdl_3 = ("""
+        <?xml version="1.0"?>
+        <wsdl:definitions
+          xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+          xmlns:tns="http://tests.python-zeep.org/wsdl-third"
+          xmlns:mine="http://tests.python-zeep.org/xsd-3"
+          xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+          targetNamespace="http://tests.python-zeep.org/wsdl-3">
+          <wsdl:import namespace="http://tests.python-zeep.org/wsdl-2" location="http://tests.python-zeep.org/schema-2.wsdl"/>
+          <wsdl:import namespace="http://tests.python-zeep.org/wsdl-4" location="http://tests.python-zeep.org/schema-4.wsdl"/>
+          <wsdl:types>
+            <xsd:schema
+                targetNamespace="http://tests.python-zeep.org/xsd-3"
+                xmlns:tns="http://tests.python-zeep.org/xsd-3">
+              <xsd:element name="input3" type="xsd:string"/>
+            </xsd:schema>
+          </wsdl:types>
+          <wsdl:message name="message-3">
+            <wsdl:part name="response" element="mine:input3"/>
+          </wsdl:message>
+        </wsdl:definitions>
+    """.strip())
+
+    wsdl_4 = ("""
+        <?xml version="1.0"?>
+        <wsdl:definitions
+          xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+          xmlns:tns="http://tests.python-zeep.org/wsdl-4"
+          xmlns:mine="http://tests.python-zeep.org/xsd-4"
+          xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+          targetNamespace="http://tests.python-zeep.org/wsdl-4">
+          <wsdl:import namespace="http://tests.python-zeep.org/wsdl-3" location="http://tests.python-zeep.org/schema-3.wsdl"/>
+          <wsdl:message name="message-4">
+            <wsdl:part name="response" type="xsd:string"/>
+          </wsdl:message>
+        </wsdl:definitions>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/schema-2.wsdl', wsdl_2)
+    transport.bind('http://tests.python-zeep.org/schema-3.wsdl', wsdl_3)
+    transport.bind('http://tests.python-zeep.org/schema-4.wsdl', wsdl_4)
+
+    document = wsdl.Document(wsdl_main, transport)
+    document.dump()

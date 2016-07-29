@@ -6,6 +6,7 @@
  - Fix rendering choice elements when the element is mixed with other elements
    in a sequence (#150)
  - Fix maximum recursion error for recursive xsd:include elements
+ - Make wsdl:import statements transitive. (#146)
 
 
 0.13.0 (2016-07-17)

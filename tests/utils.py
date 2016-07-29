@@ -32,4 +32,7 @@ class DummyTransport(object):
         self._items[url] = node
 
     def load(self, url):
-        return etree.tostring(self._items[url])
+        data = self._items[url]
+        if isinstance(data, basestring):
+            return data
+        return etree.tostring(data)
