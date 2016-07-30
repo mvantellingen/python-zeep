@@ -10,7 +10,8 @@ from zeep.wsdl.utils import etree_to_string
 
 class Transport(object):
 
-    def __init__(self, cache=NotSet, timeout=300, verify=True, http_auth=None):
+    def __init__(self, cache=NotSet, timeout=300, verify=True, http_auth=None, **kwargs):
+        self.extra_kwargs = kwargs
         self.cache = SqliteCache() if cache is NotSet else cache
         self.timeout = timeout
         self.verify = verify
@@ -22,8 +23,10 @@ class Transport(object):
         self.session.headers['User-Agent'] = (
             'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
-    def create_session(self):
-        return requests.Session()
+    def create_session(self, cert=None):
+        _session = requests.Session()
+        _session.cert = self.extra_kwargs.get('cert') or None
+        return _session
 
     def load(self, url):
         if not url:
