@@ -104,6 +104,12 @@ class Schema(object):
                 "No type '%s' in namespace %s. Available types are: %s" % (
                     qname.localname, qname.namespace, known_types or ' - '))
 
+    def merge(self, schema):
+        """Merge an other XSD schema in this one"""
+        for namespace, _schema in schema._schemas.items():
+            self._schemas[namespace] = _schema
+        self._prefix_map = self._create_prefix_map()
+
     def _create_qname(self, name):
         """Create an `lxml.etree.QName()` object for the given qname string.
 

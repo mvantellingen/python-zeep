@@ -306,10 +306,15 @@ class Definition(object):
                 schema_nodes, self.location, self.wsdl._parser_context)
         else:
             schema_node = schema_nodes[0]
-
-        return Schema(
+        schema = Schema(
             schema_node, self.wsdl.transport, self.location,
             self.wsdl._parser_context)
+
+        # Merge xsd schemas in imported wsdl's
+        for imported_wsdl in self.imports.values():
+            if imported_wsdl.types:
+                schema.merge(imported_wsdl.types)
+        return schema
 
     def parse_messages(self, doc):
         """
