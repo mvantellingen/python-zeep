@@ -12,3 +12,7 @@
 /frutsels/
 /server/
 /htmlcov/
+
+
+# Editors
+.idea/
