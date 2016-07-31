@@ -881,11 +881,13 @@ class SchemaVisitor(object):
             if child.tag == tags.attribute:
                 attributes.append(attribute)
 
-            if child.tag == tags.attributeGroup:
+            elif child.tag == tags.attributeGroup:
                 attributes.extend(attribute)
 
-            if child.tag == tags.anyAttribute:
+            elif child.tag == tags.anyAttribute:
                 attributes.append(attribute)
+            else:
+                raise XMLParseError("Unexpected tag: %s" % child.tag)
         return attributes
 
     visitors = {
