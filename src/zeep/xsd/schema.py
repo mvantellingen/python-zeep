@@ -159,9 +159,12 @@ class SchemaDocument(object):
         self._target_namespace = (
             node.get('targetNamespace') if node is not None else None)
         self._elm_instances = []
+
         self._types = {}
         self._elements = {}
         self._attributes = {}
+        self._groups = {}
+
         self._imports = OrderedDict()
         self._element_form = 'unqualified'
         self._attribute_form = 'unqualified'
@@ -221,6 +224,12 @@ class SchemaDocument(object):
             name = name.text
         logger.debug("register_attribute(%r, %r)", name, value)
         self._attributes[name] = value
+
+    def register_group(self, name, value):
+        if isinstance(name, etree.QName):
+            name = name.text
+        logger.debug("register_group(%r, %r)", name, value)
+        self._groups[name] = value
 
     def get_type(self, name, default=NotSet):
         """Return a xsd.Type object from this schema or one of the imported
@@ -300,6 +309,25 @@ class SchemaDocument(object):
 
         raise exceptions.XMLParseError(
             "No such attribute: %r (Only have %s) (from: %s)" % (
+                name.text, ', '.join(self._attributes), self))
+
+    def get_group(self, name, default=NotSet):
+        """Return a xsd.Group object from this schema or one of the
+        imported schemas.
+
+        """
+        name = self._create_qname(name)
+        if name in self._groups:
+            return self._groups[name]
+
+        if name.namespace in self._imports:
+            return self._imports[name.namespace].get_group(name)
+
+        if default is not NotSet:
+            return default
+
+        raise exceptions.XMLParseError(
+            "No such group: %r (Only have %s) (from: %s)" % (
                 name.text, ', '.join(self._attributes), self))
 
     def _check_namespace_reference(self, name):

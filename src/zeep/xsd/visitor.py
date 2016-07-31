@@ -1,4 +1,3 @@
-from collections import defaultdict
 import keyword
 import logging
 import warnings
@@ -63,10 +62,16 @@ class SchemaVisitor(object):
                 return
             return xsd_elements.RefAttribute(node.tag, ref, self.schema)
 
-    def process_ref_element(self, node, **kwargs):
+    def process_reference(self, node, **kwargs):
         ref = qname_attr(node, 'ref')
-        if ref:
+        if not ref:
+            return
+        if node.tag == tags.element:
             return xsd_elements.RefElement(node.tag, ref, self.schema, **kwargs)
+        if node.tag == tags.attribute:
+            return xsd_elements.RefAttribute(node.tag, ref, self.schema, **kwargs)
+        if node.tag == tags.group:
+            return xsd_elements.RefGroup(node.tag, ref, self.schema, **kwargs)
 
     def visit_schema(self, node):
         """
@@ -239,7 +244,7 @@ class SchemaVisitor(object):
         # be present. Short circuit that here.
         # Ref is prohibited on global elements (parent = schema)
         if not is_global:
-            result = self.process_ref_element(
+            result = self.process_reference(
                 node, min_occurs=min_occurs, max_occurs=max_occurs)
             if result:
                 return result
@@ -712,7 +717,7 @@ class SchemaVisitor(object):
 
         """
 
-        result = self.process_ref_element(node)
+        result = self.process_reference(node)
         if result:
             return result
 
@@ -726,7 +731,7 @@ class SchemaVisitor(object):
         elm = xsd_indicators.Group(name=qname, child=item)
 
         if parent.tag == tags.schema:
-            self.schema.register_element(qname, elm)
+            self.schema.register_group(qname, elm)
         return elm
 
     def visit_list(self, node, parent):

@@ -339,11 +339,18 @@ class RefElement(object):
 
     def resolve(self):
         elm = self._schema.get_element(self._ref)
-        return elm.clone(
+        elm = elm.clone(
             elm.qname, min_occurs=self.min_occurs, max_occurs=self.max_occurs)
+        return elm.resolve()
 
 
 class RefAttribute(RefElement):
 
     def resolve(self):
         return self._schema.get_attribute(self._ref)
+
+
+class RefGroup(RefElement):
+
+    def resolve(self):
+        return self._schema.get_group(self._ref)
