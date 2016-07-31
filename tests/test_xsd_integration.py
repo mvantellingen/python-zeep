@@ -2,7 +2,7 @@ import datetime
 
 from lxml import etree
 
-from tests.utils import assert_nodes_equal, load_xml
+from tests.utils import DummyTransport, assert_nodes_equal, load_xml
 from zeep import xsd
 
 
@@ -506,6 +506,63 @@ def test_complex_type_with_extension_optional():
     assert_nodes_equal(expected, node)
     item = container_elm.parse(node.getchildren()[0], schema)
     assert item.main_1 == 'foo'
+
+
+def test_wsdl_array_type():
+    transport = DummyTransport()
+    transport.bind(
+        'http://schemas.xmlsoap.org/soap/encoding/',
+        open('tests/wsdl_files/soap-enc.xsd', 'r').read())
+
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                    xmlns:tns="http://tests.python-zeep.org/"
+                    xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+                    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                    targetNamespace="http://tests.python-zeep.org/"
+                    elementFormDefault="qualified">
+          <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+          <xsd:complexType name="array">
+            <xsd:complexContent>
+              <xsd:restriction base="SOAP-ENC:Array">
+                <xsd:attribute ref="SOAP-ENC:arrayType" wsdl:arrayType="tns:base[]"/>
+              </xsd:restriction>
+            </xsd:complexContent>
+          </xsd:complexType>
+          <xsd:complexType name="base">
+            <xsd:sequence>
+              <xsd:element minOccurs="0" name="item_1" type="xsd:string"/>
+              <xsd:element minOccurs="0" name="item_2" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:element name="array" type="tns:array"/>
+        </xsd:schema>
+    """), transport)
+    array_elm = schema.get_element('{http://tests.python-zeep.org/}array')
+
+    item_type = schema.get_type('{http://tests.python-zeep.org/}base')
+    item_1 = item_type(item_1='foo_1', item_2='bar_1')
+    item_2 = item_type(item_1='foo_2', item_2='bar_2')
+
+    array = array_elm([
+        xsd.AnyObject(item_type, item_1),
+        xsd.AnyObject(item_type, item_2),
+    ])
+
+    node = etree.Element('document')
+    array_elm.render(node, array)
+    expected = """
+        <document>
+            <ns0:array xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:item_1>foo_1</ns0:item_1>
+                <ns0:item_2>bar_1</ns0:item_2>
+                <ns0:item_1>foo_2</ns0:item_1>
+                <ns0:item_2>bar_2</ns0:item_2>
+            </ns0:array>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
 
 
 def test_group():
