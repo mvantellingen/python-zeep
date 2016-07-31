@@ -61,6 +61,11 @@ class UnresolvedType(Type):
     def __repr__(self):
         return '<%s(qname=%r)>' % (self.__class__.__name__, self.qname)
 
+    def render(self, parent, value):
+        raise RuntimeError(
+            "Unable to render unresolved type %s. This is probably a bug." % (
+                self.qname))
+
     def resolve(self):
         retval = self.schema.get_type(self.qname)
         return retval.resolve()
