@@ -1,3 +1,4 @@
+import io
 import datetime
 
 from lxml import etree
@@ -512,10 +513,9 @@ def test_wsdl_array_type():
     transport = DummyTransport()
     transport.bind(
         'http://schemas.xmlsoap.org/soap/encoding/',
-        open('tests/wsdl_files/soap-enc.xsd', 'r').read())
+        load_xml(io.open('tests/wsdl_files/soap-enc.xsd', 'r').read().encode('utf-8')))
 
     schema = xsd.Schema(load_xml("""
-        <?xml version="1.0"?>
         <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                     xmlns:tns="http://tests.python-zeep.org/"
                     xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
