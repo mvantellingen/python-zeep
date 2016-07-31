@@ -102,8 +102,8 @@ def _process_signature(xsd_type, args, kwargs):
         result.update(values)
 
     if args:
-        for attribute in xsd_type.attributes:
-            result[attribute.name] = args.pop(0)
+        for attribute_name, attribute in xsd_type.attributes:
+            result[attribute_name] = args.pop(0)
 
     if args:
         raise TypeError(
