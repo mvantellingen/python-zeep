@@ -1,9 +1,9 @@
-from cStringIO import StringIO
 from collections import OrderedDict
 
 import pytest
 from lxml import etree
 from pretend import stub
+from six import StringIO
 
 from tests.utils import assert_nodes_equal, load_xml
 from zeep import xsd
