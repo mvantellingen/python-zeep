@@ -430,14 +430,11 @@ class SchemaVisitor(object):
                 is_global=is_global)
 
         elif first_tag == tags.complexContent:
-            base_type, element, attributes = self.visit_complex_content(
-                children[0], node)
+            kwargs = self.visit_complex_content(children[0], node)
 
             # XXX
             xsd_cls._xsd_base = base_type.__class__
-            xsd_type = xsd_cls(
-                element=element, attributes=attributes, extension=base_type,
-                qname=qname, is_global=is_global)
+            xsd_type = xsd_cls(qname=qname, is_global=is_global, **kwargs)
 
         elif first_tag:
             element = None
@@ -472,9 +469,21 @@ class SchemaVisitor(object):
         child = node.getchildren()[-1]
 
         if child.tag == tags.restriction:
-            return self.visit_restriction_complex_content(child, node)
+            base, element, attributes = self.visit_restriction_complex_content(
+                child, node)
+            return {
+                'attributes': attributes,
+                'element': element,
+                'restriction': base,
+            }
         elif child.tag == tags.extension:
-            return self.visit_extension_complex_content(child, node)
+            base, element, attributes = self.visit_extension_complex_content(
+                child, node)
+            return {
+                'attributes': attributes,
+                'element': element,
+                'extension': base,
+            }
 
     def visit_simple_content(self, node, parent, namespace=None):
         """Contains extensions or restrictions on a complexType element with

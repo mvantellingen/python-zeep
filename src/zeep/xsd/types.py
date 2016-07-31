@@ -298,9 +298,11 @@ class ComplexType(Type):
 
         if self._extension:
             self._extension = self._extension.resolve()
+            assert self._extension
 
         if self._restriction:
             self._restriction = self._restriction.resolve()
+            assert self._restriction
 
         if self._element:
             self._element = self._element.resolve()

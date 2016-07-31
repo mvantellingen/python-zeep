@@ -454,6 +454,60 @@ def test_complex_type_simple_content():
     assert_nodes_equal(expected, node)
 
 
+def test_complex_type_with_extension_optional():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+
+          <xs:complexType name="containerType">
+            <xs:complexContent>
+              <xs:extension base="tns:base">
+                <xs:sequence>
+                  <xs:element name="main_1" type="xs:string"/>
+                </xs:sequence>
+              </xs:extension>
+            </xs:complexContent>
+          </xs:complexType>
+          <xs:element name="container" type="tns:containerType"/>
+
+          <xs:complexType name="base">
+            <xs:sequence>
+              <xs:element minOccurs="0" name="base_1" type="tns:baseType"/>
+              <xs:element minOccurs="0" name="base_2" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <xs:complexType name="baseType">
+            <xs:sequence>
+              <xs:element minOccurs="0" name="base_1_1" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:schema>
+    """.strip())
+    schema = xsd.Schema(node)
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = container_elm(main_1='foo')
+
+    node = etree.Element('document')
+    container_elm.render(node, obj)
+    expected = """
+        <document>
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:main_1>foo</ns0:main_1>
+            </ns0:container>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    assert_nodes_equal(expected, node)
+    item = container_elm.parse(node.getchildren()[0], schema)
+    assert item.main_1 == 'foo'
+
+
 def test_group():
     node = etree.fromstring("""
         <?xml version="1.0"?>
