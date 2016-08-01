@@ -29,6 +29,26 @@ def test_simple_args_attributes():
             xsd.Attribute('attr_1', xsd.String())
         ]
     )
+    args = tuple(['value-1', 'value-2', 'bla'])
+    kwargs = {}
+    result = valueobjects._process_signature(xsd_type, args, kwargs)
+    assert result == {
+        'item_1': 'value-1',
+        'item_2': 'value-2',
+        'attr_1': 'bla',
+    }
+
+
+def test_simple_args_attributes_as_kwargs():
+    xsd_type = xsd.ComplexType(
+        xsd.Sequence([
+            xsd.Element('item_1', xsd.String()),
+            xsd.Element('item_2', xsd.String())
+        ]),
+        [
+            xsd.Attribute('attr_1', xsd.String())
+        ]
+    )
     args = tuple(['value-1', 'value-2'])
     kwargs = {'attr_1': 'bla'}
     result = valueobjects._process_signature(xsd_type, args, kwargs)

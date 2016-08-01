@@ -34,7 +34,7 @@ def main(args):
             'version': 1,
             'formatters': {
                 'verbose': {
-                    'format': '%(name)s: %(message)s'
+                    'format': '%(name)20s: %(message)s'
                 }
             },
             'handlers': {

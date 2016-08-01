@@ -525,7 +525,7 @@ class MimeXML(MimeMessage):
 
     def deserialize(self, node):
         node = fromstring(node)
-        part = self.abstract.parts.values()[0]
+        part = next(iter(self.abstract.parts.values()), None)
         return part.element.parse(node, self.wsdl.types)
 
     @classmethod

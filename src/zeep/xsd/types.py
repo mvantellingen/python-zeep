@@ -61,6 +61,11 @@ class UnresolvedType(Type):
     def __repr__(self):
         return '<%s(qname=%r)>' % (self.__class__.__name__, self.qname)
 
+    def render(self, parent, value):
+        raise RuntimeError(
+            "Unable to render unresolved type %s. This is probably a bug." % (
+                self.qname))
+
     def resolve(self):
         retval = self.schema.get_type(self.qname)
         return retval.resolve()
@@ -180,6 +185,8 @@ class ComplexType(Type):
         result = []
         if self._extension and hasattr(self._extension, 'attributes'):
             result.extend(self._extension.attributes)
+        if self._restriction and hasattr(self._restriction, 'attributes'):
+            result.extend(self._restriction.attributes)
 
         elm_names = {name for name, elm in self.elements if name is not None}
         attrs = []
@@ -217,6 +224,14 @@ class ComplexType(Type):
                 result.append((name, Element(name, self._extension)))
             else:
                 result.extend(self._extension.elements_nested)
+
+        if self._restriction:
+            name = generator.get_name()
+            if not hasattr(self._restriction, 'elements_nested'):
+                result.append((name, Element(name, self._restriction)))
+            else:
+                result.extend(self._restriction.elements_nested)
+
         # _element is one of All, Choice, Group, Sequence
         if self._element:
             result.append((generator.get_name(), self._element))
@@ -298,9 +313,11 @@ class ComplexType(Type):
 
         if self._extension:
             self._extension = self._extension.resolve()
+            assert self._extension
 
         if self._restriction:
             self._restriction = self._restriction.resolve()
+            assert self._restriction
 
         if self._element:
             self._element = self._element.resolve()

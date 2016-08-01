@@ -1,4 +1,3 @@
-from collections import defaultdict
 import keyword
 import logging
 import warnings
@@ -63,10 +62,16 @@ class SchemaVisitor(object):
                 return
             return xsd_elements.RefAttribute(node.tag, ref, self.schema)
 
-    def process_ref_element(self, node, **kwargs):
+    def process_reference(self, node, **kwargs):
         ref = qname_attr(node, 'ref')
-        if ref:
+        if not ref:
+            return
+        if node.tag == tags.element:
             return xsd_elements.RefElement(node.tag, ref, self.schema, **kwargs)
+        if node.tag == tags.attribute:
+            return xsd_elements.RefAttribute(node.tag, ref, self.schema, **kwargs)
+        if node.tag == tags.group:
+            return xsd_elements.RefGroup(node.tag, ref, self.schema, **kwargs)
 
     def visit_schema(self, node):
         """
@@ -239,7 +244,7 @@ class SchemaVisitor(object):
         # be present. Short circuit that here.
         # Ref is prohibited on global elements (parent = schema)
         if not is_global:
-            result = self.process_ref_element(
+            result = self.process_reference(
                 node, min_occurs=min_occurs, max_occurs=max_occurs)
             if result:
                 return result
@@ -430,14 +435,11 @@ class SchemaVisitor(object):
                 is_global=is_global)
 
         elif first_tag == tags.complexContent:
-            base_type, element, attributes = self.visit_complex_content(
-                children[0], node)
+            kwargs = self.visit_complex_content(children[0], node)
 
             # XXX
             xsd_cls._xsd_base = base_type.__class__
-            xsd_type = xsd_cls(
-                element=element, attributes=attributes, extension=base_type,
-                qname=qname, is_global=is_global)
+            xsd_type = xsd_cls(qname=qname, is_global=is_global, **kwargs)
 
         elif first_tag:
             element = None
@@ -472,9 +474,21 @@ class SchemaVisitor(object):
         child = node.getchildren()[-1]
 
         if child.tag == tags.restriction:
-            return self.visit_restriction_complex_content(child, node)
+            base, element, attributes = self.visit_restriction_complex_content(
+                child, node)
+            return {
+                'attributes': attributes,
+                'element': element,
+                'restriction': base,
+            }
         elif child.tag == tags.extension:
-            return self.visit_extension_complex_content(child, node)
+            base, element, attributes = self.visit_extension_complex_content(
+                child, node)
+            return {
+                'attributes': attributes,
+                'element': element,
+                'extension': base,
+            }
 
     def visit_simple_content(self, node, parent, namespace=None):
         """Contains extensions or restrictions on a complexType element with
@@ -703,7 +717,7 @@ class SchemaVisitor(object):
 
         """
 
-        result = self.process_ref_element(node)
+        result = self.process_reference(node)
         if result:
             return result
 
@@ -717,7 +731,7 @@ class SchemaVisitor(object):
         elm = xsd_indicators.Group(name=qname, child=item)
 
         if parent.tag == tags.schema:
-            self.schema.register_element(qname, elm)
+            self.schema.register_group(qname, elm)
         return elm
 
     def visit_list(self, node, parent):
@@ -867,11 +881,13 @@ class SchemaVisitor(object):
             if child.tag == tags.attribute:
                 attributes.append(attribute)
 
-            if child.tag == tags.attributeGroup:
+            elif child.tag == tags.attributeGroup:
                 attributes.extend(attribute)
 
-            if child.tag == tags.anyAttribute:
+            elif child.tag == tags.anyAttribute:
                 attributes.append(attribute)
+            else:
+                raise XMLParseError("Unexpected tag: %s" % child.tag)
         return attributes
 
     visitors = {

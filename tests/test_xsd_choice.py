@@ -302,7 +302,8 @@ def test_choice_with_sequence_once():
     """)
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:container')
-    assert element.type.signature() == 'item_0: xsd:string, ({item_1: xsd:string, item_2: xsd:string})'
+    assert element.type.signature() == (
+        'item_0: xsd:string, ({item_1: xsd:string, item_2: xsd:string})')
     value = element(item_0='nul', item_1='foo', item_2='bar')
 
     expected = """
@@ -678,4 +679,4 @@ def test_parse_check_mixed():
           <ns0:item_3>foo</ns0:item_3>
         </ns0:container>
     """)
-    data = element.parse(expected, schema)
+    element.parse(expected, schema)

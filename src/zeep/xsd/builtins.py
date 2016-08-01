@@ -595,6 +595,9 @@ class Schema(Base):
             result = self.parse(xmlelement, schema, context=context)
             return result
 
+    def resolve(self):
+        return self
+
 
 default_elements = {
     '{http://www.w3.org/2001/XMLSchema}schema': Schema(),

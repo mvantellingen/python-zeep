@@ -133,6 +133,7 @@ class Definition(object):
     """The Definition represents one wsdl:definition within a Document."""
 
     def __init__(self, wsdl, doc, location):
+        logger.debug("Creating definition for %s", location)
         self.wsdl = wsdl
         self.location = location
 
@@ -161,15 +162,22 @@ class Definition(object):
     def __repr__(self):
         return '<Definition(location=%r)>' % self.location
 
-    def get(self, name, key):
+    def get(self, name, key, _processed=None):
         container = getattr(self, name)
         if key in container:
             return container[key]
 
-        for definition in self.imports.values():
-            container = getattr(definition, name)
-            if key in container:
-                return container[key]
+        # Turns out that no one knows if the wsdl import statement is
+        # transitive or not. WSDL/SOAP specs are awesome... So lets just do it.
+        # TODO: refactor me into something more sane
+        _processed = _processed or set()
+        if self.target_namespace not in _processed:
+            _processed.add(self.target_namespace)
+            for definition in self.imports.values():
+                try:
+                    return definition.get(name, key, _processed)
+                except IndexError:
+                    pass
         raise IndexError("No definition %r in %r found" % (key, name))
 
     def resolve_imports(self):
@@ -298,10 +306,15 @@ class Definition(object):
                 schema_nodes, self.location, self.wsdl._parser_context)
         else:
             schema_node = schema_nodes[0]
-
-        return Schema(
+        schema = Schema(
             schema_node, self.wsdl.transport, self.location,
             self.wsdl._parser_context)
+
+        # Merge xsd schemas in imported wsdl's
+        for imported_wsdl in self.imports.values():
+            if imported_wsdl.types:
+                schema.merge(imported_wsdl.types)
+        return schema
 
     def parse_messages(self, doc):
         """
@@ -319,6 +332,7 @@ class Definition(object):
         for msg_node in doc.findall("wsdl:message", namespaces=NSMAP):
             msg = definitions.AbstractMessage.parse(self, msg_node)
             result[msg.name.text] = msg
+            logger.debug("Adding message: %s", msg.name.text)
         return result
 
     def parse_ports(self, doc):
@@ -338,6 +352,7 @@ class Definition(object):
         for port_node in doc.findall('wsdl:portType', namespaces=NSMAP):
             port_type = definitions.PortType.parse(self, port_node)
             result[port_type.name.text] = port_type
+            logger.debug("Adding port: %s", port_type.name.text)
         return result
 
     def parse_binding(self, doc):
@@ -385,6 +400,7 @@ class Definition(object):
             else:
                 continue
 
+            logger.debug("Adding binding: %s", binding.name.text)
             result[binding.name.text] = binding
         return result
 
@@ -406,4 +422,5 @@ class Definition(object):
         for service_node in doc.findall('wsdl:service', namespaces=NSMAP):
             service = definitions.Service.parse(self, service_node)
             result[service.name] = service
+            logger.debug("Adding service: %s", service.name)
         return result

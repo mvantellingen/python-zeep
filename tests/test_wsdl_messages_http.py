@@ -3,10 +3,11 @@ from collections import OrderedDict
 import pytest
 from lxml import etree
 from pretend import stub
+from six import StringIO
 
 from tests.utils import assert_nodes_equal, load_xml
 from zeep import xsd
-from zeep.wsdl import definitions, messages
+from zeep.wsdl import definitions, messages, wsdl
 
 
 @pytest.fixture
@@ -180,6 +181,132 @@ def test_mime_content_signature(abstract_message_input):
     }
     msg.resolve(wsdl, abstract_message_input)
     assert msg.signature() == 'arg1: xsd:string, arg2: xsd:string'
+
+
+def test_mime_content_serialize():
+    wsdl_content = StringIO("""
+    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                 xmlns:tns="http://tests.python-zeep.org/tns"
+                 xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+                 xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/"
+                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://tests.python-zeep.org/tns">
+
+      <message name="Input">
+        <part name="arg1" type="xsd:string"/>
+        <part name="arg2" type="xsd:string"/>
+      </message>
+      <message name="Output">
+        <part name="Body" type="xsd:string"/>
+      </message>
+
+      <portType name="TestPortType">
+        <operation name="TestOperation">
+          <input message="Input"/>
+          <output message="Output"/>
+        </operation>
+      </portType>
+
+      <binding name="TestBinding" type="tns:TestPortType">
+        <http:binding verb="POST"/>
+        <operation name="TestOperation">
+          <http:operation location="/test-operation"/>
+          <input>
+            <mime:content type="application/x-www-form-urlencoded"/>
+          </input>
+          <output>
+            <mime:mimeXml part="Body"/>
+          </output>
+        </operation>
+      </binding>
+    </definitions>
+    """.strip())
+
+    root = wsdl.Document(wsdl_content, None)
+
+    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
+    operation = binding.get('TestOperation')
+
+    assert operation.input.signature() == 'arg1: xsd:string, arg2: xsd:string'
+
+    serialized = operation.input.serialize(arg1='ah1', arg2='ah2')
+    assert serialized.content == 'arg1=ah1&arg2=ah2'
+
+
+def test_mime_xml_deserialize():
+    wsdl_content = StringIO("""
+    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                 xmlns:tns="http://tests.python-zeep.org/tns"
+                 xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+                 xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/"
+                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://tests.python-zeep.org/tns">
+      <types>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/tns"
+            targetNamespace="http://tests.python-zeep.org/tns"
+                elementFormDefault="qualified">
+          <xsd:element name="response">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="item_1" type="xsd:string"/>
+                <xsd:element name="item_2" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+      </types>
+
+      <message name="Input">
+        <part name="arg1" type="xsd:string"/>
+        <part name="arg2" type="xsd:string"/>
+      </message>
+      <message name="Output">
+        <part name="Body" element="tns:response"/>
+      </message>
+
+      <portType name="TestPortType">
+        <operation name="TestOperation">
+          <input message="Input"/>
+          <output message="Output"/>
+        </operation>
+      </portType>
+
+      <binding name="TestBinding" type="tns:TestPortType">
+        <http:binding verb="POST"/>
+        <operation name="TestOperation">
+          <http:operation location="/test-operation"/>
+          <input>
+            <mime:content type="application/x-www-form-urlencoded"/>
+          </input>
+          <output>
+            <mime:mimeXml part="Body"/>
+          </output>
+        </operation>
+      </binding>
+    </definitions>
+    """.strip())
+
+    root = wsdl.Document(wsdl_content, None)
+
+    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
+    operation = binding.get('TestOperation')
+
+    assert operation.input.signature() == 'arg1: xsd:string, arg2: xsd:string'
+
+    node = """
+        <response xmlns="http://tests.python-zeep.org/tns">
+          <item_1>foo</item_1>
+          <item_2>bar</item_2>
+        </response>
+    """.strip()
+
+    serialized = operation.output.deserialize(node)
+    assert serialized.item_1 == 'foo'
+    assert serialized.item_2 == 'bar'
 
 
 def test_mime_multipart_parse():

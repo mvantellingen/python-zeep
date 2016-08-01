@@ -506,3 +506,34 @@ def test_include_recursion():
     schema.get_element('{http://tests.python-zeep.org/b}foo')
     schema.get_element('{http://tests.python-zeep.org/b}bar')
 
+
+def test_merge():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+          <xs:element name="foo" type="xs:string"/>
+        </xs:schema>
+    """.strip())
+
+    node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            targetNamespace="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+          <xs:element name="foo" type="xs:int"/>
+        </xs:schema>
+    """.strip())
+
+    schema_a = xsd.Schema(node_a)
+    schema_b = xsd.Schema(node_b)
+    schema_a.merge(schema_b)
+
+    schema_a.get_element('{http://tests.python-zeep.org/a}foo')
+    schema_a.get_element('{http://tests.python-zeep.org/b}foo')
