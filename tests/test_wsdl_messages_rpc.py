@@ -1,6 +1,7 @@
+import io
 from six import StringIO
 
-from tests.utils import assert_nodes_equal, load_xml
+from tests.utils import DummyTransport, assert_nodes_equal, load_xml
 from zeep.wsdl import wsdl
 
 
@@ -152,3 +153,71 @@ def test_deserialize():
     assert operation.output.signature(True) == 'xsd:string'
     result = operation.output.deserialize(document)
     assert result == 'ah1'
+
+
+def test_wsdl_array_of_simple_types():
+    wsdl_content = StringIO("""
+    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://tests.python-zeep.org/tns" xmlns:tns="http://tests.python-zeep.org/tns" xmlns:impl="http://tests.python-zeep.org/tns" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">
+      <types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://tests.python-zeep.org/tns">
+          <complexType name="ArrayOfString">
+            <complexContent>
+              <restriction base="soapenc:Array">
+                <attribute ref="soapenc:arrayType" wsdl:arrayType="xsd:string[]"/>
+              </restriction>
+            </complexContent>
+          </complexType>
+        </schema>
+      </types>
+      <portType name="SimpleTypeArrayPortType">
+        <operation name="getSimpleArray">
+          <input message="tns:getSimpleArrayRequest"/>
+          <output message="tns:getSimpleArrayResponse"/>
+        </operation>
+      </portType>
+      <binding name="SimpleTypeArrayBinding" type="tns:SimpleTypeArrayPortType">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="getSimpleArray">
+          <soap:operation soapAction=""/>
+          <input>
+            <soap:body use="encoded" namespace="http://tests.python-zeep.org/tns" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+          </input>
+          <output>
+            <soap:body parts="return" use="encoded" namespace="http://tests.python-zeep.org/tns" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+          </output>
+        </operation>
+      </binding>
+      <message name="getSimpleArrayRequest"/>
+      <message name="getSimpleArrayResponse">
+        <part name="return" type="tns:ArrayOfString"/>
+      </message>
+    </definitions>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind(
+        'http://schemas.xmlsoap.org/soap/encoding/',
+        load_xml(io.open('tests/wsdl_files/soap-enc.xsd', 'r').read().encode('utf-8')))
+    root = wsdl.Document(wsdl_content, transport)
+
+    binding = root.bindings['{http://tests.python-zeep.org/tns}SimpleTypeArrayBinding']
+    operation = binding.get('getSimpleArray')
+
+    document = load_xml("""
+        <SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://tests.python-zeep.org/tns" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <ns1:getSimpleArrayResponse>
+                <return SOAP-ENC:arrayType="xsd:string[16]" xsi:type="ns1:ArrayOfString">
+                    <item xsi:type="xsd:string">item</item>
+                    <item xsi:type="xsd:string">and</item>
+                    <item xsi:type="xsd:string">even</item>
+                    <item xsi:type="xsd:string">more</item>
+                    <item xsi:type="xsd:string">items</item>
+                </return>
+            </ns1:getSimpleArrayResponse>
+        </SOAP-ENV:Body>
+    """)
+
+    deserialized = operation.output.deserialize(document)
+    list_of_items = deserialized['_value_1']
+
+    assert list_of_items == ['item', 'and', 'even', 'more', 'items']
