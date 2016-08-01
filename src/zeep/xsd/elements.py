@@ -78,12 +78,12 @@ class Any(Base):
 
         xsd_type = xmlelement.get('{http://www.w3.org/2001/XMLSchema-instance}type')
         if xsd_type is not None:
-            element_type = schema.get_type(xsd_type)
-            return element_type.parse(xmlelement, schema, context=context)
+            xsd_type = schema.get_type(xsd_type)
+            return xsd_type.parse_xmlelement(xmlelement, schema, context=context)
 
         try:
-            element_type = schema.get_element(xmlelement.tag)
-            return element_type.parse(xmlelement, schema, context=context)
+            element = schema.get_element(xmlelement.tag)
+            return element.parse(xmlelement, schema, context=context)
         except (ValueError, KeyError):
             return xmlelement
 
