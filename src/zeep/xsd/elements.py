@@ -322,6 +322,9 @@ class AnyAttribute(Base):
         return self
 
     def render(self, parent, value):
+        if value is None:
+            return
+
         for name, val in value.items():
             parent.set(name, val)
 

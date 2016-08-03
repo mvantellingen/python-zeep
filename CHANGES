@@ -8,6 +8,7 @@
  - Fix maximum recursion error for recursive xsd:include elements
  - Make wsdl:import statements transitive. (#149)
  - Merge xsd:schema's which are spread around imported wsdl objects. (#146)
+ - Don't raise exception when no value is given for AnyAttribute (#152)
 
 
 0.13.0 (2016-07-17)
