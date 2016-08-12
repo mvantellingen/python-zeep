@@ -78,6 +78,10 @@ class Any(Base):
 
         xsd_type = xmlelement.get('{http://www.w3.org/2001/XMLSchema-instance}type')
         if xsd_type is not None:
+            if ':' in xsd_type:
+                prefix, localname = xsd_type.split(':', 1)
+                if prefix in xmlelement.nsmap:
+                    xsd_type = "{%s}%s" % (xmlelement.nsmap[prefix], localname)
             xsd_type = schema.get_type(xsd_type)
             return xsd_type.parse_xmlelement(xmlelement, schema, context=context)
 
