@@ -2,6 +2,7 @@ import copy
 
 from lxml import etree
 
+from zeep import exceptions
 from zeep.utils import qname_attr
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.utils import max_occurs_iter
@@ -84,7 +85,7 @@ class Any(Base):
         try:
             element = schema.get_element(xmlelement.tag)
             return element.parse(xmlelement, schema, context=context)
-        except (ValueError, KeyError):
+        except (exceptions.NamespaceError, exceptions.LookupError):
             return xmlelement
 
     def parse_kwargs(self, kwargs, name=None):

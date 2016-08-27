@@ -4,6 +4,7 @@ import warnings
 
 from lxml import etree
 
+from zeep import exceptions
 from zeep.exceptions import XMLParseError, ZeepWarning
 from zeep.parser import absolute_location
 from zeep.utils import as_qname, qname_attr
@@ -61,18 +62,18 @@ class SchemaVisitor(object):
             # so that it is handled correctly
             if ref.namespace == 'http://www.w3.org/2001/XMLSchema':
                 return
-            return xsd_elements.RefAttribute(node.tag, ref, self.document)
+            return xsd_elements.RefAttribute(node.tag, ref, self.schema)
 
     def process_reference(self, node, **kwargs):
         ref = qname_attr(node, 'ref')
         if not ref:
             return
         if node.tag == tags.element:
-            return xsd_elements.RefElement(node.tag, ref, self.document, **kwargs)
+            return xsd_elements.RefElement(node.tag, ref, self.schema, **kwargs)
         if node.tag == tags.attribute:
-            return xsd_elements.RefAttribute(node.tag, ref, self.document, **kwargs)
+            return xsd_elements.RefAttribute(node.tag, ref, self.schema, **kwargs)
         if node.tag == tags.group:
-            return xsd_elements.RefGroup(node.tag, ref, self.document, **kwargs)
+            return xsd_elements.RefGroup(node.tag, ref, self.schema, **kwargs)
 
     def visit_schema(self, node):
         """
@@ -372,7 +373,7 @@ class SchemaVisitor(object):
         if child.tag == tags.restriction:
             base_type = self.visit_restriction_simple_type(child, node)
             xsd_type = xsd_types.UnresolvedCustomType(
-                qname, base_type, self.document)
+                qname, base_type, self.schema)
 
         elif child.tag == tags.list:
             xsd_type = self.visit_list(child, node)
@@ -839,8 +840,8 @@ class SchemaVisitor(object):
         name = self._create_qname(name)
         try:
             retval = self.schema.get_type(name)
-        except (ValueError, KeyError):
-            retval = xsd_types.UnresolvedType(name, self.document)
+        except (exceptions.NamespaceError, exceptions.LookupError):
+            retval = xsd_types.UnresolvedType(name, self.schema)
         return retval
 
     def _create_qname(self, name):

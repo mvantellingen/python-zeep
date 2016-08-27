@@ -61,17 +61,12 @@ class Schema(object):
 
         try:
             schema = self._get_schema_document(qname.namespace)
-            return schema._elements[qname]
-        except ValueError:
-            raise KeyError((
+            return schema.get_element(qname)
+        except exceptions.NamespaceError:
+            raise exceptions.NamespaceError((
                 "Unable to resolve element %s. " +
                 "No schema available for the namespace %r."
             ) % (qname.text, qname.namespace))
-        except KeyError:
-            known_elements = ', '.join(schema._elements.keys())
-            raise KeyError(
-                "No element '%s' in namespace %s. Available elements are: %s" % (
-                    qname.localname, qname.namespace, known_elements or ' - '))
 
     def get_type(self, qname):
         """Return a global xsd.Type object with the given qname"""
@@ -81,18 +76,48 @@ class Schema(object):
 
         try:
             schema = self._get_schema_document(qname.namespace)
-            return schema._types[qname]
-        except ValueError:
-            print(self._schemas)
-            raise KeyError((
+            return schema.get_type(qname)
+        except exceptions.NamespaceError:
+            raise exceptions.NamespaceError((
                 "Unable to resolve type %s. " +
                 "No schema available for the namespace %r."
             ) % (qname.text, qname.namespace))
-        except KeyError:
-            known_types = ', '.join(schema._types.keys())
-            raise KeyError(
-                "No type '%s' in namespace %s. Available types are: %s" % (
-                    qname.localname, qname.namespace, known_types or ' - '))
+
+    def get_group(self, qname):
+        """Return a global xsd.Group object with the given qname"""
+        qname = self._create_qname(qname)
+        try:
+            schema = self._get_schema_document(qname.namespace)
+            return schema.get_group(qname)
+        except exceptions.NamespaceError:
+            raise exceptions.NamespaceError((
+                "Unable to resolve group %s. " +
+                "No schema available for the namespace %r."
+            ) % (qname.text, qname.namespace))
+
+    def get_attribute(self, qname):
+        """Return a global xsd.attributeGroup object with the given qname"""
+        qname = self._create_qname(qname)
+        try:
+            schema = self._get_schema_document(qname.namespace)
+            return schema.get_attribute(qname)
+        except exceptions.NamespaceError:
+            raise exceptions.NamespaceError((
+                "Unable to resolve attribute %s. " +
+                "No schema available for the namespace %r."
+            ) % (qname.text, qname.namespace))
+
+    def get_attribute_group(self, qname):
+        """Return a global xsd.attributeGroup object with the given qname"""
+        qname = self._create_qname(qname)
+        try:
+            schema = self._get_schema_document(qname.namespace)
+            return schema.get_attribute_group(qname)
+        except exceptions.NamespaceError:
+            raise exceptions.NamespaceError((
+                "Unable to resolve attributeGroup %s. " +
+                "No schema available for the namespace %r."
+            ) % (qname.text, qname.namespace))
 
     def merge(self, schema):
         """Merge an other XSD schema in this one"""
@@ -135,7 +160,7 @@ class Schema(object):
 
     def _get_schema_document(self, namespace):
         if namespace not in self._schemas:
-            raise ValueError(
+            raise exceptions.NamespaceError(
                 "No schema available for the namespace %r" % namespace)
         return self._schemas[namespace]
 
@@ -157,8 +182,9 @@ class SchemaDocument(object):
 
         self._types = {}
         self._elements = {}
-        self._attributes = {}
         self._groups = {}
+        self._attributes = {}
+        self._attribute_groups = {}
 
         self._imports = OrderedDict()
         self._element_form = 'unqualified'
@@ -215,85 +241,67 @@ class SchemaDocument(object):
         logger.debug("register_element(%r, %r)", name, value)
         self._elements[name] = value
 
-    def register_attribute(self, name, value):
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_attribute(%r, %r)", name, value)
-        self._attributes[name] = value
-
     def register_group(self, name, value):
         if isinstance(name, etree.QName):
             name = name.text
         logger.debug("register_group(%r, %r)", name, value)
         self._groups[name] = value
 
-    def get_type(self, name, default=NotSet):
-        """Return a xsd.Type object from this schema or one of the imported
-        schemas.
+    def register_attribute(self, name, value):
+        if isinstance(name, etree.QName):
+            name = name.text
+        logger.debug("register_attribute(%r, %r)", name, value)
+        self._attributes[name] = value
 
-        """
-        return self._schema.get_type(name)
+    def register_attribute_group(self, name, value):
+        if isinstance(name, etree.QName):
+            name = name.text
+        logger.debug("register_attribute_group(%r, %r)", name, value)
+        self._attribute_groups[name] = value
 
-    def get_element(self, name, default=NotSet):
-        """Return a xsd.Element object from this schema or one of the imported
-        schemas.
+    def get_type(self, qname):
+        """Return a xsd.Type object from this schema"""
+        try:
+            return self._types[qname]
+        except KeyError:
+            known_items = ', '.join(self._types.keys())
+            raise exceptions.LookupError((
+                "No type '%s' in namespace %s. " +
+                "Available types are: %s"
+            ) % (qname.localname, qname.namespace, known_items or ' - '))
 
-        """
-        return self._schema.get_element(name)
+    def get_element(self, qname):
+        """Return a xsd.Element object from this schema"""
+        try:
+            return self._elements[qname]
+        except KeyError:
+            known_items = ', '.join(self._elements.keys())
+            raise exceptions.LookupError((
+                "No element '%s' in namespace %s. " +
+                "Available elements are: %s"
+            ) % (qname.localname, qname.namespace, known_items or ' - '))
 
-    def get_attribute(self, name, default=NotSet):
-        """Return a xsd.Attribute object from this schema or one of the
-        imported schemas.
+    def get_attribute(self, qname):
+        """Return a xsd.Attribute object from this schema"""
+        try:
+            return self._attributes[qname]
+        except KeyError:
+            known_items = ', '.join(self._attributes.keys())
+            raise exceptions.LookupError((
+                "No attribute '%s' in namespace %s. " +
+                "Available attributes are: %s"
+            ) % (qname.localname, qname.namespace, known_items or ' - '))
 
-        """
-        name = self._create_qname(name)
-        if name in self._attributes:
-            return self._attributes[name]
-
-        if name.namespace in self._imports:
-            return self._imports[name.namespace].get_attribute(name)
-
-        if default is not NotSet:
-            return default
-
-        raise exceptions.XMLParseError(
-            "No such attribute: %r (Only have %s) (from: %s)" % (
-                name.text, ', '.join(self._attributes), self))
-
-    def get_group(self, name, default=NotSet):
-        """Return a xsd.Group object from this schema or one of the
-        imported schemas.
-
-        """
-        name = self._create_qname(name)
-        if name in self._groups:
-            return self._groups[name]
-
-        if name.namespace in self._imports:
-            return self._imports[name.namespace].get_group(name)
-
-        if default is not NotSet:
-            return default
-
-        raise exceptions.XMLParseError(
-            "No such group: %r (Only have %s) (from: %s)" % (
-                name.text, ', '.join(self._attributes), self))
-
-    def _check_namespace_reference(self, name):
-        """See https://www.w3.org/TR/xmlschema-1/#src-resolve"""
-        ns = name.namespace
-        if ns != self._target_namespace and ns not in self._imports.keys():
-            raise exceptions.XMLParseError((
-                "References from this schema (%r) to components in the " +
-                "namespace '%s' are not allowed, since not indicated by an "
-                "import statement."
-            ) % (self._target_namespace, ns))
-
-    def _create_qname(self, name):
-        # TODO: Remove me
-        if not isinstance(name, etree.QName):
-            name = etree.QName(name)
-        return name
+    def get_group(self, qname):
+        """Return a xsd.Group object from this schema"""
+        try:
+            return self._groups[qname]
+        except KeyError:
+            known_items = ', '.join(self._groups.keys())
+            raise exceptions.LookupError((
+                "No group '%s' in namespace %s. " +
+                "Available attributes are: %s"
+            ) % (qname.localname, qname.namespace, known_items or ' - '))
 
     @property
     def is_empty(self):
