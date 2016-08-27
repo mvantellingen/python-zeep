@@ -1,28 +1,23 @@
-import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
-from zeep.xsd import builtins, visitor
+from zeep.xsd import builtins
 from zeep.xsd.context import ParserContext
-from zeep.xsd.schema import SchemaDocument
-from zeep.xsd.types import UnresolvedType
+from zeep.xsd.schema import Schema
 
 
-@pytest.fixture
-def schema_visitor():
+def parse_schema_node(node):
     parser_context = ParserContext()
-    node = etree.Element('{http://www.w3.org/2001/XMLSchema}Schema')
-    schema = SchemaDocument(
+    schema = Schema(
         node=node,
         transport=None,
         location=None,
-        parser_context=parser_context,
-        base_url=None)
-    return visitor.SchemaVisitor(schema)
+        parser_context=parser_context)
+    return schema
 
 
-def test_schema_empty(schema_visitor):
+def test_schema_empty():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
               targetNamespace="http://tests.python-zeep.org/"
@@ -30,12 +25,12 @@ def test_schema_empty(schema_visitor):
               attributeFormDefault="unqualified">
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    assert schema_visitor.schema._element_form == 'qualified'
-    assert schema_visitor.schema._attribute_form == 'unqualified'
+    schema = parse_schema_node(node)
+    assert schema._root._element_form == 'qualified'
+    assert schema._root._attribute_form == 'unqualified'
 
 
-def test_element_simle_types(schema_visitor):
+def test_element_simle_types():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
               targetNamespace="http://tests.python-zeep.org/">
@@ -43,11 +38,12 @@ def test_element_simle_types(schema_visitor):
             <element name="bar" type="int" />
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    assert len(schema_visitor.schema._elm_instances) == 2
+    schema = parse_schema_node(node)
+    assert schema.get_element('{http://tests.python-zeep.org/}foo')
+    assert schema.get_element('{http://tests.python-zeep.org/}bar')
 
 
-def test_element_simple_type_annotation(schema_visitor):
+def test_element_simple_type_annotation():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
               targetNamespace="http://tests.python-zeep.org/">
@@ -58,11 +54,12 @@ def test_element_simple_type_annotation(schema_visitor):
             </element>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    assert len(schema_visitor.schema._elm_instances) == 1
+    schema = parse_schema_node(node)
+    element = schema.get_element('{http://tests.python-zeep.org/}foo')
+    assert element
 
 
-def test_element_default_type(schema_visitor):
+def test_element_default_type():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -70,12 +67,12 @@ def test_element_default_type(schema_visitor):
             <element name="foo" />
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    element = schema_visitor.schema._elm_instances[0]
+    schema = parse_schema_node(node)
+    element = schema.get_element('{http://tests.python-zeep.org/}foo')
     assert isinstance(element.type, builtins.AnyType)
 
 
-def test_element_simple_type_unresolved(schema_visitor):
+def test_element_simple_type_unresolved():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -93,14 +90,11 @@ def test_element_simple_type_unresolved(schema_visitor):
             </simpleType>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    element = schema_visitor.schema._elm_instances[0]
-    assert isinstance(element.type, UnresolvedType)
-    assert element.type.qname == etree.QName(
-        'http://tests.python-zeep.org/', 'unresolved')
+    schema = parse_schema_node(node)
+    assert schema.get_type('{http://tests.python-zeep.org/}unresolved')
 
 
-def test_element_max_occurs(schema_visitor):
+def test_element_max_occurs():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
               targetNamespace="http://tests.python-zeep.org/">
@@ -116,8 +110,9 @@ def test_element_max_occurs(schema_visitor):
             </element>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    elements = {elm.name: elm for elm in schema_visitor.schema._elm_instances}
+    schema = parse_schema_node(node)
+    elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    elements = dict(elm.type.elements)
 
     assert isinstance(elements['e1'], xsd.Element)
     assert elements['e1'].max_occurs == 1
@@ -129,7 +124,7 @@ def test_element_max_occurs(schema_visitor):
     assert elements['e4'].max_occurs == 'unbounded'
 
 
-def test_simple_content(schema_visitor):
+def test_simple_content():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -143,13 +138,12 @@ def test_simple_content(schema_visitor):
             </complexType>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    xsd_type = schema_visitor.schema.get_type(
-        '{http://tests.python-zeep.org/}container')
+    schema = parse_schema_node(node)
+    xsd_type = schema.get_type('{http://tests.python-zeep.org/}container')
     assert xsd_type(10, sizing='qwe')
 
 
-def test_attribute_optional(schema_visitor):
+def test_attribute_optional():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -161,9 +155,8 @@ def test_attribute_optional(schema_visitor):
           </element>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    xsd_element = schema_visitor.schema.get_element(
-        '{http://tests.python-zeep.org/}foo')
+    schema = parse_schema_node(node)
+    xsd_element = schema.get_element('{http://tests.python-zeep.org/}foo')
     value = xsd_element()
 
     node = render_node(xsd_element, value)
@@ -175,7 +168,7 @@ def test_attribute_optional(schema_visitor):
     assert_nodes_equal(expected, node)
 
 
-def test_attribute_required(schema_visitor):
+def test_attribute_required():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -187,9 +180,8 @@ def test_attribute_required(schema_visitor):
           </element>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    xsd_element = schema_visitor.schema.get_element(
-        '{http://tests.python-zeep.org/}foo')
+    schema = parse_schema_node(node)
+    xsd_element = schema.get_element('{http://tests.python-zeep.org/}foo')
     value = xsd_element()
 
     node = render_node(xsd_element, value)
@@ -201,7 +193,7 @@ def test_attribute_required(schema_visitor):
     assert_nodes_equal(expected, node)
 
 
-def test_attribute_default(schema_visitor):
+def test_attribute_default():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -213,9 +205,8 @@ def test_attribute_default(schema_visitor):
           </element>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    xsd_element = schema_visitor.schema.get_element(
-        '{http://tests.python-zeep.org/}foo')
+    schema = parse_schema_node(node)
+    xsd_element = schema.get_element('{http://tests.python-zeep.org/}foo')
     value = xsd_element()
 
     node = render_node(xsd_element, value)
@@ -227,7 +218,7 @@ def test_attribute_default(schema_visitor):
     assert_nodes_equal(expected, node)
 
 
-def test_attribute_simple_type(schema_visitor):
+def test_attribute_simple_type():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -246,13 +237,12 @@ def test_attribute_simple_type(schema_visitor):
           </element>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    xsd_element = schema_visitor.schema.get_element(
-        '{http://tests.python-zeep.org/}foo')
+    schema = parse_schema_node(node)
+    xsd_element = schema.get_element('{http://tests.python-zeep.org/}foo')
     assert xsd_element(bar='hoi')
 
 
-def test_attribute_any_type(schema_visitor):
+def test_attribute_any_type():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -264,9 +254,8 @@ def test_attribute_any_type(schema_visitor):
           </element>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    xsd_element = schema_visitor.schema.get_element(
-        '{http://tests.python-zeep.org/}foo')
+    schema = parse_schema_node(node)
+    xsd_element = schema.get_element('{http://tests.python-zeep.org/}foo')
     value = xsd_element(base='hoi')
 
     node = render_node(xsd_element, value)
@@ -278,7 +267,7 @@ def test_attribute_any_type(schema_visitor):
     assert_nodes_equal(expected, node)
 
 
-def test_complex_content_mixed(schema_visitor):
+def test_complex_content_mixed():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -295,9 +284,8 @@ def test_complex_content_mixed(schema_visitor):
           </xsd:element>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    xsd_element = schema_visitor.schema.get_element(
-        '{http://tests.python-zeep.org/}foo')
+    schema = parse_schema_node(node)
+    xsd_element = schema.get_element('{http://tests.python-zeep.org/}foo')
     result = xsd_element('basetype', bar='hoi')
 
     node = etree.Element('document')
@@ -311,7 +299,7 @@ def test_complex_content_mixed(schema_visitor):
     assert_nodes_equal(expected, node)
 
 
-def test_complex_content_extension(schema_visitor):
+def test_complex_content_extension():
     node = load_xml("""
         <schema
                 xmlns="http://www.w3.org/2001/XMLSchema"
@@ -344,8 +332,7 @@ def test_complex_content_extension(schema_visitor):
           <element name="test" type="tns:BaseType"/>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    schema = schema_visitor.schema
+    schema = parse_schema_node(node)
 
     record_type = schema.get_type('{http://tests.python-zeep.org/}SubType1')
     assert len(record_type.attributes) == 2
@@ -371,7 +358,7 @@ def test_complex_content_extension(schema_visitor):
     assert_nodes_equal(expected, node)
 
 
-def test_simple_content_extension(schema_visitor):
+def test_simple_content_extension():
     node = load_xml("""
         <schema
                 xmlns="http://www.w3.org/2001/XMLSchema"
@@ -404,9 +391,7 @@ def test_simple_content_extension(schema_visitor):
           </complexType>
         </schema>
     """)
-    schema_visitor.visit_schema(node)
-    schema = schema_visitor.schema
-    schema.resolve()
+    schema = parse_schema_node(node)
 
     record_type = schema.get_type('{http://tests.python-zeep.org/}SubType1')
     assert len(record_type.attributes) == 2
@@ -438,7 +423,7 @@ def test_list_type():
         </schema>
     """)
 
-    schema = xsd.Schema(node)
+    schema = parse_schema_node(node)
     xsd_element = schema.get_element(
         '{http://tests.python-zeep.org/}foo')
     value = xsd_element(arg=[1, 2, 3, 4, 5])
@@ -479,7 +464,7 @@ def test_list_type_unresolved():
         </schema>
     """)
 
-    schema = xsd.Schema(node)
+    schema = parse_schema_node(node)
     xsd_element = schema.get_element(
         '{http://tests.python-zeep.org/}foo')
     value = xsd_element(arg=[1, 2, 3, 4, 5])
@@ -520,7 +505,7 @@ def test_list_type_simple_type():
         </schema>
     """)
 
-    schema = xsd.Schema(node)
+    schema = parse_schema_node(node)
     xsd_element = schema.get_element(
         '{http://tests.python-zeep.org/}foo')
     value = xsd_element(arg=[1, 2, 3, 4, 5])
@@ -536,7 +521,7 @@ def test_list_type_simple_type():
     assert_nodes_equal(expected, node)
 
 
-def test_union_type(schema_visitor):
+def test_union_type():
     node = load_xml("""
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -562,13 +547,12 @@ def test_union_type(schema_visitor):
         </schema>
     """)
 
-    schema_visitor.visit_schema(node)
-    xsd_element = schema_visitor.schema.get_element(
-        '{http://tests.python-zeep.org/}foo')
+    schema = parse_schema_node(node)
+    xsd_element = schema.get_element('{http://tests.python-zeep.org/}foo')
     assert xsd_element(arg='hoi')
 
 
-def test_simple_type_restriction(schema_visitor):
+def test_simple_type_restriction():
     node = load_xml("""
         <xsd:schema
             xmlns="http://tests.python-zeep.org/"
@@ -589,8 +573,6 @@ def test_simple_type_restriction(schema_visitor):
           </xsd:simpleType>
         </xsd:schema>
     """)
-    schema_visitor.visit_schema(node)
-    xsd_element = schema_visitor.schema.resolve()
-    xsd_element = schema_visitor.schema.get_type(
-        '{http://tests.python-zeep.org/}type_3')
+    schema = parse_schema_node(node)
+    xsd_element = schema.get_type('{http://tests.python-zeep.org/}type_3')
     assert xsd_element(100) == '100'

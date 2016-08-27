@@ -24,22 +24,11 @@ class Schema(object):
         self._prefix_map = {}
 
         if node is not None:
+            print(node.get('targetNamespace'))
             self._root = SchemaDocument(
-                node, transport, location, self._parser_context, location)
+                node, transport, self, location, self._parser_context, location)
 
             self._root.resolve()
-
-            def _collect_imports_recursive(schema, target=None):
-                if target is None:
-                    target = OrderedDict()
-
-                target[schema._target_namespace] = schema
-                for ns, s in schema._imports.items():
-                    if ns not in target:
-                        _collect_imports_recursive(s, target)
-                return target
-
-            self._schemas = _collect_imports_recursive(self._root)
             self._prefix_map = self._create_prefix_map()
 
     def __repr__(self):
@@ -94,6 +83,7 @@ class Schema(object):
             schema = self._get_schema_document(qname.namespace)
             return schema._types[qname]
         except ValueError:
+            print(self._schemas)
             raise KeyError((
                 "Unable to resolve type %s. " +
                 "No schema available for the namespace %r."
@@ -139,6 +129,10 @@ class Schema(object):
             prefix_map['ns%d' % i] = namespace
         return prefix_map
 
+    def _add_schema_document(self, document):
+        logger.info("Add document with tns %s to schema", document._target_namespace)
+        self._schemas[document._target_namespace] = document
+
     def _get_schema_document(self, namespace):
         if namespace not in self._schemas:
             raise ValueError(
@@ -147,12 +141,13 @@ class Schema(object):
 
 
 class SchemaDocument(object):
-    def __init__(self, node, transport, location, parser_context, base_url):
-        logger.debug("Init schema for %r", location)
+    def __init__(self, node, transport, schema, location, parser_context, base_url):
+        logger.debug("Init schema document for %r", location)
         assert node is not None
         assert parser_context
 
         # Internal
+        self._schema = schema
         self._base_url = base_url or location
         self._location = location
         self._transport = transport
@@ -171,6 +166,7 @@ class SchemaDocument(object):
         self._resolved = False
         # self._xml_schema = None
 
+        self._schema._add_schema_document(self)
         parser_context.schema_objects.add(self)
 
         if node is not None:
@@ -236,61 +232,14 @@ class SchemaDocument(object):
         schemas.
 
         """
-        name = self._create_qname(name)
-        if name.text in xsd_builtins.default_types:
-            return xsd_builtins.default_types[name]
-
-        self._check_namespace_reference(name)
-        if name.namespace == self._target_namespace:
-            if name.text in self._types:
-                return self._types[name]
-            elif default is not NotSet:
-                return default
-            else:
-                raise exceptions.XMLParseError(
-                    "Unable to resolve type with QName '%s'" % name.text)
-        else:
-            if name.namespace in self._imports:
-                return self._imports[name.namespace].get_type(name, default)
-            else:
-                raise exceptions.XMLParseError((
-                    "Unable to resolve type with QName '%s' "
-                    "(no schema imported with namespace '%s')"
-                ) % (name.text, name.namespace))
+        return self._schema.get_type(name)
 
     def get_element(self, name, default=NotSet):
         """Return a xsd.Element object from this schema or one of the imported
         schemas.
 
         """
-        name = self._create_qname(name)
-        if name.text in xsd_builtins.default_elements:
-            return xsd_builtins.default_elements[name]
-
-        self._check_namespace_reference(name)
-        if name.namespace == self._target_namespace:
-            if name.text in self._elements:
-                return self._elements[name]
-            elif default is not NotSet:
-                return default
-            else:
-                raise exceptions.XMLParseError(
-                    "Unable to resolve element with QName '%s'" % name.text)
-        else:
-            if name.namespace in self._imports:
-                return self._imports[name.namespace].get_element(name)
-            else:
-                raise exceptions.XMLParseError((
-                    "Unable to resolve element with QName '%s' " +
-                    "(no schema imported with namespace '%s')"
-                ) % (name.text, name.namespace))
-
-        if default is not NotSet:
-            return default
-
-        raise exceptions.XMLParseError(
-            "No such element: %r (Only have %s) (from: %s)" % (
-                name.text, ', '.join(self._elements), self))
+        return self._schema.get_element(name)
 
     def get_attribute(self, name, default=NotSet):
         """Return a xsd.Attribute object from this schema or one of the

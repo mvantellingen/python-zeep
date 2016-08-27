@@ -3,7 +3,7 @@ from lxml import etree
 from tests.utils import load_xml
 from zeep import xsd
 from zeep.xsd.context import ParserContext
-from zeep.xsd.schema import SchemaDocument
+from zeep.xsd.schema import SchemaDocument, Schema
 
 
 def test_sequence_parse_basic():
@@ -175,16 +175,12 @@ def test_sequence_parse_anytype_obj():
         ])
     )
 
-    parser_context = ParserContext()
-    schema = SchemaDocument(
-        etree.Element('{http://www.w3.org/2001/XMLSchema}Schema'),
-        transport=None,
-        location=None,
-        parser_context=parser_context,
-        base_url=None)
+    schema = Schema(
+        etree.Element(
+            '{http://www.w3.org/2001/XMLSchema}Schema',
+            targetNamespace='http://tests.python-zeep.org/'))
 
-    schema._target_namespace = 'http://tests.python-zeep.org/'
-    schema.register_type('{http://tests.python-zeep.org/}something', value_type)
+    schema._root.register_type('{http://tests.python-zeep.org/}something', value_type)
 
     custom_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'container'),
