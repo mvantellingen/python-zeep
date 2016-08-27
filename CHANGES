@@ -1,5 +1,10 @@
 0.15.0 (unreleased)
 -------------------
+ - All wsdl documents and xsd schemas are now globally available for eachother.
+   While this is not correct according to the (messy) soap specifications, it
+   does make zeep more compatible with all the invalid wsdl documents out
+   there. (#159)
+
 
 0.14.0 (2016-08-03)
 -------------------
