@@ -310,6 +310,24 @@ class Attribute(Element):
         parent.set(self.qname, value)
 
 
+class AttributeGroup(Element):
+    def __init__(self, name, attributes):
+        self.name = name
+        self.type = None
+        self.attributes = attributes
+
+    def resolve(self):
+        resolved = []
+        for attribute in self.attributes:
+            value = attribute.resolve()
+            assert value is not None
+            if isinstance(value, list):
+                resolved.extend(value)
+            else:
+                resolved.append(value)
+        return resolved
+
+
 class AnyAttribute(Base):
     name = None
 
@@ -349,12 +367,16 @@ class RefElement(object):
 
 
 class RefAttribute(RefElement):
-
     def resolve(self):
         return self._schema.get_attribute(self._ref)
 
 
-class RefGroup(RefElement):
+class RefAttributeGroup(RefElement):
+    def resolve(self):
+        value = self._schema.get_attribute_group(self._ref)
+        return value.resolve()
 
+
+class RefGroup(RefElement):
     def resolve(self):
         return self._schema.get_group(self._ref)

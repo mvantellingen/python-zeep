@@ -74,6 +74,9 @@ class SchemaVisitor(object):
             return xsd_elements.RefAttribute(node.tag, ref, self.schema, **kwargs)
         if node.tag == tags.group:
             return xsd_elements.RefGroup(node.tag, ref, self.schema, **kwargs)
+        if node.tag == tags.attributeGroup:
+            return xsd_elements.RefAttributeGroup(
+                node.tag, ref, self.schema, **kwargs)
 
     def visit_schema(self, node):
         """
@@ -819,8 +822,17 @@ class SchemaVisitor(object):
                      ((attribute | attributeGroup)*, anyAttribute?))
             </attributeGroup>
         """
+        ref = self.process_reference(node)
+        if ref:
+            return ref
+
+
+        qname = qname_attr(node, 'name', self.document._target_namespace)
         annotation, children = self._pop_annotation(node.getchildren())
-        return self._process_attributes(node, children)
+
+        attributes = self._process_attributes(node, children)
+        attribute_group = xsd_elements.AttributeGroup(qname, attributes)
+        self.document.register_attribute_group(qname, attribute_group)
 
     def visit_any_attribute(self, node, parent):
         """
@@ -881,13 +893,7 @@ class SchemaVisitor(object):
         attributes = []
         for child in items:
             attribute = self.process(child, node)
-            if child.tag == tags.attribute:
-                attributes.append(attribute)
-
-            elif child.tag == tags.attributeGroup:
-                attributes.extend(attribute)
-
-            elif child.tag == tags.anyAttribute:
+            if child.tag in (tags.attribute, tags.attributeGroup, tags.anyAttribute):
                 attributes.append(attribute)
             else:
                 raise XMLParseError("Unexpected tag: %s" % child.tag)

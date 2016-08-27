@@ -322,9 +322,15 @@ class ComplexType(Type):
         if self._element:
             self._element = self._element.resolve()
 
-        for i, attribute in enumerate(self._attributes):
-            self._attributes[i] = attribute.resolve()
-            assert self._attributes[i] is not None
+        resolved = []
+        for attribute in self._attributes:
+            value = attribute.resolve()
+            assert value is not None
+            if isinstance(value, list):
+                resolved.extend(value)
+            else:
+                resolved.append(value)
+        self._attributes = resolved
         return self
 
     def signature(self, depth=0):

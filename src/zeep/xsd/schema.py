@@ -297,6 +297,17 @@ class SchemaDocument(object):
                 "Available elements are: %s"
             ) % (qname.localname, qname.namespace, known_items or ' - '))
 
+    def get_group(self, qname):
+        """Return a xsd.Group object from this schema"""
+        try:
+            return self._groups[qname]
+        except KeyError:
+            known_items = ', '.join(self._groups.keys())
+            raise exceptions.LookupError((
+                "No group '%s' in namespace %s. " +
+                "Available attributes are: %s"
+            ) % (qname.localname, qname.namespace, known_items or ' - '))
+
     def get_attribute(self, qname):
         """Return a xsd.Attribute object from this schema"""
         try:
@@ -308,15 +319,15 @@ class SchemaDocument(object):
                 "Available attributes are: %s"
             ) % (qname.localname, qname.namespace, known_items or ' - '))
 
-    def get_group(self, qname):
-        """Return a xsd.Group object from this schema"""
+    def get_attribute_group(self, qname):
+        """Return a xsd.AttributeGroup object from this schema"""
         try:
-            return self._groups[qname]
+            return self._attribute_groups[qname]
         except KeyError:
-            known_items = ', '.join(self._groups.keys())
+            known_items = ', '.join(self._attribute_groups.keys())
             raise exceptions.LookupError((
-                "No group '%s' in namespace %s. " +
-                "Available attributes are: %s"
+                "No attributeGroup '%s' in namespace %s. " +
+                "Available attributeGroups are: %s"
             ) % (qname.localname, qname.namespace, known_items or ' - '))
 
     @property
