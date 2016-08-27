@@ -300,7 +300,7 @@ def test_multiple_extension():
     """.strip())
     document = wsdl.Document(content, None)
 
-    type_a = document.types.get_type('ns1:type_a')
+    type_a = document.types.get_type('ns0:type_a')
     type_a(wat='x')
 
 

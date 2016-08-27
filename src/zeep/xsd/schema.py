@@ -4,7 +4,6 @@ from collections import OrderedDict
 from lxml import etree
 
 from zeep import exceptions
-from zeep.utils import NotSet
 from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd.context import ParserContext
 from zeep.xsd.visitor import SchemaVisitor
@@ -18,26 +17,42 @@ class Schema(object):
     def __init__(self, node=None, transport=None, location=None,
                  parser_context=None):
         self._parser_context = parser_context or ParserContext()
+        self._transport = transport
 
         self._schemas = OrderedDict()
-        self._root = None
         self._prefix_map = {}
 
-        if node is not None:
-            print(node.get('targetNamespace'))
-            self._root = SchemaDocument(
-                node, transport, self, location, self._parser_context, location)
+        if not isinstance(node, list):
+            nodes = [node] if node is not None else []
+        else:
+            nodes = node
+        self.add_documents(nodes, location)
 
-            self._root.resolve()
-            self._prefix_map = self._create_prefix_map()
+    def add_documents(self, schema_nodes, location):
+        documents = []
+        for node in schema_nodes:
+            document = SchemaDocument(
+                node, self._transport, self, location,
+                self._parser_context, location)
+            documents.append(document)
+
+        for document in documents:
+            document.resolve()
+
+        self._prefix_map = self._create_prefix_map()
 
     def __repr__(self):
-        return '<Schema(location=%r)>' % (self._root._location)
+        if self._schemas:
+            main_doc = next(iter(self._schemas.values()))
+            location = main_doc._location
+        else:
+            location = '<none>'
+        return '<Schema(location=%r)>' % location
 
     @property
     def is_empty(self):
         """Boolean to indicate if this schema contains any types or elements"""
-        return self._root.is_empty if self._root else True
+        return all(schema.is_empty for schema in self._schemas.values())
 
     @property
     def elements(self):
@@ -63,6 +78,7 @@ class Schema(object):
             schema = self._get_schema_document(qname.namespace)
             return schema.get_element(qname)
         except exceptions.NamespaceError:
+            print(self._schemas)
             raise exceptions.NamespaceError((
                 "Unable to resolve element %s. " +
                 "No schema available for the namespace %r."
@@ -155,7 +171,7 @@ class Schema(object):
         return prefix_map
 
     def _add_schema_document(self, document):
-        logger.info("Add document with tns %s to schema", document._target_namespace)
+        logger.info("Add document with tns %s to schema %s", document._target_namespace, id(self))
         self._schemas[document._target_namespace] = document
 
     def _get_schema_document(self, namespace):

@@ -180,7 +180,8 @@ def test_sequence_parse_anytype_obj():
             '{http://www.w3.org/2001/XMLSchema}Schema',
             targetNamespace='http://tests.python-zeep.org/'))
 
-    schema._root.register_type('{http://tests.python-zeep.org/}something', value_type)
+    root = list(schema._schemas.values())[0]
+    root.register_type('{http://tests.python-zeep.org/}something', value_type)
 
     custom_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'container'),

@@ -26,8 +26,9 @@ def test_schema_empty():
         </schema>
     """)
     schema = parse_schema_node(node)
-    assert schema._root._element_form == 'qualified'
-    assert schema._root._attribute_form == 'unqualified'
+    root = list(schema._schemas.values())[0]
+    assert root._element_form == 'qualified'
+    assert root._attribute_form == 'unqualified'
 
 
 def test_element_simle_types():
