@@ -300,7 +300,7 @@ def test_multiple_extension():
     """.strip())
     document = wsdl.Document(content, None)
 
-    type_a = document.types.get_type('ns1:type_a')
+    type_a = document.types.get_type('ns0:type_a')
     type_a(wat='x')
 
 
@@ -355,6 +355,87 @@ def test_create_import_schema(recwarn):
     document = wsdl.Document(content, transport)
     assert len(recwarn) == 0
     assert document.types.get_element('{http://tests.python-zeep.org/b}global')
+
+
+def test_import_schema_without_location(recwarn):
+    content = StringIO("""
+    <?xml version="1.0"?>
+    <wsdl:definitions
+      xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+      xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+      xmlns:b="http://tests.python-zeep.org/b"
+      xmlns:c="http://tests.python-zeep.org/c"
+      xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+      targetNamespace="http://tests.python-zeep.org/transient"
+      xmlns:tns="http://tests.python-zeep.org/transient">
+
+      <wsdl:types>
+        <xsd:schema>
+          <xsd:import namespace="http://tests.python-zeep.org/a"
+                      schemaLocation="a.xsd"/>
+        </xsd:schema>
+        <xsd:schema targetNamespace="http://tests.python-zeep.org/c">
+          <xsd:element name="bar" type="b:foo"/>
+        </xsd:schema>
+      </wsdl:types>
+      <wsdl:message name="method">
+        <wsdl:part name="param" element="c:bar"/>
+      </wsdl:message>
+      <wsdl:portType name="port_type">
+        <wsdl:operation name="method" parameterOrder="param">
+          <wsdl:input message="tns:method" />
+        </wsdl:operation>
+      </wsdl:portType>
+      <wsdl:binding name="binding" type="tns:port_type" >
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http" />
+        <wsdl:operation name="method" >
+          <soap:operation soapAction="method"/>
+          <wsdl:input>
+            <soap:body use="literal" />
+          </wsdl:input>
+        </wsdl:operation>
+      </wsdl:binding>
+    </wsdl:definitions>
+    """.strip())
+
+    schema_node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+          <xsd:import namespace="http://tests.python-zeep.org/b"
+                      schemaLocation="b.xsd"/>
+
+        </xsd:schema>
+    """.strip())
+
+    schema_node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            targetNamespace="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+          <xsd:complexType name="foo">
+            <xsd:sequence>
+              <xsd:element name="item_1" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('a.xsd', schema_node_a)
+    transport.bind('b.xsd', schema_node_b)
+
+    document = wsdl.Document(content, transport)
+    assert len(recwarn) == 0
+    assert document.types.get_type('{http://tests.python-zeep.org/b}foo')
 
 
 def test_wsdl_import(recwarn):

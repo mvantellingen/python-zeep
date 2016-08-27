@@ -10,10 +10,8 @@ from lxml import etree
 from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import definitions, http, soap
-from zeep.wsdl.utils import combine_schemas
 from zeep.xsd import Schema
 from zeep.xsd.context import ParserContext
-from zeep.xsd.parser import parse_xml as xsd_parse_xml
 
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
@@ -53,6 +51,7 @@ class Document(object):
 
         # Dict with all definition objects within this WSDL
         self._definitions = {}
+        self.types = Schema([], transport=self.transport)
 
         # Dict with internal schema objects, used for lxml.ImportResolver
         self._parser_context = ParserContext()
@@ -63,7 +62,6 @@ class Document(object):
         root_definitions.resolve_imports()
 
         # Make the wsdl definitions public
-        self.types = root_definitions.types
         self.messages = root_definitions.messages
         self.port_types = root_definitions.port_types
         self.bindings = root_definitions.bindings
@@ -90,7 +88,7 @@ class Document(object):
 
         print('')
         print("Global types:")
-        for type_obj in sorted(self.types.types, key=lambda k: k.qname):
+        for type_obj in sorted(self.types.types, key=lambda k: k.qname or ''):
             value = six.text_type(type_obj)
             if getattr(type_obj, 'qname', None) and type_obj.qname.namespace:
                 value = '%s:%s' % (namespaces[type_obj.qname.namespace], value)
@@ -137,7 +135,7 @@ class Definition(object):
         self.wsdl = wsdl
         self.location = location
 
-        self.types = None
+        self.types = wsdl.types
         self.port_types = {}
         self.messages = {}
         self.bindings = {}
@@ -153,7 +151,7 @@ class Definition(object):
         # Process the definitions
         self.parse_imports(doc)
 
-        self.types = self.parse_types(doc)
+        self.parse_types(doc)
         self.messages = self.parse_messages(doc)
         self.port_types = self.parse_ports(doc)
         self.bindings = self.parse_binding(doc)
@@ -187,22 +185,6 @@ class Definition(object):
         if self._resolved_imports:
             return
         self._resolved_imports = True
-
-        # Create a reference to an imported types definition if the
-        # definition has no types of it's own.
-        if self.types is None or self.types.is_empty:
-            for definition in self.imports.values():
-                if definition.types and not definition.types.is_empty:
-                    self.types = definition.types
-                    break
-            else:
-                if self.types is None:
-                    logger.debug(
-                        "No suitable main schema found for wsdl. " +
-                        "Creating an empty placeholder")
-                    self.types = Schema(
-                        None, self.wsdl, self.location,
-                        self.wsdl._parser_context)
 
         for definition in self.imports.values():
             definition.resolve_imports()
@@ -246,9 +228,7 @@ class Definition(object):
                 document = self.wsdl._load_content(location)
                 location = absolute_location(location, self.location)
                 if etree.QName(document.tag).localname == 'schema':
-                    self.schema = Schema(
-                        document, self.wsdl.transport, location,
-                        self.wsdl._parser_context)
+                    self.types.add_schema(document, location)
                 else:
                     wsdl = Definition(self.wsdl, document, location)
                     self.imports[namespace] = wsdl
@@ -287,34 +267,7 @@ class Definition(object):
         # Find xsd:schema elements (wsdl:types/xsd:schema)
         schema_nodes = findall_multiple_ns(
             doc, 'wsdl:types/xsd:schema', namespace_sets)
-
-        if not schema_nodes:
-            return Schema(
-                None, self.wsdl.transport, self.location,
-                self.wsdl._parser_context)
-
-        # FIXME: This fixes `test_parse_types_nsmap_issues`, lame solution...
-        schema_nodes = [
-            xsd_parse_xml(etree.tostring(schema_node), self.location)
-            for schema_node in schema_nodes
-        ]
-
-        # If there are multiple xsd:schema's defined in the wsdl then we
-        # combine them
-        if len(schema_nodes) > 1:
-            schema_node = combine_schemas(
-                schema_nodes, self.location, self.wsdl._parser_context)
-        else:
-            schema_node = schema_nodes[0]
-        schema = Schema(
-            schema_node, self.wsdl.transport, self.location,
-            self.wsdl._parser_context)
-
-        # Merge xsd schemas in imported wsdl's
-        for imported_wsdl in self.imports.values():
-            if imported_wsdl.types:
-                schema.merge(imported_wsdl.types)
-        return schema
+        self.types.add_documents(schema_nodes, self.location)
 
     def parse_messages(self, doc):
         """

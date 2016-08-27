@@ -3,6 +3,7 @@ from lxml import etree
 
 from tests.utils import DummyTransport
 from zeep import xsd
+from zeep import exceptions
 from zeep.exceptions import ZeepWarning
 
 
@@ -376,13 +377,13 @@ def test_schema_error_handling():
         schema.get_element('nonexisting:something')
     with pytest.raises(ValueError):
         schema.get_type('nonexisting:something')
-    with pytest.raises(KeyError):
+    with pytest.raises(exceptions.NamespaceError):
         schema.get_element('{nonexisting}something')
-    with pytest.raises(KeyError):
+    with pytest.raises(exceptions.NamespaceError):
         schema.get_type('{nonexisting}something')
-    with pytest.raises(KeyError):
+    with pytest.raises(exceptions.LookupError):
         schema.get_element('ns0:something')
-    with pytest.raises(KeyError):
+    with pytest.raises(exceptions.LookupError):
         schema.get_type('ns0:something')
 
 
