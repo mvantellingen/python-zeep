@@ -10,7 +10,7 @@ from zeep.wsdl.utils import etree_to_string
 
 class Transport(object):
 
-    def __init__(self, cache=NotSet, timeout=300, verify=True, http_auth=None):
+    def __init__(self, cache=NotSet, timeout=NotSet, verify=True, http_auth=None):
         self.cache = SqliteCache() if cache is NotSet else cache
         self.timeout = timeout
         self.verify = verify
@@ -37,7 +37,8 @@ class Transport(object):
                 if response:
                     return bytes(response)
 
-            response = self.session.get(url, timeout=self.timeout)
+            timeout = 300 if self.timeout is NotSet else self.timeout
+            response = self.session.get(url, timeout=timeout)
             response.raise_for_status()
 
             if self.cache:
@@ -52,7 +53,8 @@ class Transport(object):
         with open(url, 'rb') as fh:
             return fh.read()
 
-    def post(self, address, message, headers, timeout=None):
+    def post(self, address, message, headers):
+        timeout = None if self.timeout is NotSet else self.timeout
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
         response = self.session.post(
             address, data=message, headers=headers, timeout=timeout)
@@ -61,7 +63,7 @@ class Transport(object):
             address, response.status_code, response.content)
         return response
 
-    def post_xml(self, address, envelope, headers, timeout=None):
+    def post_xml(self, address, envelope, headers):
         """Post the envelope xml element to the given address with the headers.
 
         This method is intended to be overriden if you want to customize the
@@ -70,9 +72,10 @@ class Transport(object):
 
         """
         message = etree_to_string(envelope)
-        return self.post(address, message, headers, timeout=timeout)
+        return self.post(address, message, headers)
 
-    def get(self, address, params, headers, timeout=None):
+    def get(self, address, params, headers):
+        timeout = None if self.timeout is NotSet else self.timeout
         response = self.session.get(
             address, params=params, headers=headers, timeout=timeout)
         return response
