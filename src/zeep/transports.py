@@ -52,15 +52,17 @@ class Transport(object):
         with open(url, 'rb') as fh:
             return fh.read()
 
-    def post(self, address, message, headers):
+    def post(self, address, message, headers, timeout=NotSet):
+        timeout = self.timeout if timeout is NotSet else timeout
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
-        response = self.session.post(address, data=message, headers=headers)
+        response = self.session.post(
+            address, data=message, headers=headers, timeout=timeout)
         self.logger.debug(
             "HTTP Response from %s (status: %d):\n%s",
             address, response.status_code, response.content)
         return response
 
-    def post_xml(self, address, envelope, headers):
+    def post_xml(self, address, envelope, headers, timeout=NotSet):
         """Post the envelope xml element to the given address with the headers.
 
         This method is intended to be overriden if you want to customize the
@@ -69,8 +71,10 @@ class Transport(object):
 
         """
         message = etree_to_string(envelope)
-        return self.post(address, message, headers)
+        return self.post(address, message, headers, timeout=timeout)
 
-    def get(self, address, params, headers):
-        response = self.session.get(address, params=params, headers=headers)
+    def get(self, address, params, headers, timeout=NotSet):
+        timeout = self.timeout if timeout is NotSet else timeout
+        response = self.session.get(
+            address, params=params, headers=headers, timeout=timeout)
         return response
