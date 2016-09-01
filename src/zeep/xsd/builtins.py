@@ -586,8 +586,7 @@ class Schema(Base):
     def parse(self, xmlelement, schema, context=None):
         from zeep.xsd.schema import Schema
         schema = Schema(xmlelement, schema._transport)
-        for doc in schema._schemas.values():
-            context.schemas.add(doc)
+        context.schemas.append(schema)
         return schema
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):

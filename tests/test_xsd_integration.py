@@ -663,6 +663,36 @@ def test_group_for_type():
     assert_nodes_equal(expected, node)
 
 
+def test_element_ref_missing_namespace():
+    # For buggy soap servers (#170)
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="foo" type="string"/>
+          <element name="bar">
+            <complexType>
+              <sequence>
+                <element ref="tns:foo"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+
+    custom_type = schema.get_element('{http://tests.python-zeep.org/}bar')
+    input_xml = load_xml("""
+            <ns0:bar xmlns:ns0="http://tests.python-zeep.org/">
+                <foo>bar</foo>
+            </ns0:bar>
+    """)
+    item = custom_type.parse(input_xml, schema)
+    assert item.foo == 'bar'
+
+
 def test_element_ref():
     node = etree.fromstring("""
         <?xml version="1.0"?>

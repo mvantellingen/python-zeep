@@ -74,8 +74,10 @@ class Any(Base):
             return xmlelement
 
         qname = etree.QName(xmlelement.tag)
-        if qname.namespace in context.schemas:
-            schema = context.schemas.get(qname.namespace)
+        for context_schema in context.schemas:
+            if qname.namespace in context_schema._schemas:
+                schema = context_schema
+                break
 
         xsd_type = xmlelement.get('{http://www.w3.org/2001/XMLSchema-instance}type')
         if xsd_type is not None:
@@ -225,8 +227,20 @@ class Element(Base):
         """Consume matching xmlelements and call parse() on each of them"""
         result = []
 
+        match_tags = [self.qname]
+
+        # Workaround for SOAP servers where reference elements are not
+        # qualified for unqualified documents. See #170
+        if schema and self.qname.namespace:
+            doc = schema._get_schema_document(self.qname.namespace)
+            if doc and doc._element_form == 'unqualified':
+                match_tags.append(self.qname.localname)
+
         for i in max_occurs_iter(self.max_occurs):
-            if xmlelements and xmlelements[0].tag == self.qname:
+            if not xmlelements:
+                break
+
+            if xmlelements[0].tag in match_tags:
                 xmlelement = xmlelements.pop(0)
                 item = self.parse(
                     xmlelement, schema, allow_none=True, context=context)
@@ -353,8 +367,10 @@ class AnyAttribute(Base):
 
 class RefElement(object):
 
-    def __init__(self, tag, ref, schema, min_occurs=1, max_occurs=1):
+    def __init__(self, tag, ref, schema, is_qualified=False,
+                 min_occurs=1, max_occurs=1):
         self._ref = ref
+        self._is_qualified = is_qualified
         self._schema = schema
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs

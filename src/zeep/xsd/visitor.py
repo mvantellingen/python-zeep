@@ -68,15 +68,16 @@ class SchemaVisitor(object):
         ref = qname_attr(node, 'ref')
         if not ref:
             return
+
         if node.tag == tags.element:
-            return xsd_elements.RefElement(node.tag, ref, self.schema, **kwargs)
-        if node.tag == tags.attribute:
-            return xsd_elements.RefAttribute(node.tag, ref, self.schema, **kwargs)
-        if node.tag == tags.group:
-            return xsd_elements.RefGroup(node.tag, ref, self.schema, **kwargs)
-        if node.tag == tags.attributeGroup:
-            return xsd_elements.RefAttributeGroup(
-                node.tag, ref, self.schema, **kwargs)
+            cls = xsd_elements.RefElement
+        elif node.tag == tags.attribute:
+            cls = xsd_elements.RefAttribute
+        elif node.tag == tags.group:
+            cls = xsd_elements.RefGroup
+        elif node.tag == tags.attributeGroup:
+            cls = xsd_elements.RefAttributeGroup
+        return cls(node.tag, ref, self.schema, **kwargs)
 
     def visit_schema(self, node):
         """

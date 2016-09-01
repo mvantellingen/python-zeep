@@ -666,7 +666,10 @@ def test_deserialize():
           </mns:response>
         </SOAP-ENV:Body>
     """)  # noqa
-    wsdl = stub(types=stub(_prefix_map={}))
+    wsdl = stub(types=stub(
+        _prefix_map={},
+        _get_schema_document=lambda namespace: None
+    ))
     operation = stub(soapaction='my-action', name='something')
 
     msg = messages.DocumentMessage(
@@ -713,7 +716,10 @@ def test_deserialize_choice():
           </mns:response>
         </SOAP-ENV:Body>
     """)  # noqa
-    wsdl = stub(types=stub(_prefix_map={}))
+    wsdl = stub(types=stub(
+        _prefix_map={},
+        _get_schema_document=lambda namespace: None
+    ))
     operation = stub(soapaction='my-action', name='something')
 
     msg = messages.DocumentMessage(

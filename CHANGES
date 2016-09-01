@@ -6,6 +6,7 @@
    there. (#159)
  - Implement support for attributeGroup (#160)
  - Fix handling of Mime messages with no parts (#168)
+ - Workaround an issue where soap servers don't qualify references (#170)
 
 
 0.14.0 (2016-08-03)
