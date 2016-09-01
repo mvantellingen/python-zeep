@@ -78,7 +78,6 @@ class Schema(object):
             schema = self._get_schema_document(qname.namespace)
             return schema.get_element(qname)
         except exceptions.NamespaceError:
-            print(self._schemas)
             raise exceptions.NamespaceError((
                 "Unable to resolve element %s. " +
                 "No schema available for the namespace %r."
