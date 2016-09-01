@@ -448,7 +448,6 @@ class MimeMessage(ConcreteMessage):
                 else:
                     elm = xsd.Element(name, message.type)
                 children.append(elm)
-            if not children:
             self.body = xsd.Element(
                 self.operation.name, xsd.ComplexType(xsd.Sequence(children)))
 
