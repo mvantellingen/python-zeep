@@ -425,15 +425,14 @@ class MimeMessage(ConcreteMessage):
 
         """
         self.abstract = abstract_message
-        if self.part_name:
-
+        if self.part_name and self.abstract.parts:
             if self.part_name in self.abstract.parts:
                 message = self.abstract.parts[self.part_name]
             elif len(self.abstract.parts) == 1:
                 message = list(self.abstract.parts.values())[0]
             else:
                 raise ValueError(
-                    "Multiple parts for message while no matching part found")
+                    "Multiple parts for message %r while no matching part found" % self.part_name)
 
             if message.element:
                 self.body = message.element
@@ -449,6 +448,8 @@ class MimeMessage(ConcreteMessage):
                 else:
                     elm = xsd.Element(name, message.type)
                 children.append(elm)
+            if not children:
+                print("NO CHILD FOUND YEA", self.part_name, self.abstract, self)
             self.body = xsd.Element(
                 self.operation.name, xsd.ComplexType(xsd.Sequence(children)))
 
