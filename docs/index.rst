@@ -129,6 +129,7 @@ More information
    in-depth
    transport
    wsse
+   plugins
    helpers
    changes
 
