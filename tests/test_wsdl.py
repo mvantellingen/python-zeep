@@ -13,7 +13,7 @@ from zeep.transports import Transport
 
 @pytest.mark.requests
 def test_parse_soap_wsdl():
-    client = stub(transport=Transport(), wsse=None)
+    client = stub(transport=Transport(), wsse=None, plugins=[])
 
     obj = wsdl.Document('tests/wsdl_files/soap.wsdl', transport=client.transport)
     assert len(obj.services) == 1
@@ -83,7 +83,7 @@ def test_parse_soap_wsdl():
 
 @pytest.mark.requests
 def test_parse_soap_header_wsdl():
-    client = stub(transport=Transport(), wsse=None)
+    client = stub(transport=Transport(), wsse=None, plugins=[])
 
     obj = wsdl.Document(
         'tests/wsdl_files/soap_header.wsdl', transport=client.transport)

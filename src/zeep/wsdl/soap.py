@@ -2,6 +2,7 @@ import six
 from defusedxml.lxml import fromstring
 from lxml import etree
 
+from zeep import plugins
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.utils import qname_attr
 from zeep.wsdl.definitions import Binding, Operation
@@ -79,15 +80,18 @@ class SoapBinding(Binding):
         serialized.headers['Content-Type'] = self.content_type
 
         envelope = serialized.content
-        headers = serialized.headers
+        http_headers = serialized.headers
 
         # Apply plugins
+        envelope, http_headers = plugins.apply_egress(
+            client, envelope, http_headers)
 
         # Apply WSSE
         if client.wsse:
-            envelope, http_headers = client.wsse.sign(envelope, headers)
+            envelope, http_headers = client.wsse.sign(envelope, http_headers)
 
-        response = client.transport.post_xml(options['address'], envelope, headers)
+        response = client.transport.post_xml(
+            options['address'], envelope, http_headers)
 
         return self.process_reply(client, operation_obj, response)
 
@@ -116,6 +120,9 @@ class SoapBinding(Binding):
 
         if client.wsse:
             client.wsse.verify(doc)
+
+        doc, http_headers = plugins.apply_ingress(
+            client, doc, response.headers)
 
         if response.status_code != 200:
             return self.process_error(doc)
