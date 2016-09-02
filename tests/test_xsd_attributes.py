@@ -312,3 +312,47 @@ def test_group_nested():
     node = etree.Element('document')
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
+
+
+def test_nested_attribute():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="item">
+                    <complexType>
+                        <sequence>
+                            <element name="x" type="xsd:string"/>
+                        </sequence>
+                        <attribute name="y" type="xsd:string"/>
+                    </complexType>
+                </element>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """))
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    assert container_elm.signature() == 'item: {x: xsd:string, y: xsd:string}'
+    obj = container_elm(item={'x': 'foo', 'y': 'bar'})
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item y="bar">
+            <ns0:x>foo</ns0:x>
+          </ns0:item>
+        </ns0:container>
+      </document>
+    """
+
+    node = etree.Element('document')
+    container_elm.render(node, obj)
+    assert_nodes_equal(expected, node)

@@ -288,17 +288,27 @@ class ComplexType(Type):
             return
 
         for name, attribute in self.attributes:
-            attr_value = getattr(value, name, None)
+            if isinstance(value, dict):
+                attr_value = value.get(name)
+            else:
+                attr_value = getattr(value, name, None)
             attribute.render(parent, attr_value)
 
         for name, element in self.elements_nested:
-            if isinstance(element, Element):
-                element.type.render(parent, getattr(value, name))
+            if isinstance(element, Element) or element.accepts_multiple:
+                try:
+                    element_value = value[name]
+                except AttributeError:
+                    raise ValueError(
+                        "Expected object for %s.%s, received %r instead" % (
+                            self.name, name, type(value)))
             else:
-                if element.accepts_multiple:
-                    element.render(parent, getattr(value, name))
-                else:
-                    element.render(parent, value)
+                element_value = value
+
+            if isinstance(element, Element):
+                element.type.render(parent, element_value)
+            else:
+                element.render(parent, element_value)
 
         if xsd_type and xsd_type._xsd_name:
             parent.set(
