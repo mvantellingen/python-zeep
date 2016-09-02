@@ -7,7 +7,8 @@
  - Implement support for attributeGroup (#160)
  - Fix handling of Mime messages with no parts (#168)
  - Workaround an issue where soap servers don't qualify references (#170)
- - Correctly process attributes which are passed as a dictionary.
+ - Correctly process attributes which are passed as a dictionary. (#125)
+ - Add support for plugins, see documentation for examples.
 
 
 0.14.0 (2016-08-03)
