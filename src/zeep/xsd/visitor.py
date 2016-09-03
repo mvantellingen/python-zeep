@@ -423,7 +423,6 @@ class SchemaVisitor(object):
         qname = as_qname(name, node.nsmap, self.document._target_namespace)
         cls_attributes = {
             '__module__': 'zeep.xsd.dynamic_types',
-            '_xsd_base': base_type,
             '_xsd_name': qname,
         }
         xsd_cls = type(name, (xsd_types.ComplexType,), cls_attributes)
@@ -435,16 +434,13 @@ class SchemaVisitor(object):
 
         if first_tag == tags.simpleContent:
             base_type, attributes = self.visit_simple_content(children[0], node)
-            xsd_cls._xsd_base = base_type.__class__
+
             xsd_type = xsd_cls(
                 attributes=attributes, extension=base_type, qname=qname,
                 is_global=is_global)
 
         elif first_tag == tags.complexContent:
             kwargs = self.visit_complex_content(children[0], node)
-
-            # XXX
-            xsd_cls._xsd_base = base_type.__class__
             xsd_type = xsd_cls(qname=qname, is_global=is_global, **kwargs)
 
         elif first_tag:

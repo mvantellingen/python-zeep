@@ -154,7 +154,6 @@ class SimpleType(Type):
 
 class ComplexType(Type):
     _xsd_name = None
-    _xsd_base = None
 
     def __init__(self, element=None, attributes=None,
                  restriction=None, extension=None, qname=None, is_global=False):
