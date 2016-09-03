@@ -14,7 +14,7 @@ def serialize_object(obj):
     result = OrderedDict()
     for key in obj:
         value = obj[key]
-        if isinstance(value, CompoundValue):
+        if isinstance(value, (list, CompoundValue)):
             value = serialize_object(value)
         result[key] = value
     return result
