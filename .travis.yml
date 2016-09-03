@@ -1,41 +1,30 @@
+---
+# Based on https://github.com/ionelmc/cookiecutter-pylibrary/
 sudo: false
 language: python
-cache: pip
+python: '3.5'
 
-python:
-    - '2.7'
-    - '3.3'
-    - '3.4'
-    - '3.5'
-    - 'nightly'
-    - 'pypy'
+before_cache:
+  - rm -rf $HOME/.cache/pip/log
 
+cache:
+  directories:
+    - $HOME/.cache/pip
 
-matrix:
-    allow_failures:
-        - python: 'nightly'
-
-before_install:
-    - pip install codecov
+env:
+  - TOXENV=py27,codecov
+  - TOXENV=py33,codecov
+  - TOXENV=py34,codecov
+  - TOXENV=py35,codecov
+  - TOXENV=pypy,codecov
 
 install:
-    - |
-        if [ "$TRAVIS_PYTHON_VERSION" = "pypy" ]; then
-            export PYENV_ROOT="$HOME/.pyenv"
-            if [ -f "$PYENV_ROOT/bin/pyenv" ]; then
-                pushd "$PYENV_ROOT" && git pull && popd
-            else
-                rm -rf "$PYENV_ROOT" && git clone --depth 1 https://github.com/yyuu/pyenv.git "$PYENV_ROOT"
-            fi
-            export PYPY_VERSION="5.0.1"
-            "$PYENV_ROOT/bin/pyenv" install --skip-existing "pypy-$PYPY_VERSION"
-            virtualenv --python="$PYENV_ROOT/versions/pypy-$PYPY_VERSION/bin/python" "$HOME/virtualenvs/pypy-$PYPY_VERSION"
-            source "$HOME/virtualenvs/pypy-$PYPY_VERSION/bin/activate"
-        fi
-    - pip install -e .[test]
+  - pip install codecov
 
 script:
-    - py.test --cov=zeep --cov-report=term-missing
+  - tox -v
 
-after_success: 
-    - codecov
+notifications:
+  email:
+    on_success: never
+    on_failure: always
