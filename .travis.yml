@@ -19,7 +19,7 @@ env:
   - TOXENV=pypy,codecov
 
 install:
-  - pip install codecov
+  - pip install tox
 
 script:
   - tox -v
