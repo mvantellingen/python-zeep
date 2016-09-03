@@ -13,9 +13,10 @@ def assert_nodes_equal(node_1, node_2):
             return load_xml(node)
         return node
 
-    text_1 = text_type(etree.tostring(_convert_node(node_1), pretty_print=True))
-    text_2 = text_type(etree.tostring(_convert_node(node_2), pretty_print=True))
-    assert text_1 == text_2, ('%s != %s' % (text_1, text_2))
+    # assert node_1 == node_2
+    text_1 = etree.tostring(_convert_node(node_1), pretty_print=True)
+    text_2 = etree.tostring(_convert_node(node_2), pretty_print=True)
+    assert text_1 == text_2
 
 
 def render_node(element, value):

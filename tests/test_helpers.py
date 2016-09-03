@@ -1,4 +1,5 @@
 from lxml import etree
+from collections import OrderedDict
 
 from tests.utils import load_xml
 from zeep import xsd
@@ -66,10 +67,11 @@ def test_serialize_nested_complex_type():
             {'x': 'foo', 'y': {'x': 'deeper'}},
         ])
 
-    assert obj.items == [
-        {'x': 'bla', 'y': {'x': 'deep'}},
-        {'x': 'foo', 'y': {'x': 'deeper'}},
-    ]
+    assert len(obj.items) == 2
+    obj.items[0].x == 'bla'
+    obj.items[0].y.x == 'deep'
+    obj.items[1].x == 'foo'
+    obj.items[1].y.x == 'deeper'
 
     result = serialize_object(obj)
 

@@ -1,6 +1,7 @@
 import datetime
 import io
 
+import pytest
 from lxml import etree
 
 from tests.utils import DummyTransport, assert_nodes_equal, load_xml
@@ -14,7 +15,7 @@ def test_complex_type_alt():
                 xmlns:tns="http://tests.python-zeep.org/"
                 targetNamespace="http://tests.python-zeep.org/"
                 elementFormDefault="qualified">
-          <element name="Address">
+          <element name="container">
             <complexType>
               <sequence>
                 <element minOccurs="0" maxOccurs="1" name="foo" type="string" />
@@ -25,20 +26,95 @@ def test_complex_type_alt():
     """.strip())
 
     schema = xsd.Schema(node)
-    address_type = schema.get_element('ns0:Address')
+    address_type = schema.get_element('ns0:container')
     obj = address_type(foo='bar')
 
     expected = """
       <document>
-        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:foo>bar</ns0:foo>
-        </ns0:Address>
+        </ns0:container>
       </document>
     """
 
     node = etree.Element('document')
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
+
+
+def test_complex_type_nested():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element minOccurs="0" maxOccurs="1" name="item">
+                  <complexType>
+                    <sequence>
+                      <element name="x" type="integer"/>
+                      <element name="y" type="integer"/>
+                    </sequence>
+                  </complexType>
+                </element>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+    address_type = schema.get_element('ns0:container')
+    obj = address_type(item={'x': 1, 'y': 2})
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item>
+            <ns0:x>1</ns0:x>
+            <ns0:y>2</ns0:y>
+          </ns0:item>
+        </ns0:container>
+      </document>
+    """
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+
+def test_complex_type_nested_wrong_type():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element minOccurs="0" maxOccurs="1" name="item">
+                  <complexType>
+                    <sequence>
+                      <element name="x" type="integer"/>
+                      <element name="y" type="integer"/>
+                    </sequence>
+                  </complexType>
+                </element>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+    address_type = schema.get_element('ns0:container')
+
+    with pytest.raises(TypeError):
+        obj = address_type(item={'bar': 1})
 
 
 def test_element_with_annotation():
@@ -1157,30 +1233,34 @@ def test_sequence_with_type():
                 xmlns:tns="http://tests.python-zeep.org/"
                 elementFormDefault="qualified"
                 targetNamespace="http://tests.python-zeep.org/">
-          <complexType name="BaseType" abstract="true">
+
+          <complexType name="base" abstract="true">
             <sequence>
               <element name="name" type="xsd:string" minOccurs="0"/>
             </sequence>
           </complexType>
-          <complexType name="SubType1">
+
+          <complexType name="subtype">
             <complexContent>
-              <extension base="tns:BaseType">
+              <extension base="tns:base">
                 <attribute name="attr_1" type="xsd:string"/>
               </extension>
             </complexContent>
           </complexType>
-          <complexType name="PolySequenceType">
+
+          <complexType name="polytype">
             <sequence>
-              <element name="item" type="tns:BaseType" maxOccurs="unbounded" minOccurs="0"/>
+              <element name="item" type="tns:base" maxOccurs="unbounded" minOccurs="0"/>
             </sequence>
           </complexType>
-          <element name="Seq" type="tns:PolySequenceType"/>
+
+          <element name="Seq" type="tns:polytype"/>
         </schema>
     """)
     schema = xsd.Schema(node)
-    seq = schema.get_type('ns0:PolySequenceType')
-    sub_type = schema.get_type('ns0:SubType1')
-    value = seq(item=[sub_type(attr_1="test", name="name")])
+    seq = schema.get_type('ns0:polytype')
+    sub_type = schema.get_type('ns0:subtype')
+    value = seq(item=[sub_type(attr_1='test', name='name')])
 
     node = etree.Element('document')
     seq.render(node, value)
@@ -1190,7 +1270,7 @@ def test_sequence_with_type():
         <ns0:item
             xmlns:ns0="http://tests.python-zeep.org/"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            attr_1="test" xsi:type="ns0:SubType1">
+            attr_1="test" xsi:type="ns0:subtype">
           <ns0:name>name</ns0:name>
         </ns0:item>
       </document>

@@ -31,9 +31,11 @@ class CompoundValue(object):
             else:
                 self.__values__[container_name] = values
 
+        # Set attributes
         for attribute_name, attribute in self._xsd_type.attributes:
             self.__values__[attribute_name] = attribute.default_value
 
+        # Set elements
         items = _process_signature(self._xsd_type, args, kwargs)
         for key, value in items.items():
             self.__values__[key] = value
@@ -121,17 +123,16 @@ def _process_signature(xsd_type, args, kwargs):
             for key, value in values.items():
                 if key not in result:
                     result[key] = value
+
     # Process the named arguments for attributes
     for attribute_name, attribute in xsd_type.attributes:
         if attribute_name in kwargs:
             result[attribute_name] = kwargs.pop(attribute_name)
 
     if kwargs:
-        raise TypeError(
-            (
-                "__init__() got an unexpected keyword argument %r. " +
-                "Signature: (%s)"
-            ) % (
-                next(six.iterkeys(kwargs)), xsd_type.signature()
-            ))
+        raise TypeError((
+            "%s() got an unexpected keyword argument %r. " +
+            "Signature: (%s)"
+        ) % (xsd_type.qname, next(six.iterkeys(kwargs)), xsd_type.signature()))
+
     return result

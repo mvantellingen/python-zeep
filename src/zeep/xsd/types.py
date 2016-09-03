@@ -168,12 +168,13 @@ class ComplexType(Type):
         super(ComplexType, self).__init__(qname=qname, is_global=is_global)
 
     def __call__(self, *args, **kwargs):
-        if not hasattr(self, '_value_class'):
-            self._value_class = type(
-                self.__class__.__name__, (CompoundValue,),
-                {'_xsd_type': self, '__module__': 'zeep.objects'})
-
         return self._value_class(*args, **kwargs)
+
+    @threaded_cached_property
+    def _value_class(self):
+        return type(
+            self.__class__.__name__, (CompoundValue,),
+            {'_xsd_type': self, '__module__': 'zeep.objects'})
 
     def __str__(self):
         return '%s(%s)' % (self.__class__.__name__, self.signature())
@@ -283,24 +284,22 @@ class ComplexType(Type):
         return self(**init_kwargs)
 
     def render(self, parent, value, xsd_type=None):
+        """Serialize the given value lxml.Element subelements on the parent
+        element.
+
+        """
         if not self.elements_nested and not self.attributes:
             return
 
+        # Render attributes
         for name, attribute in self.attributes:
-            if isinstance(value, dict):
-                attr_value = value.get(name)
-            else:
-                attr_value = getattr(value, name, None)
+            attr_value = getattr(value, name, None)
             attribute.render(parent, attr_value)
 
+        # Render sub elements
         for name, element in self.elements_nested:
             if isinstance(element, Element) or element.accepts_multiple:
-                try:
-                    element_value = value[name]
-                except AttributeError:
-                    raise ValueError(
-                        "Expected object for %s.%s, received %r instead" % (
-                            self.name, name, type(value)))
+                element_value = getattr(value, name, None)
             else:
                 element_value = value
 
@@ -314,8 +313,42 @@ class ComplexType(Type):
                 '{http://www.w3.org/2001/XMLSchema-instance}type',
                 xsd_type._xsd_name)
 
+    def parse_kwargs(self, kwargs, name=None):
+        value = None
+        name = name or self.name
+
+        if name in kwargs:
+            value = kwargs.pop(name)
+            value = self._create_object(value, name)
+            return {name: value}, kwargs
+        return {}, kwargs
+
+    def _create_object(self, value, name):
+        """Return the value as a CompoundValue object"""
+        if value is None:
+            return None
+
+        if isinstance(value, list):
+            return [self._create_object(val, name) for val in value]
+
+        if isinstance(value, CompoundValue):
+            return value
+
+        if isinstance(value, dict):
+            return self(**value)
+
+        # Check if the valueclass only expects one value, in that case
+        # we can try to automatically create an object for it.
+        if len(self.attributes) + len(self.elements) == 1:
+            return self(value)
+
+        raise ValueError((
+            "Error while create XML for complexType '%s': "
+            "Expected instance of type %s, received %r instead."
+        ) % (self.qname or name, self._value_class, type(value)))
+
     def resolve(self):
-        """ EXTENDS / RESTRICTS """
+        """Resolve all sub elements and types"""
         if self._resolved:
             return self
         self._resolved = True
