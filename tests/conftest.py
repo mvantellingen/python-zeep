@@ -1,4 +1,8 @@
 import pytest
+from lxml.etree import _Element
+
+
+pytest.register_assert_rewrite('tests.utils')
 
 
 @pytest.fixture(autouse=True)
