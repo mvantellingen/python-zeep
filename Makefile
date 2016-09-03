@@ -2,6 +2,7 @@
 
 install:
 	pip install -e .[docs,test]
+	pip install bumpversion twine wheel
 
 lint:
 	flake8 src/ tests/
