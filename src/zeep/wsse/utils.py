@@ -1,8 +1,9 @@
 import datetime
 
 import pytz
-from lxml import etree
 from lxml.builder import ElementMaker
+
+from zeep.wsdl.utils import get_or_create_header
 
 NSMAP = {
     'wsse': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd',
@@ -15,12 +16,7 @@ def get_security_header(doc):
     created.
 
     """
-    header_qname = '{http://schemas.xmlsoap.org/soap/envelope/}Header'
-    header = doc.find(header_qname)
-    if header is None:
-        header = etree.Element(header_qname)
-        doc.insert(0, header)
-
+    header = get_or_create_header(doc)
     security = header.find('wsse:Security', namespaces=NSMAP)
     if security is None:
         security = WSSE.Security()
