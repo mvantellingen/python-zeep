@@ -1,11 +1,9 @@
-import six
 from lxml import etree
 
-from zeep import plugins
+from zeep import plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.parser import parse_xml
 from zeep.utils import qname_attr
-from zeep.wsdl import wsa
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
 from zeep.wsdl.utils import etree_to_string

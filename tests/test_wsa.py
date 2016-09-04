@@ -1,12 +1,10 @@
 import uuid
 
-from lxml import etree
 from pretend import stub
 from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
-from zeep import wsdl
-from zeep.wsdl import wsa
+from zeep import wsa, wsdl
 
 
 def test_require_wsa(recwarn, monkeypatch):
