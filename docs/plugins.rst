@@ -1,6 +1,8 @@
-===============
-Writing plugins
-===============
+=======
+Plugins
+=======
+
+.. versionadded:: 0.15
 
 You can write plugins for zeep which can be used to process/modify data before
 it is send to the server (egress) and after it is received (ingress).

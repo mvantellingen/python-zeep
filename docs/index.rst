@@ -129,6 +129,7 @@ More information
 
    in-depth
    transport
+   wsa
    wsse
    plugins
    helpers
