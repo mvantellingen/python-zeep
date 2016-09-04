@@ -65,6 +65,7 @@ class SoapMessage(ConcreteMessage):
         self.type = type
 
     def serialize(self, *args, **kwargs):
+        """Create a SerializedMessage for this message"""
         nsmap = self.nsmap.copy()
         nsmap.update(self.wsdl.types._prefix_map)
 

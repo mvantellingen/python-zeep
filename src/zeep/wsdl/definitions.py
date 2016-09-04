@@ -7,6 +7,7 @@ from zeep.utils import qname_attr
 
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
+    'wsaw': 'http://www.w3.org/2006/05/addressing/wsdl',
 }
 
 MessagePart = namedtuple('MessagePart', ['element', 'type'])
@@ -132,6 +133,9 @@ class AbstractOperation(object):
                 kwargs['output_message'] = param_value
             else:
                 kwargs['fault_messages'][param_name] = param_value
+
+            wsa_action = msg_node.get(etree.QName(NSMAP['wsaw'], 'Action'))
+            param_value.wsa_action = wsa_action
 
         kwargs['name'] = name
         kwargs['parameter_order'] = xmlelement.get('parameterOrder')

@@ -5,6 +5,7 @@
    does make zeep more compatible with all the invalid wsdl documents out
    there. (#159)
  - Implement support for attributeGroup (#160)
+ - Add experimental support for ws-addressing (#92)
  - Fix handling of Mime messages with no parts (#168)
  - Workaround an issue where soap servers don't qualify references (#170)
  - Correctly process attributes which are passed as a dictionary. (#125)

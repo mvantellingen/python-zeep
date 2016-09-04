@@ -12,11 +12,12 @@ Highlights:
  * Uses the defusedxml module for handling potential XML security issues
  * Support for WSSE (UsernameToken only for now)
  * Experimental support for HTTP bindings
+ * Experimental support for WS-Addressing headers
 
 Features still in development include:
  * WSSE x.509 support (BinarySecurityToken)
  * XML validation using lxml XMLSchema's
- * WS-Addressing and WS Policy support
+ * WS Policy support
 
 
 Simple example::

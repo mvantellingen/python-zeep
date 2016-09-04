@@ -1,10 +1,11 @@
 import six
-from defusedxml.lxml import fromstring
 from lxml import etree
 
 from zeep import plugins
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
+from zeep.parser import parse_xml
 from zeep.utils import qname_attr
+from zeep.wsdl import wsa
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
 from zeep.wsdl.utils import etree_to_string
@@ -45,17 +46,41 @@ class SoapBinding(Binding):
         return soap_node is not None
 
     def create_message(self, operation, *args, **kwargs):
+        envelope, http_headers = self._create(operation, args, kwargs)
+        return envelope
+
+    def _create(self, operation, args, kwargs, client=None,
+                endpoint_url=None):
         """Create the XML document to send to the server.
 
         Note that this generates the soap envelope without the wsse applied.
 
         """
-        if isinstance(operation, six.string_types):
-            operation = self.get(operation)
-            if not operation:
-                raise ValueError("Operation not found")
-        serialized = operation.create(*args, **kwargs)
-        return serialized.content
+        operation_obj = self.get(operation)
+        if not operation_obj:
+            raise ValueError("Operation %r not found" % operation)
+
+        # Create the SOAP envelope
+        serialized = operation_obj.create(*args, **kwargs)
+        serialized.headers['Content-Type'] = self.content_type
+
+        envelope = serialized.content
+        http_headers = serialized.headers
+
+        # Apply ws-addressing
+        if client:
+            to_addr = endpoint_url or client.service._binding_options['address']
+            envelope, http_headers = wsa.apply(
+                to_addr, operation_obj, envelope, http_headers)
+
+            # Apply plugins
+            envelope, http_headers = plugins.apply_egress(
+                client, envelope, http_headers)
+
+            # Apply WSSE
+            if client.wsse:
+                envelope, http_headers = client.wsse.sign(envelope, http_headers)
+        return envelope, http_headers
 
     def send(self, client, options, operation, args, kwargs):
         """Called from the service
@@ -70,29 +95,17 @@ class SoapBinding(Binding):
         :type args: tuple
         :param kwargs: The **kwargs to pass to the operation
         :type kwargs: dict
+
         """
-        operation_obj = self.get(operation)
-        if not operation_obj:
-            raise ValueError("Operation %r not found" % operation)
-
-        # Create the SOAP envelope
-        serialized = operation_obj.create(*args, **kwargs)
-        serialized.headers['Content-Type'] = self.content_type
-
-        envelope = serialized.content
-        http_headers = serialized.headers
-
-        # Apply plugins
-        envelope, http_headers = plugins.apply_egress(
-            client, envelope, http_headers)
-
-        # Apply WSSE
-        if client.wsse:
-            envelope, http_headers = client.wsse.sign(envelope, http_headers)
+        envelope, http_headers = self._create(
+            operation, args, kwargs,
+            client=client,
+            endpoint_url=options['address'])
 
         response = client.transport.post_xml(
             options['address'], envelope, http_headers)
 
+        operation_obj = self.get(operation)
         return self.process_reply(client, operation_obj, response)
 
     def process_reply(self, client, operation, response):
