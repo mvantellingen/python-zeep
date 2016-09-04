@@ -69,12 +69,24 @@ class AbstractMessage(object):
 class AbstractOperation(object):
     """Abstract operations are defined in the wsdl's portType elements."""
 
-    def __init__(self, name, input=None, output=None, faults=None,
-                 parameter_order=None):
+    def __init__(self, name, input_message=None, output_message=None,
+                 fault_messages=None, parameter_order=None):
+        """Initialize the abstract operation.
+
+        :param name: The name of the operation
+        :type name: str
+        :param input_message: Message to generate the request XML
+        :type input_message: AbstractMessage
+        :param output_message: Message to process the response XML
+        :type output_message: AbstractMessage
+        :param fault_messages: Dict of messages to handle faults
+        :type fault_messages: dict of str: AbstractMessage
+
+        """
         self.name = name
-        self.input = input
-        self.output = output
-        self.faults = faults
+        self.input_message = input_message
+        self.output_message = output_message
+        self.fault_messages = fault_messages
         self.parameter_order = parameter_order
 
     def get(self, type_, name=None):
@@ -97,10 +109,11 @@ class AbstractOperation(object):
                    <wsdl:documentation .... /> ?
                </wsdl:fault>
             </wsdl:operation>
+
         """
         name = xmlelement.get('name')
         kwargs = {
-            'faults': {}
+            'fault_messages': {}
         }
 
         for msg_node in xmlelement.getchildren():
@@ -108,13 +121,17 @@ class AbstractOperation(object):
             if tag_name not in ('input', 'output', 'fault'):
                 continue
 
-            param_msg = qname_attr(msg_node, 'message', definitions.target_namespace)
+            param_msg = qname_attr(
+                msg_node, 'message', definitions.target_namespace)
             param_name = msg_node.get('name')
             param_value = definitions.get('messages', param_msg.text)
-            if tag_name in ('input', 'output'):
-                kwargs[tag_name] = param_value
+
+            if tag_name == 'input':
+                kwargs['input_message'] = param_value
+            elif tag_name == 'output':
+                kwargs['output_message'] = param_value
             else:
-                kwargs['faults'][param_name] = param_value
+                kwargs['fault_messages'][param_name] = param_value
 
         kwargs['name'] = name
         kwargs['parameter_order'] = xmlelement.get('parameterOrder')

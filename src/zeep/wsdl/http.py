@@ -163,6 +163,6 @@ class HttpOperation(Operation):
     def resolve(self, definitions):
         super(HttpOperation, self).resolve(definitions)
         if self.output:
-            self.output.resolve(definitions, self.abstract.output)
+            self.output.resolve(definitions, self.abstract.output_message)
         if self.input:
-            self.input.resolve(definitions, self.abstract.input)
+            self.input.resolve(definitions, self.abstract.input_message)

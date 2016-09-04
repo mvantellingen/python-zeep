@@ -330,10 +330,10 @@ class SoapOperation(Operation):
     def resolve(self, definitions):
         super(SoapOperation, self).resolve(definitions)
         for name, fault in self.faults.items():
-            if name in self.abstract.faults:
-                fault.resolve(definitions, self.abstract.faults[name])
+            if name in self.abstract.fault_messages:
+                fault.resolve(definitions, self.abstract.fault_messages[name])
 
         if self.output:
-            self.output.resolve(definitions, self.abstract.output)
+            self.output.resolve(definitions, self.abstract.output_message)
         if self.input:
-            self.input.resolve(definitions, self.abstract.input)
+            self.input.resolve(definitions, self.abstract.input_message)
