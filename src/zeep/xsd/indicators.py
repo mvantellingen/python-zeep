@@ -79,7 +79,11 @@ class OrderIndicator(Indicator, list):
         return result
 
     def accept(self, values):
-        """Check if the current element accepts the given values."""
+        """Return the number of values which are accepted by this choice.
+
+        If not all required elements are available then 0 is returned.
+
+        """
         values = {k for k in values if values[k] is not None}
 
         required_keys = {
@@ -93,12 +97,9 @@ class OrderIndicator(Indicator, list):
 
         values_keys = set(values)
 
-        if (
-            values_keys <= (required_keys | optional_keys) and
-            required_keys <= values_keys
-        ):
-            return True
-        return False
+        if (required_keys <= values_keys):
+            return len(values_keys & (required_keys | optional_keys))
+        return 0
 
     def parse_args(self, args):
         result = {}
@@ -191,7 +192,6 @@ class OrderIndicator(Indicator, list):
                         element_value = None
                 else:
                     element_value = value
-
                 if element_value is not None or not element.is_optional:
                     element.render(parent, element_value)
 
@@ -378,33 +378,43 @@ class Choice(OrderIndicator):
         """
         if not self.accepts_multiple:
             value = [value]
+
         for item in value:
+            result = self._find_element_to_render(item)
+            if result:
+                element, choice_value = result
+                element.render(parent, choice_value)
 
-            # Find matching choice element
-            for name, element in self.elements_nested:
+    def _find_element_to_render(self, value):
+        """Return a tuple (element, value) for the best matching choice"""
+        matches = []
 
-                if isinstance(element, Element):
-                    if element.name in item:
-                        try:
-                            choice_value = item[element.name]
-                        except KeyError:
-                            choice_value = item
+        for name, element in self.elements_nested:
+            if isinstance(element, Element):
+                if element.name in value:
+                    try:
+                        choice_value = value[element.name]
+                    except KeyError:
+                        choice_value = value
 
-                        if choice_value is not None:
-                            element.render(parent, choice_value)
-                            break
+                    if choice_value is not None:
+                        matches.append((1, element, choice_value))
+            else:
+                if name is not None:
+                    try:
+                        choice_value = value[name]
+                    except KeyError:
+                        choice_value = value
                 else:
-                    if name is not None:
-                        try:
-                            choice_value = item[name]
-                        except KeyError:
-                            choice_value = item
-                    else:
-                        choice_value = item
+                    choice_value = value
 
-                    if element.accept(choice_value):
-                        element.render(parent, choice_value)
-                        break
+                score = element.accept(choice_value)
+                if score:
+                    matches.append((score, element, choice_value))
+
+        if matches:
+            matches = sorted(matches, key=operator.itemgetter(0), reverse=True)
+            return matches[0][1:]
 
     def signature(self, depth=0):
         parts = []
