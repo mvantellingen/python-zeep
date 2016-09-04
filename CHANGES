@@ -1,4 +1,4 @@
-0.15.0 (unreleased)
+0.15.0 (2016-09-04)
 -------------------
  - All wsdl documents and xsd schemas are now globally available for eachother.
    While this is not correct according to the (messy) soap specifications, it
