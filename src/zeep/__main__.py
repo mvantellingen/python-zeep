@@ -4,6 +4,7 @@ import argparse
 import logging
 import logging.config
 import time
+from six.moves.urllib.parse import urlparse
 
 from zeep.cache import InMemoryCache, SqliteCache
 from zeep.client import Client
@@ -63,6 +64,10 @@ def main(args):
 
     if args.no_verify:
         transport_kwargs['verify'] = False
+
+    result = urlparse(args.wsdl_file)
+    if result.username or result.password:
+        transport_kwargs['http_auth'] = (result.username, result.password)
 
     transport = Transport(**transport_kwargs)
     st = time.time()

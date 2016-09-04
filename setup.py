@@ -18,9 +18,10 @@ docs_require = [
 
 tests_require = [
     'freezegun==0.3.7',
+    'mock==2.0.0',
     'pretend==1.0.8',
-    'pytest==3.0.2',
     'pytest-cov==2.3.1',
+    'pytest==3.0.2',
     'requests_mock>=0.7.0',
 
     # Linting
