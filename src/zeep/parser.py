@@ -7,20 +7,19 @@ from six.moves.urllib.parse import urljoin, urlparse
 from zeep.exceptions import XMLSyntaxError
 
 
-def parse_xml(content, transport, base_url=None):
-    parser = etree.XMLParser(remove_comments=True)
+def parse_xml(content, base_url=None, recover=False):
+    parser = etree.XMLParser(remove_comments=True, recover=recover)
     try:
         return fromstring(content, parser=parser, base_url=base_url)
     except etree.XMLSyntaxError as exc:
-        raise XMLSyntaxError("Invalid XML content received (%s)" % exc.message)
-
+        raise XMLSyntaxError("Invalid XML content received (%s)" % exc)
 
 def load_external(url, transport, base_url=None):
     if base_url:
         url = absolute_location(url, base_url)
 
     response = transport.load(url)
-    return parse_xml(response, transport, base_url)
+    return parse_xml(response, base_url)
 
 
 def absolute_location(location, base):

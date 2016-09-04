@@ -123,7 +123,7 @@ class Document(object):
 
         """
         if hasattr(location, 'read'):
-            return parse_xml(location.read(), self.transport)
+            return parse_xml(location.read())
         return load_external(location, self.transport, self.location)
 
 
