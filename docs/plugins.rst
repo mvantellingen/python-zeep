@@ -37,3 +37,30 @@ executed sequentially.
     from zeep import Client
 
     client = Client(..., plugins=[MyLoggingPlugin()])
+
+
+.. _plugin-history:
+
+
+HistoryPlugin
+=============
+
+.. versionadded:: 0.15
+
+The history plugin keep a list of sent and received requests. By default at
+most one transaction (sent/received) is kept. But this can be changed when you
+create the plugin by passing the ``maxlen`` kwarg.
+
+.. code-block:: python
+    
+    from zeep import Client
+    from zeep.plugins import HistoryPlugin
+
+    history = HistoryPlugin()
+    client = Client(
+        'http://examples.python-zeep.org/basic.wsdl',
+        plugins=[history])
+    client.service.DoSomething()
+
+    print(history.last_sent)
+    print(history.last_received)

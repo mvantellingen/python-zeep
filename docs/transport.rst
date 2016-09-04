@@ -55,8 +55,9 @@ Changing the SqliteCache settings can be done via::
 Debugging
 ---------
 To see the SOAP XML messages which are sent to the remote server and the 
-response received you need to set the Python logger level to DEBUG for the
-``zeep.transports`` module.
+response received you can set the Python logger level to DEBUG for the
+``zeep.transports`` module. Since 0.15 this can also be achieved via the
+:ref:`plugin-history`.
 
 .. code-block:: python
 

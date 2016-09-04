@@ -10,7 +10,8 @@
  - Workaround an issue where soap servers don't qualify references (#170)
  - Correctly process attributes which are passed as a dictionary. (#125)
  - Add support for plugins, see documentation for examples.
- - Fix helpers.serialize_object for lists of objects (#123)
+ - Fix helpers.serialize_object for lists of objects (#123).
+ - Add HistoryPlugin which ofers last_sent and last_received properties (#93).
 
 
 0.14.0 (2016-08-03)
