@@ -269,7 +269,7 @@ class SoapOperation(Operation):
             raise XMLSyntaxError((
                 "The XML returned by the server does not contain a valid " +
                 "{%s}Envelope root element. The root element found is %s "
-            ) % (envelope_qname, envelope.tag))
+            ) % (envelope_qname.namespace, envelope.tag))
 
         body = envelope.find('soap-env:Body', namespaces=self.nsmap)
         assert body is not None, "No {%s}Body element found" % (self.nsmap['soap-env'])
