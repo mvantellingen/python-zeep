@@ -49,8 +49,7 @@ class SoapBinding(Binding):
         envelope, http_headers = self._create(operation, args, kwargs)
         return envelope
 
-    def _create(self, operation, args, kwargs, client=None,
-                endpoint_url=None):
+    def _create(self, operation, args, kwargs, client=None, options=None):
         """Create the XML document to send to the server.
 
         Note that this generates the soap envelope without the wsse applied.
@@ -69,13 +68,16 @@ class SoapBinding(Binding):
 
         # Apply ws-addressing
         if client:
-            to_addr = endpoint_url or client.service._binding_options['address']
-            envelope, http_headers = wsa.apply(
-                to_addr, operation_obj, envelope, http_headers)
+            if not options:
+                options = client.service._binding_options
+
+            if operation_obj.abstract.input_message.wsa_action:
+                envelope, http_headers = wsa.WsAddressingPlugin().egress(
+                    envelope, http_headers, operation_obj, options)
 
             # Apply plugins
             envelope, http_headers = plugins.apply_egress(
-                client, envelope, http_headers)
+                client, envelope, http_headers, operation_obj, options)
 
             # Apply WSSE
             if client.wsse:
@@ -100,7 +102,7 @@ class SoapBinding(Binding):
         envelope, http_headers = self._create(
             operation, args, kwargs,
             client=client,
-            endpoint_url=options['address'])
+            options=options)
 
         response = client.transport.post_xml(
             options['address'], envelope, http_headers)
@@ -135,7 +137,7 @@ class SoapBinding(Binding):
             client.wsse.verify(doc)
 
         doc, http_headers = plugins.apply_ingress(
-            client, doc, response.headers)
+            client, doc, response.headers, operation)
 
         if response.status_code != 200:
             return self.process_error(doc)

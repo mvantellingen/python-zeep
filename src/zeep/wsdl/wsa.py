@@ -3,19 +3,25 @@ import uuid
 from lxml import etree
 from lxml.builder import ElementMaker
 
+from zeep.plugins import Plugin
 from zeep.wsdl.utils import get_or_create_header
 
 WSA = ElementMaker(namespace='http://www.w3.org/2005/08/addressing')
 
 
-def apply(to_addr, operation, envelope, http_headers):
-    """Apply the ws-addressing headers to the given envelope."""
-    if operation.input.abstract.wsa_action:
+class WsAddressingPlugin(Plugin):
+    def egress(self, envelope, http_headers, operation, binding_options):
+        """Apply the ws-addressing headers to the given envelope."""
+
+        wsa_action = operation.input.abstract.wsa_action
+        if not wsa_action:
+            wsa_action = operation.soapaction
+
         header = get_or_create_header(envelope)
         headers = [
-            WSA.Action(operation.input.abstract.wsa_action),
+            WSA.Action(wsa_action),
             WSA.MessageID('urn:uuid:' + str(uuid.uuid4())),
-            WSA.To(to_addr),
+            WSA.To(binding_options['address']),
         ]
         header.extend(headers)
         etree.cleanup_namespaces(
@@ -23,4 +29,4 @@ def apply(to_addr, operation, envelope, http_headers):
                 'wsa': 'http://www.w3.org/2005/08/addressing'
             })
 
-    return envelope, http_headers
+        return envelope, http_headers

@@ -15,11 +15,11 @@ Writing a plugin is really simple and best explained via an example.
 
     class MyLoggingPlugin(Plugin):
 
-        def ingress(self, envelope, http_headers):
+        def ingress(self, envelope, http_headers, operation):
             print(etree.tostring(envelope, pretty_print=True))
             return envelope, http_headers
 
-        def egress(self, envelope, http_headers):
+        def egress(self, envelope, http_headers, operation, binding_options):
             print(etree.tostring(envelope, pretty_print=True))
             return envelope, http_headers
 
