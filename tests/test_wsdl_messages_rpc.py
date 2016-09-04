@@ -157,7 +157,14 @@ def test_deserialize():
 
 def test_wsdl_array_of_simple_types():
     wsdl_content = StringIO("""
-    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://tests.python-zeep.org/tns" xmlns:tns="http://tests.python-zeep.org/tns" xmlns:impl="http://tests.python-zeep.org/tns" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">
+    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+        targetNamespace="http://tests.python-zeep.org/tns"
+        xmlns:tns="http://tests.python-zeep.org/tns"
+        xmlns:impl="http://tests.python-zeep.org/tns"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">
       <types>
         <schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://tests.python-zeep.org/tns">
           <complexType name="ArrayOfString">
@@ -204,20 +211,87 @@ def test_wsdl_array_of_simple_types():
     operation = binding.get('getSimpleArray')
 
     document = load_xml("""
-        <SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://tests.python-zeep.org/tns" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-            <ns1:getSimpleArrayResponse>
-                <return SOAP-ENC:arrayType="xsd:string[16]" xsi:type="ns1:ArrayOfString">
-                    <item xsi:type="xsd:string">item</item>
-                    <item xsi:type="xsd:string">and</item>
-                    <item xsi:type="xsd:string">even</item>
-                    <item xsi:type="xsd:string">more</item>
-                    <item xsi:type="xsd:string">items</item>
-                </return>
-            </ns1:getSimpleArrayResponse>
-        </SOAP-ENV:Body>
+    <SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+        xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+        xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:ns1="http://tests.python-zeep.org/tns"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <ns1:getSimpleArrayResponse>
+            <return SOAP-ENC:arrayType="xsd:string[16]" xsi:type="ns1:ArrayOfString">
+                <item xsi:type="xsd:string">item</item>
+                <item xsi:type="xsd:string">and</item>
+                <item xsi:type="xsd:string">even</item>
+                <item xsi:type="xsd:string">more</item>
+                <item xsi:type="xsd:string">items</item>
+            </return>
+        </ns1:getSimpleArrayResponse>
+    </SOAP-ENV:Body>
     """)
 
     deserialized = operation.output.deserialize(document)
     list_of_items = deserialized['_value_1']
 
     assert list_of_items == ['item', 'and', 'even', 'more', 'items']
+
+
+def test_handle_incorrectly_qualified():
+    # Based on #176
+    wsdl_content = StringIO("""
+    <?xml version="1.0"?>
+    <wsdl:definitions
+        xmlns="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:tns="http://tests.python-zeep.org/tns"
+        xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://tests.python-zeep.org/tns">
+      <wsdl:message name="getResponse">
+        <wsdl:part name="getItemReturn" type="xsd:string"/>
+      </wsdl:message>
+      <wsdl:message name="getRequest"></wsdl:message>
+      <wsdl:portType name="Test">
+        <wsdl:operation name="getItem">
+          <wsdl:input message="tns:getRequest" name="getRequest"/>
+          <wsdl:output message="tns:getResponse" name="getResponse"/>
+        </wsdl:operation>
+      </wsdl:portType>
+      <wsdl:binding name="TestSoapBinding" type="tns:Test">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="getItem">
+          <soap:operation soapAction=""/>
+          <wsdl:input name="getRequest">
+            <soap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://tests.python-zeep.org/tns" use="encoded"/>
+          </wsdl:input>
+          <wsdl:output name="getResponse">
+            <soap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://tests.python-zeep.org/tns" use="encoded"/>
+          </wsdl:output>
+        </wsdl:operation>
+      </wsdl:binding>
+      <wsdl:service name="TestService">
+        <wsdl:port binding="tns:TestSoapBinding" name="Test">
+          <soap:address location="http://test.python-zeeo.org/rpc"/>
+        </wsdl:port>
+      </wsdl:service>
+    </wsdl:definitions>
+    """.strip())
+
+    transport = DummyTransport()
+    root = wsdl.Document(wsdl_content, transport)
+
+    binding = root.bindings['{http://tests.python-zeep.org/tns}TestSoapBinding']
+    operation = binding.get('getItem')
+
+    document = load_xml("""
+    <soapenv:Body
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <ns1:getResponse soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:ns1="http://tests.python-zeep.org/tns">
+        <ns1:getItemReturn xsi:type="xsd:string">foobar</ns1:getItemReturn>
+      </ns1:getResponse>
+    </soapenv:Body>
+    """)
+    deserialized = operation.output.deserialize(document)
+    assert deserialized == 'foobar'

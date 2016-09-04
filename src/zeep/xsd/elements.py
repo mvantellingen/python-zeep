@@ -227,20 +227,26 @@ class Element(Base):
         """Consume matching xmlelements and call parse() on each of them"""
         result = []
 
-        match_tags = [self.qname]
-
-        # Workaround for SOAP servers where reference elements are not
-        # qualified for unqualified documents. See #170
-        if schema and self.qname.namespace:
-            doc = schema._get_schema_document(self.qname.namespace)
-            if doc and doc._element_form == 'unqualified':
-                match_tags.append(self.qname.localname)
-
         for i in max_occurs_iter(self.max_occurs):
             if not xmlelements:
                 break
 
-            if xmlelements[0].tag in match_tags:
+            # Workaround for SOAP servers which incorrectly use unqualified
+            # or qualified elements in the responses (#170, #176). To make the
+            # best of it we compare the full uri's if both elements have a
+            # namespace. If only one has a namespace then only compare the
+            # localname.
+
+            # If both elements have a namespace and they don't match then skip
+            element_tag = etree.QName(xmlelements[0].tag)
+            if (
+                element_tag.namespace and self.qname.namespace and
+                element_tag.namespace != self.qname.namespace
+            ):
+                break
+
+            # Only compare the localname
+            if element_tag.localname == self.qname.localname:
                 xmlelement = xmlelements.pop(0)
                 item = self.parse(
                     xmlelement, schema, allow_none=True, context=context)

@@ -272,11 +272,12 @@ class RpcMessage(SoapMessage):
 
     def deserialize(self, node):
         value = node.find(self.body.qname)
+        assert value is not None, "No node found with name %s" % self.body.qname
+
         result = self.body.parse(value, self.wsdl.types)
 
         result = [
-            getattr(result, name)
-            for name, field in self.body.type.elements
+            getattr(result, name) for name, field in self.body.type.elements
         ]
         if len(result) > 1:
             return tuple(result)
@@ -312,10 +313,16 @@ class RpcMessage(SoapMessage):
             else:
                 tag_name = etree.QName(namespace, self.abstract.name.localname)
 
-            self.body = xsd.Element(tag_name, xsd.ComplexType(xsd.Sequence([
-                msg.element if msg.element else xsd.Element(name, msg.type)
-                for name, msg in parts.items()
-            ])))
+            # Create the xsd element to create/parse the response. Each part
+            # is a sub element of the root node (which uses the operation name)
+            elements = []
+            for name, msg in parts.items():
+                if msg.element:
+                    elements.append(msg.element)
+                else:
+                    elements.append(xsd.Element(name, msg.type))
+            self.body = xsd.Element(
+                tag_name, xsd.ComplexType(xsd.Sequence(elements)))
 
 
 class HttpMessage(ConcreteMessage):
