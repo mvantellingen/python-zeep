@@ -22,8 +22,8 @@ Features still in development include:
  * XML validation using lxml XMLSchema's
  * WS Policy support
 
- Please see for more information the documentation at 
- http://docs.python-zeep.org/
+Please see for more information the documentation at
+http://docs.python-zeep.org/
 
 
 .. start-no-pypi
