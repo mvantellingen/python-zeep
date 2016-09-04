@@ -26,6 +26,8 @@ Features still in development include:
  http://docs.python-zeep.org/
 
 
+.. start-no-pypi
+
 Status
 ------
 
@@ -47,6 +49,7 @@ Status
 .. image:: https://requires.io/github/mvantellingen/python-zeep/requirements.svg?branch=master
      :target: https://requires.io/github/mvantellingen/python-zeep/requirements/?branch=master
 
+.. end-no-pypi
 
 Installation
 ------------

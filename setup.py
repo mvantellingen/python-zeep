@@ -1,3 +1,4 @@
+import re
 from setuptools import find_packages, setup
 
 install_requires = [
@@ -29,11 +30,15 @@ tests_require = [
     'flake8-debugger==1.4.0',
 ]
 
+with open('README.rst') as fh:
+    long_description = re.sub(
+        '^.. start-no-pypi.*^.. end-no-pypi', '', fh.read(), flags=re.M | re.S)
+
 setup(
     name='zeep',
     version='0.15.0.dev0',
     description='A modern/fast Python SOAP client based on lxml / requests',
-    long_description=open('README.rst').read(),
+    long_description=long_description,
     author="Michael van Tellingen",
     author_email="michaelvantellingen@gmail.com",
     url='http://docs.python-zeep.org',
