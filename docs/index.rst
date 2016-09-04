@@ -16,18 +16,20 @@ Highlights:
 
 Features still in development include:
  * WSSE x.509 support (BinarySecurityToken)
- * XML validation using lxml XMLSchema's
  * WS Policy support
 
 
-Simple example::
+A simple example:
 
-    >>> from zeep import Client
-    >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL')
-    >>> print(client.service.ConvertSpeed(
-    ...     100, 'kilometersPerhour', 'milesPerhour'))
-    62.137
+.. code-block:: python
+
+    from zeep import Client
+
+    client = Client('http://www.webservicex.net/ConvertSpeed.asmx?WSDL')
+    result = client.service.ConvertSpeed(
+        100, 'kilometersPerhour', 'milesPerhour')
+
+    assert result == 62.137
 
 
 Quick Introduction
@@ -43,6 +45,12 @@ Parsing the XML documents is done by using the lxml library. This is the most
 performant and compliant Python XML library currently available. This results
 in major speed benefits when retrieving large soap responses.
 
+The SOAP specifications are unfortunately really vague and leave a lot of
+things open for interpretation.  Due to this there are a lot of WSDL documents
+available which are invalid or SOAP servers which contain bugs. Zeep tries to
+be as compatible as possible but there might be cases where you run into 
+problems. Don't hesitate to `submit`_ an issue in this case (complete with an 
+wsdl document).
 
 
 Getting started
@@ -59,6 +67,13 @@ implement. This can be done with::
 
 
 See ``python -mzeep --help`` for more information about this command.
+
+
+.. note:: Since this module hasn't reached 1.0.0 yet their might be minor
+          releases which introduce backwards compatible changes. While I try 
+          to keep this to a minimum it can still happen. So as always pin the 
+          version of zeep you used (e.g. ``zeep==0.14.0``').
+
 
 
 A simple use-case
@@ -84,42 +99,6 @@ endpoint you can run the following command in your terminal.
     python -mzeep http://www.soapclient.com/xml/soapresponder.wsdl
 
 
-
-Nested objects
---------------
-
-Most of the times you need to pass nested data to the soap client.  These 
-Complex types can be created using the `client.get_type()` method.
-
-.. code-block:: python
-
-    from zeep import Client
-
-    client = Client('http://my-enterprise-endpoint.com')
-    order_type = client.get_type('ns0:Order')
-    order = order_type(number='1234', price=99)
-    client.service.submit_order(user_id=1, order=order)
-
-
-However instead of creating an object from a type defined in the XSD you can
-also pass in a dictionary. Zeep will automatically convert this dict to the
-required object during the call.
-
-
-.. code-block:: python
-
-    from zeep import Client
-
-    client = Client('http://my-enterprise-endpoint.com')
-    client.service.submit_order(user_id=1, order={
-        'number': '1234',
-        'price': 99,
-    })
-
-
-
-
-
 More information
 ================
 
@@ -127,7 +106,8 @@ More information
    :maxdepth: 2
    :name: mastertoc
 
-   in-depth
+   in_depth
+   datastructures
    transport
    wsa
    wsse
@@ -147,3 +127,4 @@ info@mvantellingen.nl for more information.
 
 
 .. _let me know: https://github.com/mvantellingen/python-zeep/issues
+.. _submit: https://github.com/mvantellingen/python-zeep/issues
