@@ -1,3 +1,5 @@
+import six
+
 from lxml import etree
 from six import binary_type, string_types, text_type
 
@@ -16,6 +18,10 @@ def assert_nodes_equal(node_1, node_2):
     # assert node_1 == node_2
     text_1 = etree.tostring(_convert_node(node_1), pretty_print=True)
     text_2 = etree.tostring(_convert_node(node_2), pretty_print=True)
+
+    if six.PY3:
+        text_1 = text_1.decode('utf-8')
+        text_2 = text_2.decode('utf-8')
     assert text_1 == text_2
 
 
