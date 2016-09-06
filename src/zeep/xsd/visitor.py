@@ -1,5 +1,6 @@
 import keyword
 import logging
+import re
 import warnings
 
 from lxml import etree
@@ -52,7 +53,7 @@ class SchemaVisitor(object):
         result = visit_func(self, node, parent)
         return result
 
-    def process_ref_attribute(self, node):
+    def process_ref_attribute(self, node, array_type=None):
         ref = qname_attr(node, 'ref')
         if ref:
             ref = self._create_qname(ref)
@@ -62,7 +63,8 @@ class SchemaVisitor(object):
             # so that it is handled correctly
             if ref.namespace == 'http://www.w3.org/2001/XMLSchema':
                 return
-            return xsd_elements.RefAttribute(node.tag, ref, self.schema)
+            return xsd_elements.RefAttribute(
+                node.tag, ref, self.schema, array_type=array_type)
 
     def process_reference(self, node, **kwargs):
         ref = qname_attr(node, 'ref')
@@ -314,11 +316,21 @@ class SchemaVisitor(object):
         """
         is_global = parent.tag == tags.schema
 
+        # Check of wsdl:arayType
+        array_type = node.get('{http://schemas.xmlsoap.org/wsdl/}arrayType')
+        if array_type:
+            match = re.match('([^\[]+)', array_type)
+            if match:
+                array_type = match.groups()[0]
+                qname = as_qname(
+                    array_type, node.nsmap, self.document._target_namespace)
+                array_type = xsd_types.UnresolvedType(qname, self.schema)
+
         # If the elment has a ref attribute then all other attributes cannot
         # be present. Short circuit that here.
         # Ref is prohibited on global elements (parent = schema)
         if not is_global:
-            result = self.process_ref_attribute(node)
+            result = self.process_ref_attribute(node, array_type=array_type)
             if result:
                 return result
 

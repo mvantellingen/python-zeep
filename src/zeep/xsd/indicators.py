@@ -43,7 +43,8 @@ class OrderIndicator(Indicator, list):
         if elements is None:
             super(OrderIndicator, self).__init__()
         else:
-            super(OrderIndicator, self).__init__(elements)
+            super(OrderIndicator, self).__init__()
+            self.extend(elements)
 
     @threaded_cached_property
     def elements(self):
@@ -463,6 +464,7 @@ class Group(Indicator):
     """
 
     def __init__(self, name, child, max_occurs=1, min_occurs=1):
+        super(Group, self).__init__()
         self.child = child
         self.qname = name
         self.name = name.localname
