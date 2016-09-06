@@ -357,6 +357,47 @@ def test_create_import_schema(recwarn):
     assert document.types.get_element('{http://tests.python-zeep.org/b}global')
 
 
+
+def test_wsdl_imports_xsd(recwarn):
+    content = StringIO("""
+    <?xml version="1.0"?>
+    <wsdl:definitions
+      xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+      xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+      xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/">
+      <wsdl:import location="a.xsd" namespace="http://tests.python-zeep.org/a"/>
+    </wsdl:definitions>
+    """.strip())
+
+    schema_node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+          <xsd:import namespace="http://tests.python-zeep.org/b" schemaLocation="b.xsd"/>
+        </xsd:schema>
+    """.strip())
+
+    schema_node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            targetNamespace="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+        </xsd:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('a.xsd', schema_node_a)
+    transport.bind('b.xsd', schema_node_b)
+
+    wsdl.Document(content, transport)
+
+
 def test_import_schema_without_location(recwarn):
     content = StringIO("""
     <?xml version="1.0"?>

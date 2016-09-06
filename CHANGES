@@ -5,6 +5,7 @@
  - Re-use credentials passed to python -mzeep <wsdl> (#130)
  - Workaround invalid usage of qualified vs non-qualified element tags in the
    response handling (#176)
+ - Fix regression when importing xsd:schema's via wsdl:import statements (#179)
 
 
 0.15.0 (2016-09-04)

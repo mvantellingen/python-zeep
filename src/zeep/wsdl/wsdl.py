@@ -220,15 +220,13 @@ class Definition(object):
         for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
             location = import_node.get('location')
             namespace = import_node.get('namespace')
-
             if namespace in self.wsdl._definitions:
                 self.imports[namespace] = self.wsdl._definitions[namespace]
             else:
-
                 document = self.wsdl._load_content(location)
                 location = absolute_location(location, self.location)
                 if etree.QName(document.tag).localname == 'schema':
-                    self.types.add_schema(document, location)
+                    self.types.add_documents([document], location)
                 else:
                     wsdl = Definition(self.wsdl, document, location)
                     self.imports[namespace] = wsdl
