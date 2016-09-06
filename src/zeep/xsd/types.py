@@ -1,3 +1,4 @@
+import re
 import copy
 from collections import OrderedDict
 
@@ -5,7 +6,7 @@ import six
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import XMLParseError
-from zeep.xsd.elements import Element
+from zeep.xsd.elements import Element, Any
 from zeep.xsd.indicators import Sequence
 from zeep.xsd.utils import NamePrefixGenerator
 from zeep.xsd.valueobjects import CompoundValue
@@ -185,8 +186,9 @@ class ComplexType(Type):
         result = []
         if self._extension and hasattr(self._extension, 'attributes'):
             result.extend(self._extension.attributes)
+
         if self._restriction and hasattr(self._restriction, 'attributes'):
-            result.extend(self._restriction.attributes)
+            pass
 
         elm_names = {name for name, elm in self.elements if name is not None}
         attrs = []
@@ -225,12 +227,25 @@ class ComplexType(Type):
             else:
                 result.extend(self._extension.elements_nested)
 
-        if self._restriction:
-            name = generator.get_name()
-            if not hasattr(self._restriction, 'elements_nested'):
-                result.append((name, Element(name, self._restriction)))
+        if self._restriction and not self._element:
+            # So this is a workaround to support wsdl:arrayType. This doesn't
+            # actually belong here but for now it's the easiest way to achieve
+            # this. What this does it that is checks if the restriction
+            # contains an arrayType attribute and then use that to retrieve
+            # the xsd type for the array.
+            attrs = {attr.qname.text: attr for attr in self._attributes}
+            array_type = attrs.get('{http://schemas.xmlsoap.org/soap/encoding/}arrayType')
+            if array_type:
+                name = generator.get_name()
+                result.append((name, Sequence([
+                    Any(max_occurs='unbounded', restrict=array_type.array_type)
+                ])))
             else:
-                result.extend(self._restriction.elements_nested)
+                name = generator.get_name()
+                if not hasattr(self._restriction, 'elements_nested'):
+                    result.append((name, Element(name, self._restriction)))
+                else:
+                    result.extend(self._restriction.elements_nested)
 
         # _element is one of All, Choice, Group, Sequence
         if self._element:

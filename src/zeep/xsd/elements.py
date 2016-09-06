@@ -46,7 +46,8 @@ class Base(object):
 class Any(Base):
     name = None
 
-    def __init__(self, max_occurs=1, min_occurs=1, process_contents='strict'):
+    def __init__(self, max_occurs=1, min_occurs=1, process_contents='strict',
+                 restrict=None):
         """
 
         :param process_contents: Specifies how the XML processor should handle
@@ -55,8 +56,10 @@ class Any(Base):
         :type process_contents: str (strict, lax, skip)
 
         """
+        super(Any, self).__init__()
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
+        self.restrict = restrict
         self.process_contents = process_contents
 
         # cyclic import
@@ -127,7 +130,19 @@ class Any(Base):
 
         from zeep.xsd.valueobjects import AnyObject  # cyclic import / FIXME
 
-        if not isinstance(value, (etree._Element, AnyObject)):
+        if (
+            self.restrict and not
+            isinstance(value, (etree._Element, self.restrict._value_class))
+
+        ):
+            raise TypeError((
+                "Received object of type %r, " +
+                "expected %s or etree.Element"
+            ) % (type(self.restrict)))
+        elif (
+            not self.restrict and not
+            isinstance(value, (etree._Element, AnyObject))
+        ):
             raise TypeError((
                 "Received object of type %r, " +
                 "expected xsd.AnyObject or etree.Element"
@@ -136,19 +151,31 @@ class Any(Base):
         if isinstance(value, etree._Element):
             parent.append(value)
 
-        elif isinstance(value.value, list):
-            for val in value.value:
-                value.xsd_elm.render(parent, val)
+        elif self.restrict:
+            if isinstance(value, list):
+                for val in value:
+                    self.restrict.render(parent, val)
+            else:
+                self.restrict.render(parent, value)
         else:
-            value.xsd_elm.render(parent, value.value)
+            if isinstance(value.value, list):
+                for val in value.value:
+                    value.xsd_elm.render(parent, val)
+            else:
+                value.xsd_elm.render(parent, value.value)
 
     def resolve(self):
         return self
 
     def signature(self, depth=0):
+        if self.restrict:
+            base = self.restrict.name
+        else:
+            base = 'ANY'
+
         if self.accepts_multiple:
-            return 'ANY[]'
-        return 'ANY'
+            return '%s[]' % base
+        return base
 
 
 class Element(Base):
@@ -226,7 +253,6 @@ class Element(Base):
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Consume matching xmlelements and call parse() on each of them"""
         result = []
-
         for i in max_occurs_iter(self.max_occurs):
             if not xmlelements:
                 break
@@ -318,6 +344,7 @@ class Attribute(Element):
     def __init__(self, name, type_=None, required=False, default=None):
         super(Attribute, self).__init__(name=name, type_=type_, default=default)
         self.required = required
+        self.array_type = None
 
     def parse(self, value):
         return self.type.pythonvalue(value)
@@ -328,6 +355,19 @@ class Attribute(Element):
 
         value = self.type.xmlvalue(value)
         parent.set(self.qname, value)
+
+    def clone(self, *args, **kwargs):
+        array_type = kwargs.pop('array_type', None)
+        new = super(Attribute, self).clone(*args, **kwargs)
+        new.array_type = array_type
+        return new
+
+    def resolve(self):
+        retval = super(Attribute, self).resolve()
+        self.type = self.type.resolve()
+        if self.array_type:
+            retval.array_type = self.array_type.resolve()
+        return retval
 
 
 class AttributeGroup(Element):
@@ -389,8 +429,14 @@ class RefElement(object):
 
 
 class RefAttribute(RefElement):
+    def __init__(self, *args, **kwargs):
+        self._array_type = kwargs.pop('array_type', None)
+        super(RefAttribute, self).__init__(*args, **kwargs)
+
     def resolve(self):
-        return self._schema.get_attribute(self._ref)
+        attrib = self._schema.get_attribute(self._ref)
+        attrib = attrib.clone(attrib.qname, array_type=self._array_type)
+        return attrib.resolve()
 
 
 class RefAttributeGroup(RefElement):
