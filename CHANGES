@@ -1,4 +1,4 @@
-0.16.0 (unreleased)
+0.16.0 (2016-09-06)
 -------------------
  - Fix error when rendering choice elements with have sequences as children, 
    see #150
