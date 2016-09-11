@@ -195,11 +195,11 @@ class SchemaDocument(object):
             node.get('targetNamespace') if node is not None else None)
         self._elm_instances = []
 
-        self._types = {}
+        self._attribute_groups = {}
+        self._attributes = {}
         self._elements = {}
         self._groups = {}
-        self._attributes = {}
-        self._attribute_groups = {}
+        self._types = {}
 
         self._imports = OrderedDict()
         self._element_form = 'unqualified'
@@ -232,10 +232,17 @@ class SchemaDocument(object):
         for schema in self._imports.values():
             schema.resolve()
 
-        for key, type_ in self._types.items():
-            new = type_.resolve()
-            assert new is not None, "resolve() should return a type"
-            self._types[key] = new
+        def _resolve_dict(val):
+            for key, obj in val.items():
+                new = obj.resolve()
+                assert new is not None, "resolve() should return a type"
+                val[key] = new
+
+        _resolve_dict(self._attribute_groups)
+        _resolve_dict(self._attributes)
+        _resolve_dict(self._elements)
+        _resolve_dict(self._groups)
+        _resolve_dict(self._types)
 
         for element in self._elm_instances:
             element.resolve_type()
