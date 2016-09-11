@@ -407,6 +407,7 @@ class AnyAttribute(Base):
     name = None
 
     def __init__(self, process_contents='strict'):
+        self.qname = None
         self.process_contents = process_contents
 
     def parse(self, attributes, context=None):

@@ -246,8 +246,8 @@ class ComplexType(Type):
             # actually belong here but for now it's the easiest way to achieve
             # this. What this does it that is checks if the restriction
             # contains an arrayType attribute and then use that to retrieve
-            # the xsd type for the array.
-            attrs = {attr.qname.text: attr for attr in self._attributes}
+            # the xsd type for the array. (We ignore AnyAttributes here)
+            attrs = {attr.qname.text: attr for attr in self._attributes if attr.qname}
             array_type = attrs.get('{http://schemas.xmlsoap.org/soap/encoding/}arrayType')
             if array_type:
                 name = generator.get_name()
