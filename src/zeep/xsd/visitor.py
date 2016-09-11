@@ -28,7 +28,7 @@ for name in [
     'simpleContent', 'complexContent',
     'sequence', 'group', 'choice', 'all', 'list', 'union',
     'attribute', 'any', 'anyAttribute', 'attributeGroup',
-    'restriction', 'extension',
+    'restriction', 'extension', 'notation',
 
 ]:
     attr = name if name not in keyword.kwlist else name + '_'
@@ -871,7 +871,25 @@ class SchemaVisitor(object):
         process_contents = node.get('processContents', 'strict')
         return xsd_elements.AnyAttribute(process_contents=process_contents)
 
+    def visit_notation(self, node, parent):
+        """Contains the definition of a notation to describe the format of
+        non-XML data within an XML document. An XML Schema notation declaration
+        is a reconstruction of XML 1.0 NOTATION declarations.
+
+            <notation
+              id = ID
+              name = NCName
+              public = Public identifier per ISO 8879
+              system = anyURI
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?)
+            </notation>
+
+        """
+        pass
+
     def _get_type(self, name):
+        assert name is not None
         name = self._create_qname(name)
         try:
             retval = self.schema.get_type(name)
@@ -939,6 +957,7 @@ class SchemaVisitor(object):
         tags.include: visit_include,
         tags.annotation: visit_annotation,
         tags.attributeGroup: visit_attribute_group,
+        tags.notation: visit_notation,
     }
 
 
