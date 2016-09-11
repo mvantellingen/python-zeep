@@ -538,8 +538,12 @@ class SchemaVisitor(object):
             </restriction>
         """
         base_name = qname_attr(node, 'base')
-        base_type = self._get_type(base_name)
-        return base_type
+        if base_name:
+            base_type = self._get_type(base_name)
+            return base_type
+        annotation, children = self._pop_annotation(node.getchildren())
+        if children[0].tag == tags.simpleType:
+            return self.visit_simple_type(children[0], node)
 
     def visit_restriction_simple_content(self, node, parent, namespace=None):
         """
@@ -803,7 +807,17 @@ class SchemaVisitor(object):
             </union>
         """
         # TODO
-        return xsd_types.UnionType([])
+        members = node.get('memberTypes')
+        types = []
+        if members:
+            for member in members.split():
+                qname = as_qname(member, node.nsmap, self.document._target_namespace)
+                xsd_type = self._get_type(qname)
+                types.append(xsd_type)
+        else:
+            annotation, types = self._pop_annotation(node.getchildren())
+            types = [self.visit_simple_type(t, node) for t in types]
+        return xsd_types.UnionType(types)
 
     def visit_unique(self, node, parent):
         """Specifies that an attribute or element value (or a combination of

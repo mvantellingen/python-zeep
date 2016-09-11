@@ -1,4 +1,3 @@
-import re
 import copy
 from collections import OrderedDict
 
@@ -6,7 +5,7 @@ import six
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import XMLParseError
-from zeep.xsd.elements import Element, Any
+from zeep.xsd.elements import Any, AttributeGroup, Element
 from zeep.xsd.indicators import Sequence
 from zeep.xsd.utils import NamePrefixGenerator
 from zeep.xsd.valueobjects import CompoundValue
@@ -57,6 +56,7 @@ class Type(object):
 class UnresolvedType(Type):
     def __init__(self, qname, schema):
         self.qname = qname
+        assert self.qname.text != 'None'
         self.schema = schema
 
     def __repr__(self):
@@ -81,16 +81,25 @@ class UnresolvedCustomType(Type):
         self.schema = schema
         self.base_type = base_type
 
+    def __repr__(self):
+        return '<%s(qname=%r, base_type=%r)>' % (
+            self.__class__.__name__, self.qname.text, self.base_type)
+
     def resolve(self):
         base = self.base_type
-        if isinstance(self.base_type, (UnresolvedType, self.__class__)):
-            base = base.resolve()
+        base = base.resolve()
 
         cls_attributes = {
             '__module__': 'zeep.xsd.dynamic_types',
         }
-        xsd_type = type(self.name, (base.__class__,), cls_attributes)
-        return xsd_type(self.qname)
+
+        if issubclass(base.__class__, SimpleType):
+            xsd_type = type(self.name, (base.__class__,), cls_attributes)
+            return xsd_type(self.qname)
+
+        else:
+            xsd_type = type(self.name, (base.base_class,), cls_attributes)
+            return xsd_type(self.qname)
 
 
 @six.python_2_unicode_compatible
@@ -432,6 +441,7 @@ class ListType(Type):
 
     def resolve(self):
         self.item_type = self.item_type.resolve()
+        self.base_class = self.item_type.__class__
         return self
 
     def xmlvalue(self, value):
@@ -452,10 +462,12 @@ class UnionType(Type):
 
     def __init__(self, item_types):
         self.item_types = item_types
+        assert item_types
         super(UnionType, self).__init__(None)
 
     def resolve(self):
         self.item_types = [item.resolve() for item in self.item_types]
+        self.base_class = self.item_types[0].__class__
         return self
 
     def signature(self, depth=0):

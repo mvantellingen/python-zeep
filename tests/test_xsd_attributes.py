@@ -356,3 +356,65 @@ def test_nested_attribute():
     node = etree.Element('document')
     container_elm.render(node, obj)
     assert_nodes_equal(expected, node)
+
+
+def test_attribute_union_type():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <simpleType name="one">
+            <restriction base="xsd:string"/>
+          </simpleType>
+          <simpleType name="parent">
+            <union memberTypes="one two"/>
+          </simpleType>
+          <simpleType name="two">
+            <restriction base="xsd:string"/>
+          </simpleType>
+          <attribute name="something" type="tns:something"/>
+          <simpleType name="something">
+            <restriction base="tns:parent">
+              <enumeration value="preserve"/>
+            </restriction>
+          </simpleType>
+        </schema>
+    """))
+
+    attr = schema.get_attribute('{http://tests.python-zeep.org/}something')
+    assert attr('foo') == 'foo'
+
+
+def test_attribute_union_type_inline():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <simpleType name="parent">
+            <union>
+              <simpleType name="one">
+                <restriction base="xsd:string"/>
+              </simpleType>
+              <simpleType name="two">
+                <restriction base="xsd:string"/>
+              </simpleType>
+            </union>
+          </simpleType>
+          <attribute name="something" type="tns:something"/>
+          <simpleType name="something">
+            <restriction base="tns:parent">
+              <enumeration value="preserve"/>
+            </restriction>
+          </simpleType>
+        </schema>
+    """))
+
+    attr = schema.get_attribute('{http://tests.python-zeep.org/}something')
+    assert attr('foo') == 'foo'
+
