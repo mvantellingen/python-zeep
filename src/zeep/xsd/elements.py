@@ -374,18 +374,33 @@ class AttributeGroup(Element):
     def __init__(self, name, attributes):
         self.name = name
         self.type = None
-        self.attributes = attributes
+        self._attributes = attributes
+        super(AttributeGroup, self).__init__(name, is_global=True)
+
+    @property
+    def attributes(self):
+        result = []
+        for attr in self._attributes:
+            if isinstance(attr, AttributeGroup):
+                result.extend(attr.attributes)
+            else:
+                result.append(attr)
+        return result
 
     def resolve(self):
         resolved = []
-        for attribute in self.attributes:
+        for attribute in self._attributes:
             value = attribute.resolve()
             assert value is not None
             if isinstance(value, list):
                 resolved.extend(value)
             else:
                 resolved.append(value)
-        return resolved
+        self._attributes = resolved
+        return self
+
+    def signature(self, depth=0):
+        return ', '.join(attr.signature() for attr in self._attributes)
 
 
 class AnyAttribute(Base):

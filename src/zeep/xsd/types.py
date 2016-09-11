@@ -191,16 +191,21 @@ class ComplexType(Type):
             pass
 
         elm_names = {name for name, elm in self.elements if name is not None}
-        attrs = []
+        attributes = []
         for attr in self._attributes:
+            if isinstance(attr, AttributeGroup):
+                attributes.extend(attr.attributes)
+            else:
+                attributes.append(attr)
+
+        for attr in attributes:
             if attr.name is None:
                 name = generator.get_name()
             elif attr.name in elm_names:
                 name = 'attr__%s' % attr.name
             else:
                 name = attr.name
-            attrs.append((name, attr))
-        result.extend(attrs)
+            result.append((name, attr))
         return result
 
     @threaded_cached_property
