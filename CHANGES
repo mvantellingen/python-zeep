@@ -5,6 +5,7 @@
  - Improve implementation of xsd.attributeGroup and xsd.UniqueType
  - Create a deepcopy of the args and kwargs passed to objects so that the 
    original are unmodified.
+ - Improve handling of wsdl:arrayType
 
 
 0.16.0 (2016-09-06)
