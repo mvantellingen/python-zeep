@@ -706,6 +706,69 @@ def test_soap_array_parse():
     assert data.FlagDetailsStruct[1].Value == 'value2'
 
 
+
+def test_soap_array_parse_remote_ns():
+    transport = DummyTransport()
+    transport.bind(
+        'http://schemas.xmlsoap.org/soap/encoding/',
+        load_xml(io.open('tests/wsdl_files/soap-enc.xsd', 'r').read().encode('utf-8')))
+
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+          xmlns:tns="http://tests.python-zeep.org/"
+          xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+          xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          targetNamespace="http://tests.python-zeep.org/"
+          elementFormDefault="qualified">
+          <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+          <xsd:simpleType name="CountryCodeType">
+            <xsd:restriction base="xsd:string">
+              <xsd:length value="2"/>
+              <xsd:pattern value="[a-zA-Z]{2}"/>
+            </xsd:restriction>
+          </xsd:simpleType>
+          <xsd:complexType name="CountryItemType">
+            <xsd:sequence>
+              <xsd:element name="code" type="tns:CountryCodeType"/>
+              <xsd:element name="name" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="CountriesArrayType">
+            <xsd:complexContent>
+              <xsd:restriction base="soapenc:Array">
+                <xsd:attribute ref="soapenc:arrayType" wsdl:arrayType="tns:CountryItemType[]"/>
+              </xsd:restriction>
+            </xsd:complexContent>
+          </xsd:complexType>
+          <xsd:element name="countries" type="tns:CountriesArrayType"/>
+        </xsd:schema>
+    """), transport)
+
+    doc = load_xml("""
+      <countries
+            SOAP-ENC:arrayType="ns1:CountryItemType[1]"
+            xsi:type="ns1:CountriesArrayType"
+            xmlns:ns1="http://tests.python-zeep.org/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <item xsi:type="ns1:CountryItemType">
+          <code xsi:type="ns1:CountryCodeType">NL</code>
+          <name xsi:type="xsd:string">The Netherlands</name>
+        </item>
+      </countries>
+    """)
+
+    elm = schema.get_element('ns0:countries')
+    data = elm.parse(doc, schema)
+
+    assert data._value_1[0].code == 'NL'
+    assert data._value_1[0].name == 'The Netherlands'
+
+
 def test_group():
     node = etree.fromstring("""
         <?xml version="1.0"?>

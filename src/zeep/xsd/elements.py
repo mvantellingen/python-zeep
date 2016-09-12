@@ -82,7 +82,7 @@ class Any(Base):
                 schema = context_schema
                 break
 
-        xsd_type = xmlelement.get('{http://www.w3.org/2001/XMLSchema-instance}type')
+        xsd_type = qname_attr(xmlelement, '{http://www.w3.org/2001/XMLSchema-instance}type')
         if xsd_type is not None:
             xsd_type = schema.get_type(xsd_type)
             return xsd_type.parse_xmlelement(xmlelement, schema, context=context)
