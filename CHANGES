@@ -3,6 +3,10 @@
  - Add support for xsd:notation (#183)
  - Add improvements to resolving phase so that all objects are resolved.
  - Improve implementation of xsd.attributeGroup and xsd.UniqueType
+ - Create a deepcopy of the args and kwargs passed to objects so that the 
+   original are unmodified.
+
+
 0.16.0 (2016-09-06)
 -------------------
  - Fix error when rendering choice elements with have sequences as children, 

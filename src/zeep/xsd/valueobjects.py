@@ -1,3 +1,4 @@
+import copy
 from collections import OrderedDict
 
 import six
@@ -16,6 +17,9 @@ class AnyObject(object):
     def __repr__(self):
         return '<%s(type=%r, value=%r)>' % (
             self.__class__.__name__, self.xsd_elm, self.value)
+
+    def __deepcopy__(self, memo):
+        return type(self)(self.xsd_elm, copy.deepcopy(self.value))
 
 
 class CompoundValue(object):
@@ -95,6 +99,12 @@ def _process_signature(xsd_type, args, kwargs):
     result = OrderedDict()
     args = list(args)
     num_args = len(args)
+
+    # Since the args/kwargs are modified when processing we need to create a
+    # copy first.
+    args = copy.deepcopy(args)
+    kwargs = copy.deepcopy(kwargs)
+
 
     # Process the positional arguments
     for element_name, element in xsd_type.elements_nested:
