@@ -600,6 +600,49 @@ def test_choice_with_sequence_multiple():
     assert_nodes_equal(expected, node)
 
 
+def test_choice_with_sequence_and_element():
+    node = load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+              <xsd:choice>
+                <xsd:element name="item_1" type="xsd:string"/>
+                <xsd:sequence>
+                  <xsd:choice>
+                    <xsd:element name="item_2" type="xsd:string"/>
+                    <xsd:element name="item_3" type="xsd:string"/>
+                  </xsd:choice>
+                </xsd:sequence>
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """)
+    schema = xsd.Schema(node)
+    element = schema.get_element('ns0:container')
+    assert element.type.signature() == (
+        '({item_1: xsd:string} | {({item_2: xsd:string} | {item_3: xsd:string})})')
+
+    value = element(item_2='foo')
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_2>foo</ns0:item_2>
+        </ns0:container>
+      </document>
+    """
+    node = etree.Element('document')
+    element.render(node, value)
+    assert_nodes_equal(expected, node)
+
+
+
 def test_element_ref_in_choice():
     node = etree.fromstring("""
         <?xml version="1.0"?>

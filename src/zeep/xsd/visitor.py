@@ -284,6 +284,11 @@ class SchemaVisitor(object):
             else:
                 xsd_type = xsd_builtins.AnyType()
 
+        # Naive workaround to mark fields which are part of a choice element
+        # as optional
+        if parent.tag == tags.choice:
+            min_occurs = 0
+
         nillable = node.get('nillable') == 'true'
         default = node.get('default')
         element = xsd_elements.Element(
