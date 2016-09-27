@@ -143,12 +143,11 @@ class HttpOperation(Operation):
                 continue
 
             # XXX Multiple mime types may be declared as alternatives
-            try:
+            message_node = None
+            if len(node.getchildren()) > 0:
                 message_node = node.getchildren()[0]
-            except IndexError:
-                message_node = None
             message_class = None
-            if message_node != None:
+            if message_node is not None:
                 if message_node.tag == etree.QName(NSMAP['http'], 'urlEncoded'):
                     message_class = messages.UrlEncoded
                 elif message_node.tag == etree.QName(NSMAP['http'], 'urlReplacement'):
