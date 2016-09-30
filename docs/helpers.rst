@@ -1,7 +1,6 @@
 Helpers
 =======
-In the `zeep.helper` module the following helpers functions are available:
+In the `zeep.helpers` module the following helpers functions are available:
 
-   - `serialize_object()` - Convert zeep value objects to native python 
+   - `serialize_object()` - Convert zeep value objects to native python
      datastructures.
-
