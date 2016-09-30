@@ -2,7 +2,11 @@ from lxml import etree
 
 
 def get_or_create_header(envelope):
-    header_qname = '{http://schemas.xmlsoap.org/soap/envelope/}Header'
+    # find the namespace of the SOAP Envelope (because it's different for SOAP 1.1 and 1.2)
+    root_tag = etree.QName(envelope)
+    soap_envelope_namespace = root_tag.namespace
+    # look for the Header element and create it if not found
+    header_qname = '{%s}Header' % soap_envelope_namespace
     header = envelope.find(header_qname)
     if header is None:
         header = etree.Element(header_qname)
