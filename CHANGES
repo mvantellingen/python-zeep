@@ -2,6 +2,7 @@
 -------------------
  - Fix parsing Any elements by using the namespace map of the response node 
    instead of the namespace map of the wsdl. (#184, #164)
+ - Improve handling of nested choice elements (choice>sequence>choice)
 
 
 0.17.0 (2016-09-12)

@@ -88,7 +88,7 @@ class OrderIndicator(Indicator, list):
         values = {k for k in values if values[k] is not None}
 
         required_keys = {
-            name for name, element in self.elements
+            name for name, element in self.elements_nested
             if not element.is_optional
         }
         optional_keys = {
