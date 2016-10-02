@@ -137,6 +137,8 @@ class SoapMessage(ConcreteMessage):
 
         body_info = self._info['body']
         if body_info:
+            # If the part name is omitted then all parts are available under
+            # the soap:body tag. Otherwise only the part with the given name.
             if body_info['part']:
                 part_name = body_info['part']
             else:
@@ -225,7 +227,6 @@ class SoapMessage(ConcreteMessage):
 
     @classmethod
     def _parse_header(cls, xmlelements, tns):
-        """Parse the soap:header / soap:headerfault elements
         """Parse the soap:header and optionally included soap:headerfault elements
 
           <soap:header
