@@ -655,105 +655,147 @@ def test_serializer_with_header_custom_xml():
 
 
 def test_deserialize():
+    wsdl_content = StringIO("""
+    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                 xmlns:tns="http://tests.python-zeep.org/tns"
+                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://tests.python-zeep.org/tns">
+      <types>
+        <xsd:schema targetNamespace="http://tests.python-zeep.org/tns"
+                    elementFormDefault="qualified">
+          <xsd:element name="Request">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="arg1" type="xsd:string"/>
+                <xsd:element name="arg2" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+      </types>
+
+      <message name="Input">
+        <part element="tns:Request"/>
+      </message>
+      <message name="Output">
+        <part element="tns:Request"/>
+      </message>
+
+      <portType name="TestPortType">
+        <operation name="TestOperation">
+          <input message="Input"/>
+          <output message="Output"/>
+        </operation>
+      </portType>
+
+      <binding name="TestBinding" type="tns:TestPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="TestOperation">
+          <soap:operation soapAction=""/>
+          <input>
+            <soap:body use="literal"/>
+          </input>
+          <output>
+            <soap:body use="literal"/>
+          </output>
+        </operation>
+      </binding>
+    </definitions>
+    """.strip())
+
+    root = wsdl.Document(wsdl_content, None)
+
+    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
+    operation = binding.get('TestOperation')
+
     response_body = load_xml("""
-        <SOAP-ENV:Body
-            xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-          <mns:response xmlns:mns="http://test.python-zeep.org/tests/document"
-                SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-            <mns:return type="xsd:string">foobar</mns:return>
-          </mns:response>
-        </SOAP-ENV:Body>
-    """)  # noqa
-    wsdl = stub(types=stub(
-        _prefix_map={},
-        _get_schema_document=lambda namespace: None
-    ))
-    operation = stub(soapaction='my-action', name='something')
-
-    msg = messages.DocumentMessage(
-        wsdl=wsdl,
-        name=None,
-        operation=operation,
-        nsmap=soap.Soap11Binding.nsmap,
-        type='input')
-
-    # Fake resolve()
-    namespace = 'http://test.python-zeep.org/tests/document'
-    msg.abstract = definitions.AbstractMessage(
-        etree.QName(namespace, 'Method1Response'))
-    msg.abstract.parts = OrderedDict([
-        ('body', definitions.MessagePart(
-            element=xsd.Element(
-                etree.QName(namespace, 'response'),
-                xsd.ComplexType([
-                    xsd.Element(etree.QName(namespace, 'return'), xsd.String()),
-                ])
-            ),
-            type=None))
-        ])
-
-    msg.namespace = {
-        'body': 'http://test.python-zeep.org/tests/document',
-        'header': None,
-        'headerfault': None
-    }
-
-    result = msg.deserialize(response_body)
-    assert result == 'foobar'
+        <?xml version="1.0"?>
+        <soap-env:Envelope
+            xmlns:ns0="http://tests.python-zeep.org/tns"
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap-env:Body>
+            <ns0:Request>
+              <ns0:arg1>ah1</ns0:arg1>
+              <ns0:arg2>ah2</ns0:arg2>
+            </ns0:Request>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """)
+    result = operation.process_reply(response_body)
+    assert result.arg1 == 'ah1'
+    assert result.arg2 == 'ah2'
 
 
 def test_deserialize_choice():
+    wsdl_content = StringIO("""
+    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                 xmlns:tns="http://tests.python-zeep.org/tns"
+                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://tests.python-zeep.org/tns">
+      <types>
+        <xsd:schema targetNamespace="http://tests.python-zeep.org/tns"
+                    elementFormDefault="qualified">
+          <xsd:element name="Request">
+            <xsd:complexType>
+              <xsd:choice>
+                <xsd:element name="arg1" type="xsd:string"/>
+                <xsd:element name="arg2" type="xsd:string"/>
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+      </types>
+
+      <message name="Input">
+        <part element="tns:Request"/>
+      </message>
+      <message name="Output">
+        <part element="tns:Request"/>
+      </message>
+
+      <portType name="TestPortType">
+        <operation name="TestOperation">
+          <input message="Input"/>
+          <output message="Output"/>
+        </operation>
+      </portType>
+
+      <binding name="TestBinding" type="tns:TestPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="TestOperation">
+          <soap:operation soapAction=""/>
+          <input>
+            <soap:body use="literal"/>
+          </input>
+          <output>
+            <soap:body use="literal"/>
+          </output>
+        </operation>
+      </binding>
+    </definitions>
+    """.strip())
+
+    root = wsdl.Document(wsdl_content, None)
+
+    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
+    operation = binding.get('TestOperation')
+
     response_body = load_xml("""
-        <SOAP-ENV:Body
-            xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-          <mns:response xmlns:mns="http://test.python-zeep.org/tests/document"
-                SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-            <mns:return type="xsd:string">foobar</mns:return>
-          </mns:response>
-        </SOAP-ENV:Body>
-    """)  # noqa
-    wsdl = stub(types=stub(
-        _prefix_map={},
-        _get_schema_document=lambda namespace: None
-    ))
-    operation = stub(soapaction='my-action', name='something')
-
-    msg = messages.DocumentMessage(
-        wsdl=wsdl,
-        name=None,
-        operation=operation,
-        nsmap=soap.Soap11Binding.nsmap,
-        type='input')
-
-    # Fake resolve()
-    namespace = 'http://test.python-zeep.org/tests/document'
-    msg.abstract = definitions.AbstractMessage(
-        etree.QName(namespace, 'Method1Response'))
-    msg.abstract.parts = OrderedDict([
-        ('body', definitions.MessagePart(
-            element=xsd.Element(
-                etree.QName(namespace, 'response'),
-                xsd.ComplexType(
-                    xsd.Choice([
-                        xsd.Element(etree.QName(namespace, 'return'), xsd.String()),
-                    ])
-                )
-            ),
-            type=None))
-        ])
-
-    msg.namespace = {
-        'body': 'http://test.python-zeep.org/tests/document',
-        'header': None,
-        'headerfault': None
-    }
-
-    result = msg.deserialize(response_body)
-    assert result == 'foobar'
+        <?xml version="1.0"?>
+        <soap-env:Envelope
+            xmlns:ns0="http://tests.python-zeep.org/tns"
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap-env:Body>
+            <ns0:Request>
+              <ns0:arg1>ah1</ns0:arg1>
+            </ns0:Request>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """)
+    result = operation.process_reply(response_body)
+    assert result.arg1 == 'ah1'
 
 
 def test_deserialize_one_part():

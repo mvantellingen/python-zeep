@@ -60,10 +60,10 @@ class SoapMessage(ConcreteMessage):
         super(SoapMessage, self).__init__(wsdl, name, operation)
         self.nsmap = nsmap
         self.abstract = None  # Set during resolve()
-        self.body = None
-        self.headers = None
-        self.headerfault = None
         self.type = type
+
+        self.body = {}
+        self.headers = {}
 
     def serialize(self, *args, **kwargs):
         """Create a SerializedMessage for this message"""
@@ -132,18 +132,27 @@ class SoapMessage(ConcreteMessage):
         parts = OrderedDict(self.abstract.parts)
         self.headers = self._resolve_header(
             self._info['header'], definitions, parts)
-        self.headerfault = self._resolve_header(
-            self._info['headerfault'], definitions, parts)
 
         body_info = self._info['body']
+
         if body_info:
             # If the part name is omitted then all parts are available under
             # the soap:body tag. Otherwise only the part with the given name.
             if body_info['part']:
                 part_name = body_info['part']
+                sub_elements = [parts[part_name].element]
             else:
-                part_name = list(parts.keys())[0]
-            self.body = parts[part_name].element
+                sub_elements = []
+                for part_name, part in parts.items():
+                    element = part.element.clone()
+                    element.attr_name = part_name or element.name
+                    sub_elements.append(element)
+
+            if len(sub_elements) > 1:
+                self.body = xsd.Element(
+                    None, xsd.ComplexType(xsd.All(sub_elements)))
+            else:
+                self.body = sub_elements[0]
 
     def _resolve_header(self, info, definitions, parts):
         if not info:
@@ -193,10 +202,10 @@ class SoapMessage(ConcreteMessage):
         name = xmlelement.get('name')
         obj = cls(definitions.wsdl, name, operation, nsmap=nsmap, type=type)
         tns = definitions.target_namespace
+
         info = {
             'body': {},
             'header': [],
-            'headerfault': [],
         }
 
         # parse soap:body
@@ -214,19 +223,13 @@ class SoapMessage(ConcreteMessage):
         # Parse soap:header (multiple)
         elements = xmlelement.findall(
             'soap:header', namespaces=operation.binding.nsmap)
-        info['header'] = cls._parse_header(elements, tns)
-
-        # Parse soap:headerfault (multiple)
-        elements = xmlelement.findall(
-            'soap:headerfault', namespaces=operation.binding.nsmap)
-        if elements is not None:
-            info['headerfault'] = cls._parse_header(elements, tns)
+        info['header'] = cls._parse_header(elements, tns, operation)
 
         obj._info = info
         return obj
 
     @classmethod
-    def _parse_header(cls, xmlelements, tns):
+    def _parse_header(cls, xmlelements, tns, operation):
         """Parse the soap:header and optionally included soap:headerfault elements
 
           <soap:header
@@ -245,22 +248,36 @@ class SoapMessage(ConcreteMessage):
 
         """
         result = []
-        for element in xmlelements:
-            attributes = element.attrib
-            try:
-                message_qname = as_qname(
-                    attributes['message'], element.nsmap, tns)
+        for xmlelement in xmlelements:
+            data = cls._parse_header_element(xmlelement, tns)
 
-                result.append({
-                    'message': message_qname,
-                    'part': attributes['part'],
-                    'use': attributes['use'],
-                    'encodingStyle': attributes.get('encodingStyle'),
-                    'namespace': attributes.get('namespace'),
-                })
-            except KeyError:
-                raise exceptions.WsdlSyntaxError("Invalid soap:header(fault)")
+            # Add optional soap:headerfault elements
+            data['faults'] = []
+            fault_elements = xmlelement.findall(
+                'soap:headerfault', namespaces=operation.binding.nsmap)
+            for fault_element in fault_elements:
+                fault_data = cls._parse_header_element(fault_element, tns)
+                data['faults'].append(fault_data)
+
+            result.append(data)
         return result
+
+    @classmethod
+    def _parse_header_element(cls, xmlelement, tns):
+        attributes = xmlelement.attrib
+        message_qname = as_qname(
+            attributes['message'], xmlelement.nsmap, tns)
+
+        try:
+            return {
+                'message': message_qname,
+                'part': attributes['part'],
+                'use': attributes['use'],
+                'encodingStyle': attributes.get('encodingStyle'),
+                'namespace': attributes.get('namespace'),
+            }
+        except KeyError:
+            raise exceptions.WsdlSyntaxError("Invalid soap:header(fault)")
 
 
 class DocumentMessage(SoapMessage):
@@ -269,27 +286,29 @@ class DocumentMessage(SoapMessage):
 
     """
     def deserialize(self, node):
-        result = []
-        for part in self.abstract.parts.values():
-            elm = node.find(part.element.qname)
-            assert elm is not None, '%s not found' % part.element.qname
-            result.append(part.element.parse(elm, self.wsdl.types))
-
-        if len(result) > 1:
-            return tuple(result)
-
-        # FIXME (not so sure about this): If the response object has only one
-        # property then return that property
-        item = result[0]
-        if not item:
+        if not self.body:
             return None
 
-        children = item._xsd_type.elements
-        if len(children) == 1:
-            item_name, item_element = children[0]
-            retval = getattr(item, item_name)
-            return retval
-        return item
+        # Body elements
+        if self.body.name:
+            xmlelement = node.getchildren()[0]
+            result = self.body.parse(xmlelement, self.wsdl.types)
+        else:
+            result = self.body.parse(node, self.wsdl.types)
+
+        if len(result) > 1:
+            return result
+        elif len(result) == 0:
+            return None
+
+        result = next(iter(result.__values__.values()))
+        if isinstance(result, xsd.CompoundValue):
+            children = result._xsd_type.elements
+            if len(children) == 1:
+                item_name, item_element = children[0]
+                retval = getattr(result, item_name)
+                return retval
+        return result
 
 
 class RpcMessage(SoapMessage):
@@ -332,8 +351,8 @@ class RpcMessage(SoapMessage):
         parts = OrderedDict(self.abstract.parts)
         self.headers = self._resolve_header(
             self._info['header'], definitions, parts)
-        self.headerfault = self._resolve_header(
-            self._info['headerfault'], definitions, parts)
+        # self.headerfault = self._resolve_header(
+        #     self._info['headerfault'], definitions, parts)
 
         # Each part is a parameter or a return value and appears inside a
         # wrapper element within the body named identically to the operation
