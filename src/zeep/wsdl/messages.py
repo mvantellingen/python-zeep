@@ -326,7 +326,6 @@ class DocumentMessage(SoapMessage):
     """
 
     def _deserialize_body(self, xmlelement):
-        # Deserialize body elements
         if self.body.name:
             xmlelement = xmlelement.getchildren()[0]
             result = self.body.parse(xmlelement, self.wsdl.types)
@@ -334,7 +333,10 @@ class DocumentMessage(SoapMessage):
             result = self.body.parse(xmlelement, self.wsdl.types)
 
         if result is not None:
-            return result.__values__
+            if isinstance(result, xsd.CompoundValue):
+                return result.__values__
+            else:
+                return {self.body.attr_name: result}
         return {}
 
     def resolve(self, definitions, abstract_message):
@@ -401,7 +403,11 @@ class RpcMessage(SoapMessage):
         value = body_element.find(self.body.qname)
         result = self.body.parse(value, self.wsdl.types)
         if result is not None:
-            return result.__values__
+            if isinstance(result, xsd.CompoundValue):
+                return result.__values__
+            else:
+                return {self.body.attr_name: result}
+        return {}
 
     def resolve(self, definitions, abstract_message):
         """Override the default `SoapMessage.resolve()` since we need to wrap
