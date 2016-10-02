@@ -14,6 +14,7 @@ SerializedMessage = namedtuple('SerializedMessage', ['path', 'headers', 'content
 
 
 class ConcreteMessage(object):
+    """Represents the wsdl:binding -> wsdl:operation -> input/ouput node"""
     def __init__(self, wsdl, name, operation):
         assert wsdl
         assert operation
@@ -116,6 +117,11 @@ class SoapMessage(ConcreteMessage):
             path=None, headers=headers, content=envelope)
 
     def resolve(self, definitions, abstract_message):
+        """Resolve the data in the self._info dict (set via parse())
+
+        XXX headerfaults are not implemented yet.
+
+        """
         self.abstract = abstract_message
 
         # If this message has no parts then we have nothing to do. This might
@@ -154,12 +160,32 @@ class SoapMessage(ConcreteMessage):
 
     @classmethod
     def parse(cls, definitions, xmlelement, operation, type, nsmap):
-        """
-        Example::
+        """Parse a wsdl:binding/wsdl:operation/wsdl:operation for the SOAP
+        implementation.
 
-              <output>
-                <soap:body use="literal"/>
-              </output>
+        Each wsdl:operation can contain three child nodes:
+         - input
+         - output
+         - fault
+
+        Definition for input/output::
+
+           <input>
+             <soap:body parts="nmtokens"? use="literal|encoded"
+                        encodingStyle="uri-list"? namespace="uri"?>
+
+             <soap:header message="qname" part="nmtoken" use="literal|encoded"
+                          encodingStyle="uri-list"? namespace="uri"?>*
+
+               <soap:headerfault message="qname" part="nmtoken" use="literal|encoded"
+                                 encodingStyle="uri-list"? namespace="uri"?/>*
+             </soap:header>
+           </input>
+
+        And the definition for fault::
+
+           <soap:fault name="nmtoken" use="literal|encoded"
+                       encodingStyle="uri-list"? namespace="uri"?>
 
         """
         name = xmlelement.get('name')
@@ -200,14 +226,21 @@ class SoapMessage(ConcreteMessage):
     @classmethod
     def _parse_header(cls, xmlelements, tns):
         """Parse the soap:header / soap:headerfault elements
+        """Parse the soap:header and optionally included soap:headerfault elements
 
-        <soap:headerfault
+          <soap:header
             message="qname"
             part="nmtoken"
             use="literal|encoded"
             encodingStyle="uri-list"?
             namespace="uri"?
-        />*
+          />*
+
+        The header can optionally contain one ore more soap:headerfault
+        elements which can contain the same attributes as the soap:header::
+
+           <soap:headerfault message="qname" part="nmtoken" use="literal|encoded"
+                             encodingStyle="uri-list"? namespace="uri"?/>*
 
         """
         result = []
