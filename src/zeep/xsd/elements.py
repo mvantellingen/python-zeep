@@ -221,14 +221,16 @@ class Element(Base):
         value = [] if self.accepts_multiple else self.default
         return value
 
-    def clone(self, name, min_occurs=1, max_occurs=1):
-        if not isinstance(name, etree.QName):
-            name = etree.QName(name)
-
+    def clone(self, name=None, min_occurs=1, max_occurs=1):
         new = copy.copy(self)
-        new.name = name.localname
-        new.qname = name
-        new.attr_name = new.name
+
+        if name:
+            if not isinstance(name, etree.QName):
+                name = etree.QName(name)
+            new.name = name.localname
+            new.qname = name
+            new.attr_name = new.name
+
         new.min_occurs = min_occurs
         new.max_occurs = max_occurs
         return new
