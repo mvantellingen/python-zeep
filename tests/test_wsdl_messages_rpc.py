@@ -234,9 +234,7 @@ def test_wsdl_array_of_simple_types():
     """)
 
     deserialized = operation.output.deserialize(document)
-    list_of_items = deserialized['_value_1']
-
-    assert list_of_items == ['item', 'and', 'even', 'more', 'items']
+    assert deserialized == ['item', 'and', 'even', 'more', 'items']
 
 
 def test_handle_incorrectly_qualified():

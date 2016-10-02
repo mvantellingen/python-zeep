@@ -118,6 +118,43 @@ class SoapMessage(ConcreteMessage):
         return SerializedMessage(
             path=None, headers=headers, content=envelope)
 
+    def deserialize(self, envelope):
+        """Deserialize the SOAP:Envelope and return a CompoundValue with the
+        result.
+
+        """
+        body = envelope.find('soap-env:Body', namespaces=self.nsmap)
+        body_result = self._deserialize_body(body)
+
+        header = envelope.find('soap-env:Header', namespaces=self.nsmap)
+        headers_result = self._deserialize_headers(header)
+
+        result = self.envelope(**body_result, **headers_result)
+
+        if len(result) > 1:
+            return result
+        elif len(result) == 0:
+            return None
+
+        result = next(iter(result.__values__.values()))
+        if isinstance(result, xsd.CompoundValue):
+            children = result._xsd_type.elements
+            if len(children) == 1:
+                item_name, item_element = children[0]
+                retval = getattr(result, item_name)
+                return retval
+        return result
+
+    def _deserialize_headers(self, xmlelement):
+        """Deserialize the values in the SOAP:Header element"""
+        if not self.headers or xmlelement is None:
+            return {}
+
+        result = self.headers.parse(xmlelement, self.wsdl.types)
+        if result is not None:
+            return result.__values__
+        return {}
+
     def _resolve_header(self, info, definitions, parts):
         if not info:
             return
@@ -287,47 +324,18 @@ class DocumentMessage(SoapMessage):
     message parts appear directly under the SOAP Body element.
 
     """
-    def deserialize(self, envelope):
-        body = envelope.find('soap-env:Body', namespaces=self.nsmap)
-        header = envelope.find('soap-env:Header', namespaces=self.nsmap)
 
-        body_result = None
-        headers_result = None
-
+    def _deserialize_body(self, xmlelement):
         # Deserialize body elements
         if self.body.name:
-            xmlelement = body.getchildren()[0]
-            body_result = self.body.parse(xmlelement, self.wsdl.types)
+            xmlelement = xmlelement.getchildren()[0]
+            result = self.body.parse(xmlelement, self.wsdl.types)
         else:
-            body_result = self.body.parse(body, self.wsdl.types)
+            result = self.body.parse(xmlelement, self.wsdl.types)
 
-        if self.headers and header:
-            headers_result = self.headers.parse(header, self.wsdl.types)
-
-        if body_result is not None:
-            body_result = body_result.__values__
-        else:
-            body_result = {}
-        if headers_result is not None:
-            headers_result = headers_result.__values__
-        else:
-            headers_result = {}
-
-        result = self.envelope(**body_result, **headers_result)
-
-        if len(result) > 1:
-            return result
-        elif len(result) == 0:
-            return None
-
-        result = next(iter(result.__values__.values()))
-        if isinstance(result, xsd.CompoundValue):
-            children = result._xsd_type.elements
-            if len(children) == 1:
-                item_name, item_element = children[0]
-                retval = getattr(result, item_name)
-                return retval
-        return result
+        if result is not None:
+            return result.__values__
+        return {}
 
     def resolve(self, definitions, abstract_message):
         """Resolve the data in the self._info dict (set via parse())
@@ -389,21 +397,11 @@ class RpcMessage(SoapMessage):
 
     """
 
-    def deserialize(self, envelope):
-        body = envelope.find('soap-env:Body', namespaces=self.nsmap)
-        header = envelope.find('soap-env:Header', namespaces=self.nsmap)
-
-        value = body.find(self.body.qname)
-        assert value is not None, "No node found with name %s" % self.body.qname
-
+    def _deserialize_body(self, body_element):
+        value = body_element.find(self.body.qname)
         result = self.body.parse(value, self.wsdl.types)
-
-        result = [
-            getattr(result, name) for name, field in self.body.type.elements
-        ]
-        if len(result) > 1:
-            return tuple(result)
-        return result[0]
+        if result is not None:
+            return result.__values__
 
     def resolve(self, definitions, abstract_message):
         """Override the default `SoapMessage.resolve()` since we need to wrap
