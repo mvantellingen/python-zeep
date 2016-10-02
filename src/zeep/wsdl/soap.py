@@ -1,4 +1,9 @@
 from lxml import etree
+try:
+    from email.parser import BytesFeedParser
+except ImportError:
+    # to support Python 2.7
+    from email.parser import FeedParser as BytesFeedParser
 
 from zeep import plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
@@ -7,6 +12,11 @@ from zeep.utils import qname_attr
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
 from zeep.wsdl.utils import etree_to_string
+from zeep.xsd.types import XOPInclude
+from zeep.xsd.valueobjects import CompoundValue
+
+
+CHUNK_SIZE = 16384
 
 
 class SoapBinding(Binding):
@@ -108,6 +118,42 @@ class SoapBinding(Binding):
         operation_obj = self.get(operation)
         return self.process_reply(client, operation_obj, response)
 
+    def handle_xop(self, client, operation, response):
+        """Decode a XML-binary Optimized Packaging (XOP) response.
+        Spec: https://www.w3.org/TR/xop10/
+        """
+        # example Content-Type: multipart/related; boundary="192ACTH5zu2kQtJcnRwnTXJzXb2hoxEPoAksrlRlihV2HO2NmRC6h5NdO4n44nSA2Q19"; type="application/xop+xml"; start="<soap:Envelope>"; start-info="application/soap+xml; charset=utf-8"
+        content_type = response.headers.get("content-type", "")
+        # don't break pre-Py33 code
+        if not content_type.strip().lower().startswith("multipart/related"):
+            return response.content
+        # parse the Content-Type header; is there an easy and robust pre-Py33 way?
+        import email.headerregistry  # New in version 3.3: as a provisional module.
+        parsed_ct = email.headerregistry.HeaderRegistry()("content-type", content_type)
+        if parsed_ct.content_type.lower() != "multipart/related":
+            # this is not a XOP Package
+            return response.content
+        if parsed_ct.params["type"].lower() != "application/xop+xml":
+            # this is not a XOP Package (but it's not plain SOAP either...??)
+            return response.content
+        # OK, this is indeed a XOP Package, so now we need to break down the multipart/related MIME message
+        message_parser = BytesFeedParser()
+        # we will only feed the parser the actual body of the HTTP response, so we must first simulate at least the
+        # Content-Type header
+        message_parser.feed(("Content-Type: %s\r\n\r\n" % (content_type,)).encode())  # additional CRLF for end of headers
+        for chunk in response.iter_content(CHUNK_SIZE):
+            message_parser.feed(chunk)
+        message = message_parser.close()
+        message_parts = message.get_payload()
+        root = message_parts[0]
+        assert root.get_content_type() == "application/xop+xml"
+        # startwith (not equals) because it might be "application/soap+xml; charset=utf-8" or similar
+        assert root.get_param("type").startswith("application/soap+xml")
+        assert all(not message.is_multipart() for message in message_parts[1:])
+        assert all(message["Content-ID"] for message in message_parts[1:])
+        operation.xop_replaced_data_by_cid = {message["Content-ID"]: message.get_payload(decode=True) for message in message_parts[1:]}
+        return root.get_payload(decode=True)
+
     def process_reply(self, client, operation, response):
         """Process the XML reply from the server.
 
@@ -124,12 +170,14 @@ class SoapBinding(Binding):
                 u'Server returned HTTP status %d (no content available)'
                 % response.status_code)
 
+        content = self.handle_xop(client, operation, response)
+
         try:
-            doc = parse_xml(response.content, recover=True)
+            doc = parse_xml(content, recover=True)
         except XMLSyntaxError:
             raise TransportError(
                 u'Server returned HTTP status %d (%s)'
-                % (response.status_code, response.content))
+                % (response.status_code, content))
 
         if client.wsse:
             client.wsse.verify(doc)
@@ -262,6 +310,7 @@ class SoapOperation(Operation):
         self.nsmap = nsmap
         self.soapaction = soapaction
         self.style = style
+        self.xop_replaced_data_by_cid = {}
 
     def process_reply(self, envelope):
         envelope_qname = etree.QName(self.nsmap['soap-env'], 'Envelope')
@@ -273,7 +322,20 @@ class SoapOperation(Operation):
 
         body = envelope.find('soap-env:Body', namespaces=self.nsmap)
         assert body is not None, "No {%s}Body element found" % (self.nsmap['soap-env'])
-        return self.output.deserialize(body)
+        result = self.output.deserialize(body)
+        if self.xop_replaced_data_by_cid:
+            result = self.replace_xop_includes(result)
+        return result
+
+    def replace_xop_includes(self, result):
+        if isinstance(result, XOPInclude):
+            return self.xop_replaced_data_by_cid["<%s>" % result.content_id]
+        if not isinstance(result, CompoundValue):
+            return result
+        for key in result:
+            value = result[key]
+            result[key] = self.replace_xop_includes(value)
+        return result
 
     @classmethod
     def parse(cls, definitions, xmlelement, binding, nsmap):

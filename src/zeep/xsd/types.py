@@ -11,6 +11,14 @@ from zeep.xsd.utils import NamePrefixGenerator
 from zeep.xsd.valueobjects import CompoundValue
 
 
+class XOPInclude(object):
+    def __init__(self, content_id):
+        self.content_id = content_id
+
+    def __repr__(self):
+        return "XOPInclude(%r)" % (self.content_id,)
+
+
 class Type(object):
 
     def __init__(self, qname=None, is_global=False):
@@ -140,9 +148,19 @@ class SimpleType(Type):
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
                          context=None):
+        xop_data = self.parse_xop(xmlelement)
+        if xop_data is not None:
+            return xop_data
         if xmlelement.text is None:
             return
         return self.pythonvalue(xmlelement.text)
+
+    def parse_xop(self, xmlelement):
+        include_element = xmlelement.find("{http://www.w3.org/2004/08/xop/include}Include")
+        if include_element is None:
+            return None
+        assert include_element.get("href").startswith("cid:")
+        return XOPInclude(include_element.get("href")[4:])
 
     def pythonvalue(self, xmlvalue):
         raise NotImplementedError(
