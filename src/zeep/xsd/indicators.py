@@ -75,7 +75,7 @@ class OrderIndicator(Indicator, list):
             elif isinstance(elm, (Any, Choice)):
                 result.append((generator.get_name(), elm))
             else:
-                name = generator_2.create_name(elm.name)
+                name = generator_2.create_name(elm.attr_name)
                 result.append((name, elm))
         return result
 

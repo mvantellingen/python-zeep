@@ -30,7 +30,7 @@ class Base(object):
             return result, args
 
         value = args.pop(0)
-        return {self.name: value}, args
+        return {self.attr_name: value}, args
 
     def parse_kwargs(self, kwargs, name=None):
         raise NotImplementedError()
@@ -180,7 +180,7 @@ class Any(Base):
 
 class Element(Base):
     def __init__(self, name, type_=None, min_occurs=1, max_occurs=1,
-                 nillable=False, default=None, is_global=False):
+                 nillable=False, default=None, is_global=False, attr_name=None):
         if name and not isinstance(name, etree.QName):
             name = etree.QName(name)
 
@@ -192,6 +192,7 @@ class Element(Base):
         self.nillable = nillable
         self.is_global = is_global
         self.default = default
+        self.attr_name = attr_name or self.name
         # assert type_
 
     def __str__(self):
@@ -227,6 +228,7 @@ class Element(Base):
         new = copy.copy(self)
         new.name = name.localname
         new.qname = name
+        new.attr_name = new.name
         new.min_occurs = min_occurs
         new.max_occurs = max_occurs
         return new
@@ -248,7 +250,7 @@ class Element(Base):
             xmlelement, schema, allow_none=allow_none, context=context)
 
     def parse_kwargs(self, kwargs, name=None):
-        return self.type.parse_kwargs(kwargs, name or self.name)
+        return self.type.parse_kwargs(kwargs, name or self.attr_name)
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Consume matching xmlelements and call parse() on each of them"""

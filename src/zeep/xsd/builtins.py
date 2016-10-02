@@ -572,6 +572,7 @@ default_types = {
 
 class Schema(Base):
     name = 'schema'
+    attr_name = 'schema'
     qname = '{http://www.w3.org/2001/XMLSchema}schema'
 
     def clone(self, qname, min_occurs=1, max_occurs=1):
