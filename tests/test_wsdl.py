@@ -120,7 +120,7 @@ def test_parse_soap_header_wsdl():
             kwargs={
                 'tickerSymbol': 'foobar',
                 '_soapheaders': {
-                    'Authentication': {
+                    'header': {
                         'username': 'ikke',
                         'password': 'oeh-is-geheim!',
                     }
