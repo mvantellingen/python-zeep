@@ -53,11 +53,23 @@ class Transport(object):
             return fh.read()
 
     def post(self, address, message, headers):
-        self.logger.debug("HTTP Post to %s:\n%s", address, message)
+        if self.logger.isEnabledFor(logging.DEBUG):
+            log_message = message
+            if isinstance(log_message, bytes):
+                log_message = log_message.decode('utf-8')
+            self.logger.debug("HTTP Post to %s:\n%s", address, log_message)
+
         response = self.session.post(address, data=message, headers=headers)
-        self.logger.debug(
-            "HTTP Response from %s (status: %d):\n%s",
-            address, response.status_code, response.content)
+
+        if self.logger.isEnabledFor(logging.DEBUG):
+            log_message = response.content
+            if isinstance(log_message, bytes):
+                log_message = log_message.decode('utf-8')
+
+            self.logger.debug(
+                "HTTP Response from %s (status: %d):\n%s",
+                address, response.status_code, log_message)
+
         return response
 
     def post_xml(self, address, envelope, headers):
