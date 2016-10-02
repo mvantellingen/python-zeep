@@ -129,7 +129,9 @@ class SoapMessage(ConcreteMessage):
         header = envelope.find('soap-env:Header', namespaces=self.nsmap)
         headers_result = self._deserialize_headers(header)
 
-        result = self.envelope(**body_result, **headers_result)
+        kwargs = body_result
+        kwargs.update(headers_result)
+        result = self.envelope(**kwargs)
 
         if len(result) > 1:
             return result
