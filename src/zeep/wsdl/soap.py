@@ -188,6 +188,46 @@ class SoapBinding(Binding):
         return obj
 
 
+
+class AsyncSoapBinding(SoapBinding):
+
+    def __init__(self, wsdl, name, port_name, transport, default_style):
+        super(AsyncSoapBinding, self).__init__(wsdl, name, port_name, transport, default_style)
+
+    async def send(self, client, options, operation, args, kwargs):
+        envelope, http_headers = self._create(
+            operation, args, kwargs,
+            client=client,
+            options=options)
+
+        response = await client.transport.post_xml(
+            options['address'], envelope, http_headers)
+
+        operation_obj = self.get(operation)
+        return await self.process_reply(client, operation_obj, response)
+
+    async def process_reply(self, client, operation, response):
+        if response.status != 200 and not await response.read():
+            raise TransportError(
+                u'Server returned HTTP status %d (no content available)'
+                % response.status)
+
+        try:
+            doc = parse_xml(await response.read(), recover=True)
+        except XMLSyntaxError:
+            raise TransportError(
+                u'Server returned HTTP status %d (%s)'
+                % (response.status, await response.read()))
+
+        if client.wsse:
+            client.wsse.verify(doc)
+
+        if response.status != 200:
+            return self.process_error(doc)
+
+        return operation.process_reply(doc)
+
+
 class Soap11Binding(SoapBinding):
     nsmap = {
         'soap': 'http://schemas.xmlsoap.org/wsdl/soap/',
@@ -218,6 +258,10 @@ class Soap11Binding(SoapBinding):
             code=get_text('faultcode'),
             actor=get_text('faultactor'),
             detail=fault_node.find('detail'))
+
+
+class AsyncSoap11Binding(AsyncSoapBinding, Soap11Binding):
+    pass
 
 
 class Soap12Binding(SoapBinding):
@@ -252,6 +296,10 @@ class Soap12Binding(SoapBinding):
             code=code,
             actor=None,
             detail=fault_node.find('Detail'))
+
+
+class AsyncSoap12Binding(AsyncSoapBinding, Soap12Binding):
+    pass
 
 
 class SoapOperation(Operation):
