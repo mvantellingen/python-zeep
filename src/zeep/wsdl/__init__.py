@@ -1,1 +1,1 @@
-from zeep.wsdl.wsdl import Document  # noqa
+from zeep.wsdl.wsdl import Document, AsyncDocument  # noqa
