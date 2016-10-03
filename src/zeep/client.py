@@ -1,7 +1,7 @@
 import logging
 
-from zeep.transports import Transport
-from zeep.wsdl import Document
+from zeep.transports import Transport, AsyncTransport
+from zeep.wsdl import Document, AsyncDocument
 
 NSMAP = {
     'xsd': 'http://www.w3.org/2001/XMLSchema',
@@ -118,3 +118,27 @@ class Client(object):
 
     def get_element(self, name):
         return self.wsdl.types.get_element(name)
+
+
+class AsyncClient(Client):
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    async def create(cls, wsdl, wsse=None, transport=None,
+                 service_name=None, port_name=None, plugins=None):
+        if not wsdl:
+            raise ValueError("No URL given for the wsdl")
+
+        self = AsyncClient()
+        self.transport = transport or AsyncTransport()
+        self.wsdl = await AsyncDocument.create(wsdl, self.transport)
+        self.wsse = wsse
+        self.plugins = plugins if plugins is not None else []
+
+        self._default_service = None
+        self._default_service_name = service_name
+        self._default_port_name = port_name
+
+        return self
