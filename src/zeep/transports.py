@@ -127,7 +127,7 @@ class AsyncTransport(Transport):
             response = await self.session.post(address, data=message, headers=headers)
             self.logger.debug(
                 "HTTP Response from %s (status: %d):\n%s",
-                address, response.status_code, await response.read())
+                address, response.status, await response.read())
             return response
 
     async def post_xml(self, address, envelope, headers):
