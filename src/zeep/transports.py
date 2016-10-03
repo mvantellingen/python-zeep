@@ -85,6 +85,7 @@ class AsyncTransport(Transport):
         self.timeout = timeout
         self.verify = verify
         self.http_auth = aiohttp.BasicAuth(http_auth[0], password=http_auth[1]) if http_auth else None
+        self.logger = logging.getLogger(__name__)
         self.connector = aiohttp.TCPConnector(verify_ssl=self.verify)
         self.headers = {'User-Agent': 'Zeep/%s (www.python-zeep.org)'.format(get_version())}
         self.session = self.create_session()
