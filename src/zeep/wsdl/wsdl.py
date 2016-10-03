@@ -129,6 +129,9 @@ class Document(object):
 
 class AsyncDocument(Document):
 
+    def __init__(self):
+        pass
+
     @classmethod
     async def create(cls, location, transport):
         self = AsyncDocument()
