@@ -7,7 +7,7 @@ from collections import OrderedDict
 import six
 from lxml import etree
 
-from zeep.parser import absolute_location, load_external, parse_xml
+from zeep.parser import absolute_location, load_external, load_external_async, parse_xml
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import definitions, http, soap
 from zeep.xsd import Schema
@@ -125,6 +125,40 @@ class Document(object):
         if hasattr(location, 'read'):
             return parse_xml(location.read())
         return load_external(location, self.transport, self.location)
+
+
+class AsyncDocument(Document):
+
+    @classmethod
+    async def create(cls, location, transport):
+        self = AsyncDocument()
+        self.location = location if not hasattr(location, 'read') else None
+        self.transport = transport
+
+        # Dict with all definition objects within this WSDL
+        self._definitions = {}
+        self.types = Schema([], transport=self.transport)
+
+        # Dict with internal schema objects, used for lxml.ImportResolver
+        self._parser_context = ParserContext()
+
+        document = await self._load_content(location)
+
+        root_definitions = AsyncDefinition(self, document, self.location)
+        root_definitions.resolve_imports()
+
+        # Make the wsdl definitions public
+        self.messages = root_definitions.messages
+        self.port_types = root_definitions.port_types
+        self.bindings = root_definitions.bindings
+        self.services = root_definitions.services
+
+        return self
+
+    async def _load_content(self, location):
+        if hasattr(location, 'read'):
+            return parse_xml(location.read())
+        return await load_external_async(location, self.transport, self.location)
 
 
 class Definition(object):
@@ -374,4 +408,29 @@ class Definition(object):
             service = definitions.Service.parse(self, service_node)
             result[service.name] = service
             logger.debug("Adding service: %s", service.name)
+        return result
+
+
+class AsyncDefinition(Definition):
+
+    def __init__(self, wsdl, doc, location):
+        super(AsyncDefinition, self).__init__(wsdl, doc, location)
+
+    def parse_binding(self, doc):
+        result = {}
+        for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
+            # Detect the binding type
+            if soap.AsyncSoap11Binding.match(binding_node):
+                binding = soap.AsyncSoap11Binding.parse(self, binding_node)
+            elif soap.AsyncSoap12Binding.match(binding_node):
+                binding = soap.AsyncSoap12Binding.parse(self, binding_node)
+            elif http.HttpGetBinding.match(binding_node):
+                binding = http.HttpGetBinding.parse(self, binding_node)
+            elif http.HttpPostBinding.match(binding_node):
+                binding = http.HttpPostBinding.parse(self, binding_node)
+            else:
+                continue
+
+            logger.debug("Adding binding: %s", binding.name.text)
+            result[binding.name.text] = binding
         return result
