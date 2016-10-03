@@ -52,6 +52,15 @@ class HttpBinding(Binding):
         raise Fault(message=doc)
 
 
+class AsyncHttpBinding(HttpBinding):
+
+    async def process_reply(self, client, operation, response):
+        if response.status != 200:
+            return self.process_error(await response.content())
+            raise NotImplementedError("No error handling yet!")
+        return operation.process_reply(await response.content())
+
+
 class HttpPostBinding(HttpBinding):
 
     def send(self, client, options, operation, args, kwargs):
@@ -80,6 +89,22 @@ class HttpPostBinding(HttpBinding):
         return http_node is not None and http_node.get('verb') == 'POST'
 
 
+class AsyncHttpPostBinding(AsyncHttpBinding, HttpPostBinding):
+    
+    async def send(self, client, options, operation, args, kwargs):
+        """Called from the service"""
+        operation_obj = self.get(operation)
+        if not operation_obj:
+            raise ValueError("Operation %r not found" % operation)
+
+        serialized = operation_obj.create(*args, **kwargs)
+
+        url = options['address'] + serialized.path
+        response = await client.transport.post(
+            url, serialized.content, headers=serialized.headers)
+        return await self.process_reply(client, operation_obj, response)
+
+
 class HttpGetBinding(HttpBinding):
 
     def send(self, client, options, operation, args, kwargs):
@@ -106,6 +131,22 @@ class HttpGetBinding(HttpBinding):
         """
         http_node = node.find(etree.QName(NSMAP['http'], 'binding'))
         return http_node is not None and http_node.get('verb') == 'GET'
+
+
+class AsyncHttpGetBinding(AsyncHttpBinding, HttpGetBinding):
+
+    async def send(self, client, options, operation, args, kwargs):
+        """Called from the service"""
+        operation_obj = self.get(operation)
+        if not operation_obj:
+            raise ValueError("Operation %r not found" % operation)
+
+        serialized = operation_obj.create(*args, **kwargs)
+
+        url = options['address'] + serialized.path
+        response = await client.transport.get(
+            url, serialized.content, headers=serialized.headers)
+        return await self.process_reply(client, operation_obj, response)
 
 
 class HttpOperation(Operation):

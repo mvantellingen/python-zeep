@@ -427,10 +427,10 @@ class AsyncDefinition(Definition):
                 binding = soap.AsyncSoap11Binding.parse(self, binding_node)
             elif soap.AsyncSoap12Binding.match(binding_node):
                 binding = soap.AsyncSoap12Binding.parse(self, binding_node)
-            elif http.HttpGetBinding.match(binding_node):
-                binding = http.HttpGetBinding.parse(self, binding_node)
-            elif http.HttpPostBinding.match(binding_node):
-                binding = http.HttpPostBinding.parse(self, binding_node)
+            elif http.AsyncHttpGetBinding.match(binding_node):
+                binding = http.AsyncHttpGetBinding.parse(self, binding_node)
+            elif http.AsyncHttpPostBinding.match(binding_node):
+                binding = http.AsyncHttpPostBinding.parse(self, binding_node)
             else:
                 continue
 
