@@ -41,6 +41,8 @@ def test_soap11_process_error():
 def test_soap12_process_error():
     response = """
         <soapenv:Envelope
+            xmlns="http://example.com/example1"
+            xmlns:ex="http://example.com/example2"
             xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope">
           <soapenv:Body>
             <soapenv:Fault>
@@ -65,7 +67,7 @@ def test_soap12_process_error():
     """
     subcode = """
                <soapenv:Subcode>
-                 <soapenv:Value>fault-subcode%u</soapenv:Value>
+                 <soapenv:Value>%s</soapenv:Value>
                  %s
                </soapenv:Subcode>
     """
@@ -82,17 +84,23 @@ def test_soap12_process_error():
         assert exc.subcodes == []
 
     try:
-        binding.process_error(load_xml(response % subcode % (1, "")))
+        binding.process_error(load_xml(response % subcode % ("fault-subcode1", "")))
         assert False
     except soap.Fault as exc:
         assert exc.message == 'us-error'
         assert exc.code == 'fault-code'
-        assert exc.subcodes == ['fault-subcode1']
+        assert len(exc.subcodes) == 1
+        assert exc.subcodes[0].namespace == 'http://example.com/example1'
+        assert exc.subcodes[0].localname == 'fault-subcode1'
 
     try:
-        binding.process_error(load_xml(response % subcode % (1, subcode % (2, ""))))
+        binding.process_error(load_xml(response % subcode % ("fault-subcode1", subcode % ("ex:fault-subcode2", ""))))
         assert False
     except soap.Fault as exc:
         assert exc.message == 'us-error'
         assert exc.code == 'fault-code'
-        assert exc.subcodes == ['fault-subcode1', 'fault-subcode2']
+        assert len(exc.subcodes) == 2
+        assert exc.subcodes[0].namespace == 'http://example.com/example1'
+        assert exc.subcodes[0].localname == 'fault-subcode1'
+        assert exc.subcodes[1].namespace == 'http://example.com/example2'
+        assert exc.subcodes[1].localname == 'fault-subcode2'
