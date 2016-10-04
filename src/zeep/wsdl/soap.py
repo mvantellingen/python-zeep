@@ -247,11 +247,18 @@ class Soap12Binding(SoapBinding):
 
         message = fault_node.findtext('soap-env:Reason/soap-env:Text', namespaces=self.nsmap)
         code = fault_node.findtext('soap-env:Code/soap-env:Value', namespaces=self.nsmap)
+        subcodes = []
+        subcode_element = fault_node.find('soap-env:Code/soap-env:Subcode', namespaces=self.nsmap)
+        while subcode_element is not None:
+            subcodes.append(subcode_element.findtext('soap-env:Value', namespaces=self.nsmap))
+            subcode_element = subcode_element.find('soap-env:Subcode', namespaces=self.nsmap)
+
         raise Fault(
             message=message,
             code=code,
             actor=None,
-            detail=fault_node.find('Detail'))
+            detail=fault_node.find('Detail'),
+            subcodes=subcodes)
 
 
 class SoapOperation(Operation):
