@@ -34,20 +34,19 @@ def test_soap11_process_error():
         assert exc.message == 'fault-string'
         assert exc.code == 'fault-code'
         assert exc.actor is None
+        assert exc.subcodes is None
         assert 'detail-message' in etree.tostring(exc.detail).decode('utf-8')
 
 
 def test_soap12_process_error():
-    response = load_xml("""
+    response = """
         <soapenv:Envelope
             xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope">
           <soapenv:Body>
             <soapenv:Fault>
              <soapenv:Code>
                <soapenv:Value>fault-code</soapenv:Value>
-               <soapenv:Subcode>
-                <soapenv:Value>fault-subcode</soapenv:Value>
-               </soapenv:Subcode>
+               %s
              </soapenv:Code>
              <soapenv:Reason>
               <soapenv:Text xml:lang="en-US">us-error</soapenv:Text>
@@ -63,14 +62,37 @@ def test_soap12_process_error():
            </soapenv:Fault>
          </soapenv:Body>
         </soapenv:Envelope>
-    """)
+    """
+    subcode = """
+               <soapenv:Subcode>
+                 <soapenv:Value>fault-subcode%u</soapenv:Value>
+                 %s
+               </soapenv:Subcode>
+    """
     binding = soap.Soap12Binding(
         wsdl=None, name=None, port_name=None, transport=None,
         default_style=None)
 
     try:
-        binding.process_error(response)
+        binding.process_error(load_xml(response % ""))
         assert False
     except soap.Fault as exc:
         assert exc.message == 'us-error'
         assert exc.code == 'fault-code'
+        assert exc.subcodes == []
+
+    try:
+        binding.process_error(load_xml(response % subcode % (1, "")))
+        assert False
+    except soap.Fault as exc:
+        assert exc.message == 'us-error'
+        assert exc.code == 'fault-code'
+        assert exc.subcodes == ['fault-subcode1']
+
+    try:
+        binding.process_error(load_xml(response % subcode % (1, subcode % (2, ""))))
+        assert False
+    except soap.Fault as exc:
+        assert exc.message == 'us-error'
+        assert exc.code == 'fault-code'
+        assert exc.subcodes == ['fault-subcode1', 'fault-subcode2']
