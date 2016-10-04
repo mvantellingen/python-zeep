@@ -27,12 +27,13 @@ class NamespaceError(Error):
 
 
 class Fault(Error):
-    def __init__(self, message, code=None, actor=None, detail=None):
+    def __init__(self, message, code=None, actor=None, detail=None, subcodes=None):
         super(Fault, self).__init__(message)
         self.message = message
         self.code = code
         self.actor = actor
         self.detail = detail
+        self.subcodes = subcodes
 
 
 class ZeepWarning(RuntimeWarning):
