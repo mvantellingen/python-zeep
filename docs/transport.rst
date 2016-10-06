@@ -25,7 +25,7 @@ To set a transport timeout use the `timeout` option. The default timeout is 300 
 
 Caching
 -------
-The default cache backed is SqliteCache.  It caches the WSDL and XSD files for 
+The default cache backend is SqliteCache.  It caches the WSDL and XSD files for 
 1 hour by default. You can disable caching by passing `None` as value to the
 `Transport.cache` attribute when initializing the client::
 
