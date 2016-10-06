@@ -25,7 +25,7 @@ To set a transport timeout use the `timeout` option. The default timeout is 300 
 
 Caching
 -------
-The default cache backed is SqliteCache.  It caches the WSDL and XSD files for 
+The default cache backend is SqliteCache.  It caches the WSDL and XSD files for 
 1 hour by default. You can disable caching by passing `None` as value to the
 `Transport.cache` attribute when initializing the client::
 
@@ -50,6 +50,22 @@ Changing the SqliteCache settings can be done via::
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
     ...     transport=transport)
 
+
+
+HTTP Authentication
+-------------------
+While some providers incorporate security features in the header of a SOAP message,
+others use the HTTP Authentication header.  In the latter case,
+you can use any method supported by ``requests``.
+
+.. code-block:: python
+
+    from requests.auth import HTTPBasicAuth  # or HTTPDigestAuth, or OAuth1, etc.
+    from zeep import Client
+    from zeep.transports import Transport
+
+    client = Client('http://my-endpoint.com/production.svc?wsdl',
+        transport=Transport(http_auth=HTTPBasicAuth(user, password)))
 
 
 Debugging
