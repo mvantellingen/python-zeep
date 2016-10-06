@@ -52,6 +52,22 @@ Changing the SqliteCache settings can be done via::
 
 
 
+HTTP Authentication
+-------------------
+While some providers incorporate security features in the header of a SOAP message,
+others use the HTTP Authentication header.  In the latter case,
+you can use any method supported by ``requests``.
+
+.. code-block:: python
+
+    from requests.auth import HTTPBasicAuth  # or HTTPDigestAuth, or OAuth1, etc.
+    from zeep import Client
+    from zeep.transports import Transport
+
+    client = Client('http://my-endpoint.com/production.svc?wsdl',
+        transport=Transport(http_auth=HTTPBasicAuth(user, password)))
+
+
 Debugging
 ---------
 To see the SOAP XML messages which are sent to the remote server and the 
