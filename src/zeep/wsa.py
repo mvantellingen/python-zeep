@@ -10,7 +10,7 @@ WSA = ElementMaker(namespace='http://www.w3.org/2005/08/addressing')
 
 
 class WsAddressingPlugin(Plugin):
-    def egress(self, envelope, http_headers, operation, binding_options):
+    def egress(self, envelope, http_headers, operation, binding_options, *args, **kwargs):
         """Apply the ws-addressing headers to the given envelope."""
 
         wsa_action = operation.input.abstract.wsa_action

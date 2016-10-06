@@ -7,14 +7,14 @@ class Plugin(object):
     def ingress(self, envelope, http_headers, operation):
         return envelope, http_headers
 
-    def egress(self, envelope, http_headers, operation, binding_options):
+    def egress(self, envelope, http_headers, operation, binding_options, *args, **kwargs):
         return envelope, http_headers
 
 
-def apply_egress(client, envelope, http_headers, operation, binding_options):
+def apply_egress(client, envelope, http_headers, operation, binding_options, *args, **kwargs):
     for plugin in client.plugins:
         result = plugin.egress(
-            envelope, http_headers, operation, binding_options)
+            envelope, http_headers, operation, binding_options, *args, **kwargs)
         if result is not None:
             envelope, http_headers = result
 
@@ -53,7 +53,7 @@ class HistoryPlugin(object):
             'http_headers': http_headers,
         }
 
-    def egress(self, envelope, http_headers, operation, binding_options):
+    def egress(self, envelope, http_headers, operation, binding_options, *args, **kwargs):
         self._buffer.append({
             'received': None,
             'sent': {

@@ -71,11 +71,11 @@ class SoapBinding(Binding):
 
             if operation_obj.abstract.input_message.wsa_action:
                 envelope, http_headers = wsa.WsAddressingPlugin().egress(
-                    envelope, http_headers, operation_obj, options)
+                    envelope, http_headers, operation_obj, options, *args, **kwargs)
 
             # Apply plugins
             envelope, http_headers = plugins.apply_egress(
-                client, envelope, http_headers, operation_obj, options)
+                client, envelope, http_headers, operation_obj, options, *args, **kwargs)
 
             # Apply WSSE
             if client.wsse:
