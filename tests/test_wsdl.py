@@ -798,3 +798,57 @@ def test_wsdl_import_xsd_references(recwarn):
     transport.bind('http://tests.python-zeep.org/schema-2.wsdl', wsdl_2)
     document = wsdl.Document(wsdl_main, transport)
     document.dump()
+
+
+def test_parse_operation_empty_nodes():
+    content = StringIO("""
+        <?xml version="1.0"?>
+        <wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" 
+            xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:s1="http://microsoft.com/wsdl/types/" 
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+            xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/"
+            targetNamespace="http://tests.python-zeep.org/" 
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+          <wsdl:types>
+            <s:schema targetNamespace="http://tests.python-zeep.org/">
+              <s:import namespace="http://microsoft.com/wsdl/types/" />
+              <s:element name="ExampleMethod">
+              </s:element>
+            </s:schema>
+            <s:schema targetNamespace="http://microsoft.com/wsdl/types/">
+              <s:simpleType name="char">
+                <s:restriction base="s:unsignedShort" />
+              </s:simpleType>
+            </s:schema>
+          </wsdl:types>
+          <wsdl:message name="MessageIn">
+            <wsdl:part name="parameters" element="tns:ExampleMethod" />
+          </wsdl:message>
+          <wsdl:message name="MessageOut">
+            <wsdl:part name="parameters" element="tns:ExampleMethod" />
+          </wsdl:message>
+          <wsdl:portType name="ExampleSoap">
+            <wsdl:operation name="ExampleMethod">
+              <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                Example documentation.
+              </wsdl:documentation>
+              <wsdl:input message="tns:MessageIn" />
+              <wsdl:output message="tns:MessageOut" />
+            </wsdl:operation>
+          </wsdl:portType>
+          <wsdl:binding name="ExampleSoap" type="tns:ExampleSoap">
+            <http:binding verb="POST" />
+            <wsdl:operation name="ExampleMethod">
+              <http:operation location="/ExampleMethod" />
+              <wsdl:input>
+                <mime:content type="application/x-www-form-urlencoded" />
+              </wsdl:input>
+              <wsdl:output />
+            </wsdl:operation>
+          </wsdl:binding>
+        </wsdl:definitions>
+    """.strip())
+
+    assert wsdl.Document(content, None)
