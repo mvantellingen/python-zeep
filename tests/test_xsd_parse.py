@@ -731,3 +731,54 @@ def test_nested_choice_optional():
     assert obj.item_1 == 'foo'
     assert obj.item_2 is None
     assert obj.item_3 is None
+
+
+def test_union():
+    schema_doc = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/tst"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/tst">
+
+          <xsd:element name="State" type="tns:StateType"/>
+
+          <xsd:complexType name="StateType">
+            <xsd:simpleContent>
+                <xsd:extension base="tns:StateBaseType">
+                  <xsd:anyAttribute namespace="##other" processContents="lax"/>
+                </xsd:extension>
+            </xsd:simpleContent>
+          </xsd:complexType>
+          <xsd:simpleType name="tns:StateBaseType">
+            <xsd:union memberTypes="tns:Type1 tns:Type2"/>
+          </xsd:simpleType>
+
+          <xsd:simpleType name="Type1">
+            <xsd:restriction base="xsd:NMTOKEN">
+              <xsd:maxLength value="255"/>
+              <xsd:enumeration value="Idle"/>
+              <xsd:enumeration value="Processing"/>
+              <xsd:enumeration value="Stopped"/>
+            </xsd:restriction>
+          </xsd:simpleType>
+
+          <xsd:simpleType name="Type2">
+            <xsd:restriction base="xsd:NMTOKEN">
+              <xsd:maxLength value="255"/>
+              <xsd:enumeration value="Paused"/>
+            </xsd:restriction>
+          </xsd:simpleType>
+        </xsd:schema>
+    """)
+
+    xml = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <tst:State xmlns:tst="http://tests.python-zeep.org/tst">Idle</tst:State>
+    """)
+
+    schema = xsd.Schema(schema_doc)
+    elm = schema.get_element('{http://tests.python-zeep.org/tst}State')
+    result = elm.parse(xml, schema)
+    assert result._value_1 == 'Idle'

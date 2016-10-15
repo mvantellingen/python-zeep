@@ -285,7 +285,7 @@ class Choice(OrderIndicator):
                     break
 
                 # Sort on least left
-                options = sorted(options, key=operator.itemgetter(0))[::-1]
+                options = sorted(options, key=operator.itemgetter(0), reverse=True)
                 if options:
                     result.append(options[0][1])
                     for i in range(options[0][0]):

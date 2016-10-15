@@ -72,6 +72,9 @@ class Any(Base):
     def __repr__(self):
         return '<%s(name=%r)>' % (self.__class__.__name__, self.name)
 
+    def accept(self, value):
+        return True
+
     def parse(self, xmlelement, schema, context=None):
         if self.process_contents == 'skip':
             return xmlelement

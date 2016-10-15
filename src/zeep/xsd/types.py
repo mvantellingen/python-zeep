@@ -279,7 +279,7 @@ class ComplexType(Type):
         # If this complexType extends a simpleType then we have no nested
         # elements. Parse it directly via the type object. This is the case
         # for xsd:simpleContent
-        if isinstance(self._extension, SimpleType):
+        if isinstance(self._extension, (SimpleType, UnionType)):
             name, element = self.elements_nested[0]
             init_kwargs[name] = element.type.parse_xmlelement(
                 xmlelement, schema, name, context=context)
@@ -472,3 +472,7 @@ class UnionType(Type):
 
     def signature(self, depth=0):
         return ''
+
+    def parse_xmlelement(self, xmlelement, schema, name=None, context=None):
+        for item_type in self.item_types:
+            return item_type.parse_xmlelement(xmlelement, schema, name, context)
