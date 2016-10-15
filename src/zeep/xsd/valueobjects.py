@@ -80,6 +80,14 @@ class CompoundValue(object):
                 "%s instance has no attribute '%s'" % (
                     self.__class__.__name__, key))
 
+    def __deepcopy__(self, memo):
+        new = type(self)()
+        new.__values__ = copy.deepcopy(self.__values__)
+        for attr, value in self.__dict__.items():
+            if attr != '__values__':
+                setattr(new, attr, value)
+        return new
+
 
 def _process_signature(xsd_type, args, kwargs):
     """Return a dict with the args/kwargs mapped to the field name.

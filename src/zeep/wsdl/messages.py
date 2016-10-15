@@ -1,3 +1,4 @@
+import copy
 from collections import OrderedDict, namedtuple
 
 import six
@@ -78,6 +79,7 @@ class SoapMessage(ConcreteMessage):
         # Create the soap:header element
         headers_value = kwargs.pop('_soapheaders', None)
         if headers_value:
+            headers_value = copy.deepcopy(headers_value)
             header = soap.Header()
             if isinstance(headers_value, list):
                 for header_value in headers_value:

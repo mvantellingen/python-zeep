@@ -1,12 +1,9 @@
-from collections import OrderedDict
-
 from lxml import etree
-from pretend import stub
 from six import StringIO
 
 from tests.utils import assert_nodes_equal, load_xml
 from zeep import xsd
-from zeep.wsdl import definitions, messages, soap, wsdl
+from zeep.wsdl import wsdl
 
 
 def test_parse():
@@ -324,9 +321,13 @@ def test_serialize_with_header():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
+    AuthHeader = root.types.get_element('{http://tests.python-zeep.org/tns}Authentication')
+    auth_header = AuthHeader(username='mvantellingen')
+
     serialized = operation.input.serialize(
-        arg1='ah1', arg2='ah2',
-        _soapheaders={'auth': {'username': 'mvantellingen'}})
+        arg1='ah1', arg2='ah2', _soapheaders=[auth_header])
+    serialized = operation.input.serialize(
+        arg1='ah1', arg2='ah2', _soapheaders=[auth_header])
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
