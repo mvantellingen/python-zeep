@@ -23,6 +23,7 @@ tests_require = [
     'pytest-cov==2.3.1',
     'pytest==3.0.2',
     'requests_mock>=0.7.0',
+    'pdbpp==0.8.3',
 
     # Linting
     'isort==4.2.5',

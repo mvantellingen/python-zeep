@@ -19,16 +19,21 @@ def test_parse():
       <types>
         <xsd:schema targetNamespace="http://tests.python-zeep.org/tns">
           <xsd:element name="Request" type="xsd:string"/>
+          <xsd:element name="Response" type="xsd:string"/>
         </xsd:schema>
       </types>
 
       <message name="Input">
         <part element="tns:Request"/>
       </message>
+      <message name="Output">
+        <part element="tns:Response"/>
+      </message>
 
       <portType name="TestPortType">
         <operation name="TestOperation">
           <input message="Input"/>
+          <output message="Output"/>
         </operation>
       </portType>
 
@@ -39,6 +44,9 @@ def test_parse():
           <input>
             <soap:body use="literal"/>
           </input>
+          <output>
+            <soap:body use="literal"/>
+          </output>
         </operation>
       </binding>
     </definitions>
@@ -50,6 +58,14 @@ def test_parse():
     operation = binding.get('TestOperation')
 
     assert operation.input.body.signature() == 'xsd:string'
+    assert operation.input.header.signature() == ''
+    assert operation.input.envelope.signature() == 'body: xsd:string, header: {}'
+    assert operation.input.signature(as_output=False) == 'xsd:string'
+
+    assert operation.output.body.signature() == 'xsd:string'
+    assert operation.output.header.signature() == ''
+    assert operation.output.envelope.signature() == 'body: xsd:string, header: {}'
+    assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {}'
 
 
 def test_parse_with_header():
@@ -63,17 +79,24 @@ def test_parse_with_header():
         <xsd:schema targetNamespace="http://tests.python-zeep.org/tns">
           <xsd:element name="Request" type="xsd:string"/>
           <xsd:element name="RequestHeader" type="xsd:string"/>
+          <xsd:element name="Response" type="xsd:string"/>
+          <xsd:element name="ResponseHeader" type="xsd:string"/>
         </xsd:schema>
       </types>
 
       <message name="Input">
         <part element="tns:Request"/>
-        <part name="header" element="tns:RequestHeader"/>
+        <part name="auth" element="tns:RequestHeader"/>
+      </message>
+      <message name="Output">
+        <part element="tns:Response"/>
+        <part name="auth" element="tns:ResponseHeader"/>
       </message>
 
       <portType name="TestPortType">
         <operation name="TestOperation">
           <input message="Input"/>
+          <output message="Output"/>
         </operation>
       </portType>
 
@@ -82,9 +105,13 @@ def test_parse_with_header():
         <operation name="TestOperation">
           <soap:operation soapAction=""/>
           <input>
-            <soap:header message="tns:Input" part="header" use="literal" />
+            <soap:header message="tns:Input" part="auth" use="literal" />
             <soap:body use="literal"/>
           </input>
+          <output>
+            <soap:header message="tns:Output" part="auth" use="literal" />
+            <soap:body use="literal"/>
+          </output>
         </operation>
       </binding>
     </definitions>
@@ -95,8 +122,15 @@ def test_parse_with_header():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.headers.signature() == 'header: RequestHeader()'
     assert operation.input.body.signature() == 'xsd:string'
+    assert operation.input.header.signature() == 'auth: RequestHeader()'
+    assert operation.input.envelope.signature() == 'body: xsd:string, header: {auth: RequestHeader()}'
+    assert operation.input.signature(as_output=False) == 'xsd:string, _soapheaders={auth: RequestHeader()}'
+
+    assert operation.output.body.signature() == 'xsd:string'
+    assert operation.output.header.signature() == 'auth: ResponseHeader()'
+    assert operation.output.envelope.signature() == 'body: xsd:string, header: {auth: ResponseHeader()}'
+    assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {auth: ResponseHeader()}'
 
 
 def test_parse_with_header_other_message():
@@ -144,7 +178,7 @@ def test_parse_with_header_other_message():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.headers.signature() == 'header: RequestHeader()'
+    assert operation.input.header.signature() == 'header: RequestHeader()'
     assert operation.input.body.signature() == 'xsd:string'
 
     header = root.types.get_element(
@@ -983,7 +1017,7 @@ def test_deserialize_with_headers():
     serialized = operation.process_reply(response_body)
 
     assert operation.output.signature(as_output=True) == (
-        'request_1: Request1(), request_2: Request2(), header_1: Header1(), header_2: Header2()')
-    assert serialized.request_1.arg1 == 'ah1'
-    assert serialized.request_2.arg2 == 'ah2'
-    assert serialized.header_1.username == 'mvantellingen'
+        'body: {request_1: Request1(), request_2: Request2()}, header: {header_1: Header1(), header_2: Header2()}')
+    assert serialized.body.request_1.arg1 == 'ah1'
+    assert serialized.body.request_2.arg2 == 'ah2'
+    assert serialized.header.header_1.username == 'mvantellingen'

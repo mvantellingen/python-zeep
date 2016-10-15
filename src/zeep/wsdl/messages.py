@@ -45,8 +45,8 @@ class ConcreteMessage(object):
             return self.body.type.signature()
 
         parts = [self.body.type.signature()]
-        if getattr(self, 'headers', None):
-            parts.append('_soapheaders={%s}' % self.headers.signature())
+        if getattr(self, 'header', None):
+            parts.append('_soapheaders={%s}' % self.header.signature())
         return ', '.join(part for part in parts if part)
 
     @classmethod
@@ -63,8 +63,8 @@ class SoapMessage(ConcreteMessage):
         self.abstract = None  # Set during resolve()
         self.type = type
 
-        self.body = None
-        self.headers = None
+        self.body = xsd.Element(None, xsd.ComplexType([]))
+        self.header = xsd.Element(None, xsd.ComplexType([]))
         self.envelope = None
 
     def serialize(self, *args, **kwargs):
@@ -88,12 +88,12 @@ class SoapMessage(ConcreteMessage):
                     else:
                         raise ValueError("Invalid value given to _soapheaders")
             elif isinstance(headers_value, dict):
-                if not self.headers:
+                if not self.header:
                     raise ValueError(
                         "_soapheaders only accepts a dictionary if the wsdl "
                         "defines the headers.")
-                headers_value = self.headers(**headers_value)
-                self.headers.render(header, headers_value)
+                headers_value = self.header(**headers_value)
+                self.header.render(header, headers_value)
             else:
                 raise ValueError("Invalid value given to _soapheaders")
 
@@ -133,6 +133,11 @@ class SoapMessage(ConcreteMessage):
         kwargs.update(headers_result)
         result = self.envelope(**kwargs)
 
+        # If the message
+        if self.header.type._element:
+            return result
+
+        result = result.body
         if len(result) > 1:
             return result
         elif len(result) == 0:
@@ -147,32 +152,23 @@ class SoapMessage(ConcreteMessage):
                 return retval
         return result
 
-    def _deserialize_headers(self, xmlelement):
-        """Deserialize the values in the SOAP:Header element"""
-        if not self.headers or xmlelement is None:
-            return {}
+    def signature(self, as_output=False):
+        if not self.envelope:
+            return None
 
-        result = self.headers.parse(xmlelement, self.wsdl.types)
-        if result is not None:
-            return result.__values__
-        return {}
+        if as_output:
+            if isinstance(self.envelope.type, xsd.ComplexType):
+                try:
+                    if len(self.envelope.type.elements) == 1:
+                        return self.envelope.type.elements[0][1].type.signature()
+                except AttributeError:
+                    return None
+            return self.envelope.type.signature()
 
-    def _resolve_header(self, info, definitions, parts):
-        if not info:
-            return
-
-        sequence = xsd.Sequence()
-        for item in info:
-            message_name = item['message'].text
-            part_name = item['part']
-
-            message = definitions.get('messages', message_name)
-            if message == self.abstract:
-                del parts[part_name]
-            element = message.parts[part_name].element.clone()
-            element.attr_name = part_name
-            sequence.append(element)
-        return xsd.Element(None, xsd.ComplexType(sequence))
+        parts = [self.body.type.signature()]
+        if self.header.type._element:
+            parts.append('_soapheaders={%s}' % self.header.signature())
+        return ', '.join(part for part in parts if part)
 
     @classmethod
     def parse(cls, definitions, xmlelement, operation, type, nsmap):
@@ -284,41 +280,49 @@ class SoapMessage(ConcreteMessage):
         except KeyError:
             raise exceptions.WsdlSyntaxError("Invalid soap:header(fault)")
 
-    def signature(self, as_output=False):
-        if not self.envelope:
-            return None
-
-        if as_output:
-            if isinstance(self.envelope.type, xsd.ComplexType):
-                try:
-                    if len(self.envelope.type.elements) == 1:
-                        return self.envelope.type.elements[0][1].type.signature()
-                except AttributeError:
-                    return None
-            return self.envelope.type.signature()
-
-        parts = [self.body.type.signature()]
-        if self.headers:
-            parts.append('_soapheaders={%s}' % self.headers.signature())
-        return ', '.join(part for part in parts if part)
-
     def _create_envelope_element(self):
         """Create combined `envelope` complexType which contains both the
         elements from the body and the headers.
         """
         all_elements = []
-        if self.body:
-            if self.body.name is None:
-                all_elements.extend(self.body.type._element)
-            else:
-                if isinstance(self.body.type, xsd.ComplexType):
-                    all_elements.append(self.body.type._element)
-                else:
-                    all_elements.append(self.body)
-        if self.headers:
-            all_elements.extend(self.headers.type._element)
+        if self.body.signature():
+            all_elements.append(xsd.Element('body', self.body.type))
+        else:
+            all_elements.append(xsd.Element('body', xsd.ComplexType([])))
+        if self.header.signature():
+            all_elements.append(xsd.Element('header', self.header.type))
+        else:
+            all_elements.append(xsd.Element('header', xsd.ComplexType([])))
 
-        return xsd.Element(None, xsd.ComplexType(all_elements))
+        retval = xsd.Element(None, xsd.ComplexType(all_elements))
+        return retval
+
+    def _deserialize_headers(self, xmlelement):
+        """Deserialize the values in the SOAP:Header element"""
+        if not self.header or xmlelement is None:
+            return {}
+
+        result = self.header.parse(xmlelement, self.wsdl.types)
+        if result is not None:
+            return {'header': result}
+        return {}
+
+    def _resolve_header(self, info, definitions, parts):
+        sequence = xsd.Sequence()
+        if not info:
+            return xsd.Element(None, xsd.ComplexType(sequence))
+
+        for item in info:
+            message_name = item['message'].text
+            part_name = item['part']
+
+            message = definitions.get('messages', message_name)
+            if message == self.abstract:
+                del parts[part_name]
+            element = message.parts[part_name].element.clone()
+            element.attr_name = part_name
+            sequence.append(element)
+        return xsd.Element(None, xsd.ComplexType(sequence))
 
 
 class DocumentMessage(SoapMessage):
@@ -327,26 +331,16 @@ class DocumentMessage(SoapMessage):
 
     """
 
-    def _deserialize_body(self, xmlelement):
-        if self.body.name:
-            xmlelement = xmlelement.getchildren()[0]
-            result = self.body.parse(xmlelement, self.wsdl.types)
-        else:
-            result = self.body.parse(xmlelement, self.wsdl.types)
-
-        if result is not None:
-            if isinstance(result, xsd.CompoundValue):
-                return result.__values__
-            else:
-                return {self.body.attr_name: result}
-        return {}
+    def __init__(self, *args, **kwargs):
+        super(DocumentMessage, self).__init__(*args, **kwargs)
+        self._is_body_wrapped = False
 
     def resolve(self, definitions, abstract_message):
         """Resolve the data in the self._info dict (set via parse())
 
         This creates three xsd.Element objects:
 
-            - self.headers
+            - self.header
             - self.body
             - self.envelope (combination of headers and body)
 
@@ -362,7 +356,7 @@ class DocumentMessage(SoapMessage):
         parts = OrderedDict(self.abstract.parts)
 
         # Process the headers
-        self.headers = self._resolve_header(
+        self.header = self._resolve_header(
             self._info['header'], definitions, parts)
 
         # Process the body
@@ -383,10 +377,25 @@ class DocumentMessage(SoapMessage):
             if len(sub_elements) > 1:
                 self.body = xsd.Element(
                     None, xsd.ComplexType(xsd.All(sub_elements)))
+                self._is_body_wrapped = True
             else:
                 self.body = sub_elements[0]
+                self._is_body_wrapped = False
 
+        # self.envelope = self.body
         self.envelope = self._create_envelope_element()
+
+    def _deserialize_body(self, xmlelement):
+        if self._is_body_wrapped:
+            result = self.body.parse(xmlelement, self.wsdl.types)
+        else:
+            # For now we assume that the body only has one child since only
+            # one part is specified in the wsdl. This should be handled way
+            # better
+            # XXX
+            xmlelement = xmlelement.getchildren()[0]
+            result = self.body.parse(xmlelement, self.wsdl.types)
+        return {'body': result}
 
 
 class RpcMessage(SoapMessage):
@@ -401,16 +410,6 @@ class RpcMessage(SoapMessage):
 
     """
 
-    def _deserialize_body(self, body_element):
-        value = body_element.find(self.body.qname)
-        result = self.body.parse(value, self.wsdl.types)
-        if result is not None:
-            if isinstance(result, xsd.CompoundValue):
-                return result.__values__
-            else:
-                return {self.body.attr_name: result}
-        return {}
-
     def resolve(self, definitions, abstract_message):
         """Override the default `SoapMessage.resolve()` since we need to wrap
         the parts in an element.
@@ -424,7 +423,7 @@ class RpcMessage(SoapMessage):
         self.abstract = abstract_message
         parts = OrderedDict(self.abstract.parts)
 
-        self.headers = self._resolve_header(
+        self.header = self._resolve_header(
             self._info['header'], definitions, parts)
 
         # Each part is a parameter or a return value and appears inside a
@@ -451,6 +450,11 @@ class RpcMessage(SoapMessage):
                 tag_name, xsd.ComplexType(xsd.Sequence(elements)))
 
         self.envelope = self._create_envelope_element()
+
+    def _deserialize_body(self, body_element):
+        value = body_element.find(self.body.qname)
+        result = self.body.parse(value, self.wsdl.types)
+        return {'body': result}
 
 
 class HttpMessage(ConcreteMessage):
