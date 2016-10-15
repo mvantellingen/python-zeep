@@ -143,16 +143,19 @@ class HttpOperation(Operation):
                 continue
 
             # XXX Multiple mime types may be declared as alternatives
-            message_node = node.getchildren()[0]
+            message_node = None
+            if len(node.getchildren()) > 0:
+                message_node = node.getchildren()[0]
             message_class = None
-            if message_node.tag == etree.QName(NSMAP['http'], 'urlEncoded'):
-                message_class = messages.UrlEncoded
-            elif message_node.tag == etree.QName(NSMAP['http'], 'urlReplacement'):
-                message_class = messages.UrlReplacement
-            elif message_node.tag == etree.QName(NSMAP['mime'], 'content'):
-                message_class = messages.MimeContent
-            elif message_node.tag == etree.QName(NSMAP['mime'], 'mimeXml'):
-                message_class = messages.MimeXML
+            if message_node is not None:
+                if message_node.tag == etree.QName(NSMAP['http'], 'urlEncoded'):
+                    message_class = messages.UrlEncoded
+                elif message_node.tag == etree.QName(NSMAP['http'], 'urlReplacement'):
+                    message_class = messages.UrlReplacement
+                elif message_node.tag == etree.QName(NSMAP['mime'], 'content'):
+                    message_class = messages.MimeContent
+                elif message_node.tag == etree.QName(NSMAP['mime'], 'mimeXml'):
+                    message_class = messages.MimeXML            
 
             if message_class:
                 msg = message_class.parse(definitions, node, obj)
