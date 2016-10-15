@@ -302,7 +302,7 @@ def test_handle_incorrectly_qualified():
 
 
 def test_deserialize_rpc_literal():
-    # Based on #176
+    # Based on #219
     wsdl_content = StringIO("""
     <?xml version="1.0"?>
     <wsdl:definitions
