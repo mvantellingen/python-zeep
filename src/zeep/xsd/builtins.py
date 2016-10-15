@@ -326,6 +326,12 @@ class AnyURI(_BuiltinType):
 class QName(_BuiltinType):
     _default_qname = '{http://www.w3.org/2001/XMLSchema}QName'
 
+    def xmlvalue(self, value):
+        return value
+
+    def pythonvalue(self, value):
+        return value
+
 
 class Notation(_BuiltinType):
     _default_qname = '{http://www.w3.org/2001/XMLSchema}NOTATION'
