@@ -3,7 +3,7 @@ from lxml import etree
 from zeep import plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.parser import parse_xml
-from zeep.utils import qname_attr
+from zeep.utils import qname_attr, as_qname
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
 from zeep.wsdl.utils import etree_to_string
@@ -247,11 +247,20 @@ class Soap12Binding(SoapBinding):
 
         message = fault_node.findtext('soap-env:Reason/soap-env:Text', namespaces=self.nsmap)
         code = fault_node.findtext('soap-env:Code/soap-env:Value', namespaces=self.nsmap)
+        subcodes = []
+        subcode_element = fault_node.find('soap-env:Code/soap-env:Subcode', namespaces=self.nsmap)
+        while subcode_element is not None:
+            subcode_value_element = subcode_element.find('soap-env:Value', namespaces=self.nsmap)
+            subcode_qname = as_qname(subcode_value_element.text, subcode_value_element.nsmap, None)
+            subcodes.append(subcode_qname)
+            subcode_element = subcode_element.find('soap-env:Subcode', namespaces=self.nsmap)
+
         raise Fault(
             message=message,
             code=code,
             actor=None,
-            detail=fault_node.find('Detail'))
+            detail=fault_node.find('Detail'),
+            subcodes=subcodes)
 
 
 class SoapOperation(Operation):
