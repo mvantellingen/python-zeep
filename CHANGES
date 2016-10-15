@@ -3,7 +3,12 @@
  - Fix deserializing RPC responses (#219
 
 
-0.18.0 (unreleased)
+0.18.1 (2016-09-23)
+-------------------
+ - PyPi release error
+
+
+0.18.0 (2016-09-23)
 -------------------
  - Fix parsing Any elements by using the namespace map of the response node 
    instead of the namespace map of the wsdl. (#184, #164)
