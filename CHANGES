@@ -6,6 +6,7 @@
    body and header elements.
  - Fix parsing HTTP bindings when there are no message elements (#185)
  - Fix deserializing RPC responses (#219
+ - Add support for SOAP 1.2 Fault subcodes (#210, vashek)
 
 
 0.18.1 (2016-09-23)
