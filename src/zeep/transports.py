@@ -1,3 +1,4 @@
+import os
 import logging
 
 import requests
@@ -49,7 +50,7 @@ class Transport(object):
             if url.startswith('file://'):
                 url = url[7:]
 
-        with open(url, 'rb') as fh:
+        with open(os.path.expanduser(url), 'rb') as fh:
             return fh.read()
 
     def post(self, address, message, headers):
