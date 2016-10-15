@@ -452,8 +452,14 @@ class RpcMessage(SoapMessage):
         self.envelope = self._create_envelope_element()
 
     def _deserialize_body(self, body_element):
-        value = body_element.find(self.body.qname)
-        result = self.body.parse(value, self.wsdl.types)
+        """The name of the wrapper element is not defined. The WS-I defines
+        that it should be the operation name with the 'Response' string as
+        suffix. But lets just do it really stupid for now and use the first
+        element.
+
+        """
+        response_element = body_element.getchildren()[0]
+        result = self.body.parse(response_element, self.wsdl.types)
         return {'body': result}
 
 

@@ -299,3 +299,70 @@ def test_handle_incorrectly_qualified():
     """)
     deserialized = operation.output.deserialize(document)
     assert deserialized == 'foobar'
+
+
+def test_deserialize_rpc_literal():
+    # Based on #176
+    wsdl_content = StringIO("""
+    <?xml version="1.0"?>
+    <wsdl:definitions
+        xmlns="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:tns="http://tests.python-zeep.org/tns"
+        xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://tests.python-zeep.org/tns">
+
+      <wsdl:message name="getItemSoapIn"></wsdl:message>
+      <wsdl:message name="getItemSoapOut">
+        <wsdl:part name="getItemReturn" type="xsd:string"/>
+      </wsdl:message>
+
+      <wsdl:portType name="Test">
+        <wsdl:operation name="getItem">
+          <wsdl:input message="tns:getItemSoapIn"/>
+          <wsdl:output message="tns:getItemSoapOut"/>
+        </wsdl:operation>
+      </wsdl:portType>
+
+      <wsdl:binding name="TestSoapBinding" type="tns:Test">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="getItem">
+          <soap:operation soapAction=""/>
+          <wsdl:input>
+            <soap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://tests.python-zeep.org/tns" use="encoded"/>
+          </wsdl:input>
+          <wsdl:output>
+            <soap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://tests.python-zeep.org/tns" use="encoded"/>
+          </wsdl:output>
+        </wsdl:operation>
+      </wsdl:binding>
+      <wsdl:service name="TestService">
+        <wsdl:port binding="tns:TestSoapBinding" name="Test">
+          <soap:address location="http://test.python-zeeo.org/rpc"/>
+        </wsdl:port>
+      </wsdl:service>
+    </wsdl:definitions>
+    """.strip())
+
+    transport = DummyTransport()
+    root = wsdl.Document(wsdl_content, transport)
+
+    binding = root.bindings['{http://tests.python-zeep.org/tns}TestSoapBinding']
+    operation = binding.get('getItem')
+
+    document = load_xml("""
+    <soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <soapenv:Body>
+        <ns1:getItemResponse soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:ns1="http://tests.python-zeep.org/tns">
+          <ns1:getItemReturn xsi:type="xsd:string">foobar</ns1:getItemReturn>
+        </ns1:getItemResponse>
+      </soapenv:Body>
+    </soapenv:Envelope>
+    """)
+    deserialized = operation.output.deserialize(document)
+    assert deserialized == 'foobar'
