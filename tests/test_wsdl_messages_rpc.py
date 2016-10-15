@@ -143,14 +143,16 @@ def test_deserialize():
     operation = binding.get('TestOperation')
 
     document = load_xml("""
-        <soap-env:Body
+        <soap-env:Envelope
           xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
-          <ns0:Output xmlns:ns0="http://test.python-zeep.org/tests/rpc">
-            <result>ah1</result>
-          </ns0:Output>
-        </soap-env:Body>
+          <soap-env:Body>
+            <ns0:Output xmlns:ns0="http://test.python-zeep.org/tests/rpc">
+              <result>ah1</result>
+            </ns0:Output>
+          </soap-env:Body>
+        </soap-env:Envelope>
     """)
-    assert operation.output.signature(True) == 'xsd:string'
+    assert operation.output.signature(True) == 'body: {result: xsd:string}, header: {}'
     result = operation.output.deserialize(document)
     assert result == 'ah1'
 
@@ -211,12 +213,13 @@ def test_wsdl_array_of_simple_types():
     operation = binding.get('getSimpleArray')
 
     document = load_xml("""
-    <SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+    <SOAP-ENV:Envelope SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
         xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
         xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
         xmlns:ns1="http://tests.python-zeep.org/tns"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <SOAP-ENV:Body>
         <ns1:getSimpleArrayResponse>
             <return SOAP-ENC:arrayType="xsd:string[16]" xsi:type="ns1:ArrayOfString">
                 <item xsi:type="xsd:string">item</item>
@@ -226,13 +229,12 @@ def test_wsdl_array_of_simple_types():
                 <item xsi:type="xsd:string">items</item>
             </return>
         </ns1:getSimpleArrayResponse>
-    </SOAP-ENV:Body>
+      </SOAP-ENV:Body>
+    </SOAP-ENV:Envelope>
     """)
 
     deserialized = operation.output.deserialize(document)
-    list_of_items = deserialized['_value_1']
-
-    assert list_of_items == ['item', 'and', 'even', 'more', 'items']
+    assert deserialized == ['item', 'and', 'even', 'more', 'items']
 
 
 def test_handle_incorrectly_qualified():
@@ -284,14 +286,16 @@ def test_handle_incorrectly_qualified():
     operation = binding.get('getItem')
 
     document = load_xml("""
-    <soapenv:Body
+    <soapenv:Envelope
         xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-      <ns1:getResponse soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:ns1="http://tests.python-zeep.org/tns">
-        <ns1:getItemReturn xsi:type="xsd:string">foobar</ns1:getItemReturn>
-      </ns1:getResponse>
-    </soapenv:Body>
+      <soapenv:Body>
+        <ns1:getResponse soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:ns1="http://tests.python-zeep.org/tns">
+          <ns1:getItemReturn xsi:type="xsd:string">foobar</ns1:getItemReturn>
+        </ns1:getResponse>
+      </soapenv:Body>
+    </soapenv:Envelope>
     """)
     deserialized = operation.output.deserialize(document)
     assert deserialized == 'foobar'

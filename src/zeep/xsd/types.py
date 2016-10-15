@@ -223,7 +223,7 @@ class ComplexType(Type):
         result = []
         for name, element in self.elements_nested:
             if isinstance(element, Element):
-                result.append((element.name, element))
+                result.append((element.attr_name, element))
             else:
                 result.extend(element.elements)
         return result

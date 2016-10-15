@@ -565,3 +565,23 @@ def test_element_attribute_name_conflict():
     assert obj.item == 'foo'
     assert obj.foo == 'x'
     assert obj.attr__item == 'bar'
+
+
+def test_attr_name():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'UserName'),
+                    xsd.String(),
+                    attr_name='username'),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'Password_x'),
+                    xsd.String(),
+                    attr_name='password'),
+            ])
+        ))
+
+    # sequences
+    custom_type(username='foo', password='bar')
