@@ -59,7 +59,7 @@ class SoapBinding(Binding):
 
         # Create the SOAP envelope
         serialized = operation_obj.create(*args, **kwargs)
-        serialized.headers['Content-Type'] = self.content_type
+        self._set_http_headers(serialized, operation_obj)
 
         envelope = serialized.content
         http_headers = serialized.headers
@@ -195,7 +195,6 @@ class Soap11Binding(SoapBinding):
         'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
         'xsd': 'http://www.w3.org/2001/XMLSchema',
     }
-    content_type = 'text/xml; charset=utf-8'
 
     def process_error(self, doc):
         fault_node = doc.find(
@@ -219,6 +218,9 @@ class Soap11Binding(SoapBinding):
             actor=get_text('faultactor'),
             detail=fault_node.find('detail'))
 
+    def _set_http_headers(self, serialized, operation):
+        serialized.headers['Content-Type'] = 'text/xml; charset=utf-8'
+
 
 class Soap12Binding(SoapBinding):
     nsmap = {
@@ -227,7 +229,6 @@ class Soap12Binding(SoapBinding):
         'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
         'xsd': 'http://www.w3.org/2001/XMLSchema',
     }
-    content_type = 'application/soap+xml; charset=utf-8'
 
     def process_error(self, doc):
         fault_node = doc.find(
@@ -261,6 +262,13 @@ class Soap12Binding(SoapBinding):
             actor=None,
             detail=fault_node.find('Detail'),
             subcodes=subcodes)
+
+    def _set_http_headers(self, serialized, operation):
+        serialized.headers['Content-Type'] = '; '.join([
+            'application/soap+xml',
+            'charset=utf-8',
+            'action=%s' % operation.soapaction
+        ])
 
 
 class SoapOperation(Operation):

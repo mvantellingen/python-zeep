@@ -112,6 +112,9 @@ class SoapMessage(ConcreteMessage):
         if body is not None:
             envelope.append(body)
 
+        # XXX: This is only used in Soap 1.1 so should be moved to the the
+        # Soap11Binding._set_http_headers(). But let's keep it like this for
+        # now.
         headers = {
             'SOAPAction': '"%s"' % self.operation.soapaction
         }
