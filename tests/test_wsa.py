@@ -272,4 +272,4 @@ def test_force_wsa_soap12(recwarn, monkeypatch):
     assert_nodes_equal(expected, envelope)
 
     assert headers['Content-Type'] == (
-        'application/soap+xml; charset=utf-8; action=urn:dummyRequest')
+        'application/soap+xml; charset=utf-8; action="urn:dummyRequest"')

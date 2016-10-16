@@ -276,7 +276,7 @@ class Soap12Binding(SoapBinding):
         serialized.headers['Content-Type'] = '; '.join([
             'application/soap+xml',
             'charset=utf-8',
-            'action=%s' % operation.soapaction
+            'action="%s"' % operation.soapaction
         ])
 
 
