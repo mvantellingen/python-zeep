@@ -24,12 +24,14 @@ class WsAddressingPlugin(Plugin):
             WSA.To(binding_options['address']),
         ]
         header.extend(headers)
-        try:
+
+        # the top_nsmap kwarg was added in lxml 3.5.0
+        if etree.LXML_VERSION[:2] >= (3, 5):
             etree.cleanup_namespaces(
                 envelope, top_nsmap={
                     'wsa': 'http://www.w3.org/2005/08/addressing'
                 })
-        except TypeError:
+        else:
             etree.cleanup_namespaces(envelope)
 
         return envelope, http_headers
