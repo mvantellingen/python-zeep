@@ -1,7 +1,8 @@
 from lxml import etree
 
 from tests.utils import load_xml
-from zeep.wsdl import soap
+from zeep.exceptions import Fault
+from zeep.wsdl import bindings
 
 
 def test_soap11_process_error():
@@ -23,14 +24,14 @@ def test_soap11_process_error():
           </soapenv:Body>
         </soapenv:Envelope>
     """)
-    binding = soap.Soap11Binding(
+    binding = bindings.Soap11Binding(
         wsdl=None, name=None, port_name=None, transport=None,
         default_style=None)
 
     try:
         binding.process_error(response, None)
         assert False
-    except soap.Fault as exc:
+    except Fault as exc:
         assert exc.message == 'fault-string'
         assert exc.code == 'fault-code'
         assert exc.actor is None
@@ -71,14 +72,14 @@ def test_soap12_process_error():
                  %s
                </soapenv:Subcode>
     """
-    binding = soap.Soap12Binding(
+    binding = bindings.Soap12Binding(
         wsdl=None, name=None, port_name=None, transport=None,
         default_style=None)
 
     try:
         binding.process_error(load_xml(response % ""), None)
         assert False
-    except soap.Fault as exc:
+    except Fault as exc:
         assert exc.message == 'us-error'
         assert exc.code == 'fault-code'
         assert exc.subcodes == []
@@ -87,7 +88,7 @@ def test_soap12_process_error():
         binding.process_error(
             load_xml(response % subcode % ("fault-subcode1", "")), None)
         assert False
-    except soap.Fault as exc:
+    except Fault as exc:
         assert exc.message == 'us-error'
         assert exc.code == 'fault-code'
         assert len(exc.subcodes) == 1
@@ -99,7 +100,7 @@ def test_soap12_process_error():
             load_xml(response % subcode % ("fault-subcode1", subcode % ("ex:fault-subcode2", ""))),
             None)
         assert False
-    except soap.Fault as exc:
+    except Fault as exc:
         assert exc.message == 'us-error'
         assert exc.code == 'fault-code'
         assert len(exc.subcodes) == 2

@@ -9,7 +9,7 @@ from lxml import etree
 
 from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
-from zeep.wsdl import http, parse, soap
+from zeep.wsdl import bindings, parse
 from zeep.xsd import Schema
 from zeep.xsd.context import ParserContext
 
@@ -340,14 +340,14 @@ class Definition(object):
         result = {}
         for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
             # Detect the binding type
-            if soap.Soap11Binding.match(binding_node):
-                binding = soap.Soap11Binding.parse(self, binding_node)
-            elif soap.Soap12Binding.match(binding_node):
-                binding = soap.Soap12Binding.parse(self, binding_node)
-            elif http.HttpGetBinding.match(binding_node):
-                binding = http.HttpGetBinding.parse(self, binding_node)
-            elif http.HttpPostBinding.match(binding_node):
-                binding = http.HttpPostBinding.parse(self, binding_node)
+            if bindings.Soap11Binding.match(binding_node):
+                binding = bindings.Soap11Binding.parse(self, binding_node)
+            elif bindings.Soap12Binding.match(binding_node):
+                binding = bindings.Soap12Binding.parse(self, binding_node)
+            elif bindings.HttpGetBinding.match(binding_node):
+                binding = bindings.HttpGetBinding.parse(self, binding_node)
+            elif bindings.HttpPostBinding.match(binding_node):
+                binding = bindings.HttpPostBinding.parse(self, binding_node)
             else:
                 continue
 
