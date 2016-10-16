@@ -28,7 +28,7 @@ def test_soap11_process_error():
         default_style=None)
 
     try:
-        binding.process_error(response)
+        binding.process_error(response, None)
         assert False
     except soap.Fault as exc:
         assert exc.message == 'fault-string'
@@ -76,7 +76,7 @@ def test_soap12_process_error():
         default_style=None)
 
     try:
-        binding.process_error(load_xml(response % ""))
+        binding.process_error(load_xml(response % ""), None)
         assert False
     except soap.Fault as exc:
         assert exc.message == 'us-error'
@@ -84,7 +84,8 @@ def test_soap12_process_error():
         assert exc.subcodes == []
 
     try:
-        binding.process_error(load_xml(response % subcode % ("fault-subcode1", "")))
+        binding.process_error(
+            load_xml(response % subcode % ("fault-subcode1", "")), None)
         assert False
     except soap.Fault as exc:
         assert exc.message == 'us-error'
@@ -94,7 +95,9 @@ def test_soap12_process_error():
         assert exc.subcodes[0].localname == 'fault-subcode1'
 
     try:
-        binding.process_error(load_xml(response % subcode % ("fault-subcode1", subcode % ("ex:fault-subcode2", ""))))
+        binding.process_error(
+            load_xml(response % subcode % ("fault-subcode1", subcode % ("ex:fault-subcode2", ""))),
+            None)
         assert False
     except soap.Fault as exc:
         assert exc.message == 'us-error'

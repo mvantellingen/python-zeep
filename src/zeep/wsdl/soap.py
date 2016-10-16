@@ -137,12 +137,16 @@ class SoapBinding(Binding):
         doc, http_headers = plugins.apply_ingress(
             client, doc, response.headers, operation)
 
-        if response.status_code != 200:
-            return self.process_error(doc)
+        # If the response code is not 200 or if there is a Fault node available
+        # then assume that an error occured.
+        fault_node = doc.find(
+            'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
+        if response.status_code != 200 or fault_node is not None:
+            return self.process_error(doc, operation)
 
         return operation.process_reply(doc)
 
-    def process_error(self, doc):
+    def process_error(self, doc, operation):
         raise NotImplementedError
 
     def process_service_port(self, xmlelement):
@@ -196,7 +200,7 @@ class Soap11Binding(SoapBinding):
         'xsd': 'http://www.w3.org/2001/XMLSchema',
     }
 
-    def process_error(self, doc):
+    def process_error(self, doc, operation):
         fault_node = doc.find(
             'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
 
@@ -230,7 +234,7 @@ class Soap12Binding(SoapBinding):
         'xsd': 'http://www.w3.org/2001/XMLSchema',
     }
 
-    def process_error(self, doc):
+    def process_error(self, doc, operation):
         fault_node = doc.find(
             'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
 
@@ -248,6 +252,9 @@ class Soap12Binding(SoapBinding):
 
         message = fault_node.findtext('soap-env:Reason/soap-env:Text', namespaces=self.nsmap)
         code = fault_node.findtext('soap-env:Code/soap-env:Value', namespaces=self.nsmap)
+
+        # Extract the fault subcodes. These can be nested, as in subcodes can
+        # also contain other subcodes.
         subcodes = []
         subcode_element = fault_node.find('soap-env:Code/soap-env:Subcode', namespaces=self.nsmap)
         while subcode_element is not None:
@@ -256,11 +263,13 @@ class Soap12Binding(SoapBinding):
             subcodes.append(subcode_qname)
             subcode_element = subcode_element.find('soap-env:Subcode', namespaces=self.nsmap)
 
+        # TODO: We should use the fault message as defined in the wsdl.
+        detail_node = fault_node.find('soap-env:Detail', namespaces=self.nsmap)
         raise Fault(
             message=message,
             code=code,
             actor=None,
-            detail=fault_node.find('Detail'),
+            detail=detail_node,
             subcodes=subcodes)
 
     def _set_http_headers(self, serialized, operation):
