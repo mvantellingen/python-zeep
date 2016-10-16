@@ -12,6 +12,7 @@
  - Add the SOAPAction to the Content-Type header in SOAP 1.2 bindings (#211)
  - Fix issue when mixing elements and any elements in a choice type (#192)
  - Improving parsing of results for union types (#192)
+ - Make ws-addressing work with lxml < 3.5 (#209)
 
 
 0.18.1 (2016-09-23)
