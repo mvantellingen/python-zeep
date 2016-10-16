@@ -37,26 +37,7 @@ class SoapMessage(ConcreteMessage):
 
         # Create the soap:header element
         headers_value = kwargs.pop('_soapheaders', None)
-        if headers_value:
-            headers_value = copy.deepcopy(headers_value)
-            header = soap.Header()
-            if isinstance(headers_value, list):
-                for header_value in headers_value:
-                    if hasattr(header_value, '_xsd_elm'):
-                        header_value._xsd_elm.render(header, header_value)
-                    elif isinstance(header_value, etree._Element):
-                        header.append(header_value)
-                    else:
-                        raise ValueError("Invalid value given to _soapheaders")
-            elif isinstance(headers_value, dict):
-                if not self.header:
-                    raise ValueError(
-                        "_soapheaders only accepts a dictionary if the wsdl "
-                        "defines the headers.")
-                headers_value = self.header(**headers_value)
-                self.header.render(header, headers_value)
-            else:
-                raise ValueError("Invalid value given to _soapheaders")
+        header = self._serialize_header(headers_value, nsmap)
 
         # Create the soap:body element
         if self.body:
@@ -107,6 +88,8 @@ class SoapMessage(ConcreteMessage):
         elif len(result) == 0:
             return None
 
+        # Check if we can remove the wrapping object to make the return value
+        # easier to use.
         result = next(iter(result.__values__.values()))
         if isinstance(result, xsd.CompoundValue):
             children = result._xsd_type.elements
@@ -260,6 +243,34 @@ class SoapMessage(ConcreteMessage):
 
         retval = xsd.Element(None, xsd.ComplexType(all_elements))
         return retval
+
+    def _serialize_header(self, headers_value, nsmap):
+        if not headers_value:
+            return
+
+        headers_value = copy.deepcopy(headers_value)
+
+        soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=nsmap)
+        header = soap.Header()
+        if isinstance(headers_value, list):
+            for header_value in headers_value:
+                if hasattr(header_value, '_xsd_elm'):
+                    header_value._xsd_elm.render(header, header_value)
+                elif isinstance(header_value, etree._Element):
+                    header.append(header_value)
+                else:
+                    raise ValueError("Invalid value given to _soapheaders")
+        elif isinstance(headers_value, dict):
+            if not self.header:
+                raise ValueError(
+                    "_soapheaders only accepts a dictionary if the wsdl "
+                    "defines the headers.")
+            headers_value = self.header(**headers_value)
+            self.header.render(header, headers_value)
+        else:
+            raise ValueError("Invalid value given to _soapheaders")
+
+        return header
 
     def _deserialize_headers(self, xmlelement):
         """Deserialize the values in the SOAP:Header element"""
