@@ -9,7 +9,7 @@ from lxml import etree
 
 from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
-from zeep.wsdl import definitions, http, soap
+from zeep.wsdl import http, parse, soap
 from zeep.xsd import Schema
 from zeep.xsd.context import ParserContext
 
@@ -281,7 +281,7 @@ class Definition(object):
         """
         result = {}
         for msg_node in doc.findall("wsdl:message", namespaces=NSMAP):
-            msg = definitions.AbstractMessage.parse(self, msg_node)
+            msg = parse.parse_abstract_message(self, msg_node)
             result[msg.name.text] = msg
             logger.debug("Adding message: %s", msg.name.text)
         return result
@@ -301,7 +301,7 @@ class Definition(object):
         """
         result = {}
         for port_node in doc.findall('wsdl:portType', namespaces=NSMAP):
-            port_type = definitions.PortType.parse(self, port_node)
+            port_type = parse.parse_port_type(self, port_node)
             result[port_type.name.text] = port_type
             logger.debug("Adding port: %s", port_type.name.text)
         return result
@@ -371,7 +371,7 @@ class Definition(object):
         """
         result = OrderedDict()
         for service_node in doc.findall('wsdl:service', namespaces=NSMAP):
-            service = definitions.Service.parse(self, service_node)
+            service = parse.parse_service(self, service_node)
             result[service.name] = service
             logger.debug("Adding service: %s", service.name)
         return result
