@@ -23,8 +23,8 @@ class SoapMessage(ConcreteMessage):
         self.abstract = None  # Set during resolve()
         self.type = type
 
-        self.body = xsd.Element(None, xsd.ComplexType([]))
-        self.header = xsd.Element(None, xsd.ComplexType([]))
+        self.body = None
+        self.header = None
         self.envelope = None
 
     def serialize(self, *args, **kwargs):
@@ -149,32 +149,40 @@ class SoapMessage(ConcreteMessage):
         """
         name = xmlelement.get('name')
         obj = cls(definitions.wsdl, name, operation, nsmap=nsmap, type=type)
-        tns = definitions.target_namespace
 
-        info = {
-            'body': {},
-            'header': [],
-        }
+        body_data = None
+        header_data = None
 
-        # parse soap:body
-        # <soap:body parts="nmtokens"? use="literal|encoded"?
-        #   encodingStyle="uri-list"? namespace="uri"?>
         body = xmlelement.find('soap:body', namespaces=operation.binding.nsmap)
         if body is not None:
-            info['body'] = {
-                'part': body.get('part'),
-                'use': body.get('use', 'literal'),
-                'encodingStyle': body.get('encodingStyle'),
-                'namespace': body.get('namespace'),
-            }
+            body_data = cls._parse_body(body)
 
         # Parse soap:header (multiple)
         elements = xmlelement.findall(
             'soap:header', namespaces=operation.binding.nsmap)
-        info['header'] = cls._parse_header(elements, tns, operation)
+        header_data = cls._parse_header(
+            elements, definitions.target_namespace, operation)
 
-        obj._info = info
+        obj._resolve_info = {
+            'body': body_data,
+            'header': header_data
+        }
         return obj
+
+    @classmethod
+    def _parse_body(cls, xmlelement):
+        """Parse soap:body and return a dict with data to resolve it.
+
+            <soap:body parts="nmtokens"? use="literal|encoded"?
+                       encodingStyle="uri-list"? namespace="uri"?>
+
+        """
+        return {
+            'part': xmlelement.get('part'),
+            'use': xmlelement.get('use', 'literal'),
+            'encodingStyle': xmlelement.get('encodingStyle'),
+            'namespace': xmlelement.get('namespace'),
+        }
 
     @classmethod
     def _parse_header(cls, xmlelements, tns, operation):
@@ -227,22 +235,43 @@ class SoapMessage(ConcreteMessage):
         except KeyError:
             raise exceptions.WsdlSyntaxError("Invalid soap:header(fault)")
 
+    def resolve(self, definitions, abstract_message):
+        """Resolve the data in the self._resolve_info dict (set via parse())
+
+        This creates three xsd.Element objects:
+
+            - self.header
+            - self.body
+            - self.envelope (combination of headers and body)
+
+        XXX headerfaults are not implemented yet.
+
+        """
+        info = self._resolve_info
+        del self._resolve_info
+
+        # If this message has no parts then we have nothing to do. This might
+        # happen for output messages which don't return anything.
+        if not abstract_message.parts and self.type != 'input':
+            return
+
+        self.abstract = abstract_message
+        parts = OrderedDict(self.abstract.parts)
+
+        self.header = self._resolve_header(info['header'], definitions, parts)
+        self.body = self._resolve_body(info['body'], definitions, parts)
+        self.envelope = self._create_envelope_element()
+
     def _create_envelope_element(self):
         """Create combined `envelope` complexType which contains both the
         elements from the body and the headers.
-        """
-        all_elements = []
-        if self.body.signature():
-            all_elements.append(xsd.Element('body', self.body.type))
-        else:
-            all_elements.append(xsd.Element('body', xsd.ComplexType([])))
-        if self.header.signature():
-            all_elements.append(xsd.Element('header', self.header.type))
-        else:
-            all_elements.append(xsd.Element('header', xsd.ComplexType([])))
 
-        retval = xsd.Element(None, xsd.ComplexType(all_elements))
-        return retval
+        """
+        all_elements = xsd.Sequence([
+            xsd.Element('body', self.body.type),
+            xsd.Element('header', self.header.type),
+        ])
+        return xsd.Element('envelope', xsd.ComplexType(all_elements))
 
     def _serialize_header(self, headers_value, nsmap):
         if not headers_value:
@@ -310,56 +339,6 @@ class DocumentMessage(SoapMessage):
         super(DocumentMessage, self).__init__(*args, **kwargs)
         self._is_body_wrapped = False
 
-    def resolve(self, definitions, abstract_message):
-        """Resolve the data in the self._info dict (set via parse())
-
-        This creates three xsd.Element objects:
-
-            - self.header
-            - self.body
-            - self.envelope (combination of headers and body)
-
-        XXX headerfaults are not implemented yet.
-
-        """
-        # If this message has no parts then we have nothing to do. This might
-        # happen for output messages which don't return anything.
-        if not abstract_message.parts:
-            return
-
-        self.abstract = abstract_message
-        parts = OrderedDict(self.abstract.parts)
-
-        # Process the headers
-        self.header = self._resolve_header(
-            self._info['header'], definitions, parts)
-
-        # Process the body
-        body_info = self._info['body']
-        if body_info:
-            # If the part name is omitted then all parts are available under
-            # the soap:body tag. Otherwise only the part with the given name.
-            if body_info['part']:
-                part_name = body_info['part']
-                sub_elements = [parts[part_name].element]
-            else:
-                sub_elements = []
-                for part_name, part in parts.items():
-                    element = part.element.clone()
-                    element.attr_name = part_name or element.name
-                    sub_elements.append(element)
-
-            if len(sub_elements) > 1:
-                self.body = xsd.Element(
-                    None, xsd.ComplexType(xsd.All(sub_elements)))
-                self._is_body_wrapped = True
-            else:
-                self.body = sub_elements[0]
-                self._is_body_wrapped = False
-
-        # self.envelope = self.body
-        self.envelope = self._create_envelope_element()
-
     def _deserialize_body(self, xmlelement):
         if self._is_body_wrapped:
             result = self.body.parse(xmlelement, self.wsdl.types)
@@ -371,6 +350,30 @@ class DocumentMessage(SoapMessage):
             xmlelement = xmlelement.getchildren()[0]
             result = self.body.parse(xmlelement, self.wsdl.types)
         return {'body': result}
+
+    def _resolve_body(self, info, definitions, parts):
+        if not info:
+            return xsd.Element(None, xsd.ComplexType([]))
+
+        # If the part name is omitted then all parts are available under
+        # the soap:body tag. Otherwise only the part with the given name.
+        if info['part']:
+            part_name = info['part']
+            sub_elements = [parts[part_name].element]
+        else:
+            sub_elements = []
+            for part_name, part in parts.items():
+                element = part.element.clone()
+                element.attr_name = part_name or element.name
+                sub_elements.append(element)
+
+        if len(sub_elements) > 1:
+            self._is_body_wrapped = True
+            return xsd.Element(
+                None, xsd.ComplexType(xsd.All(sub_elements)))
+        else:
+            self._is_body_wrapped = False
+            return sub_elements[0]
 
 
 class RpcMessage(SoapMessage):
@@ -385,46 +388,32 @@ class RpcMessage(SoapMessage):
 
     """
 
-    def resolve(self, definitions, abstract_message):
-        """Override the default `SoapMessage.resolve()` since we need to wrap
-        the parts in an element.
+    def _resolve_body(self, info, definitions, parts):
+        """Return an XSD element for the SOAP:Body.
+
+        Each part is a parameter or a return value and appears inside a
+        wrapper element within the body named identically to the operation
+        name and its namespace is the value of the namespace attribute.
 
         """
-        # If this message has no parts then we have nothing to do. This might
-        # happen for output messages which don't return anything.
-        if not abstract_message.parts and self.type != 'input':
-            return
+        if not info:
+            return xsd.Element(None, xsd.ComplexType([]))
 
-        self.abstract = abstract_message
-        parts = OrderedDict(self.abstract.parts)
+        namespace = info['namespace']
+        if self.type == 'input':
+            tag_name = etree.QName(namespace, self.operation.name)
+        else:
+            tag_name = etree.QName(namespace, self.abstract.name.localname)
 
-        self.header = self._resolve_header(
-            self._info['header'], definitions, parts)
-
-        # Each part is a parameter or a return value and appears inside a
-        # wrapper element within the body named identically to the operation
-        # name and its namespace is the value of the namespace attribute.
-        body_info = self._info['body']
-        if body_info:
-            namespace = self._info['body']['namespace']
-            if self.type == 'input':
-                tag_name = etree.QName(namespace, self.operation.name)
+        # Create the xsd element to create/parse the response. Each part
+        # is a sub element of the root node (which uses the operation name)
+        elements = []
+        for name, msg in parts.items():
+            if msg.element:
+                elements.append(msg.element)
             else:
-                tag_name = etree.QName(namespace, self.abstract.name.localname)
-
-            # Create the xsd element to create/parse the response. Each part
-            # is a sub element of the root node (which uses the operation name)
-            elements = []
-            for name, msg in parts.items():
-                if msg.element:
-                    elements.append(msg.element)
-                else:
-                    elements.append(xsd.Element(name, msg.type))
-
-            self.body = xsd.Element(
-                tag_name, xsd.ComplexType(xsd.Sequence(elements)))
-
-        self.envelope = self._create_envelope_element()
+                elements.append(xsd.Element(name, msg.type))
+        return xsd.Element(tag_name, xsd.ComplexType(xsd.Sequence(elements)))
 
     def _deserialize_body(self, body_element):
         """The name of the wrapper element is not defined. The WS-I defines
