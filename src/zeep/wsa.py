@@ -24,9 +24,12 @@ class WsAddressingPlugin(Plugin):
             WSA.To(binding_options['address']),
         ]
         header.extend(headers)
-        etree.cleanup_namespaces(
-            envelope, top_nsmap={
-                'wsa': 'http://www.w3.org/2005/08/addressing'
-            })
+        try:
+            etree.cleanup_namespaces(
+                envelope, top_nsmap={
+                    'wsa': 'http://www.w3.org/2005/08/addressing'
+                })
+        except TypeError:
+            etree.cleanup_namespaces(envelope)
 
         return envelope, http_headers
