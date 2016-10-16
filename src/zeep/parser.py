@@ -21,6 +21,13 @@ def load_external(url, transport, base_url=None):
     response = transport.load(url)
     return parse_xml(response, base_url)
 
+async def load_external_async(url, transport, base_url = None):
+    if base_url:
+        url = absolute_location(url, base_url)
+
+    response = await transport.load(url)
+    return parse_xml(response, base_url)
+
 
 def absolute_location(location, base):
     if location == base or location.startswith('intschema'):

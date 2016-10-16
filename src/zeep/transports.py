@@ -2,6 +2,7 @@ import os
 import logging
 
 import requests
+import aiohttp
 
 from six.moves.urllib.parse import urlparse
 from zeep.cache import SqliteCache
@@ -87,3 +88,66 @@ class Transport(object):
     def get(self, address, params, headers):
         response = self.session.get(address, params=params, headers=headers)
         return response
+
+
+class AsyncTransport(Transport):
+
+    def __init__(self, loop, cache=NotSet, timeout=300, verify=True, http_auth=None):
+        self.loop = loop if loop else asyncio.get_event_loop()
+        self.cache = SqliteCache() if cache is NotSet else cache
+        self.timeout = timeout
+        self.verify = verify
+        self.http_auth = aiohttp.BasicAuth(http_auth[0], password=http_auth[1]) if http_auth else None
+        self.logger = logging.getLogger(__name__)
+        self.connector = aiohttp.TCPConnector(verify_ssl=self.verify)
+        self.headers = {'User-Agent': 'Zeep/%s (www.python-zeep.org)'.format(get_version())}
+        self.session = self.create_session()
+
+    def create_session(self):
+        return aiohttp.ClientSession(connector=self.connector, loop=self.loop, headers=self.headers, auth=self.http_auth)
+
+    async def load(self, url):
+        if not url:
+            raise ValueError("No url given to load")
+
+        scheme = urlparse(url).scheme
+        if scheme in ('http', 'https'):
+
+            if self.cache:
+                response = self.cache.get(url)
+                if response:
+                    return bytes(response)
+
+            with aiohttp.Timeout(self.timeout):
+                async with self.session.get(url) as response:
+                    response.raise_for_status()
+                    content = await response.read()
+                    if self.cache:
+                        self.cache.add(url, content)
+
+                    return content
+
+        elif scheme == 'file':
+            if url.startswith('file://'):
+                url = url[7:]
+
+        with open(url, 'rb') as fh:
+            return fh.read()
+
+    async def post(self, address, message, headers):
+        self.logger.debug("HTTP Post to %s:\n%s", address, message)
+        with aiohttp.Timeout(self.timeout):
+            response = await self.session.post(address, data=message, headers=headers)
+            self.logger.debug(
+                "HTTP Response from %s (status: %d):\n%s",
+                address, response.status, await response.read())
+            return response
+
+    async def post_xml(self, address, envelope, headers):
+        message = etree_to_string(envelope)
+        return await self.post(address, message, headers)
+
+    async def get(self, address, params, headers):
+        with aiohttp.Timeout(self.timeout):
+            response = await self.session.get(address, params=params, headers=headers)
+            return response
