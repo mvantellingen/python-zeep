@@ -113,14 +113,15 @@ More information
    wsse
    plugins
    helpers
+   reporting_bugs
    changes
 
 
 Support
 =======
 
-If you encounter bugs then please `let me know`_ .  A copy of the WSDL file if
-possible would be most helpful. 
+If you encounter bugs then please `let me know`_ . Please see :doc:`reporting_bugs`
+for information how to best report them.
 
 I'm also able to offer commercial support.  Please contact me at
 info@mvantellingen.nl for more information.

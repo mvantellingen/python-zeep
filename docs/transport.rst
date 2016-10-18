@@ -68,6 +68,8 @@ you can use any method supported by ``requests``.
         transport=Transport(http_auth=HTTPBasicAuth(user, password)))
 
 
+.. _debugging:
+
 Debugging
 ---------
 To see the SOAP XML messages which are sent to the remote server and the 
