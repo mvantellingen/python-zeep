@@ -1,4 +1,4 @@
-0.19.0 (unreleased)
+0.19.0 (2016-10-18)
 -------------------
  - **backwards-incompatible**: If the WSDL defines that the endpoint returns
    soap:header elements and/or multple soap:body messages then the return
