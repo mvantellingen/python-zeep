@@ -13,6 +13,7 @@
  - Fix issue when mixing elements and any elements in a choice type (#192)
  - Improving parsing of results for union types (#192)
  - Make ws-addressing work with lxml < 3.5 (#209)
+ - Fix recursion error when xsi:type='anyType' is given. (#198)
 
 
 0.18.1 (2016-09-23)

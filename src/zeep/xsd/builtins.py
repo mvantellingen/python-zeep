@@ -62,6 +62,7 @@ import six
 from lxml import etree
 
 from zeep.utils import qname_attr
+from zeep.xsd.const import xsi_ns, xsd_ns
 from zeep.xsd.elements import Base
 from zeep.xsd.types import SimpleType
 from zeep.xsd.valueobjects import AnyObject
@@ -464,16 +465,27 @@ class AnyType(_BuiltinType):
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
                          context=None):
-        xsi_type = qname_attr(
-            xmlelement,
-            '{http://www.w3.org/2001/XMLSchema-instance}type')
+        xsi_type = qname_attr(xmlelement, xsi_ns('type'))
+        xsi_nil = xmlelement.get(xsi_ns('nil'))
+
+        # Handle xsi:nil attribute
+        if xsi_nil == "true":
+            return None
+
         if xsi_type and schema:
             xsd_type = schema.get_type(xsi_type)
+
+            # If the xsd_type is xsd:anyType then we will recurs so ignore
+            # that.
+            if isinstance(xsd_type, self.__class__):
+                return xmlelement.text or None
+
             return xsd_type.parse_xmlelement(
                 xmlelement, schema, context=context)
 
         if xmlelement.text is None:
             return
+
         return self.pythonvalue(xmlelement.text)
 
     def xmlvalue(self, value):

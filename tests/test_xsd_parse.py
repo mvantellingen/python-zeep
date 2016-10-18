@@ -166,6 +166,34 @@ def test_sequence_parse_anytype():
     assert obj.item_1 == 'foo'
 
 
+def test_sequence_parse_anytype_nil():
+    schema = xsd.Schema(load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <xsd:schema xmlns:tns="http://tests.python-zeep.org/"
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+          elementFormDefault="qualified"
+          targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element minOccurs="0" maxOccurs="1" name="item_1" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """))
+
+    container = schema.get_element('{http://tests.python-zeep.org/}container')
+
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <ns0:item_1 xsi:type="xsd:anyType"/>
+        </ns0:container>
+    """)
+    obj = container.parse(expected, schema)
+    assert obj.item_1 == None
+
+
 def test_sequence_parse_anytype_obj():
     value_type = xsd.ComplexType(
         xsd.Sequence([
