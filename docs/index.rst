@@ -49,8 +49,8 @@ The SOAP specifications are unfortunately really vague and leave a lot of
 things open for interpretation.  Due to this there are a lot of WSDL documents
 available which are invalid or SOAP servers which contain bugs. Zeep tries to
 be as compatible as possible but there might be cases where you run into 
-problems. Don't hesitate to `submit`_ an issue in this case (complete with an 
-wsdl document).
+problems. Don't hesitate to submit an issue in this case (please see 
+:ref:`reporting_bugs`).
 
 
 Getting started
@@ -128,4 +128,3 @@ info@mvantellingen.nl for more information.
 
 
 .. _let me know: https://github.com/mvantellingen/python-zeep/issues
-.. _submit: https://github.com/mvantellingen/python-zeep/issues
