@@ -2,7 +2,6 @@ from collections import OrderedDict, namedtuple
 
 from six import python_2_unicode_compatible
 
-
 MessagePart = namedtuple('MessagePart', ['element', 'type'])
 
 

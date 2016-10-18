@@ -4,8 +4,8 @@ from lxml import etree
 
 from zeep import xsd
 from zeep.helpers import serialize_object
-from zeep.wsdl.utils import etree_to_string
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
+from zeep.wsdl.utils import etree_to_string
 
 __all__ = [
     'MimeContent',

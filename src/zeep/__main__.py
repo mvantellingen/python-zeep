@@ -4,8 +4,8 @@ import argparse
 import logging
 import logging.config
 import time
-from six.moves.urllib.parse import urlparse
 
+from six.moves.urllib.parse import urlparse
 from zeep.cache import InMemoryCache, SqliteCache
 from zeep.client import Client
 from zeep.transports import Transport
