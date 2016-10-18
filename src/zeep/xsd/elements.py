@@ -4,6 +4,7 @@ from lxml import etree
 
 from zeep import exceptions
 from zeep.utils import qname_attr
+from zeep.xsd.const import xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.utils import max_occurs_iter
 
@@ -85,7 +86,7 @@ class Any(Base):
                 schema = context_schema
                 break
 
-        xsd_type = qname_attr(xmlelement, '{http://www.w3.org/2001/XMLSchema-instance}type')
+        xsd_type = qname_attr(xmlelement, xsi_ns('type'))
         if xsd_type is not None:
             xsd_type = schema.get_type(xsd_type)
             return xsd_type.parse_xmlelement(xmlelement, schema, context=context)
@@ -245,8 +246,7 @@ class Element(Base):
 
         """
         context = context or XmlParserContext()
-        instance_type = qname_attr(
-            xmlelement, '{http://www.w3.org/2001/XMLSchema-instance}type')
+        instance_type = qname_attr(xmlelement, xsi_ns('type'))
         if instance_type:
             xsd_type = schema.get_type(instance_type)
         else:
@@ -314,10 +314,7 @@ class Element(Base):
 
             elm = etree.SubElement(parent, self.qname)
             if self.nillable:
-                elm.set(
-                    '{http://www.w3.org/2001/XMLSchema-instance}nil',
-                    'true'
-                )
+                elm.set( xsi_ns('nil'), 'true')
             return
 
         if self.name is None:

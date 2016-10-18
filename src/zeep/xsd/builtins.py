@@ -62,7 +62,7 @@ import six
 from lxml import etree
 
 from zeep.utils import qname_attr
-from zeep.xsd.const import xsi_ns, xsd_ns
+from zeep.xsd.const import xsd_ns, xsi_ns
 from zeep.xsd.elements import Base
 from zeep.xsd.types import SimpleType
 from zeep.xsd.valueobjects import AnyObject

@@ -13,6 +13,7 @@ from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import indicators as xsd_indicators
 from zeep.xsd import types as xsd_types
+from zeep.xsd.const import xsd_ns
 from zeep.xsd.parser import load_external
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ for name in [
 
 ]:
     attr = name if name not in keyword.kwlist else name + '_'
-    setattr(tags, attr, etree.QName('http://www.w3.org/2001/XMLSchema', name))
+    setattr(tags, attr, xsd_ns(name))
 
 
 class SchemaVisitor(object):

@@ -5,6 +5,7 @@ import six
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import XMLParseError
+from zeep.xsd.const import xsi_ns
 from zeep.xsd.elements import Any, AttributeGroup, Element
 from zeep.xsd.indicators import Sequence
 from zeep.xsd.utils import NamePrefixGenerator
@@ -339,9 +340,7 @@ class ComplexType(Type):
                 element.render(parent, element_value)
 
         if xsd_type and xsd_type._xsd_name:
-            parent.set(
-                '{http://www.w3.org/2001/XMLSchema-instance}type',
-                xsd_type._xsd_name)
+            parent.set(xsi_ns('type'), xsd_type._xsd_name)
 
     def parse_kwargs(self, kwargs, name=None):
         value = None
