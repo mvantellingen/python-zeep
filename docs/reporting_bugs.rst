@@ -6,7 +6,7 @@ Reporting bugs
 The SOAP specifications are pretty bad and unclear for a lot of use-cases. This
 results in a lot of (older) SOAP servers which don't implement the
 specifications correctly (or implement them in a way Zeep doesn't expect).
-Ofcourse there is also a good chance that Zeep doesn't implement something
+Of course there is also a good chance that Zeep doesn't implement something
 correctly ;-) I'm always interested in the latter.
 
 Since Zeep is a module I've created and currently maintain mostly in my spare
