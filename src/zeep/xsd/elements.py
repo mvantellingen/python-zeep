@@ -124,8 +124,16 @@ class Any(Base):
     def render(self, parent, value):
         assert parent is not None
         if self.accepts_multiple and isinstance(value, list):
-            for val in value:
-                self._render_value_item(parent, val)
+            from zeep.xsd import SimpleType
+
+            if isinstance(self.restrict, SimpleType):
+                for val in value:
+                    node = etree.SubElement(parent, 'item')
+                    node.set(xsi_ns('type'), self.restrict.qname)
+                    self._render_value_item(node, val)
+            else:
+                for val in value:
+                    self._render_value_item(parent, val)
         else:
             self._render_value_item(parent, value)
 
@@ -133,18 +141,21 @@ class Any(Base):
         if not value:
             return
 
-
         # Check if we received a proper value object. If we receive the wrong
         # type then return a nice error message
         if self.restrict:
-            expected_types = (etree._Element, self.restrict._value_class)
+            if hasattr(self.restrict, '_value_class'):
+                expected_types = (etree._Element, self.restrict._value_class)
+            else:
+                expected_types = (etree._Element, str)
         else:
             expected_types = (etree._Element, AnyObject)
+
         if not isinstance(value, expected_types):
             type_names = [
                 '%s.%s' % (t.__module__, t.__name__) for t in expected_types
             ]
-            err_message = "Received object of type %r, expected %s" % (
+            err_message = "Any element received object of type %r, expected %s" % (
                 type(value).__name__, ' or '.join(type_names))
 
             raise TypeError('\n'.join((

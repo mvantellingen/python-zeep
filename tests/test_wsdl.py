@@ -300,6 +300,9 @@ def test_multiple_extension():
     """.strip())
     document = wsdl.Document(content, None)
 
+    type_a = document.types.get_element('ns0:typetje')
+    type_a(wat='x')
+
     type_a = document.types.get_type('ns0:type_a')
     type_a(wat='x')
 
@@ -803,13 +806,13 @@ def test_wsdl_import_xsd_references(recwarn):
 def test_parse_operation_empty_nodes():
     content = StringIO("""
         <?xml version="1.0"?>
-        <wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" 
+        <wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema"
             xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
             xmlns:tns="http://tests.python-zeep.org/"
-            xmlns:s1="http://microsoft.com/wsdl/types/" 
-            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+            xmlns:s1="http://microsoft.com/wsdl/types/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
             xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/"
-            targetNamespace="http://tests.python-zeep.org/" 
+            targetNamespace="http://tests.python-zeep.org/"
             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
           <wsdl:types>
             <s:schema targetNamespace="http://tests.python-zeep.org/">

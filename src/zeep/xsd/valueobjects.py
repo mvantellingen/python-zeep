@@ -120,7 +120,6 @@ def _process_signature(xsd_type, args, kwargs):
     args = copy.deepcopy(args)
     kwargs = copy.deepcopy(kwargs)
 
-
     # Process the positional arguments
     for element_name, element in xsd_type.elements_nested:
         values, args = element.parse_args(args)

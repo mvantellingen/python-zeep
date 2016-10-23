@@ -27,10 +27,7 @@ class Indicator(Base):
         return result
 
     def clone(self, name, min_occurs=1, max_occurs=1):
-        new = copy.copy(self)
-        new.min_occurs = min_occurs
-        new.max_occurs = max_occurs
-        return new
+        raise NotImplementedError()
 
 
 class OrderIndicator(Indicator, list):
@@ -45,6 +42,12 @@ class OrderIndicator(Indicator, list):
         else:
             super(OrderIndicator, self).__init__()
             self.extend(elements)
+
+    def clone(self, name, min_occurs=1, max_occurs=1):
+        return self.__class__(
+            elements=list(self),
+            min_occurs=min_occurs,
+            max_occurs=max_occurs)
 
     @threaded_cached_property
     def elements(self):
@@ -470,6 +473,13 @@ class Group(Indicator):
         self.name = name.localname
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
+
+    def clone(self, name, min_occurs=1, max_occurs=1):
+        return self.__class__(
+            name=self.qname,
+            child=self.child,
+            min_occurs=min_occurs,
+            max_occurs=max_occurs)
 
     def __str__(self):
         return '%s(%s)' % (self.name, self.signature())
