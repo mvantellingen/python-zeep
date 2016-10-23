@@ -235,7 +235,7 @@ class SchemaDocument(object):
         def _resolve_dict(val):
             for key, obj in val.items():
                 new = obj.resolve()
-                assert new is not None, "resolve() should return a type"
+                assert new is not None, "resolve() should return an object"
                 val[key] = new
 
         _resolve_dict(self._attribute_groups)
@@ -245,7 +245,7 @@ class SchemaDocument(object):
         _resolve_dict(self._types)
 
         for element in self._elm_instances:
-            element.resolve_type()
+            element.resolve()
         self._elm_instances = []
 
     def register_type(self, name, value):

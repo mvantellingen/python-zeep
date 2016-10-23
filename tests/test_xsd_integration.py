@@ -628,7 +628,8 @@ def test_wsdl_array_type():
 
     array = array_elm([item_1, item_2])
     node = etree.Element('document')
-    assert array_elm.signature() == '_value_1: base[], arrayType: xsd:string'
+    assert array_elm.signature() == (
+        '_value_1: base[], arrayType: xsd:string, offset: xsd:arrayCoordinate, id: xsd:ID, href: xsd:anyURI, _attr_1: {}')
     array_elm.render(node, array)
     expected = """
         <document>
@@ -699,7 +700,6 @@ def test_soap_array_parse():
 
     elm = schema.get_element('ns0:FlagDetailsList')
     data = elm.parse(doc, schema)
-
     assert data.FlagDetailsStruct[0].Name == 'flag1'
     assert data.FlagDetailsStruct[0].Value == 'value1'
     assert data.FlagDetailsStruct[1].Name == 'flag2'

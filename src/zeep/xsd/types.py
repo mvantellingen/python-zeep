@@ -1,4 +1,5 @@
 import copy
+from itertools import chain
 from collections import OrderedDict
 
 import six
@@ -6,8 +7,8 @@ from cached_property import threaded_cached_property
 
 from zeep.exceptions import XMLParseError
 from zeep.xsd.const import xsi_ns
-from zeep.xsd.elements import Any, AttributeGroup, Element
-from zeep.xsd.indicators import Sequence
+from zeep.xsd.elements import Any, AttributeGroup, Element, AnyAttribute
+from zeep.xsd.indicators import Sequence, OrderIndicator, Group
 from zeep.xsd.utils import NamePrefixGenerator
 from zeep.xsd.valueobjects import CompoundValue
 
@@ -34,16 +35,27 @@ class Type(object):
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
                          context=None):
-        raise NotImplementedError
+        raise NotImplementedError(
+            '%s.parse_xmlelement() is not implemented' % self.__class__.__name__)
 
     def parsexml(self, xml, schema=None):
         raise NotImplementedError
 
     def render(self, parent, value):
-        raise NotImplementedError
+        raise NotImplementedError(
+            '%s.render() is not implemented' % self.__class__.__name__)
 
     def resolve(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            '%s.resolve() is not implemented' % self.__class__.__name__)
+
+    def extend(self, child):
+        raise NotImplementedError(
+            '%s.extend() is not implemented' % self.__class__.__name__)
+
+    def restrict(self, child):
+        raise NotImplementedError(
+            '%s.restrict() is not implemented' % self.__class__.__name__)
 
     @property
     def attributes(self):
@@ -105,6 +117,7 @@ class UnresolvedCustomType(Type):
 
 @six.python_2_unicode_compatible
 class SimpleType(Type):
+    accepted_types = (six.string_types,)
 
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.
@@ -181,6 +194,10 @@ class ComplexType(Type):
     def __call__(self, *args, **kwargs):
         return self._value_class(*args, **kwargs)
 
+    @property
+    def accepted_types(self):
+        return (self._value_class,)
+
     @threaded_cached_property
     def _value_class(self):
         return type(
@@ -194,21 +211,8 @@ class ComplexType(Type):
     def attributes(self):
         generator = NamePrefixGenerator(prefix='_attr_')
         result = []
-        if self._extension and hasattr(self._extension, 'attributes'):
-            result.extend(self._extension.attributes)
-
-        if self._restriction and hasattr(self._restriction, 'attributes'):
-            pass
-
         elm_names = {name for name, elm in self.elements if name is not None}
-        attributes = []
-        for attr in self._attributes:
-            if isinstance(attr, AttributeGroup):
-                attributes.extend(attr.attributes)
-            else:
-                attributes.append(attr)
-
-        for attr in attributes:
+        for attr in self._attributes_unwrapped:
             if attr.name is None:
                 name = generator.get_name()
             elif attr.name in elm_names:
@@ -217,6 +221,16 @@ class ComplexType(Type):
                 name = attr.name
             result.append((name, attr))
         return result
+
+    @threaded_cached_property
+    def _attributes_unwrapped(self):
+        attributes = []
+        for attr in self._attributes:
+            if isinstance(attr, AttributeGroup):
+                attributes.extend(attr.attributes)
+            else:
+                attributes.append(attr)
+        return attributes
 
     @threaded_cached_property
     def elements(self):
@@ -235,32 +249,17 @@ class ComplexType(Type):
         result = []
         generator = NamePrefixGenerator()
 
-        if self._extension:
+        # Handle wsdl:arrayType objects
+        attrs = {attr.qname.text: attr for attr in self._attributes if attr.qname}
+        array_type = attrs.get('{http://schemas.xmlsoap.org/soap/encoding/}arrayType')
+        if array_type:
             name = generator.get_name()
-            if not hasattr(self._extension, 'elements_nested'):
-                result.append((name, Element(name, self._extension)))
-            else:
-                result.extend(self._extension.elements_nested)
-
-        if self._restriction and not self._element:
-            # So this is a workaround to support wsdl:arrayType. This doesn't
-            # actually belong here but for now it's the easiest way to achieve
-            # this. What this does it that is checks if the restriction
-            # contains an arrayType attribute and then use that to retrieve
-            # the xsd type for the array. (We ignore AnyAttributes here)
-            attrs = {attr.qname.text: attr for attr in self._attributes if attr.qname}
-            array_type = attrs.get('{http://schemas.xmlsoap.org/soap/encoding/}arrayType')
-            if array_type:
-                name = generator.get_name()
-                result.append((name, Sequence([
+            if isinstance(self._element, Group):
+                return [(name, Sequence([
                     Any(max_occurs='unbounded', restrict=array_type.array_type)
-                ])))
+                ]))]
             else:
-                name = generator.get_name()
-                if not hasattr(self._restriction, 'elements_nested'):
-                    result.append((name, Element(name, self._restriction)))
-                else:
-                    result.extend(self._restriction.elements_nested)
+                return [(name, self._element)]
 
         # _element is one of All, Choice, Group, Sequence
         if self._element:
@@ -280,7 +279,7 @@ class ComplexType(Type):
         # If this complexType extends a simpleType then we have no nested
         # elements. Parse it directly via the type object. This is the case
         # for xsd:simpleContent
-        if isinstance(self._extension, (SimpleType, UnionType)):
+        if isinstance(self._element, Element) and isinstance(self._element.type, SimpleType):
             name, element = self.elements_nested[0]
             init_kwargs[name] = element.type.parse_xmlelement(
                 xmlelement, schema, name, context=context)
@@ -379,16 +378,8 @@ class ComplexType(Type):
     def resolve(self):
         """Resolve all sub elements and types"""
         if self._resolved:
-            return self
-        self._resolved = True
-
-        if self._extension:
-            self._extension = self._extension.resolve()
-            assert self._extension
-
-        if self._restriction:
-            self._restriction = self._restriction.resolve()
-            assert self._restriction
+            return self._resolved
+        self._resolved = self
 
         if self._element:
             self._element = self._element.resolve()
@@ -402,7 +393,91 @@ class ComplexType(Type):
             else:
                 resolved.append(value)
         self._attributes = resolved
-        return self
+
+        if self._extension:
+            self._extension = self._extension.resolve()
+            self._resolved = self.extend(self._extension)
+            return self._resolved
+
+        elif self._restriction:
+            self._restriction = self._restriction.resolve()
+            self._resolved = self.restrict(self._restriction)
+            return self._resolved
+
+        else:
+            return self._resolved
+
+    def extend(self, base):
+        """Create a new complextype instance which is the current type
+        extending the given base type.
+
+        Used for handling xsd:extension tags
+
+        """
+        if isinstance(base, ComplexType):
+            base_attributes = base._attributes_unwrapped
+            base_element = base._element
+        else:
+            base_attributes = []
+            base_element = None
+        attributes = base_attributes + self._attributes_unwrapped
+
+        # Make sure we don't have duplicate (child is leading)
+        if base_attributes and self._attributes_unwrapped:
+            new_attributes = OrderedDict()
+            for attr in attributes:
+                if isinstance(attr, AnyAttribute):
+                    new_attributes['##any'] = attr
+                else:
+                    new_attributes[attr.qname.text] = attr
+            attributes = new_attributes.values()
+
+        element = []
+        if self._element and base_element:
+            element = self._element.clone(self._element.name)
+            if isinstance(element, OrderIndicator):
+                for item in reversed(base_element):
+                    element.insert(0, item)
+
+            elif isinstance(self._element, Group):
+                raise NotImplementedError('TODO')
+
+        elif self._element or base_element:
+            element = self._element or base_element
+        else:
+            element = Element('_value_1', base)
+
+        new = self.__class__(
+            element=element,
+            attributes=attributes,
+            qname=self.qname)
+        return new
+
+    def restrict(self, base):
+        """Create a new complextype instance which is the current type
+        restricted by the base type.
+
+        Used for handling xsd:restriction
+
+        """
+        attributes = list(
+            chain(base._attributes_unwrapped, self._attributes_unwrapped))
+
+        # Make sure we don't have duplicate (self is leading)
+        if base._attributes_unwrapped and self._attributes_unwrapped:
+            new_attributes = OrderedDict()
+            for attr in attributes:
+                if isinstance(attr, AnyAttribute):
+                    new_attributes['##any'] = attr
+                else:
+                    new_attributes[attr.qname.text] = attr
+            attributes = new_attributes.values()
+
+        new = self.__class__(
+            element=self._element or base._element,
+            attributes=attributes,
+            qname=self.qname)
+        return new.resolve()
 
     def signature(self, depth=0):
         if depth > 0 and self.is_global:
@@ -466,8 +541,7 @@ class UnionType(Type):
 
     def resolve(self):
         self.item_types = [item.resolve() for item in self.item_types]
-        self.base_class = self.item_types[0].__class__
-        return self
+        return self.item_types[0]
 
     def signature(self, depth=0):
         return ''
