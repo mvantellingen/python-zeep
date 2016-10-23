@@ -144,10 +144,7 @@ class Any(Base):
         # Check if we received a proper value object. If we receive the wrong
         # type then return a nice error message
         if self.restrict:
-            if hasattr(self.restrict, '_value_class'):
-                expected_types = (etree._Element, self.restrict._value_class)
-            else:
-                expected_types = (etree._Element, str)
+            expected_types = (etree._Element,) + self.restrict.accepted_types
         else:
             expected_types = (etree._Element, AnyObject)
 

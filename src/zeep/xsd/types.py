@@ -117,6 +117,7 @@ class UnresolvedCustomType(Type):
 
 @six.python_2_unicode_compatible
 class SimpleType(Type):
+    accepted_types = (six.string_types,)
 
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.
@@ -192,6 +193,10 @@ class ComplexType(Type):
 
     def __call__(self, *args, **kwargs):
         return self._value_class(*args, **kwargs)
+
+    @property
+    def accepted_types(self):
+        return (self._value_class,)
 
     @threaded_cached_property
     def _value_class(self):
