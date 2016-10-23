@@ -323,7 +323,7 @@ class Element(Base):
 
             elm = etree.SubElement(parent, self.qname)
             if self.nillable:
-                elm.set( xsi_ns('nil'), 'true')
+                elm.set(xsi_ns('nil'), 'true')
             return
 
         if self.name is None:

@@ -114,7 +114,7 @@ def test_complex_type_nested_wrong_type():
     address_type = schema.get_element('ns0:container')
 
     with pytest.raises(TypeError):
-        obj = address_type(item={'bar': 1})
+        address_type(item={'bar': 1})
 
 
 def test_element_with_annotation():
@@ -629,7 +629,8 @@ def test_wsdl_array_type():
     array = array_elm([item_1, item_2])
     node = etree.Element('document')
     assert array_elm.signature() == (
-        '_value_1: base[], arrayType: xsd:string, offset: xsd:arrayCoordinate, id: xsd:ID, href: xsd:anyURI, _attr_1: {}')
+        '_value_1: base[], arrayType: xsd:string, offset: xsd:arrayCoordinate, ' +
+        'id: xsd:ID, href: xsd:anyURI, _attr_1: {}')
     array_elm.render(node, array)
     expected = """
         <document>
@@ -675,7 +676,9 @@ def test_soap_array_parse():
           <complexContent>
               <restriction base="soapenc:Array">
                   <sequence>
-                      <element name="FlagDetailsStruct" type="tns:FlagDetailsStruct" minOccurs="0" maxOccurs="unbounded"/>
+                      <element
+                        name="FlagDetailsStruct" type="tns:FlagDetailsStruct"
+                        minOccurs="0" maxOccurs="unbounded"/>
                   </sequence>
                   <attribute ref="soapenc:arrayType" use="required"/>
               </restriction>
@@ -704,7 +707,6 @@ def test_soap_array_parse():
     assert data.FlagDetailsStruct[0].Value == 'value1'
     assert data.FlagDetailsStruct[1].Name == 'flag2'
     assert data.FlagDetailsStruct[1].Value == 'value2'
-
 
 
 def test_soap_array_parse_remote_ns():

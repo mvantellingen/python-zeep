@@ -1,9 +1,7 @@
 import io
-from lxml import etree
-from six import StringIO
 
-from tests.utils import load_xml
-from zeep.wsdl import wsdl
+from lxml import etree
+
 from tests.utils import DummyTransport, assert_nodes_equal, load_xml
 from zeep import xsd
 

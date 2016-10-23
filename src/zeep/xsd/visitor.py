@@ -855,7 +855,6 @@ class SchemaVisitor(object):
         if ref:
             return ref
 
-
         qname = qname_attr(node, 'name', self.document._target_namespace)
         annotation, children = self._pop_annotation(node.getchildren())
 

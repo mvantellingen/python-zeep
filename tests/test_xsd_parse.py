@@ -2,8 +2,7 @@ from lxml import etree
 
 from tests.utils import load_xml
 from zeep import xsd
-from zeep.xsd.context import ParserContext
-from zeep.xsd.schema import SchemaDocument, Schema
+from zeep.xsd.schema import Schema
 
 
 def test_sequence_parse_basic():
@@ -186,12 +185,15 @@ def test_sequence_parse_anytype_nil():
     container = schema.get_element('{http://tests.python-zeep.org/}container')
 
     expected = etree.fromstring("""
-        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <ns0:container
+            xmlns:ns0="http://tests.python-zeep.org/"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
           <ns0:item_1 xsi:type="xsd:anyType"/>
         </ns0:container>
     """)
     obj = container.parse(expected, schema)
-    assert obj.item_1 == None
+    assert obj.item_1 is None
 
 
 def test_sequence_parse_anytype_obj():

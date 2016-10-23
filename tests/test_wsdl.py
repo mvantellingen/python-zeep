@@ -360,7 +360,6 @@ def test_create_import_schema(recwarn):
     assert document.types.get_element('{http://tests.python-zeep.org/b}global')
 
 
-
 def test_wsdl_imports_xsd(recwarn):
     content = StringIO("""
     <?xml version="1.0"?>

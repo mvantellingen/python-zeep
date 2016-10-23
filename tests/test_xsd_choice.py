@@ -181,7 +181,6 @@ def test_choice_element_optional():
     assert_nodes_equal(expected, node)
 
 
-
 def test_choice_element_with_any():
     node = etree.fromstring("""
         <?xml version="1.0"?>
@@ -420,8 +419,6 @@ def test_choice_with_sequence_once_extra_data():
     node = etree.Element('document')
     element.render(node, value)
     assert_nodes_equal(expected, node)
-
-
 
 
 def test_choice_with_sequence_second():
@@ -685,7 +682,6 @@ def test_choice_with_sequence_and_element():
     node = etree.Element('document')
     element.render(node, value)
     assert_nodes_equal(expected, node)
-
 
 
 def test_element_ref_in_choice():

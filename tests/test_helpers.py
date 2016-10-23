@@ -1,5 +1,4 @@
 from lxml import etree
-from collections import OrderedDict
 
 from tests.utils import load_xml
 from zeep import xsd

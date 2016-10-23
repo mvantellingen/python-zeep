@@ -303,7 +303,8 @@ def test_group_nested():
 
     expected = """
       <document>
-        <ns0:Address xmlns:ns0="http://tests.python-zeep.org/" id="20" ns0:pos="30" ns0:size="maat">
+        <ns0:Address
+            xmlns:ns0="http://tests.python-zeep.org/" id="20" ns0:pos="30" ns0:size="maat">
           <foo>bar</foo>
         </ns0:Address>
       </document>
@@ -417,4 +418,3 @@ def test_attribute_union_type_inline():
 
     attr = schema.get_attribute('{http://tests.python-zeep.org/}something')
     assert attr('foo') == 'foo'
-

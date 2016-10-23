@@ -110,7 +110,7 @@ class SqliteCache(Base):
     def _encode_data(self, data):
         data = base64.b64encode(data)
         if six.PY2:
-            return buffer(self._version_string + data)
+            return buffer(self._version_string + data)  # noqa
         return self._version_string + data
 
     def _decode_data(self, data):

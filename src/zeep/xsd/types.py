@@ -1,14 +1,14 @@
 import copy
-from itertools import chain
 from collections import OrderedDict
+from itertools import chain
 
 import six
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import XMLParseError
 from zeep.xsd.const import xsi_ns
-from zeep.xsd.elements import Any, AttributeGroup, Element, AnyAttribute
-from zeep.xsd.indicators import Sequence, OrderIndicator, Group
+from zeep.xsd.elements import Any, AnyAttribute, AttributeGroup, Element
+from zeep.xsd.indicators import Group, OrderIndicator, Sequence
 from zeep.xsd.utils import NamePrefixGenerator
 from zeep.xsd.valueobjects import CompoundValue
 

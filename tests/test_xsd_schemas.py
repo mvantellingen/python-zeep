@@ -2,8 +2,7 @@ import pytest
 from lxml import etree
 
 from tests.utils import DummyTransport
-from zeep import xsd
-from zeep import exceptions
+from zeep import exceptions, xsd
 from zeep.exceptions import ZeepWarning
 
 

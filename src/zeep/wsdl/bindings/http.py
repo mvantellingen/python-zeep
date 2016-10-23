@@ -155,7 +155,7 @@ class HttpOperation(Operation):
                 elif message_node.tag == etree.QName(NSMAP['mime'], 'content'):
                     message_class = messages.MimeContent
                 elif message_node.tag == etree.QName(NSMAP['mime'], 'mimeXml'):
-                    message_class = messages.MimeXML            
+                    message_class = messages.MimeXML
 
             if message_class:
                 msg = message_class.parse(definitions, node, obj)

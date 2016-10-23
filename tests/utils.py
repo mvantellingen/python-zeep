@@ -1,7 +1,6 @@
 import six
-
 from lxml import etree
-from six import binary_type, string_types, text_type
+from six import binary_type, string_types
 
 
 def load_xml(xml):

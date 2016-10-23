@@ -430,7 +430,7 @@ class Long(Integer):
     _default_qname = xsd_ns('long')
 
     def pythonvalue(self, value):
-        return long(value) if six.PY2 else int(value)
+        return long(value) if six.PY2 else int(value)  # noqa
 
 
 class Int(Long):

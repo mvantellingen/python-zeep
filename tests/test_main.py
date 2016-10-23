@@ -1,6 +1,6 @@
+from mock import patch
 from pretend import stub
 
-from mock import patch
 from zeep import __main__, client
 
 

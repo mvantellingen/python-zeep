@@ -1,4 +1,5 @@
 import io
+
 from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal, load_xml
@@ -201,7 +202,7 @@ def test_wsdl_array_of_simple_types():
         <part name="return" type="tns:ArrayOfString"/>
       </message>
     </definitions>
-    """.strip())
+    """.strip())  # noqa
 
     transport = DummyTransport()
     transport.bind(
@@ -264,10 +265,14 @@ def test_handle_incorrectly_qualified():
         <wsdl:operation name="getItem">
           <soap:operation soapAction=""/>
           <wsdl:input name="getRequest">
-            <soap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://tests.python-zeep.org/tns" use="encoded"/>
+            <soap:body
+                encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+                namespace="http://tests.python-zeep.org/tns" use="encoded"/>
           </wsdl:input>
           <wsdl:output name="getResponse">
-            <soap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://tests.python-zeep.org/tns" use="encoded"/>
+            <soap:body
+                encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+                namespace="http://tests.python-zeep.org/tns" use="encoded"/>
           </wsdl:output>
         </wsdl:operation>
       </wsdl:binding>
@@ -291,7 +296,9 @@ def test_handle_incorrectly_qualified():
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <soapenv:Body>
-        <ns1:getResponse soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:ns1="http://tests.python-zeep.org/tns">
+        <ns1:getResponse
+            soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+            xmlns:ns1="http://tests.python-zeep.org/tns">
           <ns1:getItemReturn xsi:type="xsd:string">foobar</ns1:getItemReturn>
         </ns1:getResponse>
       </soapenv:Body>
@@ -331,10 +338,14 @@ def test_deserialize_rpc_literal():
         <wsdl:operation name="getItem">
           <soap:operation soapAction=""/>
           <wsdl:input>
-            <soap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://tests.python-zeep.org/tns" use="encoded"/>
+            <soap:body
+                encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+                namespace="http://tests.python-zeep.org/tns" use="encoded"/>
           </wsdl:input>
           <wsdl:output>
-            <soap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://tests.python-zeep.org/tns" use="encoded"/>
+            <soap:body
+                encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+                namespace="http://tests.python-zeep.org/tns" use="encoded"/>
           </wsdl:output>
         </wsdl:operation>
       </wsdl:binding>
@@ -358,7 +369,9 @@ def test_deserialize_rpc_literal():
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <soapenv:Body>
-        <ns1:getItemResponse soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:ns1="http://tests.python-zeep.org/tns">
+        <ns1:getItemResponse
+            soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+            xmlns:ns1="http://tests.python-zeep.org/tns">
           <ns1:getItemReturn xsi:type="xsd:string">foobar</ns1:getItemReturn>
         </ns1:getItemResponse>
       </soapenv:Body>

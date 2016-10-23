@@ -121,13 +121,13 @@ def test_parse_with_header():
 
     assert operation.input.body.signature() == 'xsd:string'
     assert operation.input.header.signature() == 'auth: RequestHeader()'
-    assert operation.input.envelope.signature() == 'body: xsd:string, header: {auth: RequestHeader()}'
-    assert operation.input.signature(as_output=False) == 'xsd:string, _soapheaders={auth: RequestHeader()}'
+    assert operation.input.envelope.signature() == 'body: xsd:string, header: {auth: RequestHeader()}'  # noqa
+    assert operation.input.signature(as_output=False) == 'xsd:string, _soapheaders={auth: RequestHeader()}'  # noqa
 
     assert operation.output.body.signature() == 'xsd:string'
     assert operation.output.header.signature() == 'auth: ResponseHeader()'
-    assert operation.output.envelope.signature() == 'body: xsd:string, header: {auth: ResponseHeader()}'
-    assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {auth: ResponseHeader()}'
+    assert operation.output.envelope.signature() == 'body: xsd:string, header: {auth: ResponseHeader()}'  # noqa
+    assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {auth: ResponseHeader()}'  # noqa
 
 
 def test_parse_with_header_other_message():
@@ -1080,7 +1080,7 @@ def test_deserialize_with_headers():
     serialized = operation.process_reply(response_body)
 
     assert operation.output.signature(as_output=True) == (
-        'body: {request_1: Request1(), request_2: Request2()}, header: {header_1: Header1(), header_2: Header2()}')
+        'body: {request_1: Request1(), request_2: Request2()}, header: {header_1: Header1(), header_2: Header2()}')  # noqa
     assert serialized.body.request_1.arg1 == 'ah1'
     assert serialized.body.request_2.arg2 == 'ah2'
     assert serialized.header.header_1.username == 'mvantellingen'

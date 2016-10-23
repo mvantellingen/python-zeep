@@ -14,6 +14,7 @@ def parse_xml(content, base_url=None, recover=False):
     except etree.XMLSyntaxError as exc:
         raise XMLSyntaxError("Invalid XML content received (%s)" % exc)
 
+
 def load_external(url, transport, base_url=None):
     if base_url:
         url = absolute_location(url, base_url)
