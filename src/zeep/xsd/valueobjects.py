@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 import six
 
-from zeep.xsd.indicators import Indicator
 from zeep.xsd.printer import PrettyPrinter
 
 __all__ = ['AnyObject', 'CompoundValue']
@@ -38,7 +37,7 @@ class CompoundValue(object):
         # Set default values
         for container_name, container in self._xsd_type.elements_nested:
             values = container.default_value
-            if isinstance(container, Indicator):
+            if isinstance(values, dict):
                 self.__values__.update(values)
             else:
                 self.__values__[container_name] = values

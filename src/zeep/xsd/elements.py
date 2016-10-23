@@ -7,6 +7,7 @@ from zeep.utils import qname_attr
 from zeep.xsd.const import xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.utils import max_occurs_iter
+from zeep.xsd.valueobjects import AnyObject  # cyclic import / FIXME
 
 
 class Base(object):
@@ -132,7 +133,6 @@ class Any(Base):
         if not value:
             return
 
-        from zeep.xsd.valueobjects import AnyObject  # cyclic import / FIXME
 
         # Check if we received a proper value object. If we receive the wrong
         # type then return a nice error message

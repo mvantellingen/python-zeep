@@ -251,7 +251,7 @@ class Choice(OrderIndicator):
 
     @property
     def default_value(self):
-        return {}
+        return OrderedDict()
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Return a dictionary"""
