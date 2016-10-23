@@ -128,7 +128,11 @@ Nested list using _value_1
 Any objects
 -----------
 
-Zeep offers full support for xsd:any elements.
+Zeep offers full support for xsd:any elements. xsd:any elements are used as 
+a kind of wildcard and basically allows any element to be used. Zeep needs to
+know the element name you want to serialize, so the value needs to be wrapped
+in a special object. This is the xsd.AnyObject(). It takes two parameters, the
+xsd Element first and the value as the second arg.
 
 .. code-block:: python
 
@@ -140,3 +144,21 @@ Zeep offers full support for xsd:any elements.
     order = xsd.AnyObject(
       order_type, order_type(number='1234', price=99))
     client.service.submit_something(user_id=1, _value_1=order)
+
+
+AnyType objects
+---------------
+
+xsd:anyType is used as a wildcard type. Where the xsd:Any element allows any
+element the xsd:anyType allows any type for a specific element. The usage from
+zeep is almost the same. Instead of passing an Element class to the AnyObject
+an xsd type is passed.
+
+.. code-block:: python
+
+    from zeep import Client
+    from zeep import xsd
+
+    client = Client('http://my-entrprisy-endpoint.com')
+    value = xsd.AnyObject(xsd.String(), 'foobar')
+    client.service.submit_something(user_id=1, my_string=value)

@@ -460,6 +460,7 @@ class AnyType(_BuiltinType):
     def render(self, parent, value):
         if isinstance(value, AnyObject):
             value.xsd_type.render(parent, value.value)
+            parent.set(xsi_ns('type'), value.xsd_type.qname)
         else:
             parent.text = self.xmlvalue(value)
 

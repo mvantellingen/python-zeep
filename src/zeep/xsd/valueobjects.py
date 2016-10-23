@@ -10,8 +10,8 @@ __all__ = ['AnyObject', 'CompoundValue']
 
 
 class AnyObject(object):
-    def __init__(self, xsd_element, value):
-        self.xsd_elm = xsd_element
+    def __init__(self, xsd_object, value):
+        self.xsd_obj = xsd_object
         self.value = value
 
     def __repr__(self):
@@ -20,6 +20,14 @@ class AnyObject(object):
 
     def __deepcopy__(self, memo):
         return type(self)(self.xsd_elm, copy.deepcopy(self.value))
+
+    @property
+    def xsd_type(self):
+        return self.xsd_obj
+
+    @property
+    def xsd_elm(self):
+        return self.xsd_obj
 
 
 class CompoundValue(object):
