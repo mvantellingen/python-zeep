@@ -87,7 +87,7 @@ class _BuiltinType(SimpleType):
 
 class String(_BuiltinType):
     _default_qname = xsd_ns('string')
-    accepted_types = (six.string_types,)
+    accepted_types = six.string_types
 
     def xmlvalue(self, value):
         return six.text_type(value if value is not None else '')
@@ -113,7 +113,7 @@ class Boolean(_BuiltinType):
 
 class Decimal(_BuiltinType):
     _default_qname = xsd_ns('decimal')
-    accepted_types = (_Decimal, float, six.string_types)
+    accepted_types = (_Decimal, float) + six.string_types
 
     def xmlvalue(self, value):
         return str(value)
@@ -124,7 +124,7 @@ class Decimal(_BuiltinType):
 
 class Float(_BuiltinType):
     _default_qname = xsd_ns('float')
-    accepted_types = (float, _Decimal, six.string_types)
+    accepted_types = (float, _Decimal) + six.string_types
 
     def xmlvalue(self, value):
         return str(value).upper()
@@ -135,7 +135,7 @@ class Float(_BuiltinType):
 
 class Double(_BuiltinType):
     _default_qname = xsd_ns('double')
-    accepted_types = (_Decimal, float, six.string_types)
+    accepted_types = (_Decimal, float) + six.string_types
 
     def xmlvalue(self, value):
         return str(value)
@@ -146,7 +146,7 @@ class Double(_BuiltinType):
 
 class Duration(_BuiltinType):
     _default_qname = xsd_ns('duration')
-    accepted_types = (isodate.duration.Duration, six.string_types)
+    accepted_types = (isodate.duration.Duration,) + six.string_types
 
     def xmlvalue(self, value):
         return isodate.duration_isoformat(value)
@@ -157,7 +157,7 @@ class Duration(_BuiltinType):
 
 class DateTime(_BuiltinType):
     _default_qname = xsd_ns('dateTime')
-    accepted_types = (datetime.datetime, six.string_types)
+    accepted_types = (datetime.datetime,) + six.string_types
 
     def xmlvalue(self, value):
         return isodate.isostrf.strftime(value, '%Y-%m-%dT%H:%M:%S%Z')
@@ -168,7 +168,7 @@ class DateTime(_BuiltinType):
 
 class Time(_BuiltinType):
     _default_qname = xsd_ns('time')
-    accepted_types = (datetime.time, six.string_types)
+    accepted_types = (datetime.time,) + six.string_types
 
     def xmlvalue(self, value):
         return isodate.isostrf.strftime(value, '%H:%M:%S%Z')
@@ -179,7 +179,7 @@ class Time(_BuiltinType):
 
 class Date(_BuiltinType):
     _default_qname = xsd_ns('date')
-    accepted_types = (datetime.date, six.string_types)
+    accepted_types = (datetime.date,) + six.string_types
 
     def xmlvalue(self, value):
         return isodate.isostrf.strftime(value, '%Y-%m-%d')
@@ -195,7 +195,7 @@ class gYearMonth(_BuiltinType):
     Lexical representation: CCYY-MM
 
     """
-    accepted_types = (datetime.date, six.string_types)
+    accepted_types = (datetime.date,) + six.string_types
     _default_qname = xsd_ns('gYearMonth')
     _pattern = re.compile(
         r'^(?P<year>-?\d{4,})-(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
@@ -220,7 +220,7 @@ class gYear(_BuiltinType):
     Lexical representation: CCYY
 
     """
-    accepted_types = (datetime.date, six.string_types)
+    accepted_types = (datetime.date,) + six.string_types
     _default_qname = xsd_ns('gYear')
     _pattern = re.compile(r'^(?P<year>-?\d{4,})(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
@@ -243,7 +243,7 @@ class gMonthDay(_BuiltinType):
     Lexical representation: --MM-DD
 
     """
-    accepted_types = (datetime.date, six.string_types)
+    accepted_types = (datetime.date, ) + six.string_types
     _default_qname = xsd_ns('gMonthDay')
     _pattern = re.compile(
         r'^--(?P<month>\d\d)-(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
@@ -270,7 +270,7 @@ class gDay(_BuiltinType):
     Lexical representation: ---DD
 
     """
-    accepted_types = (datetime.date, six.string_types)
+    accepted_types = (datetime.date,) + six.string_types
     _default_qname = xsd_ns('gDay')
     _pattern = re.compile(r'^---(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
@@ -292,7 +292,7 @@ class gMonth(_BuiltinType):
     Lexical representation: --MM
 
     """
-    accepted_types = (datetime.date, six.string_types)
+    accepted_types = (datetime.date,) + six.string_types
     _default_qname = xsd_ns('gMonth')
     _pattern = re.compile(r'^--(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
@@ -309,7 +309,7 @@ class gMonth(_BuiltinType):
 
 
 class HexBinary(_BuiltinType):
-    accepted_types = (six.string_types,)
+    accepted_types = six.string_types
     _default_qname = xsd_ns('hexBinary')
 
     def xmlvalue(self, value):
@@ -320,7 +320,7 @@ class HexBinary(_BuiltinType):
 
 
 class Base64Binary(_BuiltinType):
-    accepted_types = (six.string_types,)
+    accepted_types = six.string_types
     _default_qname = xsd_ns('base64Binary')
 
     def xmlvalue(self, value):
@@ -331,7 +331,7 @@ class Base64Binary(_BuiltinType):
 
 
 class AnyURI(_BuiltinType):
-    accepted_types = (six.string_types,)
+    accepted_types = six.string_types
     _default_qname = xsd_ns('anyURI')
 
     def xmlvalue(self, value):
@@ -342,7 +342,7 @@ class AnyURI(_BuiltinType):
 
 
 class QName(_BuiltinType):
-    accepted_types = (six.string_types,)
+    accepted_types = six.string_types
     _default_qname = xsd_ns('QName')
 
     def xmlvalue(self, value):
@@ -353,7 +353,7 @@ class QName(_BuiltinType):
 
 
 class Notation(_BuiltinType):
-    accepted_types = (six.string_types,)
+    accepted_types = six.string_types
     _default_qname = xsd_ns('NOTATION')
 
 
