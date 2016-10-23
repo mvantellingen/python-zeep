@@ -117,7 +117,7 @@ class UnresolvedCustomType(Type):
 
 @six.python_2_unicode_compatible
 class SimpleType(Type):
-    accepted_types = (six.string_types,)
+    accepted_types = six.string_types
 
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.
