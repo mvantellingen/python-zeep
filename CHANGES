@@ -1,3 +1,8 @@
+0.20.0 (unreleased)
+-------------------
+ - Fix parsing empty soap response (#223)
+
+
 0.19.0 (2016-10-18)
 -------------------
  - **backwards-incompatible**: If the WSDL defines that the endpoint returns

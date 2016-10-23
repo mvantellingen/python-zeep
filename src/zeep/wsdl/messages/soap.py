@@ -83,10 +83,10 @@ class SoapMessage(ConcreteMessage):
             return result
 
         result = result.body
-        if len(result) > 1:
-            return result
-        elif len(result) == 0:
+        if result is None or len(result) == 0:
             return None
+        elif len(result) > 1:
+            return result
 
         # Check if we can remove the wrapping object to make the return value
         # easier to use.
