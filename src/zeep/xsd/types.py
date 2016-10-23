@@ -408,6 +408,12 @@ class ComplexType(Type):
             return self._resolved
 
     def extend(self, base):
+        """Create a new complextype instance which is the current type
+        extending the given base type.
+
+        Used for handling xsd:extension tags
+
+        """
         if isinstance(base, ComplexType):
             base_attributes = base._attributes_unwrapped
             base_element = base._element
@@ -448,9 +454,10 @@ class ComplexType(Type):
         return new
 
     def restrict(self, base):
-        """Restrict the base element with items from the child.
+        """Create a new complextype instance which is the current type
+        restricted by the base type.
 
-        Returns a new complexType.
+        Used for handling xsd:restriction
 
         """
         attributes = list(
