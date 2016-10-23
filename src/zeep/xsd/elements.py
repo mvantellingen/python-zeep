@@ -134,23 +134,24 @@ class Any(Base):
 
         from zeep.xsd.valueobjects import AnyObject  # cyclic import / FIXME
 
-        if (
-            self.restrict and not
-            isinstance(value, (etree._Element, self.restrict._value_class))
+        # Check if we received a proper value object. If we receive the wrong
+        # type then return a nice error message
+        if self.restrict:
+            expected_types = (etree._Element, self.restrict._value_class)
+        else:
+            expected_types = (etree._Element, AnyObject)
+        if not isinstance(value, expected_types):
+            type_names = [
+                '%s.%s' % (t.__module__, t.__name__) for t in expected_types
+            ]
+            err_message = "Received object of type %r, expected %s" % (
+                type(value).__name__, ' or '.join(type_names))
 
-        ):
-            raise TypeError((
-                "Received object of type %r, " +
-                "expected %s or etree.Element"
-            ) % (type(self.restrict)))
-        elif (
-            not self.restrict and not
-            isinstance(value, (etree._Element, AnyObject))
-        ):
-            raise TypeError((
-                "Received object of type %r, " +
-                "expected xsd.AnyObject or etree.Element"
-            ) % (type(value).__name__))
+            raise TypeError('\n'.join((
+                err_message,
+                "See http://docs.python-zeep.org/en/master/datastructures.html"
+                "#any-objects for more information"
+            )))
 
         if isinstance(value, etree._Element):
             parent.append(value)
