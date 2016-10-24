@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import copy
 import operator
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, deque
 
 from cached_property import threaded_cached_property
 
@@ -224,7 +224,7 @@ class All(OrderIndicator):
         expected_tags = {element.qname for __, element in self.elements}
         consumed_tags = set()
 
-        values = defaultdict(list)
+        values = defaultdict(deque)
         for i, elm in enumerate(xmlelements):
             if elm.tag in expected_tags:
                 consumed_tags.add(i)
@@ -289,7 +289,7 @@ class Choice(OrderIndicator):
                 if options:
                     result.append(options[0][1])
                     for i in range(options[0][0]):
-                        xmlelements.pop(0)
+                        xmlelements.popleft()
                 else:
                     break
 

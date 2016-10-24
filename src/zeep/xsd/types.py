@@ -1,5 +1,5 @@
 import copy
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from itertools import chain
 
 import six
@@ -285,7 +285,7 @@ class ComplexType(Type):
             init_kwargs[name] = element.type.parse_xmlelement(
                 xmlelement, schema, name, context=context)
         else:
-            elements = xmlelement.getchildren()
+            elements = deque(xmlelement.iterchildren())
             if allow_none and len(elements) == 0 and len(attributes) == 0:
                 return
 

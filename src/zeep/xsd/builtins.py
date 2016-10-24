@@ -631,7 +631,7 @@ class Schema(Base):
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         if xmlelements[0].tag == self.qname:
-            xmlelement = xmlelements.pop(0)
+            xmlelement = xmlelements.popleft()
             result = self.parse(xmlelement, schema, context=context)
             return result
 
