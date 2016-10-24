@@ -109,7 +109,7 @@ class Any(Base):
 
         for i in max_occurs_iter(self.max_occurs):
             if xmlelements:
-                xmlelement = xmlelements.pop(0)
+                xmlelement = xmlelements.popleft()
                 item = self.parse(xmlelement, schema, context=context)
                 if item is not None:
                     result.append(item)
@@ -289,7 +289,7 @@ class Element(Base):
 
             # Only compare the localname
             if element_tag.localname == self.qname.localname:
-                xmlelement = xmlelements.pop(0)
+                xmlelement = xmlelements.popleft()
                 item = self.parse(
                     xmlelement, schema, allow_none=True, context=context)
                 if item is not None:
