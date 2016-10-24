@@ -117,8 +117,6 @@ def _process_signature(xsd_type, args, kwargs):
 
     # Since the args/kwargs are modified when processing we need to create a
     # copy first.
-    args = copy.deepcopy(args)
-    kwargs = copy.deepcopy(kwargs)
 
     # Process the positional arguments
     for element_name, element in xsd_type.elements_nested:
@@ -137,11 +135,12 @@ def _process_signature(xsd_type, args, kwargs):
                 len(result), num_args))
 
     # Process the named arguments (sequence/group/all/choice)
+    available_kwargs = set(kwargs.keys())
     for element_name, element in xsd_type.elements_nested:
         if element.accepts_multiple:
-            values, kwargs = element.parse_kwargs(kwargs, element_name)
+            values = element.parse_kwargs(kwargs, element_name, available_kwargs)
         else:
-            values, kwargs = element.parse_kwargs(kwargs, None)
+            values = element.parse_kwargs(kwargs, None, available_kwargs)
 
         if values is not None:
             for key, value in values.items():
@@ -150,13 +149,14 @@ def _process_signature(xsd_type, args, kwargs):
 
     # Process the named arguments for attributes
     for attribute_name, attribute in xsd_type.attributes:
-        if attribute_name in kwargs:
-            result[attribute_name] = kwargs.pop(attribute_name)
+        if attribute_name in available_kwargs:
+            available_kwargs.remove(attribute_name)
+            result[attribute_name] = kwargs[attribute_name]
 
-    if kwargs:
+    if available_kwargs:
         raise TypeError((
             "%s() got an unexpected keyword argument %r. " +
             "Signature: (%s)"
-        ) % (xsd_type.qname, next(six.iterkeys(kwargs)), xsd_type.signature()))
+        ) % (xsd_type.qname, next(iter(available_kwargs)), xsd_type.signature()))
 
     return result

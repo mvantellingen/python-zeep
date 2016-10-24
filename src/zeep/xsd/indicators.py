@@ -107,8 +107,6 @@ class OrderIndicator(Indicator, list):
 
     def parse_args(self, args):
         result = {}
-        args = copy.copy(args)
-
         for name, element in self.elements:
             if not args:
                 break
@@ -117,17 +115,17 @@ class OrderIndicator(Indicator, list):
 
         return result, args
 
-    def parse_kwargs(self, kwargs, name=None):
+    def parse_kwargs(self, kwargs, name, available_kwargs):
         """Apply the given kwarg to the element.
 
-        Returns a tuple with two dictionaries, the first one being the result
-        and the second one the unparsed kwargs.
+        The available_kwargs is modified in-place. Returns a dict with the
+        result.
 
         """
         if self.accepts_multiple:
             assert name
 
-        if name and name in kwargs:
+        if name and name in available_kwargs:
 
             # Make sure we have a list, lame lame
             item_kwargs = kwargs.get(name)
@@ -136,9 +134,10 @@ class OrderIndicator(Indicator, list):
 
             result = []
             for i, item_value in zip(max_occurs_iter(self.max_occurs), item_kwargs):
+                item_kwargs = set(item_value.keys())
                 subresult = OrderedDict()
                 for item_name, element in self.elements:
-                    value, item_value = element.parse_kwargs(item_value, item_name)
+                    value = element.parse_kwargs(item_value, item_name, item_kwargs)
                     if value is not None:
                         subresult.update(value)
 
@@ -151,21 +150,21 @@ class OrderIndicator(Indicator, list):
 
             # All items consumed
             if not any(filter(None, item_kwargs)):
-                del kwargs[name]
+                available_kwargs.remove(name)
 
-            return result, kwargs
+            return result
 
         else:
             result = OrderedDict()
             for elm_name, element in self.elements:
-                sub_result, kwargs = element.parse_kwargs(kwargs, elm_name)
+                sub_result = element.parse_kwargs(kwargs, elm_name, available_kwargs)
                 if sub_result is not None:
                     result.update(sub_result)
 
             if name:
                 result = {name: result}
 
-            return result, kwargs
+            return result
 
     def resolve(self):
         for i, elm in enumerate(self):
@@ -185,8 +184,6 @@ class OrderIndicator(Indicator, list):
             values = value
 
         for i, value in zip(max_occurs_iter(self.max_occurs), values):
-            value = copy.copy(value)
-
             for name, element in self.elements_nested:
                 if name:
                     if name in value:
@@ -302,10 +299,10 @@ class Choice(OrderIndicator):
             result = result[0] if result else {}
         return result
 
-    def parse_kwargs(self, kwargs, name):
+    def parse_kwargs(self, kwargs, name, available_kwargs):
         """Processes the kwargs for this choice element.
 
-        Returns a tuple containing value, kwags.
+        Returns a dict containing the values found.
 
         This handles two distinct initialization methods:
 
@@ -321,9 +318,9 @@ class Choice(OrderIndicator):
         :type kwargs: list / dict
 
         """
-        kwargs = copy.copy(kwargs)
-        if name and name in kwargs:
-            values = kwargs.pop(name) or []
+        if name and name in available_kwargs:
+            values = kwargs[name] or []
+            available_kwargs.remove(name)
             result = []
 
             if isinstance(values, dict):
@@ -352,26 +349,26 @@ class Choice(OrderIndicator):
         else:
             # Direct use-case isn't supported when maxOccurs > 1
             if self.accepts_multiple:
-                return {}, kwargs
+                return {}
 
             result = {}
             for choice_name, choice in self.elements:
                 result[choice_name] = None
 
             # When choice elements are specified directly in the kwargs
-            org_kwargs = kwargs
             for choice in self:
-                subresult, kwargs = choice.parse_kwargs(org_kwargs)
+                temp_kwargs = copy.copy(available_kwargs)
+                subresult = choice.parse_kwargs(kwargs, None, temp_kwargs)
                 if subresult:
+                    available_kwargs.intersection_update(temp_kwargs)
                     result.update(subresult)
                     break
             else:
                 result = {}
-                kwargs = org_kwargs
 
         if name and self.accepts_multiple:
             result = {name: result}
-        return result, kwargs
+        return result
 
     def render(self, parent, value):
         """Render the value to the parent element tree node.
@@ -497,23 +494,28 @@ class Group(Indicator):
     def parse_args(self, args):
         return self.child.parse_args(args)
 
-    def parse_kwargs(self, kwargs, name=None):
+    def parse_kwargs(self, kwargs, name, available_kwargs):
         if self.accepts_multiple:
             if name not in kwargs:
                 return {}, kwargs
 
-            item_kwargs = kwargs.pop(name)
+            available_kwargs.remove(name)
+            item_kwargs = kwargs[name]
+
             result = []
             sub_name = '_value_1' if self.child.accepts_multiple else None
             for i, sub_kwargs in zip(max_occurs_iter(self.max_occurs), item_kwargs):
-                subresult, res_kwargs = self.child.parse_kwargs(sub_kwargs, sub_name)
+                available_sub_kwargs = set(sub_kwargs.keys())
+                subresult = self.child.parse_kwargs(
+                    sub_kwargs, sub_name, available_sub_kwargs)
+
                 if subresult:
                     result.append(subresult)
             if result:
                 result = {name: result}
         else:
-            result, kwargs = self.child.parse_kwargs(kwargs, name)
-        return result, kwargs
+            result = self.child.parse_kwargs(kwargs, name, available_kwargs)
+        return result
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         result = []

@@ -616,11 +616,12 @@ class Schema(Base):
     def clone(self, qname, min_occurs=1, max_occurs=1):
         return self.__class__()
 
-    def parse_kwargs(self, kwargs, name=None):
-        if name in kwargs:
-            value = kwargs.pop(name)
-            return {name: value}, kwargs
-        return {}, kwargs
+    def parse_kwargs(self, kwargs, name, available_kwargs):
+        if name in available_kwargs:
+            value = kwargs[name]
+            available_kwargs.remove(name)
+            return {name: value}
+        return {}
 
     def parse(self, xmlelement, schema, context=None):
         from zeep.xsd.schema import Schema

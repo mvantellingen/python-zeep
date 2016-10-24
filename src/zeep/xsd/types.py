@@ -24,14 +24,15 @@ class Type(object):
     def accept(self, value):
         raise NotImplementedError
 
-    def parse_kwargs(self, kwargs, name=None):
+    def parse_kwargs(self, kwargs, name, available_kwargs):
         value = None
         name = name or self.name
 
-        if name in kwargs:
-            value = kwargs.pop(name)
-            return {name: value}, kwargs
-        return {}, kwargs
+        if name in available_kwargs:
+            value = kwargs[name]
+            available_kwargs.remove(name)
+            return {name: value}
+        return {}
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
                          context=None):
@@ -341,15 +342,17 @@ class ComplexType(Type):
         if xsd_type and xsd_type._xsd_name:
             parent.set(xsi_ns('type'), xsd_type._xsd_name)
 
-    def parse_kwargs(self, kwargs, name=None):
+    def parse_kwargs(self, kwargs, name, available_kwargs):
         value = None
         name = name or self.name
 
-        if name in kwargs:
-            value = kwargs.pop(name)
+        if name in available_kwargs:
+            value = kwargs[name]
+            available_kwargs.remove(name)
+
             value = self._create_object(value, name)
-            return {name: value}, kwargs
-        return {}, kwargs
+            return {name: value}
+        return {}
 
     def _create_object(self, value, name):
         """Return the value as a CompoundValue object"""

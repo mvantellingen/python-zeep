@@ -26,15 +26,13 @@ class Base(object):
 
     def parse_args(self, args):
         result = {}
-        args = copy.copy(args)
-
         if not args:
             return result, args
 
         value = args.pop(0)
         return {self.attr_name: value}, args
 
-    def parse_kwargs(self, kwargs, name=None):
+    def parse_kwargs(self, kwargs, name, available_kwargs):
         raise NotImplementedError()
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
@@ -98,11 +96,12 @@ class Any(Base):
         except (exceptions.NamespaceError, exceptions.LookupError):
             return xmlelement
 
-    def parse_kwargs(self, kwargs, name=None):
-        if name in kwargs:
-            value = kwargs.pop(name)
-            return {name: value}, kwargs
-        return {}, kwargs
+    def parse_kwargs(self, kwargs, name, available_kwargs):
+        if name in available_kwargs:
+            available_kwargs.remove(name)
+            value = kwargs[name]
+            return {name: value}
+        return {}
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Consume matching xmlelements and call parse() on each of them"""
@@ -263,8 +262,9 @@ class Element(Base):
         return xsd_type.parse_xmlelement(
             xmlelement, schema, allow_none=allow_none, context=context)
 
-    def parse_kwargs(self, kwargs, name=None):
-        return self.type.parse_kwargs(kwargs, name or self.attr_name)
+    def parse_kwargs(self, kwargs, name, available_kwargs):
+        return self.type.parse_kwargs(
+            kwargs, name or self.attr_name, available_kwargs)
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Consume matching xmlelements and call parse() on each of them"""
