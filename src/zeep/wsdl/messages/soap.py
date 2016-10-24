@@ -68,6 +68,9 @@ class SoapMessage(ConcreteMessage):
         result.
 
         """
+        if not self.envelope:
+            return None
+
         body = envelope.find('soap-env:Body', namespaces=self.nsmap)
         body_result = self._deserialize_body(body)
 
@@ -423,5 +426,7 @@ class RpcMessage(SoapMessage):
 
         """
         response_element = body_element.getchildren()[0]
-        result = self.body.parse(response_element, self.wsdl.types)
-        return {'body': result}
+        if self.body:
+            result = self.body.parse(response_element, self.wsdl.types)
+            return {'body': result}
+        return {'body': None}

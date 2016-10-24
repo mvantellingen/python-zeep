@@ -379,3 +379,56 @@ def test_deserialize_rpc_literal():
     """)
     deserialized = operation.output.deserialize(document)
     assert deserialized == 'foobar'
+
+
+def test_deserialize():
+    wsdl_content = StringIO("""
+    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                 xmlns:tns="http://tests.python-zeep.org/tns"
+                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata"
+                 targetNamespace="http://tests.python-zeep.org/tns">
+
+
+      <message name="clearFoo">
+        <part name="code" type="xsd:string"/>
+      </message>
+      <message name="clearFooResponse"/>
+
+      <portType name="TestPortType">
+        <operation name="clearFoo">
+          <input wsam:Action="http://foo.services.example.com/Util/clearFooRequest" message="tns:clearFoo"/>
+          <output wsam:Action="http://foo.services.example.com/Util/clearFooResponse" message="tns:clearFooResponse"/>
+        </operation>
+      </portType>
+
+      <binding name="TestBinding" type="tns:TestPortType">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="clearFoo">
+          <soap:operation soapAction=""/>
+          <input>
+            <soap:body use="literal" namespace="http://foo.services.example.com/"/>
+          </input>
+          <output>
+            <soap:body use="literal" namespace="http://foo.services.example.com/"/>
+          </output>
+        </operation>
+      </binding>
+    </definitions>
+    """.strip())
+
+    root = wsdl.Document(wsdl_content, None)
+    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
+    operation = binding.get('clearFoo')
+
+    document = load_xml("""
+        <?xml version="1.0" ?>
+        <S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+            <S:Body>
+                <ns2:clearFooResponse xmlns:ns2="http://foo.services.example.com/"/>
+            </S:Body>
+        </S:Envelope>
+    """)
+    result = operation.output.deserialize(document)
+    assert result is None
