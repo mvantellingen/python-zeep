@@ -635,10 +635,14 @@ def test_wsdl_array_type():
     expected = """
         <document>
             <ns0:array xmlns:ns0="http://tests.python-zeep.org/">
-                <ns0:item_1>foo_1</ns0:item_1>
-                <ns0:item_2>bar_1</ns0:item_2>
-                <ns0:item_1>foo_2</ns0:item_1>
-                <ns0:item_2>bar_2</ns0:item_2>
+                <base>
+                    <ns0:item_1>foo_1</ns0:item_1>
+                    <ns0:item_2>bar_1</ns0:item_2>
+                </base>
+                <base>
+                    <ns0:item_1>foo_2</ns0:item_1>
+                    <ns0:item_2>bar_2</ns0:item_2>
+                </base>
             </ns0:array>
         </document>
     """

@@ -131,6 +131,11 @@ class Any(Base):
                     node = etree.SubElement(parent, 'item')
                     node.set(xsi_ns('type'), self.restrict.qname)
                     self._render_value_item(node, val)
+            elif self.restrict:
+                for val in value:
+                    node = etree.SubElement(parent, self.restrict.name)
+                    # node.set(xsi_ns('type'), self.restrict.qname)
+                    self._render_value_item(node, val)
             else:
                 for val in value:
                     self._render_value_item(parent, val)
