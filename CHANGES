@@ -4,6 +4,7 @@
    copies data and alters it in place but instead uses a set to keep track of 
    modified data.
  - Fix parsing empty soap response (#223)
+ - Major refactor of the xsd:extension / xsd:restriction implementation.
  - Better support for xsd:anyType, by re-using the xsd.AnyObject (#229)
  - Deserialize SOAP response without message elements correctly (#237)
 
