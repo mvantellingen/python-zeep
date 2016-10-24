@@ -506,7 +506,7 @@ class ComplexType(Type):
         return value
 
 
-class ListType(Type):
+class ListType(SimpleType):
     """Space separated list of simpleType values"""
 
     def __init__(self, item_type):
