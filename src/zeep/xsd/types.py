@@ -507,12 +507,15 @@ class ComplexType(Type):
         return value
 
 
-class ListType(Type):
+class ListType(SimpleType):
     """Space separated list of simpleType values"""
 
     def __init__(self, item_type):
         self.item_type = item_type
-        super(ListType, self).__init__(None)
+        super(Type, self).__init__()
+
+    def __call__(self, value):
+        return value
 
     def render(self, parent, value):
         parent.text = self.xmlvalue(value)
