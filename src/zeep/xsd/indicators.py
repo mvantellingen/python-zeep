@@ -19,12 +19,11 @@ class Indicator(Base):
         return '<%s(%s)>' % (
             self.__class__.__name__, super(Indicator, self).__repr__())
 
-    @property
+    @threaded_cached_property
     def default_value(self):
-        result = OrderedDict()
-        for name, element in self.elements:
-            result[name] = element.default_value
-        return result
+        return OrderedDict([
+            (name, element.default_value) for name, element in self.elements
+        ])
 
     def clone(self, name, min_occurs=1, max_occurs=1):
         raise NotImplementedError()

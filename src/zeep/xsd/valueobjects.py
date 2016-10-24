@@ -32,24 +32,25 @@ class AnyObject(object):
 class CompoundValue(object):
 
     def __init__(self, *args, **kwargs):
-        self.__values__ = OrderedDict()
+        values = OrderedDict()
 
         # Set default values
         for container_name, container in self._xsd_type.elements_nested:
-            values = container.default_value
-            if isinstance(values, dict):
-                self.__values__.update(values)
+            elm_values = container.default_value
+            if isinstance(elm_values, dict):
+                values.update(elm_values)
             else:
-                self.__values__[container_name] = values
+                values[container_name] = elm_values
 
         # Set attributes
         for attribute_name, attribute in self._xsd_type.attributes:
-            self.__values__[attribute_name] = attribute.default_value
+            values[attribute_name] = attribute.default_value
 
         # Set elements
         items = _process_signature(self._xsd_type, args, kwargs)
         for key, value in items.items():
-            self.__values__[key] = value
+            values[key] = value
+        self.__values__ = values
 
     def __contains__(self, key):
         return self.__values__.__contains__(key)
@@ -112,18 +113,17 @@ def _process_signature(xsd_type, args, kwargs):
 
     """
     result = OrderedDict()
-    args = list(args)
-    num_args = len(args)
+    # Process the positional arguments. args is currently still modified
+    # in-place here
+    if args:
+        args = list(args)
+        num_args = len(args)
 
-    # Since the args/kwargs are modified when processing we need to create a
-    # copy first.
-
-    # Process the positional arguments
-    for element_name, element in xsd_type.elements_nested:
-        values, args = element.parse_args(args)
-        if not values:
-            break
-        result.update(values)
+        for element_name, element in xsd_type.elements_nested:
+            values, args = element.parse_args(args)
+            if not values:
+                break
+            result.update(values)
 
     if args:
         for attribute_name, attribute in xsd_type.attributes:
@@ -134,7 +134,8 @@ def _process_signature(xsd_type, args, kwargs):
             "__init__() takes at most %s positional arguments (%s given)" % (
                 len(result), num_args))
 
-    # Process the named arguments (sequence/group/all/choice)
+    # Process the named arguments (sequence/group/all/choice). The
+    # available_kwargs set is modified in-place.
     available_kwargs = set(kwargs.keys())
     for element_name, element in xsd_type.elements_nested:
         if element.accepts_multiple:
@@ -148,10 +149,11 @@ def _process_signature(xsd_type, args, kwargs):
                     result[key] = value
 
     # Process the named arguments for attributes
-    for attribute_name, attribute in xsd_type.attributes:
-        if attribute_name in available_kwargs:
-            available_kwargs.remove(attribute_name)
-            result[attribute_name] = kwargs[attribute_name]
+    if available_kwargs:
+        for attribute_name, attribute in xsd_type.attributes:
+            if attribute_name in available_kwargs:
+                available_kwargs.remove(attribute_name)
+                result[attribute_name] = kwargs[attribute_name]
 
     if available_kwargs:
         raise TypeError((

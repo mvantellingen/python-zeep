@@ -303,14 +303,15 @@ class ComplexType(Type):
                     elements[0].tag, self.elements[0][1].qname.text))
 
         # Parse attributes
-        attributes = copy.copy(attributes)
-        for name, attribute in self.attributes:
-            if attribute.name:
-                if attribute.qname.text in attributes:
-                    value = attributes.pop(attribute.qname.text)
-                    init_kwargs[name] = attribute.parse(value)
-            else:
-                init_kwargs[name] = attribute.parse(attributes)
+        if attributes:
+            attributes = copy.copy(attributes)
+            for name, attribute in self.attributes:
+                if attribute.name:
+                    if attribute.qname.text in attributes:
+                        value = attributes.pop(attribute.qname.text)
+                        init_kwargs[name] = attribute.parse(value)
+                else:
+                    init_kwargs[name] = attribute.parse(attributes)
 
         return self(**init_kwargs)
 
