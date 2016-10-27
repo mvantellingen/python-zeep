@@ -1,4 +1,10 @@
-0.20.0 (unreleased)
+0.21.0 (unreleased)
+-------------------
+ - Don't error on empty xml namespaces declarations in inline schema's (#186)
+
+
+
+0.20.0 (2016-10-24)
 -------------------
  - Major performance improvements / lower memory usage. Zeep now no longer
    copies data and alters it in place but instead uses a set to keep track of 

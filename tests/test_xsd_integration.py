@@ -1495,3 +1495,37 @@ def test_nill():
     etree.cleanup_namespaces(node)
 
     assert_nodes_equal(expected, node)
+
+
+def test_empty_xmlns():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <complexType name="empty"/>
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element ref="schema"/>
+                <any/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    node = load_xml("""
+        <container>
+            <xs:schema xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="NewDataSet">
+              <xs:element name="something" type="xs:string" msdata:foo=""/>
+            </xs:schema>
+            <something>foo</something>
+        </container>
+    """)
+    item = container_elm.parse(node, schema)
+    assert item._value_1 == 'foo'

@@ -26,7 +26,7 @@ def as_qname(value, nsmap, target_namespace):
     if target_namespace:
         return etree.QName(target_namespace, value)
 
-    if None in nsmap:
+    if nsmap.get(None):
         return etree.QName(nsmap[None], value)
     return etree.QName(value)
 
