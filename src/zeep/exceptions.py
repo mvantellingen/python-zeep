@@ -1,5 +1,5 @@
 class Error(Exception):
-    def __init__(self, message):
+    def __init__(self, message=''):
         super(Exception, self).__init__(message)
         self.message = message
 
@@ -70,3 +70,7 @@ class ValidationError(Error):
             path = '.'.join(str(x) for x in self.path)
             return '%s (%s)' % (self.message, path)
         return self.message
+
+
+class SignatureVerificationFailed(Error):
+    pass

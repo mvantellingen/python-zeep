@@ -20,6 +20,10 @@ async_require = [
     'aiohttp>=1.0',
 ]
 
+xmlsec_require = [
+    'xmlsec>=0.6.1',
+]
+
 tests_require = [
     'freezegun==0.3.8',
     'mock==2.0.0',
@@ -54,6 +58,7 @@ setup(
         'docs': docs_require,
         'test': tests_require,
         'async': async_require,
+        'xmlsec': xmlsec_require,
     },
     entry_points={},
     package_dir={'': 'src'},

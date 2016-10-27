@@ -56,3 +56,8 @@ def get_base_class(objects):
             break
         base_class = bases[0][i]
     return base_class
+
+
+def detect_soap_env(envelope):
+    root_tag = etree.QName(envelope)
+    return root_tag.namespace

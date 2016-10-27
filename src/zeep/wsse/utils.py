@@ -1,14 +1,20 @@
+from uuid import uuid4
+from lxml import etree
 import datetime
 
 import pytz
 from lxml.builder import ElementMaker
 
+from zeep import ns
 from zeep.wsdl.utils import get_or_create_header
 
 NSMAP = {
-    'wsse': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd',
+    'wsse': ns.WSSE,
+    'wsu': ns.WSU,
 }
-WSSE = ElementMaker(namespace=NSMAP['wsse'], nsmap=NSMAP)
+WSSE = ElementMaker(namespace=NSMAP['wsse'], nsmap={'wsse': ns.WSSE})
+WSU = ElementMaker(namespace=NSMAP['wsu'], nsmap={'wsu': ns.WSU})
+ID_ATTR = etree.QName(NSMAP['wsu'], 'Id')
 
 
 def get_security_header(doc):
@@ -28,3 +34,21 @@ def get_timestamp(timestamp=None):
     timestamp = timestamp or datetime.datetime.utcnow()
     timestamp = timestamp.replace(tzinfo=pytz.utc, microsecond=0)
     return timestamp.isoformat()
+
+
+def get_unique_id():
+    return 'id-{0}'.format(uuid4())
+
+
+def ensure_id(node):
+    """Ensure given node has a wsu:Id attribute; add unique one if not.
+
+    Return found/created attribute value.
+
+    """
+    assert node is not None
+    id_val = node.get(ID_ATTR)
+    if not id_val:
+        id_val = get_unique_id()
+        node.set(ID_ATTR, id_val)
+    return id_val
