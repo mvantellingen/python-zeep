@@ -218,6 +218,63 @@ def test_element_any_type():
     assert item.something == 'bar'
 
 
+def test_array_of_element_any_type():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="properties" type="tns:array_of_property"/>
+              </sequence>
+            </complexType>
+          </element>
+          <complexType name="array_of_property">
+            <sequence>
+              <element maxOccurs="unbounded" minOccurs="0" name="property" type="tns:property"/>
+            </sequence>
+          </complexType>
+          <complexType name="property">
+            <sequence>
+              <element minOccurs="0" name="value" type="anyType"/>
+            </sequence>
+            <attribute name="name" type="string" use="required"/>
+          </complexType>
+        </schema>
+    """.strip())
+    schema = xsd.Schema(node)
+
+    container_element = schema.get_element('{http://tests.python-zeep.org/}container')
+    array_of_property_type = schema.get_type('{http://tests.python-zeep.org/}array_of_property')
+    property_type = schema.get_type('{http://tests.python-zeep.org/}property')
+
+    property1 = property_type(name='a name', value=xsd.AnyObject(xsd.String(), 'a value'))
+    array_of_property = array_of_property_type(property=[property1])
+    container = container_element(properties=array_of_property)
+
+    node = etree.Element('document')
+    container_element.render(node, container)
+    expected = """
+        <document>
+          <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+            <ns0:properties>
+                <ns0:property name="a name">
+                  <ns0:value xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">a value</ns0:value>
+                </ns0:property>
+            </ns0:properties>
+          </ns0:container>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    item = container_element.parse(node.getchildren()[0], schema)
+    assert item.properties.property[0].name == 'a name'
+    assert item.properties.property[0].value == 'a value'
+
+
 def test_any_in_nested_sequence():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
