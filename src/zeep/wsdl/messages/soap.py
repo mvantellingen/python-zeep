@@ -355,7 +355,7 @@ class DocumentMessage(SoapMessage):
         return {'body': result}
 
     def _resolve_body(self, info, definitions, parts):
-        if not info:
+        if not info or not parts:
             return xsd.Element(None, xsd.ComplexType([]))
 
         # If the part name is omitted then all parts are available under
