@@ -2,6 +2,8 @@ import logging
 import os
 
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.poolmanager import PoolManager
 
 from six.moves.urllib.parse import urlparse
 from zeep.cache import SqliteCache
@@ -9,9 +11,24 @@ from zeep.utils import NotSet, get_version
 from zeep.wsdl.utils import etree_to_string
 
 
+class SSLAdapter(HTTPAdapter):
+    '''An HTTPS Transport Adapter that uses an arbitrary SSL version.'''
+    def __init__(self, ssl_version=None, **kwargs):
+        self.ssl_version = ssl_version
+
+        super(SSLAdapter, self).__init__(**kwargs)
+
+    def init_poolmanager(self, connections, maxsize, block=False):
+        self.poolmanager = PoolManager(num_pools=connections,
+                                       maxsize=maxsize,
+                                       block=block,
+                                       ssl_version=self.ssl_version)
+                                       
+
 class Transport(object):
 
-    def __init__(self, cache=NotSet, timeout=300, verify=True, http_auth=None):
+    def __init__(self, cache=NotSet, timeout=300, verify=True, http_auth=None, **kwargs):
+        self.extra_kwargs = kwargs
         self.cache = SqliteCache() if cache is NotSet else cache
         self.timeout = timeout
         self.verify = verify
@@ -24,7 +41,10 @@ class Transport(object):
             'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
     def create_session(self):
-        return requests.Session()
+        session = requests.Session()
+        if self.extra_kwargs.get('ssl') is not None:
+            session.mount('https://', SSLAdapter(self.extra_kwargs.get('ssl')))
+        return session
 
     def load(self, url):
         if not url:
