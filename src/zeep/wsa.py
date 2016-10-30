@@ -10,6 +10,10 @@ WSA = ElementMaker(namespace='http://www.w3.org/2005/08/addressing')
 
 
 class WsAddressingPlugin(Plugin):
+    nsmap = {
+        'wsa': 'http://www.w3.org/2005/08/addressing'
+    }
+
     def egress(self, envelope, http_headers, operation, binding_options):
         """Apply the ws-addressing headers to the given envelope."""
 
@@ -28,10 +32,11 @@ class WsAddressingPlugin(Plugin):
         # the top_nsmap kwarg was added in lxml 3.5.0
         if etree.LXML_VERSION[:2] >= (3, 5):
             etree.cleanup_namespaces(
-                envelope, top_nsmap={
-                    'wsa': 'http://www.w3.org/2005/08/addressing'
-                })
+                header,
+                keep_ns_prefixes=header.nsmap,
+                top_nsmap=self.nsmap)
         else:
-            etree.cleanup_namespaces(envelope)
-
+            etree.cleanup_namespaces(
+                header,
+                keep_ns_prefixes=header.nsmap)
         return envelope, http_headers
