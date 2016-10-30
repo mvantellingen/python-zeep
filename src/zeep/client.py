@@ -1,4 +1,5 @@
 import logging
+from contextlib import contextmanager
 
 from zeep.transports import Transport
 from zeep.wsdl import Document
@@ -71,6 +72,23 @@ class Client(object):
                 "There is no default service defined. This is usually due to "
                 "missing wsdl:service definitions in the WSDL")
         return self._default_service
+
+    @contextmanager
+    def options(self, timeout):
+        """Context manager to temporarily overrule various options.
+
+        Example::
+
+            client = zeep.Client('foo.wsdl')
+            with client.options(timeout=10):
+                client.service.fast_call()
+
+        :param timeout: Set the timeout for POST/GET operations (not used for
+                        loading external WSDL or XSD documents)
+
+        """
+        with self.transport._options(timeout=timeout):
+            yield
 
     def bind(self, service_name=None, port_name=None):
         """Create a new ServiceProxy for the given service_name and port_name.

@@ -1,5 +1,6 @@
 import logging
 import os
+from contextlib import contextmanager
 
 import requests
 
@@ -123,3 +124,22 @@ class Transport(object):
 
         with open(os.path.expanduser(url), 'rb') as fh:
             return fh.read()
+
+    @contextmanager
+    def _options(self, timeout=None):
+        """Context manager to temporarily overrule options.
+
+        Example::
+
+            client = zeep.Client('foo.wsdl')
+            with client.options(timeout=10):
+                client.service.fast_call()
+
+        :param timeout: Set the timeout for POST/GET operations (not used for
+                        loading external WSDL or XSD documents)
+
+        """
+        old_timeout = self.operation_timeout
+        self.operation_timeout = timeout
+        yield
+        self.operation_timeout = old_timeout
