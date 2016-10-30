@@ -1076,3 +1076,72 @@ def test_deserialize_with_headers():
     assert serialized.body.request_1.arg1 == 'ah1'
     assert serialized.body.request_2.arg2 == 'ah2'
     assert serialized.header.header_1.username == 'mvantellingen'
+
+
+def test_serialize_any_type():
+    wsdl_content = StringIO("""
+    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                 xmlns:tns="http://tests.python-zeep.org/tns"
+                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://tests.python-zeep.org/tns">
+      <types>
+        <xsd:schema targetNamespace="http://tests.python-zeep.org/tns"
+                    elementFormDefault="qualified">
+          <xsd:element name="Request">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="arg1" type="xsd:anyType"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+      </types>
+
+      <message name="Input">
+        <part element="tns:Request"/>
+      </message>
+
+      <portType name="TestPortType">
+        <operation name="TestOperation">
+          <input message="Input"/>
+        </operation>
+      </portType>
+
+      <binding name="TestBinding" type="tns:TestPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="TestOperation">
+          <soap:operation soapAction=""/>
+          <input>
+            <soap:body use="literal"/>
+          </input>
+        </operation>
+      </binding>
+    </definitions>
+    """.strip())
+
+    root = wsdl.Document(wsdl_content, None)
+
+    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
+    operation = binding.get('TestOperation')
+
+    serialized = operation.input.serialize(
+        arg1=xsd.AnyObject(xsd.String(), 'ah1'))
+    expected = """
+        <?xml version="1.0"?>
+        <soap-env:Envelope
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap-env:Body>
+            <ns0:Request xmlns:ns0="http://tests.python-zeep.org/tns">
+              <ns0:arg1
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:type="xs:string">ah1</ns0:arg1>
+            </ns0:Request>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """
+    assert_nodes_equal(expected, serialized.content)
+    deserialized = operation.input.deserialize(serialized.content)
+
+    assert deserialized == 'ah1'
