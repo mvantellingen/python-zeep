@@ -1,7 +1,7 @@
 0.21.0 (unreleased)
 -------------------
  - Don't error on empty xml namespaces declarations in inline schema's (#186)
-
+ - Wrap importing of sqlite3 in try..except for Google App Engine (#243)
 
 
 0.20.0 (2016-10-24)
