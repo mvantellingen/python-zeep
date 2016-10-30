@@ -149,6 +149,9 @@ class TestTime:
         value = isodate.parse_time('21:14:42.120+0200')
         assert instance.pythonvalue('21:14:42.120+0200') == value
 
+        value = None
+        assert instance.pythonvalue('  :  :  ') == value
+
 
 class TestDate:
 
