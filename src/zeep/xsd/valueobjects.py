@@ -159,6 +159,9 @@ def _process_signature(xsd_type, args, kwargs):
         raise TypeError((
             "%s() got an unexpected keyword argument %r. " +
             "Signature: (%s)"
-        ) % (xsd_type.qname, next(iter(available_kwargs)), xsd_type.signature()))
+        ) % (
+            xsd_type.qname or 'ComplexType',
+            next(iter(available_kwargs)),
+            xsd_type.signature()))
 
     return result

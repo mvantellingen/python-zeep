@@ -1511,7 +1511,7 @@ def test_nill():
 
 
 def test_empty_xmlns():
-    node = etree.fromstring("""
+    node = load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -1534,7 +1534,10 @@ def test_empty_xmlns():
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
     node = load_xml("""
         <container>
-            <xs:schema xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="NewDataSet">
+            <xs:schema
+                xmlns=""
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="NewDataSet">
               <xs:element name="something" type="xs:string" msdata:foo=""/>
             </xs:schema>
             <something>foo</something>
@@ -1542,3 +1545,120 @@ def test_empty_xmlns():
     """)
     item = container_elm.parse(node, schema)
     assert item._value_1 == 'foo'
+
+
+def test_issue_221():
+    transport = DummyTransport()
+    transport.bind(
+        'https://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd',
+        load_xml(io.open('tests/wsdl_files/xmldsig-core-schema.xsd', 'r').read().encode('utf-8')))
+
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <import namespace="http://www.w3.org/2000/09/xmldsig#"
+                  schemaLocation="https://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd"/>
+          <complexType name="BaseType">
+            <sequence>
+              <element ref="ds:Signature" minOccurs="0"/>
+            </sequence>
+            <attribute name="Id"/>
+          </complexType>
+          <element name="exportOrgRegistryRequest">
+            <complexType>
+              <complexContent>
+                <extension base="tns:BaseType">
+                  <sequence>
+                    <element name="SearchCriteria" maxOccurs="100">
+                      <complexType>
+                        <sequence>
+                          <choice>
+                            <choice>
+                              <element ref="tns:OGRNIP"/>
+                              <sequence>
+                                <element name="OGRN" type="string"/>
+                                <element name="KPP" type="string" minOccurs="0"/>
+                              </sequence>
+                            </choice>
+                            <element ref="tns:orgVersionGUID"/>
+                            <element ref="tns:orgRootEntityGUID"/>
+                          </choice>
+                          <element name="isRegistered" type="boolean" fixed="true" minOccurs="0">
+                          </element>
+                        </sequence>
+                      </complexType>
+                    </element>
+                    <element name="lastEditingDateFrom" type="date" minOccurs="0"/>
+                  </sequence>
+                </extension>
+              </complexContent>
+            </complexType>
+          </element>
+          <simpleType name="OGRNIPType">
+            <restriction base="string">
+              <length value="13"/>
+            </restriction>
+          </simpleType>
+          <element name="OGRNIP" type="tns:OGRNIPType"/>
+          <element name="orgVersionGUID" type="tns:GUIDType"/>
+          <element name="orgRootEntityGUID" type="tns:GUIDType"/>
+          <simpleType name="GUIDType">
+            <restriction base="string">
+              <pattern value="([0-9a-fA-F]){8}-([0-9a-fA-F]){4}-([0-9a-fA-F]){4}-([0-9a-fA-F]){4}-([0-9a-fA-F]){12}"/>
+            </restriction>
+          </simpleType>x
+        </schema>
+    """), transport=transport)
+
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    elm = schema.get_element('tns:exportOrgRegistryRequest')
+
+    # Args
+    obj = elm(None, {'OGRN': '123123123123', 'isRegistered': True})
+    node = etree.Element('document')
+    elm.render(node, obj)
+    expected = """
+      <document>
+        <ns0:exportOrgRegistryRequest xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:SearchCriteria>
+            <ns0:OGRN>123123123123</ns0:OGRN>
+            <ns0:isRegistered>true</ns0:isRegistered>
+          </ns0:SearchCriteria>
+        </ns0:exportOrgRegistryRequest>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    obj = elm(SearchCriteria={'orgVersionGUID': '1234', 'isRegistered': False})
+    node = etree.Element('document')
+    elm.render(node, obj)
+    expected = """
+      <document>
+        <ns0:exportOrgRegistryRequest xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:SearchCriteria>
+            <ns0:orgVersionGUID>1234</ns0:orgVersionGUID>
+            <ns0:isRegistered>false</ns0:isRegistered>
+          </ns0:SearchCriteria>
+        </ns0:exportOrgRegistryRequest>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    obj = elm(SearchCriteria={'OGRNIP': '123123123123', 'isRegistered': True})
+    node = etree.Element('document')
+    elm.render(node, obj)
+    expected = """
+      <document>
+        <ns0:exportOrgRegistryRequest xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:SearchCriteria>
+            <ns0:OGRNIP>123123123123</ns0:OGRNIP>
+            <ns0:isRegistered>true</ns0:isRegistered>
+          </ns0:SearchCriteria>
+        </ns0:exportOrgRegistryRequest>
+      </document>
+    """
+    assert_nodes_equal(expected, node)

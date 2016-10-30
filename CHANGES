@@ -12,6 +12,7 @@
    options (only timeout for now) (#140)
  - Wrap the parsing of xml values in a try..except block and log an error 
    instead of throwing an exception (#137)
+ - Fix xsd:choice xml rendering with nested choice/sequence structure (#221)
 
 
 0.20.0 (2016-10-24)
