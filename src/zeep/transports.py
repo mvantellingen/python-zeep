@@ -12,6 +12,15 @@ from zeep.wsdl.utils import etree_to_string
 class Transport(object):
 
     def __init__(self, cache=NotSet, timeout=300, verify=True, http_auth=None):
+        """The transport object handles all communication to the SOAP server.
+
+        :param cache: The cache object to be used to cache GET requests
+        :param timeout: The timeout for loading wsdl and xsd documents.
+        :param verify: Boolean to indicate if the SSL certificate needs to be
+                       verified.
+        :param http_auth: HTTP authentication, passed to requests.
+
+        """
         self.cache = SqliteCache() if cache is NotSet else cache
         self.timeout = timeout
         self.verify = verify
@@ -26,34 +35,25 @@ class Transport(object):
     def create_session(self):
         return requests.Session()
 
-    def load(self, url):
-        if not url:
-            raise ValueError("No url given to load")
+    def get(self, address, params, headers):
+        """Proxy to requests.get()
 
-        scheme = urlparse(url).scheme
-        if scheme in ('http', 'https'):
+        :param address: The URL for the request
+        :param params: The query parameters
+        :param headers: a dictionary with the HTTP headers.
 
-            if self.cache:
-                response = self.cache.get(url)
-                if response:
-                    return bytes(response)
-
-            response = self.session.get(url, timeout=self.timeout)
-            response.raise_for_status()
-
-            if self.cache:
-                self.cache.add(url, response.content)
-
-            return response.content
-
-        elif scheme == 'file':
-            if url.startswith('file://'):
-                url = url[7:]
-
-        with open(os.path.expanduser(url), 'rb') as fh:
-            return fh.read()
+        """
+        response = self.session.get(address, params=params, headers=headers)
+        return response
 
     def post(self, address, message, headers):
+        """Proxy to requests.posts()
+
+        :param address: The URL for the request
+        :param message: The content for the body
+        :param headers: a dictionary with the HTTP headers.
+
+        """
         if self.logger.isEnabledFor(logging.DEBUG):
             log_message = message
             if isinstance(log_message, bytes):
@@ -84,6 +84,30 @@ class Transport(object):
         message = etree_to_string(envelope)
         return self.post(address, message, headers)
 
-    def get(self, address, params, headers):
-        response = self.session.get(address, params=params, headers=headers)
-        return response
+    def load(self, url):
+        """Load the content from the given URL"""
+        if not url:
+            raise ValueError("No url given to load")
+
+        scheme = urlparse(url).scheme
+        if scheme in ('http', 'https'):
+
+            if self.cache:
+                response = self.cache.get(url)
+                if response:
+                    return bytes(response)
+
+            response = self.session.get(url, timeout=self.timeout)
+            response.raise_for_status()
+
+            if self.cache:
+                self.cache.add(url, response.content)
+
+            return response.content
+
+        elif scheme == 'file':
+            if url.startswith('file://'):
+                url = url[7:]
+
+        with open(os.path.expanduser(url), 'rb') as fh:
+            return fh.read()
