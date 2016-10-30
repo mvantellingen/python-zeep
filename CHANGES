@@ -4,6 +4,8 @@
  - Wrap importing of sqlite3 in try..except for Google App Engine (#243)
  - Don't use pkg_resources to determine the zeep version, use __version__ 
    instead (#243).
+ - Fix SOAP arrays by wrapping children in the appropriate element 
+   (joeribekker, #2360)
 
 
 0.20.0 (2016-10-24)
