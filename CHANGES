@@ -6,6 +6,8 @@
    instead (#243).
  - Fix SOAP arrays by wrapping children in the appropriate element 
    (joeribekker, #2360)
+ - Add ``operation_timeout`` kwarg to the Transport class to set timeouts for
+   operations. The default is still no timeout (#140)
 
 
 0.20.0 (2016-10-24)

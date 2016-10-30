@@ -11,18 +11,22 @@ from zeep.wsdl.utils import etree_to_string
 
 class Transport(object):
 
-    def __init__(self, cache=NotSet, timeout=300, verify=True, http_auth=None):
+    def __init__(self, cache=NotSet, timeout=300, operation_timeout=None,
+                 verify=True, http_auth=None):
         """The transport object handles all communication to the SOAP server.
 
         :param cache: The cache object to be used to cache GET requests
         :param timeout: The timeout for loading wsdl and xsd documents.
+        :param operation_timeout: The timeout for operations (POST/GET). By
+                                  default this is None (no timeout).
         :param verify: Boolean to indicate if the SSL certificate needs to be
                        verified.
         :param http_auth: HTTP authentication, passed to requests.
 
         """
         self.cache = SqliteCache() if cache is NotSet else cache
-        self.timeout = timeout
+        self.load_timeout = timeout
+        self.operation_timeout = None
         self.verify = verify
         self.http_auth = http_auth
         self.logger = logging.getLogger(__name__)
@@ -43,7 +47,11 @@ class Transport(object):
         :param headers: a dictionary with the HTTP headers.
 
         """
-        response = self.session.get(address, params=params, headers=headers)
+        response = self.session.get(
+            address,
+            params=params,
+            headers=headers,
+            timeout=self.operation_timeout)
         return response
 
     def post(self, address, message, headers):
@@ -60,7 +68,11 @@ class Transport(object):
                 log_message = log_message.decode('utf-8')
             self.logger.debug("HTTP Post to %s:\n%s", address, log_message)
 
-        response = self.session.post(address, data=message, headers=headers)
+        response = self.session.post(
+            address,
+            data=message,
+            headers=headers,
+            timeout=self.operation_timeout)
 
         if self.logger.isEnabledFor(logging.DEBUG):
             log_message = response.content
@@ -97,7 +109,7 @@ class Transport(object):
                 if response:
                     return bytes(response)
 
-            response = self.session.get(url, timeout=self.timeout)
+            response = self.session.get(url, timeout=self.load_timeout)
             response.raise_for_status()
 
             if self.cache:
