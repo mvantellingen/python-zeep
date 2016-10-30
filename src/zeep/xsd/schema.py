@@ -5,6 +5,7 @@ from lxml import etree
 
 from zeep import exceptions
 from zeep.xsd import builtins as xsd_builtins
+from zeep.xsd import const
 from zeep.xsd.context import ParserContext
 from zeep.xsd.visitor import SchemaVisitor
 
@@ -74,6 +75,13 @@ class Schema(object):
         if qname.text in xsd_builtins.default_elements:
             return xsd_builtins.default_elements[qname]
 
+        # Handle XSD namespace items
+        if qname.namespace == const.NS_XSD:
+            try:
+                return xsd_builtins.default_elements[qname]
+            except KeyError:
+                raise exceptions.LookupError("No such type %r" % qname.text)
+
         try:
             schema = self._get_schema_document(qname.namespace)
             return schema.get_element(qname)
@@ -86,8 +94,13 @@ class Schema(object):
     def get_type(self, qname):
         """Return a global xsd.Type object with the given qname"""
         qname = self._create_qname(qname)
-        if qname.text in xsd_builtins.default_types:
-            return xsd_builtins.default_types[qname]
+
+        # Handle XSD namespace items
+        if qname.namespace == const.NS_XSD:
+            try:
+                return xsd_builtins.default_types[qname]
+            except KeyError:
+                raise exceptions.LookupError("No such type %r" % qname.text)
 
         try:
             schema = self._get_schema_document(qname.namespace)
