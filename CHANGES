@@ -10,6 +10,8 @@
    operations. The default is still no timeout (#140)
  - Introduce client.options context manager to temporarily override various
    options (only timeout for now) (#140)
+ - Wrap the parsing of xml values in a try..except block and log an error 
+   instead of throwing an exception (#137)
 
 
 0.20.0 (2016-10-24)

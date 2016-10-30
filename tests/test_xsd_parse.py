@@ -1,3 +1,4 @@
+import datetime
 from lxml import etree
 
 from tests.utils import load_xml
@@ -812,3 +813,45 @@ def test_union():
     elm = schema.get_element('{http://tests.python-zeep.org/tst}State')
     result = elm.parse(xml, schema)
     assert result._value_1 == 'Idle'
+
+
+def test_parse_invalid_values():
+    schema = xsd.Schema(load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <schema
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="item_1" type="xsd:dateTime" />
+                <element name="item_2" type="xsd:date" />
+              </sequence>
+              <attribute name="attr_1" type="xsd:dateTime" />
+              <attribute name="attr_2" type="xsd:date" />
+            </complexType>
+          </element>
+        </schema>
+    """))
+
+    xml = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <tns:container
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:tns="http://tests.python-zeep.org/"
+            attr_1="::" attr_2="2013-10-20">
+          <tns:item_1>foo</tns:item_1>
+          <tns:item_2>2016-10-20</tns:item_2>
+        </tns:container>
+    """)
+
+    elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    result = elm.parse(xml, schema)
+    assert result.item_1 is None
+    assert result.item_2 == datetime.date(2016, 10, 20)
+    assert result.attr_1 is None
+    assert result.attr_2 == datetime.date(2013, 10, 20)
