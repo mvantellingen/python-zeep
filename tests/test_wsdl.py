@@ -8,22 +8,13 @@ from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
 from zeep import wsdl
+from zeep import Client
 from zeep.transports import Transport
 
 
 @pytest.mark.requests
 def test_parse_soap_wsdl():
-    client = stub(transport=Transport(), wsse=None, plugins=[])
-
-    obj = wsdl.Document('tests/wsdl_files/soap.wsdl', transport=client.transport)
-    assert len(obj.services) == 1
-
-    service = obj.services['StockQuoteService']
-    assert service
-    assert len(service.ports) == 1
-
-    port = service.ports['StockQuotePort']
-    assert port
+    client = Client('tests/wsdl_files/soap.wsdl', transport=Transport(),)
 
     response = """
         <?xml version="1.0"?>
@@ -39,21 +30,20 @@ def test_parse_soap_wsdl():
         </soapenv:Envelope>
     """.strip()
 
+    client.set_ns_prefix('stoc', 'http://example.com/stockquote.xsd')
+
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response)
-        account_type = obj.types.get_type('{http://example.com/stockquote.xsd}account')
+        account_type = client.get_type('stoc:account')
         account = account_type(id=100)
-        country = obj.types.get_element(
-            '{http://example.com/stockquote.xsd}country'
-        ).type()
+        country = client.get_element('stoc:country').type()
         country.name = 'The Netherlands'
         country.code = 'NL'
-        result = port.binding.send(
-            client=client,
-            options={'address': 'http://example.com/stockquote'},
-            operation='GetLastTradePrice',
-            args=[],
-            kwargs={'tickerSymbol': 'foobar', 'account': account, 'country': country})
+
+        result = client.service.GetLastTradePrice(
+            tickerSymbol='foobar',
+            account=account,
+            country=country)
         assert result == 120.123
 
         request = m.request_history[0]
@@ -61,20 +51,20 @@ def test_parse_soap_wsdl():
         # Compare request body
         expected = """
         <soap-env:Envelope
-                xmlns:ns0="http://example.com/stockquote.xsd"
-                xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+                xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+                xmlns:stoc="http://example.com/stockquote.xsd">
             <soap-env:Body>
-              <ns0:TradePriceRequest>
+              <stoc:TradePriceRequest>
                 <tickerSymbol>foobar</tickerSymbol>
                 <account>
                   <id>100</id>
                   <user/>
                 </account>
-                <ns0:country>
+                <stoc:country>
                   <name>The Netherlands</name>
                   <code>NL</code>
-                </ns0:country>
-              </ns0:TradePriceRequest>
+                </stoc:country>
+              </stoc:TradePriceRequest>
            </soap-env:Body>
         </soap-env:Envelope>
         """
@@ -83,18 +73,7 @@ def test_parse_soap_wsdl():
 
 @pytest.mark.requests
 def test_parse_soap_header_wsdl():
-    client = stub(transport=Transport(), wsse=None, plugins=[])
-
-    obj = wsdl.Document(
-        'tests/wsdl_files/soap_header.wsdl', transport=client.transport)
-    assert len(obj.services) == 1
-
-    service = obj.services['StockQuoteService']
-    assert service
-    assert len(service.ports) == 1
-
-    port = service.ports['StockQuotePort']
-    assert port
+    client = Client('tests/wsdl_files/soap_header.wsdl', transport=Transport(),)
 
     response = """
     <?xml version="1.0"?>
@@ -112,18 +91,12 @@ def test_parse_soap_header_wsdl():
 
     with requests_mock.mock() as m:
         m.post('http://example.com/stockquote', text=response)
-        result = port.binding.send(
-            client=client,
-            options={'address': 'http://example.com/stockquote'},
-            operation='GetLastTradePrice',
-            args=[],
-            kwargs={
-                'tickerSymbol': 'foobar',
-                '_soapheaders': {
-                    'header': {
-                        'username': 'ikke',
-                        'password': 'oeh-is-geheim!',
-                    }
+        result = client.service.GetLastTradePrice(
+            tickerSymbol='foobar',
+            _soapheaders={
+                'header': {
+                    'username': 'ikke',
+                    'password': 'oeh-is-geheim!',
                 }
             })
 
@@ -134,16 +107,15 @@ def test_parse_soap_header_wsdl():
         # Compare request body
         expected = """
         <soap-env:Envelope
-                xmlns:ns0="http://example.com/stockquote.xsd"
                 xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
            <soap-env:Header>
-              <ns0:Authentication>
+              <ns0:Authentication xmlns:ns0="http://example.com/stockquote.xsd">
                  <username>ikke</username>
                  <password>oeh-is-geheim!</password>
               </ns0:Authentication>
            </soap-env:Header>
            <soap-env:Body>
-              <ns0:TradePriceRequest>
+              <ns0:TradePriceRequest xmlns:ns0="http://example.com/stockquote.xsd">
                  <tickerSymbol>foobar</tickerSymbol>
               </ns0:TradePriceRequest>
            </soap-env:Body>

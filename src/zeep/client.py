@@ -136,3 +136,6 @@ class Client(object):
 
     def get_element(self, name):
         return self.wsdl.types.get_element(name)
+
+    def set_ns_prefix(self, prefix, namespace):
+        self.wsdl.types.set_ns_prefix(prefix, namespace)

@@ -26,7 +26,9 @@ def test_complex_type_alt():
     """.strip())
 
     schema = xsd.Schema(node)
-    address_type = schema.get_element('ns0:container')
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+
+    address_type = schema.get_element('tns:container')
     obj = address_type(foo='bar')
 
     expected = """
@@ -67,7 +69,9 @@ def test_complex_type_nested():
     """.strip())
 
     schema = xsd.Schema(node)
-    address_type = schema.get_element('ns0:container')
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+
+    address_type = schema.get_element('tns:container')
     obj = address_type(item={'x': 1, 'y': 2})
 
     expected = """
@@ -137,7 +141,9 @@ def test_element_with_annotation():
         </schema>
     """.strip())
     schema = xsd.Schema(node)
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    address_type = schema.get_element('tns:Address')
     address_type(foo='bar')
 
 
@@ -220,23 +226,26 @@ def test_array():
     """.strip())
 
     schema = xsd.Schema(node)
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+
+    address_type = schema.get_element('tns:Address')
+
     obj = address_type()
     assert obj.foo == []
     obj.foo.append('foo')
     obj.foo.append('bar')
 
     expected = """
-        <document>
-          <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
-            <ns0:foo>foo</ns0:foo>
-            <ns0:foo>bar</ns0:foo>
-          </ns0:Address>
+        <document  xmlns:tns="http://tests.python-zeep.org/">
+          <tns:Address>
+            <tns:foo>foo</tns:foo>
+            <tns:foo>bar</tns:foo>
+          </tns:Address>
         </document>
     """
-
-    node = etree.Element('document')
+    node = etree.Element('document', nsmap=schema._prefix_map_custom)
     address_type.render(node, obj)
+    print(etree.tostring(node))
     assert_nodes_equal(expected, node)
 
 

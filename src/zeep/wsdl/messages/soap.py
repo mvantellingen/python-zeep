@@ -29,8 +29,10 @@ class SoapMessage(ConcreteMessage):
 
     def serialize(self, *args, **kwargs):
         """Create a SerializedMessage for this message"""
-        nsmap = self.nsmap.copy()
-        nsmap.update(self.wsdl.types._prefix_map)
+        nsmap = {
+            'soap-env': self.nsmap['soap-env']
+        }
+        nsmap.update(self.wsdl.types._prefix_map_custom)
 
         soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=nsmap)
         body = header = None
@@ -58,8 +60,6 @@ class SoapMessage(ConcreteMessage):
         headers = {
             'SOAPAction': '"%s"' % self.operation.soapaction
         }
-
-        etree.cleanup_namespaces(envelope)
         return SerializedMessage(
             path=None, headers=headers, content=envelope)
 
