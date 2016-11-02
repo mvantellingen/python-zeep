@@ -276,6 +276,27 @@ def test_choice_sequences_no_match():
         valueobjects._process_signature(xsd_type, args, kwargs)
 
 
+def test_choice_sequences_no_match_last():
+    xsd_type = xsd.ComplexType(
+        xsd.Sequence([
+            xsd.Choice([
+                xsd.Sequence([
+                    xsd.Element('item_1', xsd.String()),
+                    xsd.Element('item_2', xsd.String())
+                ]),
+                xsd.Sequence([
+                    xsd.Element('item_3', xsd.String()),
+                    xsd.Element('item_4', xsd.String())
+                ]),
+            ])
+        ])
+    )
+    args = tuple([])
+    with pytest.raises(TypeError):
+        kwargs = {'item_2': 'value-2', 'item_4': 'value-4'}
+        valueobjects._process_signature(xsd_type, args, kwargs)
+
+
 def test_choice_sequences_no_match_nested():
     xsd_type = xsd.ComplexType(
         xsd.Sequence([
