@@ -823,3 +823,111 @@ def test_parse_check_mixed():
         </ns0:container>
     """)
     element.parse(expected, schema)
+
+
+def test_parse_check_mixed_choices():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema
+                xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <choice>
+                  <choice>
+                    <element name="item_1_1" type="string"/>
+                    <sequence>
+                      <element name="item_1_2a" type="string"/>
+                      <element name="item_1_2b" type="string" minOccurs="0"/>
+                    </sequence>
+                  </choice>
+                  <element name="item_2" type="string"/>
+                  <element name="item_3" type="string"/>
+                </choice>
+                <element name="isRegistered" type="boolean" fixed="true" minOccurs="0"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """))
+
+    element = schema.get_element('ns0:container')
+
+    # item_1_1
+    value = element(item_1_1="foo")
+    assert value.item_1_1 == 'foo'
+
+    node = etree.Element('document')
+    element.render(node, value)
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1_1>foo</ns0:item_1_1>
+        </ns0:container>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    # item_1_2a
+    value = element(item_1_2a="foo")
+    node = etree.Element('document')
+    element.render(node, value)
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1_2a>foo</ns0:item_1_2a>
+        </ns0:container>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    # item_1_2a & item_1_2b
+    value = element(item_1_2a="foo", item_1_2b="bar")
+    node = etree.Element('document')
+    element.render(node, value)
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1_2a>foo</ns0:item_1_2a>
+          <ns0:item_1_2b>bar</ns0:item_1_2b>
+        </ns0:container>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    # item_2
+    value = element(item_2="foo")
+    assert value.item_2 == 'foo'
+    node = etree.Element('document')
+    element.render(node, value)
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_2>foo</ns0:item_2>
+        </ns0:container>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    # item_3
+    value = element(item_3="foo")
+    assert value.item_3 == 'foo'
+    node = etree.Element('document')
+    element.render(node, value)
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_3>foo</ns0:item_3>
+        </ns0:container>
+      </document>
+    """
+    assert_nodes_equal(expected, node)

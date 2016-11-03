@@ -8,20 +8,20 @@ def load_xml(xml):
     return etree.fromstring(xml.strip(), parser=parser)
 
 
-def assert_nodes_equal(node_1, node_2):
+def assert_nodes_equal(result, expected):
     def _convert_node(node):
         if isinstance(node, (string_types, binary_type)):
             return load_xml(node)
         return node
 
     # assert node_1 == node_2
-    text_1 = etree.tostring(_convert_node(node_1), pretty_print=True)
-    text_2 = etree.tostring(_convert_node(node_2), pretty_print=True)
+    result = etree.tostring(_convert_node(result), pretty_print=True)
+    expected = etree.tostring(_convert_node(expected), pretty_print=True)
 
     if six.PY3:
-        text_1 = text_1.decode('utf-8')
-        text_2 = text_2.decode('utf-8')
-    assert text_1 == text_2
+        result = result.decode('utf-8')
+        expected = expected.decode('utf-8')
+    assert result == expected
 
 
 def render_node(element, value):

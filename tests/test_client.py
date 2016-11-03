@@ -117,3 +117,16 @@ def test_call_method_fault():
         m.post('http://example.com/stockquote', text=response, status_code=500)
         with pytest.raises(Error):
             obj.service.GetLastTradePrice(tickerSymbol='foobar')
+
+
+def test_set_context_options_timeout():
+    obj = client.Client('tests/wsdl_files/soap.wsdl')
+
+    assert obj.transport.operation_timeout is None
+    with obj.options(timeout=120):
+        assert obj.transport.operation_timeout == 120
+
+        with obj.options(timeout=90):
+            assert obj.transport.operation_timeout == 90
+        assert obj.transport.operation_timeout == 120
+    assert obj.transport.operation_timeout is None

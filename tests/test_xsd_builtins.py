@@ -130,6 +130,11 @@ class TestDateTime:
         value = datetime.datetime(2016, 3, 4, 21, 14, 42)
         assert instance.pythonvalue('2016-03-04T21:14:42') == value
 
+    def test_pythonvalue_invalid(self):
+        instance = builtins.DateTime()
+        with pytest.raises(ValueError):
+            assert instance.pythonvalue('  :  :  ')
+
 
 class TestTime:
 
@@ -149,6 +154,11 @@ class TestTime:
         value = isodate.parse_time('21:14:42.120+0200')
         assert instance.pythonvalue('21:14:42.120+0200') == value
 
+    def test_pythonvalue_invalid(self):
+        instance = builtins.Time()
+        with pytest.raises(ValueError):
+            assert instance.pythonvalue(':')
+
 
 class TestDate:
 
@@ -164,11 +174,13 @@ class TestDate:
         assert instance.pythonvalue('2001-10-26Z') == datetime.date(2001, 10, 26)
         assert instance.pythonvalue('2001-10-26+00:00') == datetime.date(2001, 10, 26)
 
+    def test_pythonvalue_invalid(self):
+        instance = builtins.Date()
         # negative dates are not supported for datetime.date objects so lets
         # hope no-one uses it for now..
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             assert instance.pythonvalue('-2001-10-26')
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             assert instance.pythonvalue('-20000-04-01')
 
 

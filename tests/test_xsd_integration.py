@@ -4,90 +4,14 @@ import io
 import pytest
 from lxml import etree
 
-from tests.utils import DummyTransport, assert_nodes_equal, load_xml
+from tests.utils import DummyTransport, assert_nodes_equal, load_xml, render_node
 from zeep import xsd
 
 
-def test_complex_type_alt():
-    node = etree.fromstring("""
-        <?xml version="1.0"?>
-        <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                xmlns:tns="http://tests.python-zeep.org/"
-                targetNamespace="http://tests.python-zeep.org/"
-                elementFormDefault="qualified">
-          <element name="container">
-            <complexType>
-              <sequence>
-                <element minOccurs="0" maxOccurs="1" name="foo" type="string" />
-              </sequence>
-            </complexType>
-          </element>
-        </schema>
-    """.strip())
-
-    schema = xsd.Schema(node)
-    address_type = schema.get_element('ns0:container')
-    obj = address_type(foo='bar')
-
-    expected = """
-      <document>
-        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
-          <ns0:foo>bar</ns0:foo>
-        </ns0:container>
-      </document>
-    """
-
-    node = etree.Element('document')
-    address_type.render(node, obj)
-    assert_nodes_equal(expected, node)
-
-
-def test_complex_type_nested():
-    node = etree.fromstring("""
-        <?xml version="1.0"?>
-        <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                xmlns:tns="http://tests.python-zeep.org/"
-                targetNamespace="http://tests.python-zeep.org/"
-                elementFormDefault="qualified">
-          <element name="container">
-            <complexType>
-              <sequence>
-                <element minOccurs="0" maxOccurs="1" name="item">
-                  <complexType>
-                    <sequence>
-                      <element name="x" type="integer"/>
-                      <element name="y" type="integer"/>
-                    </sequence>
-                  </complexType>
-                </element>
-              </sequence>
-            </complexType>
-          </element>
-        </schema>
-    """.strip())
-
-    schema = xsd.Schema(node)
-    address_type = schema.get_element('ns0:container')
-    obj = address_type(item={'x': 1, 'y': 2})
-
-    expected = """
-      <document>
-        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
-          <ns0:item>
-            <ns0:x>1</ns0:x>
-            <ns0:y>2</ns0:y>
-          </ns0:item>
-        </ns0:container>
-      </document>
-    """
-
-    node = etree.Element('document')
-    address_type.render(node, obj)
-    assert_nodes_equal(expected, node)
 
 
 def test_complex_type_nested_wrong_type():
-    node = etree.fromstring("""
+    schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -108,17 +32,15 @@ def test_complex_type_nested_wrong_type():
             </complexType>
           </element>
         </schema>
-    """.strip())
+    """))
 
-    schema = xsd.Schema(node)
-    address_type = schema.get_element('ns0:container')
-
+    container_elm = schema.get_element('ns0:container')
     with pytest.raises(TypeError):
-        address_type(item={'bar': 1})
+        container_elm(item={'bar': 1})
 
 
 def test_element_with_annotation():
-    node = etree.fromstring("""
+    schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -135,14 +57,15 @@ def test_element_with_annotation():
             </sequence>
           </complexType>
         </schema>
-    """.strip())
-    schema = xsd.Schema(node)
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    """))
+
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    address_type = schema.get_element('tns:Address')
     address_type(foo='bar')
 
 
 def test_complex_type_parsexml():
-    node = etree.fromstring("""
+    schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -156,12 +79,11 @@ def test_complex_type_parsexml():
             </complexType>
           </element>
         </schema>
-    """.strip())
+    """))
 
-    schema = xsd.Schema(node)
     address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
 
-    input_node = etree.fromstring("""
+    input_node = load_xml("""
         <Address xmlns="http://tests.python-zeep.org/">
           <foo>bar</foo>
         </Address>
@@ -169,37 +91,6 @@ def test_complex_type_parsexml():
 
     obj = address_type.parse(input_node, None)
     assert obj.foo == 'bar'
-
-
-def test_complex_type_array_parsexml():
-    node = etree.fromstring("""
-        <?xml version="1.0"?>
-        <schema xmlns="http://www.w3.org/2001/XMLSchema"
-                xmlns:tns="http://tests.python-zeep.org/"
-                targetNamespace="http://tests.python-zeep.org/"
-                elementFormDefault="qualified">
-          <element name="container">
-            <complexType>
-              <sequence>
-                <element minOccurs="0" maxOccurs="unbounded" name="foo" type="string" />
-              </sequence>
-            </complexType>
-          </element>
-        </schema>
-    """.strip())
-
-    schema = xsd.Schema(node)
-    address_type = schema.get_element('{http://tests.python-zeep.org/}container')
-
-    input_node = etree.fromstring("""
-        <Address xmlns="http://tests.python-zeep.org/">
-          <foo>bar</foo>
-          <foo>zoo</foo>
-        </Address>
-    """)
-
-    obj = address_type.parse(input_node, None)
-    assert obj.foo == ['bar', 'zoo']
 
 
 def test_array():
@@ -220,23 +111,26 @@ def test_array():
     """.strip())
 
     schema = xsd.Schema(node)
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+
+    address_type = schema.get_element('tns:Address')
+
     obj = address_type()
     assert obj.foo == []
     obj.foo.append('foo')
     obj.foo.append('bar')
 
     expected = """
-        <document>
-          <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
-            <ns0:foo>foo</ns0:foo>
-            <ns0:foo>bar</ns0:foo>
-          </ns0:Address>
+        <document  xmlns:tns="http://tests.python-zeep.org/">
+          <tns:Address>
+            <tns:foo>foo</tns:foo>
+            <tns:foo>bar</tns:foo>
+          </tns:Address>
         </document>
     """
-
-    node = etree.Element('document')
+    node = etree.Element('document', nsmap=schema._prefix_map_custom)
     address_type.render(node, obj)
+    print(etree.tostring(node))
     assert_nodes_equal(expected, node)
 
 
@@ -635,10 +529,14 @@ def test_wsdl_array_type():
     expected = """
         <document>
             <ns0:array xmlns:ns0="http://tests.python-zeep.org/">
-                <ns0:item_1>foo_1</ns0:item_1>
-                <ns0:item_2>bar_1</ns0:item_2>
-                <ns0:item_1>foo_2</ns0:item_1>
-                <ns0:item_2>bar_2</ns0:item_2>
+                <base>
+                    <ns0:item_1>foo_1</ns0:item_1>
+                    <ns0:item_2>bar_1</ns0:item_2>
+                </base>
+                <base>
+                    <ns0:item_1>foo_2</ns0:item_1>
+                    <ns0:item_2>bar_2</ns0:item_2>
+                </base>
             </ns0:array>
         </document>
     """
@@ -708,67 +606,6 @@ def test_soap_array_parse():
     assert data.FlagDetailsStruct[1].Name == 'flag2'
     assert data.FlagDetailsStruct[1].Value == 'value2'
 
-
-def test_soap_array_parse_remote_ns():
-    transport = DummyTransport()
-    transport.bind(
-        'http://schemas.xmlsoap.org/soap/encoding/',
-        load_xml(io.open('tests/wsdl_files/soap-enc.xsd', 'r').read().encode('utf-8')))
-
-    schema = xsd.Schema(load_xml("""
-        <?xml version="1.0"?>
-        <xsd:schema
-          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-          xmlns:tns="http://tests.python-zeep.org/"
-          xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
-          xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          targetNamespace="http://tests.python-zeep.org/"
-          elementFormDefault="qualified">
-          <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
-          <xsd:simpleType name="CountryCodeType">
-            <xsd:restriction base="xsd:string">
-              <xsd:length value="2"/>
-              <xsd:pattern value="[a-zA-Z]{2}"/>
-            </xsd:restriction>
-          </xsd:simpleType>
-          <xsd:complexType name="CountryItemType">
-            <xsd:sequence>
-              <xsd:element name="code" type="tns:CountryCodeType"/>
-              <xsd:element name="name" type="xsd:string"/>
-            </xsd:sequence>
-          </xsd:complexType>
-          <xsd:complexType name="CountriesArrayType">
-            <xsd:complexContent>
-              <xsd:restriction base="soapenc:Array">
-                <xsd:attribute ref="soapenc:arrayType" wsdl:arrayType="tns:CountryItemType[]"/>
-              </xsd:restriction>
-            </xsd:complexContent>
-          </xsd:complexType>
-          <xsd:element name="countries" type="tns:CountriesArrayType"/>
-        </xsd:schema>
-    """), transport)
-
-    doc = load_xml("""
-      <countries
-            SOAP-ENC:arrayType="ns1:CountryItemType[1]"
-            xsi:type="ns1:CountriesArrayType"
-            xmlns:ns1="http://tests.python-zeep.org/"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <item xsi:type="ns1:CountryItemType">
-          <code xsi:type="ns1:CountryCodeType">NL</code>
-          <name xsi:type="xsd:string">The Netherlands</name>
-        </item>
-      </countries>
-    """)
-
-    elm = schema.get_element('ns0:countries')
-    data = elm.parse(doc, schema)
-
-    assert data._value_1[0].code == 'NL'
-    assert data._value_1[0].name == 'The Netherlands'
 
 
 def test_group():
@@ -1498,7 +1335,7 @@ def test_nill():
 
 
 def test_empty_xmlns():
-    node = etree.fromstring("""
+    node = load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -1521,7 +1358,10 @@ def test_empty_xmlns():
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
     node = load_xml("""
         <container>
-            <xs:schema xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="NewDataSet">
+            <xs:schema
+                xmlns=""
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="NewDataSet">
               <xs:element name="something" type="xs:string" msdata:foo=""/>
             </xs:schema>
             <something>foo</something>
@@ -1529,3 +1369,120 @@ def test_empty_xmlns():
     """)
     item = container_elm.parse(node, schema)
     assert item._value_1 == 'foo'
+
+
+def test_issue_221():
+    transport = DummyTransport()
+    transport.bind(
+        'https://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd',
+        load_xml(io.open('tests/wsdl_files/xmldsig-core-schema.xsd', 'r').read().encode('utf-8')))
+
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <import namespace="http://www.w3.org/2000/09/xmldsig#"
+                  schemaLocation="https://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd"/>
+          <complexType name="BaseType">
+            <sequence>
+              <element ref="ds:Signature" minOccurs="0"/>
+            </sequence>
+            <attribute name="Id"/>
+          </complexType>
+          <element name="exportOrgRegistryRequest">
+            <complexType>
+              <complexContent>
+                <extension base="tns:BaseType">
+                  <sequence>
+                    <element name="SearchCriteria" maxOccurs="100">
+                      <complexType>
+                        <sequence>
+                          <choice>
+                            <choice>
+                              <element ref="tns:OGRNIP"/>
+                              <sequence>
+                                <element name="OGRN" type="string"/>
+                                <element name="KPP" type="string" minOccurs="0"/>
+                              </sequence>
+                            </choice>
+                            <element ref="tns:orgVersionGUID"/>
+                            <element ref="tns:orgRootEntityGUID"/>
+                          </choice>
+                          <element name="isRegistered" type="boolean" fixed="true" minOccurs="0">
+                          </element>
+                        </sequence>
+                      </complexType>
+                    </element>
+                    <element name="lastEditingDateFrom" type="date" minOccurs="0"/>
+                  </sequence>
+                </extension>
+              </complexContent>
+            </complexType>
+          </element>
+          <simpleType name="OGRNIPType">
+            <restriction base="string">
+              <length value="13"/>
+            </restriction>
+          </simpleType>
+          <element name="OGRNIP" type="tns:OGRNIPType"/>
+          <element name="orgVersionGUID" type="tns:GUIDType"/>
+          <element name="orgRootEntityGUID" type="tns:GUIDType"/>
+          <simpleType name="GUIDType">
+            <restriction base="string">
+              <pattern value="([0-9a-fA-F]){8}-([0-9a-fA-F]){4}-([0-9a-fA-F]){4}-([0-9a-fA-F]){4}-([0-9a-fA-F]){12}"/>
+            </restriction>
+          </simpleType>x
+        </schema>
+    """), transport=transport)
+
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    elm = schema.get_element('tns:exportOrgRegistryRequest')
+
+    # Args
+    obj = elm(None, {'OGRN': '123123123123', 'isRegistered': True})
+    node = etree.Element('document')
+    elm.render(node, obj)
+    expected = """
+      <document>
+        <ns0:exportOrgRegistryRequest xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:SearchCriteria>
+            <ns0:OGRN>123123123123</ns0:OGRN>
+            <ns0:isRegistered>true</ns0:isRegistered>
+          </ns0:SearchCriteria>
+        </ns0:exportOrgRegistryRequest>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    obj = elm(SearchCriteria={'orgVersionGUID': '1234', 'isRegistered': False})
+    node = etree.Element('document')
+    elm.render(node, obj)
+    expected = """
+      <document>
+        <ns0:exportOrgRegistryRequest xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:SearchCriteria>
+            <ns0:orgVersionGUID>1234</ns0:orgVersionGUID>
+            <ns0:isRegistered>false</ns0:isRegistered>
+          </ns0:SearchCriteria>
+        </ns0:exportOrgRegistryRequest>
+      </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    obj = elm(SearchCriteria={'OGRNIP': '123123123123', 'isRegistered': True})
+    node = etree.Element('document')
+    elm.render(node, obj)
+    expected = """
+      <document>
+        <ns0:exportOrgRegistryRequest xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:SearchCriteria>
+            <ns0:OGRNIP>123123123123</ns0:OGRNIP>
+            <ns0:isRegistered>true</ns0:isRegistered>
+          </ns0:SearchCriteria>
+        </ns0:exportOrgRegistryRequest>
+      </document>
+    """
+    assert_nodes_equal(expected, node)

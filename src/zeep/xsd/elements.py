@@ -1,4 +1,5 @@
 import copy
+import logging
 
 from lxml import etree
 
@@ -8,6 +9,8 @@ from zeep.xsd.const import xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.utils import max_occurs_iter
 from zeep.xsd.valueobjects import AnyObject  # cyclic import / FIXME
+
+logger = logging.getLogger(__name__)
 
 
 class Base(object):
@@ -129,6 +132,11 @@ class Any(Base):
                 for val in value:
                     node = etree.SubElement(parent, 'item')
                     node.set(xsi_ns('type'), self.restrict.qname)
+                    self._render_value_item(node, val)
+            elif self.restrict:
+                for val in value:
+                    node = etree.SubElement(parent, self.restrict.name)
+                    # node.set(xsi_ns('type'), self.restrict.qname)
                     self._render_value_item(node, val)
             else:
                 for val in value:
@@ -360,7 +368,11 @@ class Attribute(Element):
         self.array_type = None
 
     def parse(self, value):
-        return self.type.pythonvalue(value)
+        try:
+            return self.type.pythonvalue(value)
+        except (TypeError, ValueError):
+            logger.exception("Error during xml -> python translation")
+            return None
 
     def render(self, parent, value):
         if value is None and not self.required:

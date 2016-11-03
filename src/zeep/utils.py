@@ -1,4 +1,3 @@
-import pkg_resources
 from lxml import etree
 
 
@@ -39,4 +38,6 @@ def findall_multiple_ns(node, name, namespace_sets):
 
 
 def get_version():
-    return pkg_resources.require('zeep')[0].version
+    from zeep import __version__  # cyclic import
+
+    return __version__

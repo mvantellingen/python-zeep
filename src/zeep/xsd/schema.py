@@ -5,6 +5,7 @@ from lxml import etree
 
 from zeep import exceptions
 from zeep.xsd import builtins as xsd_builtins
+from zeep.xsd import const
 from zeep.xsd.context import ParserContext
 from zeep.xsd.visitor import SchemaVisitor
 
@@ -20,7 +21,8 @@ class Schema(object):
         self._transport = transport
 
         self._schemas = OrderedDict()
-        self._prefix_map = {}
+        self._prefix_map_auto = {}
+        self._prefix_map_custom = {}
 
         if not isinstance(node, list):
             nodes = [node] if node is not None else []
@@ -39,7 +41,7 @@ class Schema(object):
         for document in documents:
             document.resolve()
 
-        self._prefix_map = self._create_prefix_map()
+        self._prefix_map_auto = self._create_prefix_map()
 
     def __repr__(self):
         if self._schemas:
@@ -48,6 +50,16 @@ class Schema(object):
         else:
             location = '<none>'
         return '<Schema(location=%r)>' % location
+
+    @property
+    def prefix_map(self):
+        retval = {}
+        retval.update(self._prefix_map_custom)
+        retval.update({
+            k: v for k, v in self._prefix_map_auto.items()
+            if v not in retval.values()
+        })
+        return retval
 
     @property
     def is_empty(self):
@@ -74,6 +86,13 @@ class Schema(object):
         if qname.text in xsd_builtins.default_elements:
             return xsd_builtins.default_elements[qname]
 
+        # Handle XSD namespace items
+        if qname.namespace == const.NS_XSD:
+            try:
+                return xsd_builtins.default_elements[qname]
+            except KeyError:
+                raise exceptions.LookupError("No such type %r" % qname.text)
+
         try:
             schema = self._get_schema_document(qname.namespace)
             return schema.get_element(qname)
@@ -86,8 +105,13 @@ class Schema(object):
     def get_type(self, qname):
         """Return a global xsd.Type object with the given qname"""
         qname = self._create_qname(qname)
-        if qname.text in xsd_builtins.default_types:
-            return xsd_builtins.default_types[qname]
+
+        # Handle XSD namespace items
+        if qname.namespace == const.NS_XSD:
+            try:
+                return xsd_builtins.default_types[qname]
+            except KeyError:
+                raise exceptions.LookupError("No such type %r" % qname.text)
 
         try:
             schema = self._get_schema_document(qname.namespace)
@@ -138,7 +162,7 @@ class Schema(object):
         """Merge an other XSD schema in this one"""
         for namespace, _schema in schema._schemas.items():
             self._schemas[namespace] = _schema
-        self._prefix_map = self._create_prefix_map()
+        self._prefix_map_auto = self._create_prefix_map()
 
     def _create_qname(self, name):
         """Create an `lxml.etree.QName()` object for the given qname string.
@@ -149,10 +173,12 @@ class Schema(object):
         if isinstance(name, etree.QName):
             return name
 
-        if not name.startswith('{') and ':' in name and self._prefix_map:
+        if not name.startswith('{') and ':' in name and self._prefix_map_auto:
             prefix, localname = name.split(':', 1)
-            if prefix in self._prefix_map:
-                return etree.QName(self._prefix_map[prefix], localname)
+            if prefix in self._prefix_map_custom:
+                return etree.QName(self._prefix_map_custom[prefix], localname)
+            elif prefix in self._prefix_map_auto:
+                return etree.QName(self._prefix_map_auto[prefix], localname)
             else:
                 raise ValueError(
                     "No namespace defined for the prefix %r" % prefix)
@@ -168,6 +194,9 @@ class Schema(object):
                 continue
             prefix_map['ns%d' % i] = namespace
         return prefix_map
+
+    def set_ns_prefix(self, prefix, namespace):
+        self._prefix_map_custom[prefix] = namespace
 
     def _add_schema_document(self, document):
         logger.info("Add document with tns %s to schema %s", document._target_namespace, id(self))

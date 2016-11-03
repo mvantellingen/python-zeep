@@ -1,4 +1,5 @@
 import copy
+import logging
 from collections import OrderedDict, deque
 from itertools import chain
 
@@ -11,6 +12,9 @@ from zeep.xsd.elements import Any, AnyAttribute, AttributeGroup, Element
 from zeep.xsd.indicators import Group, OrderIndicator, Sequence
 from zeep.xsd.utils import NamePrefixGenerator
 from zeep.xsd.valueobjects import CompoundValue
+
+
+logger = logging.getLogger(__name__)
 
 
 class Type(object):
@@ -157,7 +161,11 @@ class SimpleType(Type):
                          context=None):
         if xmlelement.text is None:
             return
-        return self.pythonvalue(xmlelement.text)
+        try:
+            return self.pythonvalue(xmlelement.text)
+        except (TypeError, ValueError):
+            logger.exception("Error during xml -> python translation")
+            return None
 
     def pythonvalue(self, xmlvalue):
         raise NotImplementedError(
@@ -507,12 +515,15 @@ class ComplexType(Type):
         return value
 
 
-class ListType(Type):
+class ListType(SimpleType):
     """Space separated list of simpleType values"""
 
     def __init__(self, item_type):
         self.item_type = item_type
-        super(ListType, self).__init__(None)
+        super(Type, self).__init__()
+
+    def __call__(self, value):
+        return value
 
     def render(self, parent, value):
         parent.text = self.xmlvalue(value)

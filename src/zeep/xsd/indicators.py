@@ -87,22 +87,14 @@ class OrderIndicator(Indicator, list):
         If not all required elements are available then 0 is returned.
 
         """
-        values = {k for k in values if values[k] is not None}
-
-        required_keys = {
-            name for name, element in self.elements_nested
-            if not element.is_optional
-        }
-        optional_keys = {
-            name for name, element in self.elements
-            if element.is_optional
-        }
-
-        values_keys = set(values)
-
-        if (required_keys <= values_keys):
-            return len(values_keys & (required_keys | optional_keys))
-        return 0
+        num = 0
+        for name, element in self.elements_nested:
+            if isinstance(element, Element):
+                if element.name in values and values[element.name] is not None:
+                    num += 1
+            else:
+                num += element.accept(values)
+        return num
 
     def parse_args(self, args):
         result = {}
@@ -155,9 +147,9 @@ class OrderIndicator(Indicator, list):
 
         else:
             result = OrderedDict()
-            for elm_name, element in self.elements:
+            for elm_name, element in self.elements_nested:
                 sub_result = element.parse_kwargs(kwargs, elm_name, available_kwargs)
-                if sub_result is not None:
+                if sub_result:
                     result.update(sub_result)
 
             if name:
@@ -351,17 +343,21 @@ class Choice(OrderIndicator):
                 return {}
 
             result = {}
-            for choice_name, choice in self.elements:
-                result[choice_name] = None
 
             # When choice elements are specified directly in the kwargs
-            for choice in self:
+            found = False
+            for i, choice in enumerate(self):
                 temp_kwargs = copy.copy(available_kwargs)
                 subresult = choice.parse_kwargs(kwargs, None, temp_kwargs)
                 if subresult:
-                    available_kwargs.intersection_update(temp_kwargs)
+                    if not found or not any(subresult.values()):
+                        available_kwargs.intersection_update(temp_kwargs)
                     result.update(subresult)
-                    break
+                    found = True
+
+            if found:
+                for choice_name, choice in self.elements:
+                    result.setdefault(choice_name, None)
             else:
                 result = {}
 
@@ -384,6 +380,22 @@ class Choice(OrderIndicator):
             if result:
                 element, choice_value = result
                 element.render(parent, choice_value)
+
+    def accept(self, values):
+        """Return the number of values which are accepted by this choice.
+
+        If not all required elements are available then 0 is returned.
+
+        """
+        nums = set()
+        for name, element in self.elements_nested:
+            if isinstance(element, Element):
+                if name in values and values[name]:
+                    nums.add(1)
+            else:
+                num = element.accept(values)
+                nums.add(num)
+        return max(nums)
 
     def _find_element_to_render(self, value):
         """Return a tuple (element, value) for the best matching choice"""

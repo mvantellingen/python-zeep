@@ -73,6 +73,17 @@ class ParseError(ValueError):
     pass
 
 
+def check_no_collection(func):
+    def _wrapper(self, value):
+        if isinstance(value, (list, dict, set)):
+            raise ValueError(
+                "The %s type doesn't accept collections as value" % (
+                    self.__class__.__name__))
+
+        return func(self, value)
+    return _wrapper
+
+
 class _BuiltinType(SimpleType):
     def __init__(self, qname=None, is_global=False):
         super(_BuiltinType, self).__init__(
@@ -89,6 +100,7 @@ class String(_BuiltinType):
     _default_qname = xsd_ns('string')
     accepted_types = six.string_types
 
+    @check_no_collection
     def xmlvalue(self, value):
         return six.text_type(value if value is not None else '')
 
@@ -100,6 +112,7 @@ class Boolean(_BuiltinType):
     _default_qname = xsd_ns('boolean')
     accepted_types = (bool,)
 
+    @check_no_collection
     def xmlvalue(self, value):
         return 'true' if value else 'false'
 
@@ -115,6 +128,7 @@ class Decimal(_BuiltinType):
     _default_qname = xsd_ns('decimal')
     accepted_types = (_Decimal, float) + six.string_types
 
+    @check_no_collection
     def xmlvalue(self, value):
         return str(value)
 
@@ -137,6 +151,7 @@ class Double(_BuiltinType):
     _default_qname = xsd_ns('double')
     accepted_types = (_Decimal, float) + six.string_types
 
+    @check_no_collection
     def xmlvalue(self, value):
         return str(value)
 
@@ -148,6 +163,7 @@ class Duration(_BuiltinType):
     _default_qname = xsd_ns('duration')
     accepted_types = (isodate.duration.Duration,) + six.string_types
 
+    @check_no_collection
     def xmlvalue(self, value):
         return isodate.duration_isoformat(value)
 
@@ -159,6 +175,7 @@ class DateTime(_BuiltinType):
     _default_qname = xsd_ns('dateTime')
     accepted_types = (datetime.datetime,) + six.string_types
 
+    @check_no_collection
     def xmlvalue(self, value):
         return isodate.isostrf.strftime(value, '%Y-%m-%dT%H:%M:%S%Z')
 
@@ -170,6 +187,7 @@ class Time(_BuiltinType):
     _default_qname = xsd_ns('time')
     accepted_types = (datetime.time,) + six.string_types
 
+    @check_no_collection
     def xmlvalue(self, value):
         return isodate.isostrf.strftime(value, '%H:%M:%S%Z')
 
@@ -181,6 +199,7 @@ class Date(_BuiltinType):
     _default_qname = xsd_ns('date')
     accepted_types = (datetime.date,) + six.string_types
 
+    @check_no_collection
     def xmlvalue(self, value):
         return isodate.isostrf.strftime(value, '%Y-%m-%d')
 
@@ -200,6 +219,7 @@ class gYearMonth(_BuiltinType):
     _pattern = re.compile(
         r'^(?P<year>-?\d{4,})-(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
+    @check_no_collection
     def xmlvalue(self, value):
         year, month, tzinfo = value
         return '%04d-%02d%s' % (year, month, _unparse_timezone(tzinfo))
@@ -224,6 +244,7 @@ class gYear(_BuiltinType):
     _default_qname = xsd_ns('gYear')
     _pattern = re.compile(r'^(?P<year>-?\d{4,})(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
+    @check_no_collection
     def xmlvalue(self, value):
         year, tzinfo = value
         return '%04d%s' % (year, _unparse_timezone(tzinfo))
@@ -248,6 +269,7 @@ class gMonthDay(_BuiltinType):
     _pattern = re.compile(
         r'^--(?P<month>\d\d)-(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
+    @check_no_collection
     def xmlvalue(self, value):
         month, day, tzinfo = value
         return '--%02d-%02d%s' % (month, day, _unparse_timezone(tzinfo))
@@ -274,6 +296,7 @@ class gDay(_BuiltinType):
     _default_qname = xsd_ns('gDay')
     _pattern = re.compile(r'^---(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
+    @check_no_collection
     def xmlvalue(self, value):
         day, tzinfo = value
         return '---%02d%s' % (day, _unparse_timezone(tzinfo))
@@ -296,6 +319,7 @@ class gMonth(_BuiltinType):
     _default_qname = xsd_ns('gMonth')
     _pattern = re.compile(r'^--(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$')
 
+    @check_no_collection
     def xmlvalue(self, value):
         month, tzinfo = value
         return '--%d%s' % (month, _unparse_timezone(tzinfo))
@@ -312,6 +336,7 @@ class HexBinary(_BuiltinType):
     accepted_types = six.string_types
     _default_qname = xsd_ns('hexBinary')
 
+    @check_no_collection
     def xmlvalue(self, value):
         return value
 
@@ -323,6 +348,7 @@ class Base64Binary(_BuiltinType):
     accepted_types = six.string_types
     _default_qname = xsd_ns('base64Binary')
 
+    @check_no_collection
     def xmlvalue(self, value):
         return base64.b64encode(value)
 
@@ -334,6 +360,7 @@ class AnyURI(_BuiltinType):
     accepted_types = six.string_types
     _default_qname = xsd_ns('anyURI')
 
+    @check_no_collection
     def xmlvalue(self, value):
         return value
 
@@ -345,6 +372,7 @@ class QName(_BuiltinType):
     accepted_types = six.string_types
     _default_qname = xsd_ns('QName')
 
+    @check_no_collection
     def xmlvalue(self, value):
         return value
 

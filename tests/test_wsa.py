@@ -4,7 +4,7 @@ from pretend import stub
 from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
-from zeep import wsa, wsdl
+from zeep import wsa, wsdl, Client
 
 
 def test_require_wsa(recwarn, monkeypatch):
@@ -69,8 +69,8 @@ def test_require_wsa(recwarn, monkeypatch):
     client = stub(plugins=[], wsse=None)
 
     transport = DummyTransport()
-    doc = wsdl.Document(wsdl_main, transport)
-    binding = doc.services.get('TestService').ports.get('TestPortType').binding
+    client = Client(wsdl_main, transport=transport)
+    binding = client.wsdl.services.get('TestService').ports.get('TestPortType').binding
 
     envelope, headers = binding._create(
         'TestOperation1',
@@ -80,16 +80,14 @@ def test_require_wsa(recwarn, monkeypatch):
         options={'address': 'http://tests.python-zeep.org/test'})
     expected = """
         <soap-env:Envelope
-            xmlns:ns0="http://tests.python-zeep.org/xsd-main"
-            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-            xmlns:wsa="http://www.w3.org/2005/08/addressing">
-          <soap-env:Header>
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap-env:Header  xmlns:wsa="http://www.w3.org/2005/08/addressing">
             <wsa:Action>urn:dummyRequest</wsa:Action>
             <wsa:MessageID>urn:uuid:ada686f9-5995-4088-bea4-239f694b2eaf</wsa:MessageID>
             <wsa:To>http://tests.python-zeep.org/test</wsa:To>
           </soap-env:Header>
           <soap-env:Body>
-            <ns0:input>foo</ns0:input>
+            <ns0:input xmlns:ns0="http://tests.python-zeep.org/xsd-main">foo</ns0:input>
           </soap-env:Body>
         </soap-env:Envelope>
     """
@@ -154,11 +152,9 @@ def test_force_wsa(recwarn, monkeypatch):
         </wsdl:definitions>
     """.strip())
 
-    client = stub(plugins=[wsa.WsAddressingPlugin()], wsse=None)
-
     transport = DummyTransport()
-    doc = wsdl.Document(wsdl_main, transport)
-    binding = doc.services.get('TestService').ports.get('TestPortType').binding
+    client = Client(wsdl_main, transport=transport, plugins=[wsa.WsAddressingPlugin()])
+    binding = client.wsdl.services.get('TestService').ports.get('TestPortType').binding
 
     envelope, headers = binding._create(
         'TestOperation1',
@@ -168,16 +164,14 @@ def test_force_wsa(recwarn, monkeypatch):
         options={'address': 'http://tests.python-zeep.org/test'})
     expected = """
         <soap-env:Envelope
-            xmlns:ns0="http://tests.python-zeep.org/xsd-main"
-            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
-            xmlns:wsa="http://www.w3.org/2005/08/addressing">
-          <soap-env:Header>
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap-env:Header  xmlns:wsa="http://www.w3.org/2005/08/addressing">
             <wsa:Action>urn:dummyRequest</wsa:Action>
             <wsa:MessageID>urn:uuid:ada686f9-5995-4088-bea4-239f694b2eaf</wsa:MessageID>
             <wsa:To>http://tests.python-zeep.org/test</wsa:To>
           </soap-env:Header>
           <soap-env:Body>
-            <ns0:input>foo</ns0:input>
+            <ns0:input xmlns:ns0="http://tests.python-zeep.org/xsd-main">foo</ns0:input>
           </soap-env:Body>
         </soap-env:Envelope>
     """
@@ -256,16 +250,15 @@ def test_force_wsa_soap12(recwarn, monkeypatch):
         options={'address': 'http://tests.python-zeep.org/test'})
     expected = """
         <soap-env:Envelope
-            xmlns:ns0="http://tests.python-zeep.org/xsd-main"
-            xmlns:soap-env="http://www.w3.org/2003/05/soap-envelope"
-            xmlns:wsa="http://www.w3.org/2005/08/addressing">
-          <soap-env:Header>
+            xmlns:soap-env="http://www.w3.org/2003/05/soap-envelope">
+          <soap-env:Header  xmlns:wsa="http://www.w3.org/2005/08/addressing">
             <wsa:Action>urn:dummyRequest</wsa:Action>
             <wsa:MessageID>urn:uuid:ada686f9-5995-4088-bea4-239f694b2eaf</wsa:MessageID>
             <wsa:To>http://tests.python-zeep.org/test</wsa:To>
           </soap-env:Header>
           <soap-env:Body>
-            <ns0:input>foo</ns0:input>
+            <ns0:input xmlns:ns0="http://tests.python-zeep.org/xsd-main">foo</ns0:input>
+
           </soap-env:Body>
         </soap-env:Envelope>
     """

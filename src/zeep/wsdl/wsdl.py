@@ -71,11 +71,11 @@ class Document(object):
         return '<WSDL(location=%r)>' % self.location
 
     def dump(self):
-        namespaces = {v: k for k, v in self.types._prefix_map.items()}
+        namespaces = {v: k for k, v in self.types.prefix_map.items()}
 
         print('')
         print("Prefixes:")
-        for prefix, namespace in self.types._prefix_map.items():
+        for prefix, namespace in self.types.prefix_map.items():
             print(' ' * 4, '%s: %s' % (prefix, namespace))
 
         print('')

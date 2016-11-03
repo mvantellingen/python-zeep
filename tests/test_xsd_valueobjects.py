@@ -1,3 +1,4 @@
+import pytest
 import six
 
 from zeep import xsd
@@ -130,7 +131,7 @@ def test_choice():
     args = tuple([])
     kwargs = {'item_2': 'value-2'}
     result = valueobjects._process_signature(xsd_type, args, kwargs)
-    assert result == {'item_2': 'value-2'}
+    assert result == {'item_1': None, 'item_2': 'value-2'}
 
 
 def test_choice_max_occurs_simple_interface():
@@ -223,6 +224,7 @@ def test_choice_mixed():
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
         'item_1': 'value-1',
+        'item_2': None,
         'item_2__1': 'value-2',
     }
 
@@ -248,6 +250,8 @@ def test_choice_sequences_simple():
     assert result == {
         'item_1': 'value-1',
         'item_2': 'value-2',
+        'item_3': None,
+        'item_4': None,
     }
 
 
@@ -267,12 +271,30 @@ def test_choice_sequences_no_match():
         ])
     )
     args = tuple([])
-    kwargs = {'item_1': 'value-1', 'item_3': 'value-3'}
-    value = valueobjects._process_signature(xsd_type, args, kwargs)
-    assert value == {
-        'item_1': 'value-1',
-        'item_3': 'value-3',
-    }
+    with pytest.raises(TypeError):
+        kwargs = {'item_1': 'value-1', 'item_3': 'value-3'}
+        valueobjects._process_signature(xsd_type, args, kwargs)
+
+
+def test_choice_sequences_no_match_last():
+    xsd_type = xsd.ComplexType(
+        xsd.Sequence([
+            xsd.Choice([
+                xsd.Sequence([
+                    xsd.Element('item_1', xsd.String()),
+                    xsd.Element('item_2', xsd.String())
+                ]),
+                xsd.Sequence([
+                    xsd.Element('item_3', xsd.String()),
+                    xsd.Element('item_4', xsd.String())
+                ]),
+            ])
+        ])
+    )
+    args = tuple([])
+    with pytest.raises(TypeError):
+        kwargs = {'item_2': 'value-2', 'item_4': 'value-4'}
+        valueobjects._process_signature(xsd_type, args, kwargs)
 
 
 def test_choice_sequences_no_match_nested():
@@ -289,7 +311,10 @@ def test_choice_sequences_no_match_nested():
     args = tuple([])
     kwargs = {'item_1': 'value-1'}
     value = valueobjects._process_signature(xsd_type, args, kwargs)
-    assert value == {'item_1': 'value-1'}
+    assert value == {
+        'item_1': 'value-1',
+        'item_2': None,
+    }
 
 
 def test_choice_sequences_optional_elms():
@@ -312,7 +337,9 @@ def test_choice_sequences_optional_elms():
     kwargs = {'item_1': 'value-1'}
     result = valueobjects._process_signature(xsd_type, args, kwargs)
     assert result == {
-        'item_1': 'value-1'
+        'item_1': 'value-1',
+        'item_2': None,
+        'item_3': None,
     }
 
 

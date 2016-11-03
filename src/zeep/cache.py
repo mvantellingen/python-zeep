@@ -3,13 +3,20 @@ import datetime
 import errno
 import logging
 import os
-import sqlite3
 import threading
 from contextlib import contextmanager
 
 import appdirs
 import pytz
 import six
+
+# The sqlite3 is not available on Google App Engine so we handle the
+# ImportError here and set the sqlite3 var to None.
+# See https://github.com/mvantellingen/python-zeep/issues/243
+try:
+    import sqlite3
+except ImportError:
+    sqlite3 = None
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +59,9 @@ class SqliteCache(Base):
     _version = '1'
 
     def __init__(self, path=None, timeout=3600):
+
+        if sqlite3 is None:
+            raise RuntimeError("sqlite3 module is required for the SqliteCache")
 
         # No way we can support this when we want to achieve thread safety
         if path == ':memory:':
