@@ -27,7 +27,7 @@ class Transport(object):
         """
         self.cache = SqliteCache() if cache is NotSet else cache
         self.load_timeout = timeout
-        self.operation_timeout = None
+        self.operation_timeout = operation_timeout
         self.verify = verify
         self.http_auth = http_auth
         self.logger = logging.getLogger(__name__)
