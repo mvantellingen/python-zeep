@@ -230,3 +230,131 @@ def test_soap_array_parse_remote_ns():
 
     assert data._value_1[0].code == 'NL'
     assert data._value_1[0].name == 'The Netherlands'
+
+
+def test_wsdl_array_type():
+    transport = DummyTransport()
+    transport.bind(
+        'http://schemas.xmlsoap.org/soap/encoding/',
+        load_xml(io.open('tests/wsdl_files/soap-enc.xsd', 'r').read().encode('utf-8')))
+
+    schema = xsd.Schema(load_xml("""
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                    xmlns:tns="http://tests.python-zeep.org/"
+                    xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+                    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                    targetNamespace="http://tests.python-zeep.org/"
+                    elementFormDefault="qualified">
+          <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+          <xsd:complexType name="array">
+            <xsd:complexContent>
+              <xsd:restriction base="SOAP-ENC:Array">
+                <xsd:attribute ref="SOAP-ENC:arrayType" wsdl:arrayType="tns:base[]"/>
+              </xsd:restriction>
+            </xsd:complexContent>
+          </xsd:complexType>
+          <xsd:complexType name="base">
+            <xsd:sequence>
+              <xsd:element minOccurs="0" name="item_1" type="xsd:string"/>
+              <xsd:element minOccurs="0" name="item_2" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:element name="array" type="tns:array"/>
+        </xsd:schema>
+    """), transport)
+    array_elm = schema.get_element('{http://tests.python-zeep.org/}array')
+
+    item_type = schema.get_type('{http://tests.python-zeep.org/}base')
+    item_1 = item_type(item_1='foo_1', item_2='bar_1')
+    item_2 = item_type(item_1='foo_2', item_2='bar_2')
+
+    # array = array_elm([
+    #     xsd.AnyObject(item_type, item_1),
+    #     xsd.AnyObject(item_type, item_2),
+    # ])
+
+    array = array_elm([item_1, item_2])
+    node = etree.Element('document')
+    assert array_elm.signature() == (
+        '_value_1: base[], arrayType: xsd:string, offset: xsd:arrayCoordinate, ' +
+        'id: xsd:ID, href: xsd:anyURI, _attr_1: {}')
+    array_elm.render(node, array)
+    expected = """
+        <document>
+            <ns0:array xmlns:ns0="http://tests.python-zeep.org/">
+                <base>
+                    <ns0:item_1>foo_1</ns0:item_1>
+                    <ns0:item_2>bar_1</ns0:item_2>
+                </base>
+                <base>
+                    <ns0:item_1>foo_2</ns0:item_1>
+                    <ns0:item_2>bar_2</ns0:item_2>
+                </base>
+            </ns0:array>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+def test_soap_array_parse():
+    transport = DummyTransport()
+    transport.bind(
+        'http://schemas.xmlsoap.org/soap/encoding/',
+        load_xml(io.open('tests/wsdl_files/soap-enc.xsd', 'r').read().encode('utf-8')))
+
+    schema = xsd.Schema(load_xml("""
+    <?xml version="1.0"?>
+    <schema xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+      <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+      <complexType name="FlagDetailsStruct">
+          <sequence>
+              <element name="Name">
+                  <simpleType>
+                      <restriction base="string">
+                          <maxLength value="512"/>
+                      </restriction>
+                  </simpleType>
+              </element>
+              <element name="Value" type="string"/>
+          </sequence>
+      </complexType>
+      <complexType name="FlagDetailsList">
+          <complexContent>
+              <restriction base="soapenc:Array">
+                  <sequence>
+                      <element
+                        name="FlagDetailsStruct" type="tns:FlagDetailsStruct"
+                        minOccurs="0" maxOccurs="unbounded"/>
+                  </sequence>
+                  <attribute ref="soapenc:arrayType" use="required"/>
+              </restriction>
+          </complexContent>
+      </complexType>
+      <element name="FlagDetailsList" type="tns:FlagDetailsList"/>
+    </schema>
+    """), transport)
+
+    doc = load_xml("""
+         <FlagDetailsList xmlns="http://tests.python-zeep.org/">
+            <FlagDetailsStruct>
+               <Name>flag1</Name>
+               <Value>value1</Value>
+            </FlagDetailsStruct>
+            <FlagDetailsStruct>
+               <Name>flag2</Name>
+               <Value>value2</Value>
+            </FlagDetailsStruct>
+         </FlagDetailsList>
+    """)
+
+    elm = schema.get_element('ns0:FlagDetailsList')
+    data = elm.parse(doc, schema)
+    assert data.FlagDetailsStruct[0].Name == 'flag1'
+    assert data.FlagDetailsStruct[0].Value == 'value1'
+    assert data.FlagDetailsStruct[1].Name == 'flag2'
+    assert data.FlagDetailsStruct[1].Value == 'value2'
