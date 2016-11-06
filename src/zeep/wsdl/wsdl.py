@@ -9,7 +9,7 @@ from lxml import etree
 
 from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
-from zeep.wsdl import bindings, parse
+from zeep.wsdl import parse
 from zeep.xsd import Schema
 from zeep.xsd.context import ParserContext
 
@@ -339,6 +339,7 @@ class Definition(object):
         """
         result = {}
         if not getattr(self.wsdl.transport, 'supports_async', False):
+            from zeep.wsdl import bindings
             binding_classes = [
                 bindings.Soap11Binding,
                 bindings.Soap12Binding,
@@ -346,10 +347,10 @@ class Definition(object):
                 bindings.HttpPostBinding,
             ]
         else:
-            from zeep.asyncio import AsyncSoap11Binding, AsyncSoap12Binding
+            from zeep.asyncio import bindings  # Python 3.5+ syntax
             binding_classes = [
-                AsyncSoap11Binding,
-                AsyncSoap12Binding,
+                bindings.AsyncSoap11Binding,
+                bindings.AsyncSoap12Binding,
             ]
 
         for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
