@@ -525,7 +525,7 @@ class ListType(SimpleType):
 
     def __init__(self, item_type):
         self.item_type = item_type
-        super(Type, self).__init__()
+        super(ListType, self).__init__()
 
     def __call__(self, value):
         return value
