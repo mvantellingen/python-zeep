@@ -9,5 +9,9 @@ Please provide the following information:
 2. The WSDL you are using
 3. An example script
 
+Also please don't paste WSDL/XSD file contents directly into the issue since 
+that makes it hard to read, instead please create a gist at 
+https://gist.github.com and link that here.
+
 Please see http://docs.python-zeep.org/en/master/reporting_bugs.html for 
 more information.
