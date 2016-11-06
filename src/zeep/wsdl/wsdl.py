@@ -338,25 +338,23 @@ class Definition(object):
 
         """
         result = {}
+        binding_classes = [
+            bindings.Soap11Binding,
+            bindings.Soap12Binding,
+            bindings.HttpGetBinding,
+            bindings.HttpPostBinding,
+        ]
+
         for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
             # Detect the binding type
-            try:
-                if bindings.Soap11Binding.match(binding_node):
-                    binding = bindings.Soap11Binding.parse(self, binding_node)
-                elif bindings.Soap12Binding.match(binding_node):
-                    binding = bindings.Soap12Binding.parse(self, binding_node)
-                elif bindings.HttpGetBinding.match(binding_node):
-                    binding = bindings.HttpGetBinding.parse(self, binding_node)
-                elif bindings.HttpPostBinding.match(binding_node):
-                    binding = bindings.HttpPostBinding.parse(self, binding_node)
-                else:
-                    continue
-            except NotImplementedError:
-                logger.warn("Binding not implemented: %s", str(binding_node))
-                continue
-            else:
-                logger.debug("Adding binding: %s", binding.name.text)
-                result[binding.name.text] = binding
+            binding = None
+            for binding_class in binding_classes:
+                if binding_class.match(binding_node):
+                    binding = binding_class.parse(self, binding_node)
+
+                    logger.debug("Adding binding: %s", binding.name.text)
+                    result[binding.name.text] = binding
+                    break
         return result
 
     def parse_service(self, doc):
