@@ -7,11 +7,13 @@ import asyncio
 import aiohttp
 
 from zeep.transports import Transport
-from zeep.wsdl import bindings
 from zeep.wsdl.utils import etree_to_string
+
+__all__ = ['AsyncTransport']
 
 
 class AsyncTransport(Transport):
+    """Asynchronous Transport class using aiohttp."""
     supports_async = True
 
     def __init__(self, loop, *args, **kwargs):
@@ -65,26 +67,3 @@ class AsyncTransport(Transport):
                 content=await response.read(),
                 status_code=response.status,
                 headers=response.headers)
-
-
-class AsyncSoapBinding(object):
-
-    async def send(self, client, options, operation, args, kwargs):
-        envelope, http_headers = self._create(
-            operation, args, kwargs,
-            client=client,
-            options=options)
-
-        response = await client.transport.post_xml(
-            options['address'], envelope, http_headers)
-
-        operation_obj = self.get(operation)
-        return self.process_reply(client, operation_obj, response)
-
-
-class AsyncSoap11Binding(AsyncSoapBinding, bindings.Soap11Binding):
-    pass
-
-
-class AsyncSoap12Binding(AsyncSoapBinding, bindings.Soap12Binding):
-    pass
