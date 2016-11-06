@@ -31,6 +31,7 @@ class HttpBinding(Binding):
         if address_node is None:
             raise ValueError("No `http:address` node found")
 
+        # Force the usage of HTTPS when the force_https boolean is true
         location = address_node.get('location')
         if force_https and location and location.startswith('http://'):
             logger.warning("Forcing http:address location to HTTPS")
