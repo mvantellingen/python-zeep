@@ -22,6 +22,8 @@
  - Wrap the parsing of xml values in a try..except block and log an error 
    instead of throwing an exception (#137)
  - Fix xsd:choice xml rendering with nested choice/sequence structure (#221)
+ - Correctly resolve header elements of which the message part defines the
+   type instead of element. (#199)
 
 
 0.20.0 (2016-10-24)
