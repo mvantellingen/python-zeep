@@ -338,12 +338,19 @@ class Definition(object):
 
         """
         result = {}
-        binding_classes = [
-            bindings.Soap11Binding,
-            bindings.Soap12Binding,
-            bindings.HttpGetBinding,
-            bindings.HttpPostBinding,
-        ]
+        if not getattr(self.wsdl.transport, 'supports_async', False):
+            binding_classes = [
+                bindings.Soap11Binding,
+                bindings.Soap12Binding,
+                bindings.HttpGetBinding,
+                bindings.HttpPostBinding,
+            ]
+        else:
+            from zeep.asyncio import AsyncSoap11Binding, AsyncSoap12Binding
+            binding_classes = [
+                AsyncSoap11Binding,
+                AsyncSoap12Binding,
+            ]
 
         for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
             # Detect the binding type
