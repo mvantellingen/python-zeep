@@ -63,7 +63,7 @@ import six
 from lxml import etree
 
 from zeep.utils import qname_attr
-from zeep.xsd.const import xsd_ns, xsi_ns
+from zeep.xsd.const import xsd_ns, xsi_ns, NS_XSD
 from zeep.xsd.elements import Base
 from zeep.xsd.types import SimpleType
 from zeep.xsd.valueobjects import AnyObject
@@ -90,7 +90,9 @@ class _BuiltinType(SimpleType):
             qname or etree.QName(self._default_qname), is_global)
 
     def signature(self, depth=0):
-        return 'xsd:%s' % self.name
+        if self.qname.namespace == NS_XSD:
+            return 'xsd:%s' % self.name
+        return self.name
 
 ##
 # Primitive types
