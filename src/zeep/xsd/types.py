@@ -11,6 +11,7 @@ from zeep.xsd.const import xsi_ns
 from zeep.xsd.elements import Any, AnyAttribute, AttributeGroup, Element
 from zeep.xsd.indicators import Group, OrderIndicator, Sequence
 from zeep.xsd.utils import NamePrefixGenerator
+from zeep.utils import get_base_class
 from zeep.xsd.valueobjects import CompoundValue
 
 
@@ -111,7 +112,11 @@ class UnresolvedCustomType(Type):
             '__module__': 'zeep.xsd.dynamic_types',
         }
 
-        if issubclass(base.__class__, SimpleType):
+        if issubclass(base.__class__, UnionType):
+            xsd_type = type(self.name, (base.__class__,), cls_attributes)
+            return xsd_type(base.item_types)
+
+        elif issubclass(base.__class__, SimpleType):
             xsd_type = type(self.name, (base.__class__,), cls_attributes)
             return xsd_type(self.qname)
 
@@ -547,20 +552,39 @@ class ListType(SimpleType):
         return self.item_type.signature(depth) + '[]'
 
 
-class UnionType(Type):
+class UnionType(SimpleType):
 
     def __init__(self, item_types):
         self.item_types = item_types
+        self.item_class = None
         assert item_types
         super(UnionType, self).__init__(None)
 
     def resolve(self):
+        from zeep.xsd.builtins import _BuiltinType
+
         self.item_types = [item.resolve() for item in self.item_types]
-        return self.item_types[0]
+        base_class = get_base_class(self.item_types)
+        if issubclass(base_class, _BuiltinType) and base_class != _BuiltinType:
+            self.item_class = base_class
+        return self
 
     def signature(self, depth=0):
         return ''
 
-    def parse_xmlelement(self, xmlelement, schema, name=None, context=None):
-        for item_type in self.item_types:
-            return item_type.parse_xmlelement(xmlelement, schema, name, context)
+    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
+                         context=None):
+        if self.item_class:
+            return self.item_class().parse_xmlelement(
+                xmlelement, schema, allow_none, context)
+        return xmlelement.text
+
+    def pythonvalue(self, value):
+        if self.item_class:
+            return self.item_class().pythonvalue(value)
+        return value
+
+    def xmlvalue(self, value):
+        if self.item_class:
+            return self.item_class().xmlvalue(value)
+        return value

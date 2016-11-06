@@ -2,6 +2,9 @@
 -------------------
  - Force the soap:address / http:address to HTTPS when the wsdl is loaded from
    a https url (#228)
+ - Improvements to the xsd:union handling. The matching base class is now used
+   for serializing/deserializing the values. If there is no matching base class 
+   then the raw value is returned. (#195)
 
 
 0.21.0 (2016-11-02)

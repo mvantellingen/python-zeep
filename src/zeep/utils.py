@@ -1,3 +1,6 @@
+import inspect
+
+
 from lxml import etree
 
 
@@ -41,3 +44,24 @@ def get_version():
     from zeep import __version__  # cyclic import
 
     return __version__
+
+
+def get_base_class(objects):
+    """Return the best base class for multiple objects.
+
+    Implementation is quick and dirty, might be done better.. ;-)
+
+    """
+    bases = [inspect.getmro(obj.__class__)[::-1] for obj in objects]
+    num_objects = len(objects)
+    max_mro = max(len(mro) for mro in bases)
+
+    base_class = None
+    for i in range(max_mro):
+        try:
+            if len({bases[j][i] for j in range(num_objects)}) > 1:
+                break
+        except IndexError:
+            break
+        base_class = bases[0][i]
+    return base_class

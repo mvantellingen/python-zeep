@@ -545,8 +545,8 @@ class SchemaVisitor(object):
         """
         base_name = qname_attr(node, 'base')
         if base_name:
-            base_type = self._get_type(base_name)
-            return base_type
+            return self._get_type(base_name)
+
         annotation, children = self._pop_annotation(node.getchildren())
         if children[0].tag == tags.simpleType:
             return self.visit_simple_type(children[0], node)
