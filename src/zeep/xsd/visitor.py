@@ -151,6 +151,11 @@ class SchemaVisitor(object):
             self.document._imports[namespace] = schema
             return schema
 
+        # Hardcode the mapping between the xml namespace and the xsd for now.
+        # This seems to fix issues with exchange wsdl's, see #220
+        if not location and namespace == 'http://www.w3.org/XML/1998/namespace':
+            location = 'https://www.w3.org/2001/xml.xsd'
+
         # Silently ignore import statements which we can't resolve via the
         # namespace and doesn't have a schemaLocation attribute.
         if not location:
