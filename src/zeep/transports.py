@@ -11,6 +11,7 @@ from zeep.wsdl.utils import etree_to_string
 
 
 class Transport(object):
+    supports_async = False
 
     def __init__(self, cache=NotSet, timeout=300, operation_timeout=None,
                  verify=True, http_auth=None):
