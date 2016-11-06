@@ -67,6 +67,10 @@ class Schema(object):
         return all(schema.is_empty for schema in self._schemas.values())
 
     @property
+    def namespaces(self):
+        return set(self._schemas.keys())
+
+    @property
     def elements(self):
         """Yield all globla xsd.Type objects"""
         for schema in self._schemas.values():
@@ -197,6 +201,15 @@ class Schema(object):
 
     def set_ns_prefix(self, prefix, namespace):
         self._prefix_map_custom[prefix] = namespace
+
+    def get_ns_prefix(self, prefix):
+        try:
+            try:
+                return self._prefix_map_custom[prefix]
+            except KeyError:
+                return self._prefix_map_auto[prefix]
+        except KeyError:
+            raise ValueError("No such prefix %r" % prefix)
 
     def _add_schema_document(self, document):
         logger.info("Add document with tns %s to schema %s", document._target_namespace, id(self))

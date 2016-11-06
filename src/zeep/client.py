@@ -42,6 +42,22 @@ class ServiceProxy(object):
         return OperationProxy(self, key)
 
 
+class Factory(object):
+    def __init__(self, types, kind, namespace):
+        self._method = getattr(types, 'get_%s' % kind)
+
+        if namespace in types.namespaces:
+            self._ns = namespace
+        else:
+            self._ns = types.get_ns_prefix(namespace)
+
+    def __getattr__(self, key):
+        return self[key]
+
+    def __getitem__(self, key):
+        return self._method('{%s}%s' % (self._ns, key))
+
+
 class Client(object):
 
     def __init__(self, wsdl, wsse=None, transport=None,
@@ -130,6 +146,9 @@ class Client(object):
                 "No binding found with the given QName. Available bindings "
                 "are: %s" % (', '.join(self.wsdl.bindings.keys())))
         return ServiceProxy(self, binding, address=address)
+
+    def type_factory(self, namespace):
+        return Factory(self.wsdl.types, 'type', namespace)
 
     def get_type(self, name):
         return self.wsdl.types.get_type(name)
