@@ -114,8 +114,11 @@ class Binding(object):
         return '<%s(name=%r, port_type=%r)>' % (
             self.__class__.__name__, self.name.text, self.port_type)
 
-    def get(self, name):
-        return self._operations.get(name)
+    def get(self, key):
+        try:
+            return self._operations[key]
+        except KeyError:
+            raise ValueError("No such operation %r on %s" % (key, self.name))
 
     @classmethod
     def match(cls, node):

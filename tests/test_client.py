@@ -25,6 +25,28 @@ def test_bind_service_port():
     assert service
 
 
+def test_service_proxy_ok():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    assert client_obj.service.GetLastTradePrice
+
+
+def test_service_proxy_non_existing():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    with pytest.raises(AttributeError):
+        assert client_obj.service.NonExisting
+
+
+def test_client_no_wsdl():
+    with pytest.raises(ValueError):
+        client.Client(None)
+
+
+def test_client_cache_service():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    assert client_obj.service.GetLastTradePrice
+    assert client_obj.service.GetLastTradePrice
+
+
 @pytest.mark.requests
 def test_create_service():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
