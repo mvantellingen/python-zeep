@@ -1,3 +1,9 @@
+0.22.0 (unreleased)
+-------------------
+ - Force the soap:address / http:address to HTTPS when the wsdl is loaded from
+   a https url (#228)
+
+
 0.21.0 (2016-11-02)
 -------------------
  - Don't error on empty xml namespaces declarations in inline schema's (#186)

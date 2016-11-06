@@ -47,6 +47,17 @@ def test_client_cache_service():
     assert client_obj.service.GetLastTradePrice
 
 
+def test_force_https():
+    with open('tests/wsdl_files/soap.wsdl') as fh:
+        response = fh.read()
+
+    with requests_mock.mock() as m:
+        m.get('https://tests.python-zeep.org/wsdl', text=response, status_code=200)
+        client_obj = client.Client('https://tests.python-zeep.org/wsdl')
+        binding_options = client_obj.service._binding_options
+        assert binding_options['address'].startswith('https')
+
+
 @pytest.mark.requests
 def test_create_service():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
