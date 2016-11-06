@@ -1,8 +1,9 @@
 import pytest
 from lxml import etree
 
-from tests.utils import DummyTransport
+from tests.utils import DummyTransport, load_xml
 from zeep import exceptions, xsd
+from zeep.xsd.builtins import Schema as Schema
 from zeep.exceptions import ZeepWarning
 
 
@@ -10,6 +11,122 @@ def test_default_types():
     schema = xsd.Schema()
     xsd_string = schema.get_type('{http://www.w3.org/2001/XMLSchema}string')
     assert xsd_string == xsd.String()
+
+
+def test_default_types_not_found():
+    schema = xsd.Schema()
+    with pytest.raises(exceptions.LookupError):
+        schema.get_type('{http://www.w3.org/2001/XMLSchema}bar')
+
+
+def test_default_elements():
+    schema = xsd.Schema()
+    xsd_schema = schema.get_element('{http://www.w3.org/2001/XMLSchema}schema')
+    isinstance(xsd_schema, Schema)
+
+
+def test_default_elements_not_found():
+    schema = xsd.Schema()
+    with pytest.raises(exceptions.LookupError):
+        schema.get_element('{http://www.w3.org/2001/XMLSchema}bar')
+
+
+def test_invalid_namespace_handling():
+    schema = xsd.Schema()
+    qname = '{http://tests.python-zeep.org/404}foo'
+
+    with pytest.raises(exceptions.NamespaceError) as exc:
+        schema.get_element(qname)
+    assert qname in str(exc.value.message)
+
+    with pytest.raises(exceptions.NamespaceError) as exc:
+        schema.get_type(qname)
+    assert qname in str(exc.value.message)
+
+    with pytest.raises(exceptions.NamespaceError) as exc:
+        schema.get_group(qname)
+    assert qname in str(exc.value.message)
+
+    with pytest.raises(exceptions.NamespaceError) as exc:
+        schema.get_attribute(qname)
+    assert qname in str(exc.value.message)
+
+    with pytest.raises(exceptions.NamespaceError) as exc:
+        schema.get_attribute_group(qname)
+    assert qname in str(exc.value.message)
+
+
+def test_invalid_localname_handling():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+        </xs:schema>
+    """))
+
+    qname = '{http://tests.python-zeep.org/}foo'
+    namespace = 'http://tests.python-zeep.org/'
+    localname = 'foo'
+
+    with pytest.raises(exceptions.LookupError) as exc:
+        schema.get_element(qname)
+    assert namespace in str(exc.value.message)
+    assert localname in str(exc.value.message)
+
+    with pytest.raises(exceptions.LookupError) as exc:
+        schema.get_type(qname)
+    assert namespace in str(exc.value.message)
+    assert localname in str(exc.value.message)
+
+    with pytest.raises(exceptions.LookupError) as exc:
+        schema.get_group(qname)
+    assert namespace in str(exc.value.message)
+    assert localname in str(exc.value.message)
+
+    with pytest.raises(exceptions.LookupError) as exc:
+        schema.get_attribute(qname)
+    assert namespace in str(exc.value.message)
+    assert localname in str(exc.value.message)
+
+    with pytest.raises(exceptions.LookupError) as exc:
+        schema.get_attribute_group(qname)
+    assert namespace in str(exc.value.message)
+    assert localname in str(exc.value.message)
+
+
+def test_schema_repr_none():
+    schema = xsd.Schema()
+    assert repr(schema) == "<Schema(location='<none>')>"
+
+
+def test_schema_repr_val():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+        </xs:schema>
+    """))
+    assert repr(schema) == "<Schema(location=None)>"
+
+
+def test_schema_doc_repr_val():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+        </xs:schema>
+    """))
+    doc = schema._get_schema_document('http://tests.python-zeep.org/')
+    assert repr(doc) == "<SchemaDocument(location=None, tns='http://tests.python-zeep.org/', is_empty=True)>"
 
 
 def test_multiple_extension():

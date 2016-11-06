@@ -1,5 +1,10 @@
 class Error(Exception):
-    pass
+    def __init__(self, message):
+        super(Exception, self).__init__(message)
+        self.message = message
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.message)
 
 
 class XMLSyntaxError(Error):
