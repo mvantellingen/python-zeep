@@ -166,6 +166,8 @@ class TestDate:
         instance = builtins.Date()
         value = datetime.datetime(2016, 3, 4)
         assert instance.xmlvalue(value) == '2016-03-04'
+        assert instance.xmlvalue('2016-03-04') == '2016-03-04'
+        assert instance.xmlvalue('2016-04') == '2016-04'
 
     def test_pythonvalue(self):
         instance = builtins.Date()

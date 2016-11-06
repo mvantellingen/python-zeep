@@ -201,6 +201,8 @@ class Date(_BuiltinType):
 
     @check_no_collection
     def xmlvalue(self, value):
+        if isinstance(value, six.string_types):
+            return value
         return isodate.isostrf.strftime(value, '%Y-%m-%d')
 
     def pythonvalue(self, value):
