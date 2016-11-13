@@ -1,4 +1,4 @@
-0.22.0 (unreleased)
+0.22.0 (2016-11-13)
 -------------------
  - Force the soap:address / http:address to HTTPS when the wsdl is loaded from
    a https url (#228)
@@ -6,6 +6,8 @@
    for serializing/deserializing the values. If there is no matching base class 
    then the raw value is returned. (#195)
  - Fix handling of xsd:any with maxOccurs > 1 in xsd:choice elements (#253)
+ - Add new Client.type_factory(namespace) method which returns a factory to
+   simplify creation of types. 
 
 
 0.21.0 (2016-11-02)
