@@ -349,12 +349,15 @@ class Choice(OrderIndicator):
             for i, choice in enumerate(self):
                 temp_kwargs = copy.copy(available_kwargs)
                 subresult = choice.parse_kwargs(kwargs, None, temp_kwargs)
-                if subresult:
-                    if not found or not any(subresult.values()):
-                        available_kwargs.intersection_update(temp_kwargs)
-                    result.update(subresult)
-                    found = True
 
+                if subresult:
+                    if not any(subresult.values()):
+                        available_kwargs.intersection_update(temp_kwargs)
+                        result.update(subresult)
+                    elif not found:
+                        available_kwargs.intersection_update(temp_kwargs)
+                        result.update(subresult)
+                        found = True
             if found:
                 for choice_name, choice in self.elements:
                     result.setdefault(choice_name, None)

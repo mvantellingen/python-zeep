@@ -5,6 +5,7 @@
  - Improvements to the xsd:union handling. The matching base class is now used
    for serializing/deserializing the values. If there is no matching base class 
    then the raw value is returned. (#195)
+ - Fix handling of xsd:any with maxOccurs > 1 in xsd:choice elements (#253)
 
 
 0.21.0 (2016-11-02)
