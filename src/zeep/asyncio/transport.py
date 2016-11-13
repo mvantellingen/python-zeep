@@ -20,9 +20,6 @@ class AsyncTransport(Transport):
         self.loop = loop if loop else asyncio.get_event_loop()
         super().__init__(*args, **kwargs)
 
-        # Create a separate regular requests session for non async
-        self._load_session = Transport.create_session(self)
-
     def create_session(self):
         connector = aiohttp.TCPConnector(verify_ssl=self.http_verify)
 
@@ -33,9 +30,16 @@ class AsyncTransport(Transport):
             auth=self.http_auth)
 
     def _load_remote_data(self, url):
-        response = self._load_session.get(url, timeout=self.load_timeout)
-        response.raise_for_status()
-        return response.content
+        result = None
+        async def _load_remote_data_async():
+            nonlocal result
+            with aiohttp.Timeout(self.load_timeout):
+                response = await self.session.get(url)
+                result = await response.read()
+
+        # Block until we have the data
+        self.loop.run_until_complete(_load_remote_data_async())
+        return result
 
     async def post(self, address, message, headers):
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
