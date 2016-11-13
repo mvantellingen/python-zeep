@@ -6,6 +6,7 @@ from collections import OrderedDict, defaultdict, deque
 
 from cached_property import threaded_cached_property
 
+from zeep.exceptions import UnexpectedElementError
 from zeep.xsd.elements import Any, Base, Element
 from zeep.xsd.utils import (
     NamePrefixGenerator, UniqueNameGenerator, max_occurs_iter)
@@ -258,8 +259,12 @@ class Choice(OrderIndicator):
                 for element_name, element in self.elements_nested:
 
                     local_xmlelements = copy.copy(xmlelements)
-                    sub_result = element.parse_xmlelements(
-                        local_xmlelements, schema, context=context)
+
+                    try:
+                        sub_result = element.parse_xmlelements(
+                            local_xmlelements, schema, context=context)
+                    except UnexpectedElementError:
+                        continue
 
                     if isinstance(element, OrderIndicator):
                         if element.accepts_multiple:

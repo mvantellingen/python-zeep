@@ -15,6 +15,10 @@ class XMLParseError(Error):
     pass
 
 
+class UnexpectedElementError(Error):
+    pass
+
+
 class WsdlSyntaxError(Error):
     pass
 

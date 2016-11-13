@@ -4,6 +4,7 @@ import logging
 from lxml import etree
 
 from zeep import exceptions
+from zeep.exceptions import UnexpectedElementError
 from zeep.utils import qname_attr
 from zeep.xsd.const import xsi_ns
 from zeep.xsd.context import XmlParserContext
@@ -277,6 +278,7 @@ class Element(Base):
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Consume matching xmlelements and call parse() on each of them"""
         result = []
+        num_matches = 0
         for i in max_occurs_iter(self.max_occurs):
             if not xmlelements:
                 break
@@ -298,11 +300,18 @@ class Element(Base):
             # Only compare the localname
             if element_tag.localname == self.qname.localname:
                 xmlelement = xmlelements.popleft()
+                num_matches += 1
                 item = self.parse(
                     xmlelement, schema, allow_none=True, context=context)
                 if item is not None:
                     result.append(item)
             else:
+                # If the element passed doesn't match and the current one is
+                # not optional then throw an error
+                if num_matches == 0 and not self.is_optional:
+                    raise UnexpectedElementError(
+                        "Unexpected element %r, expected %r" % (
+                            element_tag.text, self.qname.text))
                 break
 
         if not self.accepts_multiple:

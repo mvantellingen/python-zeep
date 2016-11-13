@@ -6,7 +6,7 @@ from itertools import chain
 import six
 from cached_property import threaded_cached_property
 
-from zeep.exceptions import XMLParseError
+from zeep.exceptions import XMLParseError, UnexpectedElementError
 from zeep.xsd.const import xsi_ns
 from zeep.xsd.elements import Any, AnyAttribute, AttributeGroup, Element
 from zeep.xsd.indicators import Group, OrderIndicator, Sequence
@@ -305,15 +305,17 @@ class ComplexType(Type):
             # Parse elements. These are always indicator elements (all, choice,
             # group, sequence)
             for name, element in self.elements_nested:
-                result = element.parse_xmlelements(
-                    elements, schema, name, context=context)
-                if result:
-                    init_kwargs.update(result)
+                try:
+                    result = element.parse_xmlelements(
+                        elements, schema, name, context=context)
+                    if result:
+                        init_kwargs.update(result)
+                except UnexpectedElementError as exc:
+                    raise XMLParseError(exc.message)
 
             # Check if all children are consumed (parsed)
             if elements:
-                raise XMLParseError("Unexpected element %r, expected %r" % (
-                    elements[0].tag, self.elements[0][1].qname.text))
+                raise XMLParseError("Unexpected element %r" % elements[0].tag)
 
         # Parse attributes
         if attributes:
