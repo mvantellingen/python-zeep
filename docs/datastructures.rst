@@ -2,11 +2,11 @@
 Datastructures
 ==============
 
-Nested objects
---------------
+Creating objects
+----------------
 
 Most of the times you need to pass nested data to the soap client.  These 
-Complex types can be created using the `client.get_type()` method.
+Complex types can be retrieve using the `client.get_type()` method.
 
 .. code-block:: python
 
@@ -32,6 +32,28 @@ required object during the call.
         'number': '1234',
         'price': 99,
     })
+
+
+Using factories
+---------------
+
+When you need to create multiple types the ``Client.get_type()`` calls to 
+retrieve the type class and then instantiating them can be a bit verbose. To
+simplify this you can use a factory object.
+
+
+.. code-block:: python
+
+    from zeep import Client
+
+    client = Client('http://my-enterprise-endpoint.com')
+    factory = client.type_factory('ns0')
+
+    user = factory.User(id=1, name='John')
+    order = factory.Order(number='1234', price=99)
+    client.service.submit_order(user=user, order=order)
+
+.. versionadded:: 0.22
 
 
 xsd:choice
