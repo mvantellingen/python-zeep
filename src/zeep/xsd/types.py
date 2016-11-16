@@ -6,11 +6,12 @@ from itertools import chain
 import six
 from cached_property import threaded_cached_property
 
-from zeep.exceptions import XMLParseError
+from zeep.exceptions import XMLParseError, UnexpectedElementError
 from zeep.xsd.const import xsi_ns
 from zeep.xsd.elements import Any, AnyAttribute, AttributeGroup, Element
 from zeep.xsd.indicators import Group, OrderIndicator, Sequence
 from zeep.xsd.utils import NamePrefixGenerator
+from zeep.utils import get_base_class
 from zeep.xsd.valueobjects import CompoundValue
 
 
@@ -111,7 +112,11 @@ class UnresolvedCustomType(Type):
             '__module__': 'zeep.xsd.dynamic_types',
         }
 
-        if issubclass(base.__class__, SimpleType):
+        if issubclass(base.__class__, UnionType):
+            xsd_type = type(self.name, (base.__class__,), cls_attributes)
+            return xsd_type(base.item_types)
+
+        elif issubclass(base.__class__, SimpleType):
             xsd_type = type(self.name, (base.__class__,), cls_attributes)
             return xsd_type(self.qname)
 
@@ -300,15 +305,17 @@ class ComplexType(Type):
             # Parse elements. These are always indicator elements (all, choice,
             # group, sequence)
             for name, element in self.elements_nested:
-                result = element.parse_xmlelements(
-                    elements, schema, name, context=context)
-                if result:
-                    init_kwargs.update(result)
+                try:
+                    result = element.parse_xmlelements(
+                        elements, schema, name, context=context)
+                    if result:
+                        init_kwargs.update(result)
+                except UnexpectedElementError as exc:
+                    raise XMLParseError(exc.message)
 
             # Check if all children are consumed (parsed)
             if elements:
-                raise XMLParseError("Unexpected element %r, expected %r" % (
-                    elements[0].tag, self.elements[0][1].qname.text))
+                raise XMLParseError("Unexpected element %r" % elements[0].tag)
 
         # Parse attributes
         if attributes:
@@ -520,7 +527,7 @@ class ListType(SimpleType):
 
     def __init__(self, item_type):
         self.item_type = item_type
-        super(Type, self).__init__()
+        super(ListType, self).__init__()
 
     def __call__(self, value):
         return value
@@ -547,20 +554,39 @@ class ListType(SimpleType):
         return self.item_type.signature(depth) + '[]'
 
 
-class UnionType(Type):
+class UnionType(SimpleType):
 
     def __init__(self, item_types):
         self.item_types = item_types
+        self.item_class = None
         assert item_types
         super(UnionType, self).__init__(None)
 
     def resolve(self):
+        from zeep.xsd.builtins import _BuiltinType
+
         self.item_types = [item.resolve() for item in self.item_types]
-        return self.item_types[0]
+        base_class = get_base_class(self.item_types)
+        if issubclass(base_class, _BuiltinType) and base_class != _BuiltinType:
+            self.item_class = base_class
+        return self
 
     def signature(self, depth=0):
         return ''
 
-    def parse_xmlelement(self, xmlelement, schema, name=None, context=None):
-        for item_type in self.item_types:
-            return item_type.parse_xmlelement(xmlelement, schema, name, context)
+    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
+                         context=None):
+        if self.item_class:
+            return self.item_class().parse_xmlelement(
+                xmlelement, schema, allow_none, context)
+        return xmlelement.text
+
+    def pythonvalue(self, value):
+        if self.item_class:
+            return self.item_class().pythonvalue(value)
+        return value
+
+    def xmlvalue(self, value):
+        if self.item_class:
+            return self.item_class().xmlvalue(value)
+        return value

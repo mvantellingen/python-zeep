@@ -1,3 +1,18 @@
+0.22.0 (2016-11-13)
+-------------------
+ - Force the soap:address / http:address to HTTPS when the wsdl is loaded from
+   a https url (#228)
+ - Improvements to the xsd:union handling. The matching base class is now used
+   for serializing/deserializing the values. If there is no matching base class 
+   then the raw value is returned. (#195)
+ - Fix handling of xsd:any with maxOccurs > 1 in xsd:choice elements (#253)
+ - Add workaround for schema's importing the xsd from 
+   http://www.w3.org/XML/1998/namespace (#220)
+ - Add new Client.type_factory(namespace) method which returns a factory to
+   simplify creation of types. 
+
+
+
 0.21.0 (2016-11-02)
 -------------------
  - Don't error on empty xml namespaces declarations in inline schema's (#186)
@@ -5,7 +20,7 @@
  - Don't use pkg_resources to determine the zeep version, use __version__ 
    instead (#243).
  - Fix SOAP arrays by wrapping children in the appropriate element 
-   (joeribekker, #2360)
+   (joeribekker, #236)
  - Add ``operation_timeout`` kwarg to the Transport class to set timeouts for
    operations. The default is still no timeout (#140)
  - Introduce client.options context manager to temporarily override various
@@ -13,6 +28,8 @@
  - Wrap the parsing of xml values in a try..except block and log an error 
    instead of throwing an exception (#137)
  - Fix xsd:choice xml rendering with nested choice/sequence structure (#221)
+ - Correctly resolve header elements of which the message part defines the
+   type instead of element. (#199)
 
 
 0.20.0 (2016-10-24)

@@ -27,18 +27,22 @@ class Transport(object):
         """
         self.cache = SqliteCache() if cache is NotSet else cache
         self.load_timeout = timeout
-        self.operation_timeout = None
-        self.verify = verify
-        self.http_auth = http_auth
+        self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)
+
+        self.http_verify = verify
+        self.http_auth = http_auth
+        self.http_headers = {
+            'User-Agent': 'Zeep/%s (www.python-zeep.org)' % (get_version())
+        }
         self.session = self.create_session()
-        self.session.verify = verify
-        self.session.auth = http_auth
-        self.session.headers['User-Agent'] = (
-            'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
     def create_session(self):
-        return requests.Session()
+        session = requests.Session()
+        session.verify = self.http_verify
+        session.auth = self.http_auth
+        session.headers = self.http_headers
+        return session
 
     def get(self, address, params, headers):
         """Proxy to requests.get()
@@ -110,13 +114,12 @@ class Transport(object):
                 if response:
                     return bytes(response)
 
-            response = self.session.get(url, timeout=self.load_timeout)
-            response.raise_for_status()
+            content = self._load_remote_data(url)
 
             if self.cache:
-                self.cache.add(url, response.content)
+                self.cache.add(url, content)
 
-            return response.content
+            return content
 
         elif scheme == 'file':
             if url.startswith('file://'):
@@ -124,6 +127,11 @@ class Transport(object):
 
         with open(os.path.expanduser(url), 'rb') as fh:
             return fh.read()
+
+    def _load_remote_data(self, url):
+        response = self.session.get(url, timeout=self.load_timeout)
+        response.raise_for_status()
+        return response.content
 
     @contextmanager
     def _options(self, timeout=None):

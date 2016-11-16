@@ -662,10 +662,12 @@ def test_nested_complex_type_optional():
                             xsd.Choice([
                                 xsd.Element(
                                     '{http://tests.python-zeep.org/}item_2a1',
-                                    xsd.String()),
+                                    xsd.String(),
+                                    min_occurs=0),
                                 xsd.Element(
                                     '{http://tests.python-zeep.org/}item_2a2',
-                                    xsd.String()),
+                                    xsd.String(),
+                                    min_occurs=0),
                             ]),
                             xsd.Element(
                                 '{http://tests.python-zeep.org/}item_2b',

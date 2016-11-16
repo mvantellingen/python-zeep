@@ -1,3 +1,5 @@
+import logging
+
 import six
 from lxml import etree
 
@@ -5,6 +7,8 @@ from zeep.exceptions import Fault
 from zeep.utils import qname_attr
 from zeep.wsdl import messages
 from zeep.wsdl.definitions import Binding, Operation
+
+logger = logging.getLogger(__name__)
 
 NSMAP = {
     'http': 'http://schemas.xmlsoap.org/wsdl/http/',
@@ -22,13 +26,19 @@ class HttpBinding(Binding):
                 raise ValueError("Operation not found")
         return operation.create(*args, **kwargs)
 
-    def process_service_port(self, xmlelement):
+    def process_service_port(self, xmlelement, force_https=False):
         address_node = xmlelement.find('http:address', namespaces=NSMAP)
         if address_node is None:
             raise ValueError("No `http:address` node found")
 
+        # Force the usage of HTTPS when the force_https boolean is true
+        location = address_node.get('location')
+        if force_https and location and location.startswith('http://'):
+            logger.warning("Forcing http:address location to HTTPS")
+            location = 'https://' + location[8:]
+
         return {
-            'address': address_node.get('location')
+            'address': location
         }
 
     @classmethod

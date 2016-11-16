@@ -1,3 +1,5 @@
+import logging
+
 from lxml import etree
 
 from zeep import plugins, wsa
@@ -7,6 +9,8 @@ from zeep.utils import as_qname, qname_attr
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
 from zeep.wsdl.utils import etree_to_string
+
+logger = logging.getLogger(__name__)
 
 
 class SoapBinding(Binding):
@@ -149,10 +153,17 @@ class SoapBinding(Binding):
     def process_error(self, doc, operation):
         raise NotImplementedError
 
-    def process_service_port(self, xmlelement):
+    def process_service_port(self, xmlelement, force_https=False):
         address_node = xmlelement.find('soap:address', namespaces=self.nsmap)
+
+        # Force the usage of HTTPS when the force_https boolean is true
+        location = address_node.get('location')
+        if force_https and location and location.startswith('http://'):
+            logger.warning("Forcing soap:address location to HTTPS")
+            location = 'https://' + location[8:]
+
         return {
-            'address': address_node.get('location')
+            'address': location
         }
 
     @classmethod

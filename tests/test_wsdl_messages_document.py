@@ -182,6 +182,78 @@ def test_parse_with_header():
     assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {auth: ResponseHeader()}'  # noqa
 
 
+def test_parse_with_header_type():
+    wsdl_content = StringIO("""
+    <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                 xmlns:tns="http://tests.python-zeep.org/tns"
+                 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://tests.python-zeep.org/tns">
+      <types>
+        <xsd:schema targetNamespace="http://tests.python-zeep.org/tns">
+          <xsd:element name="Request" type="xsd:string"/>
+          <xsd:simpleType name="RequestHeaderType">
+            <xsd:restriction base="xsd:string"/>
+          </xsd:simpleType>
+          <xsd:element name="Response" type="xsd:string"/>
+          <xsd:simpleType name="ResponseHeaderType">
+            <xsd:restriction base="xsd:string"/>
+          </xsd:simpleType>
+        </xsd:schema>
+      </types>
+
+      <message name="Input">
+        <part element="tns:Request"/>
+        <part name="auth" type="tns:RequestHeaderType"/>
+      </message>
+      <message name="Output">
+        <part element="tns:Response"/>
+        <part name="auth" type="tns:ResponseHeaderType"/>
+      </message>
+
+      <portType name="TestPortType">
+        <operation name="TestOperation">
+          <input message="Input"/>
+          <output message="Output"/>
+        </operation>
+      </portType>
+
+      <binding name="TestBinding" type="tns:TestPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="TestOperation">
+          <soap:operation soapAction=""/>
+          <input>
+            <soap:header message="tns:Input" part="auth" use="literal" />
+            <soap:body use="literal"/>
+          </input>
+          <output>
+            <soap:header message="tns:Output" part="auth" use="literal" />
+            <soap:body use="literal"/>
+          </output>
+        </operation>
+      </binding>
+    </definitions>
+    """.strip())
+
+    root = wsdl.Document(wsdl_content, None)
+
+    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
+    operation = binding.get('TestOperation')
+
+    assert operation.input.body.signature() == 'xsd:string'
+    assert operation.input.header.signature() == 'auth: RequestHeaderType'
+    assert operation.input.envelope.signature() == 'body: xsd:string, header: {auth: RequestHeaderType}'  # noqa
+    assert operation.input.signature(as_output=False) == 'xsd:string, _soapheaders={auth: RequestHeaderType}'  # noqa
+
+    assert operation.output.body.signature() == 'xsd:string'
+    assert operation.output.header.signature() == 'auth: ResponseHeaderType'
+    assert operation.output.envelope.signature() == 'body: xsd:string, header: {auth: ResponseHeaderType}'  # noqa
+    assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {auth: ResponseHeaderType}'  # noqa
+
+
+
+
+
 def test_parse_with_header_other_message():
     wsdl_content = StringIO("""
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"

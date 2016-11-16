@@ -326,8 +326,13 @@ class SoapMessage(ConcreteMessage):
             message = definitions.get('messages', message_name)
             if message == self.abstract:
                 del parts[part_name]
-            element = message.parts[part_name].element.clone()
-            element.attr_name = part_name
+
+            part = message.parts[part_name]
+            if part.element:
+                element = part.element.clone()
+                element.attr_name = part_name
+            else:
+                element = xsd.Element(part_name, part.type)
             sequence.append(element)
         return xsd.Element(None, xsd.ComplexType(sequence))
 

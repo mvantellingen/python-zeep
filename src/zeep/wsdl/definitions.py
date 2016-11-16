@@ -114,8 +114,11 @@ class Binding(object):
         return '<%s(name=%r, port_type=%r)>' % (
             self.__class__.__name__, self.name.text, self.port_type)
 
-    def get(self, name):
-        return self._operations.get(name)
+    def get(self, key):
+        try:
+            return self._operations[key]
+        except KeyError:
+            raise ValueError("No such operation %r on %s" % (key, self.name))
 
     @classmethod
     def match(cls, node):
@@ -209,14 +212,19 @@ class Port(object):
             return
 
         try:
-            binding = definitions.get(
+            self.binding = definitions.get(
                 'bindings', self._resolve_context['binding_name'].text)
         except IndexError:
             return False
 
-        self.binding = binding
-        self.binding_options = binding.process_service_port(
-            self._resolve_context['xmlelement'])
+        if definitions.location:
+            force_https = definitions.location.startswith('https')
+        else:
+            force_https = False
+
+        self.binding_options = self.binding.process_service_port(
+            self._resolve_context['xmlelement'],
+            force_https)
         self._resolve_context = None
         return True
 

@@ -25,6 +25,39 @@ def test_bind_service_port():
     assert service
 
 
+def test_service_proxy_ok():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    assert client_obj.service.GetLastTradePrice
+
+
+def test_service_proxy_non_existing():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    with pytest.raises(AttributeError):
+        assert client_obj.service.NonExisting
+
+
+def test_client_no_wsdl():
+    with pytest.raises(ValueError):
+        client.Client(None)
+
+
+def test_client_cache_service():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    assert client_obj.service.GetLastTradePrice
+    assert client_obj.service.GetLastTradePrice
+
+
+def test_force_https():
+    with open('tests/wsdl_files/soap.wsdl') as fh:
+        response = fh.read()
+
+    with requests_mock.mock() as m:
+        m.get('https://tests.python-zeep.org/wsdl', text=response, status_code=200)
+        client_obj = client.Client('https://tests.python-zeep.org/wsdl')
+        binding_options = client_obj.service._binding_options
+        assert binding_options['address'].startswith('https')
+
+
 @pytest.mark.requests
 def test_create_service():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')

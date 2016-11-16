@@ -1,7 +1,7 @@
 import pytest
 from lxml import etree
 
-from tests.utils import assert_nodes_equal, load_xml
+from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
 from zeep.exceptions import XMLParseError
 from zeep.helpers import serialize_object
@@ -223,6 +223,52 @@ def test_choice_element_with_any():
     assert result.name == 'foo'
     assert result.something is True
     assert result.item_1 == 'foo'
+
+
+def test_choice_element_with_any_max_occurs():
+    schema = xsd.Schema(load_xml("""
+        <schema targetNamespace="http://tests.python-zeep.org/"
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+
+          <element name="item_any" type="string"/>
+          <element name="container">
+            <complexType>
+                <sequence>
+                  <choice minOccurs="0">
+                    <element maxOccurs="999" minOccurs="0" name="item_1" type="string"/>
+                    <sequence>
+                      <element minOccurs="0" name="item_2"/>
+                      <any maxOccurs="unbounded" minOccurs="0"/>
+                    </sequence>
+                  </choice>
+                </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """))
+
+    element = schema.get_element('ns0:container')
+    value = element(
+        item_2="item-2",
+        _value_1=[
+            xsd.AnyObject(schema.get_element('ns0:item_any'), 'any-content')
+        ])
+
+    expected = """
+        <document>
+          <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+            <ns0:item_2>item-2</ns0:item_2>
+            <ns0:item_any>any-content</ns0:item_any>
+          </ns0:container>
+        </document>
+    """
+    node = render_node(element, value)
+    assert_nodes_equal(node, expected)
+    result = element.parse(node.getchildren()[0], schema)
+    assert result.item_2 == 'item-2'
+    assert result._value_1 == ['any-content']
 
 
 def test_choice_optional_values():
