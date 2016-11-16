@@ -454,7 +454,7 @@ class ComplexType(Type):
         element = []
         if self._element and base_element:
             element = self._element.clone(self._element.name)
-            if isinstance(element, OrderIndicator):
+            if isinstance(element, OrderIndicator) and isinstance(base_element, Sequence):
                 for item in reversed(base_element):
                     element.insert(0, item)
 
