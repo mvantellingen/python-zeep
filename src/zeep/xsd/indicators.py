@@ -188,11 +188,13 @@ class OrderIndicator(Indicator, list):
                 if element_value is not None or not element.is_optional:
                     element.render(parent, element_value)
 
-    def signature(self, depth=0):
-        depth += 1
+    def signature(self, depth=()):
+        depth += (self.name,)
         parts = []
         for name, element in self.elements_nested:
-            if name:
+            if hasattr(element, 'type') and element.type.name and element.type.name in depth:
+                parts.append('{}: {}'.format(name, element.type.name))
+            elif name:
                 parts.append('%s: %s' % (name, element.signature(depth)))
             elif isinstance(element,  Indicator):
                 parts.append('%s' % (element.signature(depth)))
@@ -201,7 +203,7 @@ class OrderIndicator(Indicator, list):
         part = ', '.join(parts)
 
         if self.accepts_multiple:
-            return '[%s]' % (part)
+            return '[%s]' % (part,)
         return part
 
 
@@ -436,7 +438,7 @@ class Choice(OrderIndicator):
             matches = sorted(matches, key=operator.itemgetter(0), reverse=True)
             return matches[0][1:]
 
-    def signature(self, depth=0):
+    def signature(self, depth=()):
         parts = []
         for name, element in self.elements_nested:
             if isinstance(element, OrderIndicator):
@@ -445,7 +447,7 @@ class Choice(OrderIndicator):
                 parts.append('{%s: %s}' % (name, element.signature(depth)))
         part = '(%s)' % ' | '.join(parts)
         if self.accepts_multiple:
-            return '%s[]' % (part)
+            return '%s[]' % (part,)
         return part
 
 
@@ -555,5 +557,5 @@ class Group(Indicator):
         self.child = self.child.resolve()
         return self
 
-    def signature(self, depth=0):
+    def signature(self, depth=()):
         return self.child.signature(depth)

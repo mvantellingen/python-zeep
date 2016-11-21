@@ -93,6 +93,54 @@ def test_complex_content_sequence_extension():
     assert_nodes_equal(expected, node)
 
 
+def test_complex_content_with_recursive_elements():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+
+            <xsd:complexType name="Pet">
+              <xsd:complexContent>
+                <xsd:extension base="tns:Name">
+                  <xsd:sequence>
+                    <xsd:element name="children" type="tns:Pet"/>
+                  </xsd:sequence>
+                </xsd:extension>
+              </xsd:complexContent>
+            </xsd:complexType>
+          <xsd:element name="Pet" type="tns:Pet"/>
+
+          <xsd:complexType name="Name">
+            <xsd:sequence>
+              <xsd:element name="name" type="xsd:string"/>
+              <xsd:element name="common_name" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:schema>
+    """))
+    pet_type = schema.get_element('{http://tests.python-zeep.org/}Pet')
+    assert(pet_type.signature() == 'name: xsd:string, common_name: xsd:string, children: Pet')
+
+    obj = pet_type(
+        name='foo', common_name='bar')
+
+    node = etree.Element('document')
+    pet_type.render(node, obj)
+    expected = """
+        <document>
+            <ns0:Pet xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:name>foo</ns0:name>
+                <ns0:common_name>bar</ns0:common_name>
+                <ns0:children/>
+            </ns0:Pet>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
 def test_complex_content_sequence_extension_2():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
@@ -454,5 +502,56 @@ def test_issue_221():
           </ns0:SearchCriteria>
         </ns0:exportOrgRegistryRequest>
       </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
+def test_complex_content_extension_with_sequence():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+
+            <xsd:complexType name="Package">
+              <xsd:complexContent>
+                <xsd:extension base="tns:AbstractPackage">
+                  <xsd:attribute name="id" type="xsd:string"/>
+                </xsd:extension>
+              </xsd:complexContent>
+            </xsd:complexType>
+
+            <xsd:complexType name="SpecialPackage">
+              <xsd:complexContent>
+                <xsd:extension base="tns:Package">
+                    <xsd:sequence>
+                        <xsd:element name="otherElement" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:extension>
+              </xsd:complexContent>
+            </xsd:complexType>
+
+            <xsd:complexType name="AbstractPackage">
+              <xsd:attribute name="pkg_id" type="xsd:string"/>
+            </xsd:complexType>
+
+          <xsd:element name="SpecialPackage" type="tns:SpecialPackage"/>
+        </xsd:schema>
+    """))
+    address_type = schema.get_element('{http://tests.python-zeep.org/}SpecialPackage')
+
+    obj = address_type(
+        id='testString', pkg_id='nameId')
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    expected = """
+        <document>
+            <ns0:SpecialPackage xmlns:ns0="http://tests.python-zeep.org/" pkg_id="nameId" id="testString">
+                <ns0:otherElement/>
+            </ns0:SpecialPackage>
+        </document>
     """
     assert_nodes_equal(expected, node)
