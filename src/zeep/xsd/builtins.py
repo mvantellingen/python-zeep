@@ -89,7 +89,7 @@ class _BuiltinType(SimpleType):
         super(_BuiltinType, self).__init__(
             qname or etree.QName(self._default_qname), is_global)
 
-    def signature(self, depth=0):
+    def signature(self, depth=None):
         if self.qname.namespace == NS_XSD:
             return 'xsd:%s' % self.name
         return self.name

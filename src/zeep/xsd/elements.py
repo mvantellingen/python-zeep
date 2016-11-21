@@ -43,7 +43,7 @@ class Base(object):
         """Consume matching xmlelements and call parse() on each of them"""
         raise NotImplementedError()
 
-    def signature(self, depth=0):
+    def signature(self, depth=None):
         return ''
 
 
@@ -188,7 +188,7 @@ class Any(Base):
     def resolve(self):
         return self
 
-    def signature(self, depth=0):
+    def signature(self, depth=None):
         if self.restrict:
             base = self.restrict.name
         else:
@@ -360,8 +360,10 @@ class Element(Base):
         self.resolve_type()
         return self
 
-    def signature(self, depth=0):
-        if depth > 0 and self.is_global:
+    def signature(self, depth=None):
+        if not depth:
+            depth = set()
+        if len(depth) > 0 and self.is_global:
             return self.name + '()'
 
         value = self.type.signature(depth)
@@ -433,7 +435,7 @@ class AttributeGroup(Element):
         self._attributes = resolved
         return self
 
-    def signature(self, depth=0):
+    def signature(self, depth=None):
         return ', '.join(attr.signature() for attr in self._attributes)
 
 
@@ -457,7 +459,7 @@ class AnyAttribute(Base):
         for name, val in value.items():
             parent.set(name, val)
 
-    def signature(self, depth=0):
+    def signature(self, depth=None):
         return '{}'
 
 
