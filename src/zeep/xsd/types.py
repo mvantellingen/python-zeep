@@ -68,7 +68,7 @@ class Type(object):
         return []
 
     @classmethod
-    def signature(cls, depth=None):
+    def signature(cls, depth=()):
         return ''
 
 
@@ -182,7 +182,7 @@ class SimpleType(Type):
     def resolve(self):
         return self
 
-    def signature(self, depth=None):
+    def signature(self, depth=()):
         return self.name
 
     def xmlvalue(self, value):
@@ -498,14 +498,12 @@ class ComplexType(Type):
             qname=self.qname)
         return new.resolve()
 
-    def signature(self, depth=None):
-        if not depth:
-            depth = set()
+    def signature(self, depth=()):
         if len(depth) > 0 and self.is_global:
             return self.name
 
         parts = []
-        depth.add(self.name)
+        depth += (self.name,)
         for name, element in self.elements_nested:
             # http://schemas.xmlsoap.org/soap/encoding/ contains cyclic type
             if isinstance(element, Element) and element.type == self:
@@ -520,7 +518,7 @@ class ComplexType(Type):
 
         value = ', '.join(parts)
         if len(depth) > 1:
-            value = '%s' % value
+            value = '{%s}' % value
         return value
 
 
@@ -552,7 +550,7 @@ class ListType(SimpleType):
         item_type = self.item_type
         return [item_type.pythonvalue(v) for v in value.split()]
 
-    def signature(self, depth=None):
+    def signature(self, depth=()):
         return self.item_type.signature(depth) + '[]'
 
 
@@ -573,7 +571,7 @@ class UnionType(SimpleType):
             self.item_class = base_class
         return self
 
-    def signature(self, depth=None):
+    def signature(self, depth=()):
         return ''
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
