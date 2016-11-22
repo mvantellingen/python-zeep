@@ -451,10 +451,12 @@ class ComplexType(Type):
                     new_attributes[attr.qname.text] = attr
             attributes = new_attributes.values()
 
+        # If the base and the current type both have an element defined then
+        # these need to be merged.
         element = []
         if self._element and base_element:
             element = self._element.clone(self._element.name)
-            if isinstance(element, OrderIndicator) and isinstance(base_element, Sequence):
+            if isinstance(element, OrderIndicator) and isinstance(base_element, OrderIndicator):
                 for item in reversed(base_element):
                     element.insert(0, item)
 
