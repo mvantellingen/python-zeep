@@ -452,7 +452,8 @@ class ComplexType(Type):
             attributes = new_attributes.values()
 
         # If the base and the current type both have an element defined then
-        # these need to be merged.
+        # these need to be merged. The base_element might be empty (or just
+        # container a placeholder element).
         element = []
         if self._element and base_element:
             element = self._element.clone(self._element.name)
@@ -462,6 +463,8 @@ class ComplexType(Type):
 
             elif isinstance(self._element, Group):
                 raise NotImplementedError('TODO')
+            else:
+                pass  # Element (ignore for now)
 
         elif self._element or base_element:
             element = self._element or base_element

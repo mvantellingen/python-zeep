@@ -507,3 +507,43 @@ def test_complex_content_extension_with_sequence():
         </document>
     """
     assert_nodes_equal(expected, node)
+
+
+def test_extension_abstract_complex_type():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+
+            <xsd:complexType name="Package" abstract="true"/>
+
+            <xsd:complexType name="SpecialPackage">
+              <xsd:complexContent>
+                <xsd:extension base="tns:Package">
+                    <xsd:sequence>
+                        <xsd:element name="item" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:extension>
+              </xsd:complexContent>
+            </xsd:complexType>
+
+          <xsd:element name="SpecialPackage" type="tns:SpecialPackage"/>
+        </xsd:schema>
+    """))
+    package_cls = schema.get_element('{http://tests.python-zeep.org/}SpecialPackage')
+
+    obj = package_cls(item='foo')
+
+    node = etree.Element('document')
+    package_cls.render(node, obj)
+    expected = """
+        <document>
+            <ns0:SpecialPackage xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:item>foo</ns0:item>
+            </ns0:SpecialPackage>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
