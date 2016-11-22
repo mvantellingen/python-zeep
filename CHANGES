@@ -1,3 +1,10 @@
+0.22.1 (2016-11-22)
+-------------------
+ - Fix reversed() error (jaceksnet) (#260)
+ - Better error message when unexpected xml elements are encountered in 
+   sequences.
+
+
 0.22.0 (2016-11-13)
 -------------------
  - Force the soap:address / http:address to HTTPS when the wsdl is loaded from
