@@ -31,10 +31,19 @@
           </sequence>
         </complexType>
       </element>
+        <element name="Authentication2">
+            <complexType>
+                <sequence>
+                    <element name="username" type="string"/>
+                    <element name="password" type="string"/>
+                </sequence>
+            </complexType>
+        </element>
     </schema>
   </types>
   <message name="GetLastTradePriceInput">
     <part name="header" element="xsd1:Authentication"/>
+      <part name="header2" element="xsd1:Authentication2"/>
     <part name="body" element="xsd1:TradePriceRequest"/>
   </message>
   <message name="GetLastTradePriceOutput">
@@ -52,6 +61,7 @@
       <soap:operation soapAction="http://example.com/GetLastTradePrice"/>
       <input>
         <soap:header message="tns:GetLastTradePriceInput" part="header" use="literal"/>
+          <soap:header message="tns:GetLastTradePriceInput" part="header2" use="literal"/>
         <soap:body use="literal"/>
       </input>
       <output>
