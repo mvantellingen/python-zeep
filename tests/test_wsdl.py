@@ -98,10 +98,6 @@ def test_parse_soap_header_wsdl():
                     'username': 'ikke',
                     'password': 'oeh-is-geheim!',
                 },
-                'header2': {
-                    'username': 'ikke',
-                    'password': 'oeh-is-geheim!',
-                }
             })
 
         assert result == 120.123
@@ -117,10 +113,6 @@ def test_parse_soap_header_wsdl():
                  <username>ikke</username>
                  <password>oeh-is-geheim!</password>
               </ns0:Authentication>
-              <ns1:Authentication2 xmlns:ns1="http://example.com/stockquote.xsd">
-                 <username>ikke</username>
-                 <password>oeh-is-geheim!</password>
-              </ns1:Authentication2>
            </soap-env:Header>
            <soap-env:Body>
               <ns0:TradePriceRequest xmlns:ns0="http://example.com/stockquote.xsd">
