@@ -97,7 +97,7 @@ def test_parse_soap_header_wsdl():
                 'header': {
                     'username': 'ikke',
                     'password': 'oeh-is-geheim!',
-                },
+                }
             })
 
         assert result == 120.123
