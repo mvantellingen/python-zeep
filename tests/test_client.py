@@ -2,9 +2,12 @@ import os
 
 import pytest
 import requests_mock
+from lxml import etree
 
 from zeep import client
+from zeep import xsd
 from zeep.exceptions import Error
+from tests.utils import load_xml
 
 
 def test_bind():
@@ -167,3 +170,40 @@ def test_set_context_options_timeout():
             assert obj.transport.operation_timeout == 90
         assert obj.transport.operation_timeout == 120
     assert obj.transport.operation_timeout is None
+
+
+@pytest.mark.requests
+def test_default_soap_headers():
+    header = xsd.Element(None, xsd.ComplexType(
+        xsd.Sequence([
+            xsd.Element('{http://tests.python-zeep.org}name', xsd.String()),
+            xsd.Element('{http://tests.python-zeep.org}password', xsd.String()),
+        ])
+    ))
+    header_value = header(name='ik', password='geheim')
+
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    client_obj.set_default_soapheaders([header_value])
+
+    response = """
+    <?xml version="1.0"?>
+    <soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:stoc="http://example.com/stockquote.xsd">
+       <soapenv:Header/>
+       <soapenv:Body>
+          <stoc:TradePrice>
+             <price>120.123</price>
+          </stoc:TradePrice>
+       </soapenv:Body>
+    </soapenv:Envelope>
+    """.strip()
+
+    with requests_mock.mock() as m:
+        m.post('http://example.com/stockquote', text=response)
+        client_obj.service.GetLastTradePrice('foobar')
+
+        doc = load_xml(m.request_history[0].body)
+        header = doc.find('{http://schemas.xmlsoap.org/soap/envelope/}Header')
+        assert header is not None
+        assert len(header.getchildren()) == 2

@@ -1,3 +1,9 @@
+0.23.0 (unreleased)
+-------------------
+ - Add Client.set_default_soapheaders() to set soapheaders which are to be used
+   on all operations done via the client object.
+
+
 0.22.1 (2016-11-22)
 -------------------
  - Fix reversed() error (jaceksnet) (#260)

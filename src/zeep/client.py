@@ -1,3 +1,4 @@
+import copy
 import logging
 from contextlib import contextmanager
 
@@ -20,6 +21,21 @@ class OperationProxy(object):
         self._op_name = operation_name
 
     def __call__(self, *args, **kwargs):
+        if self._proxy._client._default_soapheaders:
+            op_soapheaders = kwargs.get('_soapheaders')
+            if op_soapheaders:
+                soapheaders = copy.deepcopy(self._proxy._client._default_soapheaders)
+                if type(op_soapheaders) != type(soapheaders):
+                    raise ValueError("Incompatible soapheaders definition")
+
+                if isinstance(soapheaders, list):
+                    soapheaders.extend(op_soapheaders)
+                else:
+                    soapheaders.update(op_soapheaders)
+            else:
+                soapheaders = self._proxy._client._default_soapheaders
+            kwargs['_soapheaders'] = soapheaders
+
         return self._proxy._binding.send(
             self._proxy._client, self._proxy._binding_options,
             self._op_name, args, kwargs)
@@ -73,6 +89,7 @@ class Client(object):
         self._default_service = None
         self._default_service_name = service_name
         self._default_port_name = port_name
+        self._default_soapheaders = None
 
     @property
     def service(self):
@@ -158,3 +175,14 @@ class Client(object):
 
     def set_ns_prefix(self, prefix, namespace):
         self.wsdl.types.set_ns_prefix(prefix, namespace)
+
+    def set_default_soapheaders(self, headers):
+        """Set the default soap headers which will be automatically used on
+        all calls.
+
+        Note that if you pass custom soapheaders using a list then you will
+        also need to use that during the operations. Since mixing these use
+        cases isn't supported (yet).
+
+        """
+        self._default_soapheaders = headers
