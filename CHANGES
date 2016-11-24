@@ -6,6 +6,7 @@
    for the initial implementation! Please see 
    https://github.com/mvantellingen/python-zeep/pull/207 and
    https://github.com/mvantellingen/python-zeep/pull/251 for more information
+ - Fix recursion error when generating the call signature (jaceksnet, #264)
 
 
 0.22.1 (2016-11-22)
