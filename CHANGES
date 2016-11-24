@@ -2,6 +2,10 @@
 -------------------
  - Add Client.set_default_soapheaders() to set soapheaders which are to be used
    on all operations done via the client object.
+ - Add basic support for asyncio using aiohttp. Many thanks to chrisimcevoy
+   for the initial implementation! Please see 
+   https://github.com/mvantellingen/python-zeep/pull/207 and
+   https://github.com/mvantellingen/python-zeep/pull/251 for more information
 
 
 0.22.1 (2016-11-22)

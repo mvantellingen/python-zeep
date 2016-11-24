@@ -2,7 +2,7 @@
 Zeep: Python SOAP client 
 ========================
 
-A fast and hip Python SOAP client ;-)
+A fast and modern Python SOAP client
 
 | Website: http://docs.python-zeep.org/
 | IRC: #python-zeep on Freenode
@@ -16,10 +16,10 @@ Highlights:
  * Support for WSSE (UsernameToken only for now)
  * Experimental support for HTTP bindings
  * Experimental support for WS-Addressing headers
+ * Experimental support for asyncio via aiohttp (Python 3.5+)
 
 Features still in development include:
  * WSSE x.509 support (BinarySecurityToken)
- * XML validation using lxml XMLSchema's
  * WS Policy support
 
 Please see for more information the documentation at

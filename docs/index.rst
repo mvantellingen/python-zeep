@@ -13,6 +13,7 @@ Highlights:
  * Support for WSSE (UsernameToken only for now)
  * Experimental support for HTTP bindings
  * Experimental support for WS-Addressing headers
+ * Experimental support for asyncio via aiohttp (Python 3.5+)
 
 Features still in development include:
  * WSSE x.509 support (BinarySecurityToken)
