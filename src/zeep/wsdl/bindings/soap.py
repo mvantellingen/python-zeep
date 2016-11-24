@@ -160,7 +160,7 @@ class SoapBinding(Binding):
         location = address_node.get('location')
         if force_https and location and location.startswith('http://'):
             logger.warning("Forcing soap:address location to HTTPS")
-            location = 'https://' + location[8:]
+            location = 'https://' + location[7:]
 
         return {
             'address': location

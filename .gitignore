@@ -5,6 +5,8 @@
 .eggs
 .cache
 .python-version
+.venv
+.idea/
 /build/
 /dist/
 /test_clients/
