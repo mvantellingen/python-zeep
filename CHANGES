@@ -1,4 +1,4 @@
-0.23.0 (unreleased)
+0.23.0 (2016-11-24)
 -------------------
  - Add Client.set_default_soapheaders() to set soapheaders which are to be used
    on all operations done via the client object.
