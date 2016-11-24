@@ -52,10 +52,14 @@ def test_force_https():
         response = fh.read()
 
     with requests_mock.mock() as m:
-        m.get('https://tests.python-zeep.org/wsdl', text=response, status_code=200)
-        client_obj = client.Client('https://tests.python-zeep.org/wsdl')
+        url = 'https://tests.python-zeep.org/wsdl'
+        m.get(url, text=response, status_code=200)
+        client_obj = client.Client(url)
         binding_options = client_obj.service._binding_options
         assert binding_options['address'].startswith('https')
+
+        expected_url = 'https://example.com/stockquote'
+        assert binding_options['address'] == expected_url
 
 
 @pytest.mark.requests
