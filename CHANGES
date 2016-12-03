@@ -1,3 +1,8 @@
+0.24.0 (unreleased)
+-------------------
+ - Don't fail the parsing of responses if an xsi:type references an non-existing
+   type. Instead log a message (#273)
+
 0.23.0 (2016-11-24)
 -------------------
  - Add Client.set_default_soapheaders() to set soapheaders which are to be used

@@ -525,7 +525,12 @@ class AnyType(_BuiltinType):
             return None
 
         if xsi_type and schema:
-            xsd_type = schema.get_type(xsi_type)
+            xsd_type = schema.get_type(xsi_type, fail_silently=True)
+
+            # If we were unable to resolve a type for the xsi:type (due to
+            # buggy soap servers) then we just return the lxml element.
+            if not xsd_type:
+                return xmlelement.getchildren()
 
             # If the xsd_type is xsd:anyType then we will recurs so ignore
             # that.

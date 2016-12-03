@@ -106,7 +106,7 @@ class Schema(object):
                 "No schema available for the namespace %r."
             ) % (qname.text, qname.namespace))
 
-    def get_type(self, qname):
+    def get_type(self, qname, fail_silently=False):
         """Return a global xsd.Type object with the given qname"""
         qname = self._create_qname(qname)
 
@@ -121,10 +121,15 @@ class Schema(object):
             schema = self._get_schema_document(qname.namespace)
             return schema.get_type(qname)
         except exceptions.NamespaceError:
-            raise exceptions.NamespaceError((
+            message = (
                 "Unable to resolve type %s. " +
                 "No schema available for the namespace %r."
-            ) % (qname.text, qname.namespace))
+            ) % (qname.text, qname.namespace)
+
+            if fail_silently:
+                logger.info(message)
+            else:
+                raise exceptions.NamespaceError(message)
 
     def get_group(self, qname):
         """Return a global xsd.Group object with the given qname"""

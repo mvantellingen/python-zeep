@@ -264,10 +264,10 @@ class Element(Base):
         """
         context = context or XmlParserContext()
         instance_type = qname_attr(xmlelement, xsi_ns('type'))
+        xsd_type = None
         if instance_type:
-            xsd_type = schema.get_type(instance_type)
-        else:
-            xsd_type = self.type
+            xsd_type = schema.get_type(instance_type, fail_silently=True)
+        xsd_type = xsd_type or self.type
         return xsd_type.parse_xmlelement(
             xmlelement, schema, allow_none=allow_none, context=context)
 
