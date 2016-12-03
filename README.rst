@@ -84,7 +84,9 @@ Support
 If you encounter bugs then please `let me know`_ .  A copy of the WSDL file if
 possible would be most helpful. 
 
-I'm also able to offer commercial support.  Please contact me at
-info@mvantellingen.nl for more information.
+I'm also able to offer commercial support.  As in contracting work. Please
+contact me at info@mvantellingen.nl for more information. If you just have a
+random question and don't intent to actually pay me for my support then please
+DO NOT email me at that e-mail address but just use stackoverflow or something..
 
 .. _let me know: https://github.com/mvantellingen/python-zeep/issues
