@@ -5,9 +5,13 @@ from contextlib import contextmanager
 import requests
 
 from six.moves.urllib.parse import urlparse
+from zeep import __version__
 from zeep.cache import SqliteCache
-from zeep.utils import NotSet, get_version
+from zeep.utils import NotSet
 from zeep.wsdl.utils import etree_to_string
+
+
+ZEEP_USERAGENT = 'Zeep/%s (www.python-zeep.org)' % __version__
 
 
 class Transport(object):
@@ -35,7 +39,7 @@ class Transport(object):
         self.http_verify = verify
         self.http_auth = http_auth
         self.http_headers = {
-            'User-Agent': 'Zeep/%s (www.python-zeep.org)' % (get_version())
+            'User-Agent': ZEEP_USERAGENT,
         }
         if http_headers:
             self.http_headers.update(http_headers)
