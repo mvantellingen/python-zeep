@@ -79,10 +79,12 @@ class Client(object):
     def __init__(self, wsdl, wsse=None, transport=None,
                  service_name=None, port_name=None, plugins=None):
         if not wsdl:
-            raise ValueError("No URL given for the wsdl")
+            raise ValueError("`wsdl` argument can not be empty")
 
-        self.transport = transport or Transport()
-        self.wsdl = Document(wsdl, self.transport)
+        if not isinstance(wsdl, Document):
+            wsdl = Document(wsdl, transport or Transport())
+        self.wsdl = wsdl
+        self.transport = self.wsdl.transport or Transport()
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
 
