@@ -288,6 +288,8 @@ class SoapMessage(ConcreteMessage):
             for header_value in headers_value:
                 if hasattr(header_value, '_xsd_elm'):
                     header_value._xsd_elm.render(header, header_value)
+                elif hasattr(header_value, '_xsd_type'):
+                    header_value._xsd_type.render(header, header_value)
                 elif isinstance(header_value, etree._Element):
                     header.append(header_value)
                 else:
@@ -298,7 +300,7 @@ class SoapMessage(ConcreteMessage):
                     "_soapheaders only accepts a dictionary if the wsdl "
                     "defines the headers.")
             headers_value = self.header(**headers_value)
-            self.header.render(header, headers_value)
+            self.header.type.render(header, headers_value)
         else:
             raise ValueError("Invalid value given to _soapheaders")
 
@@ -315,9 +317,11 @@ class SoapMessage(ConcreteMessage):
         return {}
 
     def _resolve_header(self, info, definitions, parts):
+        name = etree.QName(self.nsmap['soap-env'], 'Header')
+
         sequence = xsd.Sequence()
         if not info:
-            return xsd.Element(None, xsd.ComplexType(sequence))
+            return xsd.Element(name, xsd.ComplexType(sequence))
 
         for item in info:
             message_name = item['message'].text
@@ -334,7 +338,7 @@ class SoapMessage(ConcreteMessage):
             else:
                 element = xsd.Element(part_name, part.type)
             sequence.append(element)
-        return xsd.Element(None, xsd.ComplexType(sequence))
+        return xsd.Element(name, xsd.ComplexType(sequence))
 
 
 class DocumentMessage(SoapMessage):
@@ -360,8 +364,10 @@ class DocumentMessage(SoapMessage):
         return {'body': result}
 
     def _resolve_body(self, info, definitions, parts):
+        name = etree.QName(self.nsmap['soap-env'], 'Body')
+
         if not info or not parts:
-            return xsd.Element(None, xsd.ComplexType([]))
+            return xsd.Element(name, xsd.ComplexType([]))
 
         # If the part name is omitted then all parts are available under
         # the soap:body tag. Otherwise only the part with the given name.
@@ -377,8 +383,7 @@ class DocumentMessage(SoapMessage):
 
         if len(sub_elements) > 1:
             self._is_body_wrapped = True
-            return xsd.Element(
-                None, xsd.ComplexType(xsd.All(sub_elements)))
+            return xsd.Element(name, xsd.ComplexType(xsd.All(sub_elements)))
         else:
             self._is_body_wrapped = False
             return sub_elements[0]
@@ -404,8 +409,9 @@ class RpcMessage(SoapMessage):
         name and its namespace is the value of the namespace attribute.
 
         """
+        name = etree.QName(self.nsmap['soap-env'], 'Body')
         if not info:
-            return xsd.Element(None, xsd.ComplexType([]))
+            return xsd.Element(name, xsd.ComplexType([]))
 
         namespace = info['namespace']
         if self.type == 'input':

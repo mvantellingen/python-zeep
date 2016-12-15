@@ -527,12 +527,12 @@ def test_serialize_with_headers_simple():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    header = xsd.Element(None, xsd.ComplexType(
+    header = xsd.ComplexType(
         xsd.Sequence([
             xsd.Element('{http://www.w3.org/2005/08/addressing}Action', xsd.String()),
             xsd.Element('{http://www.w3.org/2005/08/addressing}To', xsd.String()),
         ])
-    ))
+    )
     header_value = header(Action='doehet', To='server')
     serialized = operation.input.serialize(
         arg1='ah1', arg2='ah2',

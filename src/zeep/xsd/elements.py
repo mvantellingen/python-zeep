@@ -202,7 +202,9 @@ class Any(Base):
 class Element(Base):
     def __init__(self, name, type_=None, min_occurs=1, max_occurs=1,
                  nillable=False, default=None, is_global=False, attr_name=None):
-        if name and not isinstance(name, etree.QName):
+        if name is None:
+            raise ValueError("name cannot be None", self.__class__)
+        if not isinstance(name, etree.QName):
             name = etree.QName(name)
 
         self.name = name.localname if name else None
@@ -342,9 +344,6 @@ class Element(Base):
             if self.nillable:
                 elm.set(xsi_ns('nil'), 'true')
             return
-
-        if self.name is None:
-            return self.type.render(parent, value)
 
         node = etree.SubElement(parent, self.qname)
         xsd_type = getattr(value, '_xsd_type', self.type)

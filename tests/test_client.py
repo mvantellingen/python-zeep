@@ -174,13 +174,13 @@ def test_set_context_options_timeout():
 
 @pytest.mark.requests
 def test_default_soap_headers():
-    header = xsd.Element(None, xsd.ComplexType(
+    header = xsd.ComplexType(
         xsd.Sequence([
             xsd.Element('{http://tests.python-zeep.org}name', xsd.String()),
             xsd.Element('{http://tests.python-zeep.org}password', xsd.String()),
         ])
-    ))
-    header_value = header(name='ik', password='geheim')
+    )
+    header_value = header(name='ik', password='foo')
 
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
     client_obj.set_default_soapheaders([header_value])
@@ -211,20 +211,20 @@ def test_default_soap_headers():
 
 @pytest.mark.requests
 def test_default_soap_headers_extra():
-    header = xsd.Element(None, xsd.ComplexType(
+    header = xsd.ComplexType(
         xsd.Sequence([
             xsd.Element('{http://tests.python-zeep.org}name', xsd.String()),
             xsd.Element('{http://tests.python-zeep.org}password', xsd.String()),
         ])
-    ))
+    )
     header_value = header(name='ik', password='geheim')
 
-    extra_header = xsd.Element(None, xsd.ComplexType(
+    extra_header = xsd.ComplexType(
         xsd.Sequence([
             xsd.Element('{http://tests.python-zeep.org}name', xsd.String()),
             xsd.Element('{http://tests.python-zeep.org}password', xsd.String()),
         ])
-    ))
+    )
     extra_header_value = extra_header(name='ik', password='geheim')
 
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')

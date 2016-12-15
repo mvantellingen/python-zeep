@@ -512,6 +512,9 @@ class AnyType(_BuiltinType):
         if isinstance(value, AnyObject):
             value.xsd_type.render(parent, value.value)
             parent.set(xsi_ns('type'), value.xsd_type.qname)
+        elif hasattr(value, '_xsd_elm'):
+            value._xsd_elm.render(parent, value)
+            parent.set(xsi_ns('type'), value._xsd_elm.qname)
         else:
             parent.text = self.xmlvalue(value)
 
