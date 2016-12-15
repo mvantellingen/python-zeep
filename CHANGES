@@ -2,6 +2,8 @@
 -------------------
  - Don't fail the parsing of responses if an xsi:type references an non-existing
    type. Instead log a message (#273)
+ - Fix serializing etree.Element instances in the helpers.serialize function
+   (#255)
 
 0.23.0 (2016-11-24)
 -------------------
