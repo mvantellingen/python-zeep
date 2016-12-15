@@ -355,8 +355,11 @@ class ComplexType(Type):
             else:
                 element.render(parent, element_value)
 
-        if xsd_type and xsd_type._xsd_name:
-            parent.set(xsi_ns('type'), xsd_type._xsd_name)
+        if xsd_type:
+            if xsd_type._xsd_name:
+                parent.set(xsi_ns('type'), xsd_type._xsd_name)
+            if xsd_type.qname:
+                parent.set(xsi_ns('type'), xsd_type.qname)
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
         value = None
