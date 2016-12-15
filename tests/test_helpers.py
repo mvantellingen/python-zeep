@@ -1,6 +1,6 @@
 from lxml import etree
 
-from tests.utils import load_xml
+from tests.utils import assert_nodes_equal, load_xml
 from zeep import xsd
 from zeep.helpers import serialize_object
 
@@ -111,3 +111,39 @@ def test_nested_complex_types():
     assert isinstance(result, dict), type(result)
     assert isinstance(result['item'], dict), type(result['item'])
     assert result['item']['item_1'] == 'foo'
+
+
+def test_serialize_any_array():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Any(max_occurs=2),
+            ])
+        ))
+
+    any_obj = etree.Element('{http://tests.python-zeep.org}lxml')
+    etree.SubElement(any_obj, 'node').text = 'foo'
+
+    obj = custom_type(any_obj)
+
+    expected = """
+        <document>
+          <ns0:authentication xmlns:ns0="http://tests.python-zeep.org/">
+            <ns0:lxml xmlns:ns0="http://tests.python-zeep.org">
+              <node>foo</node>
+            </ns0:lxml>
+          </ns0:authentication>
+        </document>
+    """
+    node = etree.Element('document')
+    custom_type.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+    schema = xsd.Schema()
+    obj = custom_type.parse(node.getchildren()[0], schema=schema)
+    result = serialize_object(obj)
+
+    assert result == {
+        '_value_1': [any_obj],
+    }

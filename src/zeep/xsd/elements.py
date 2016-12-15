@@ -146,7 +146,7 @@ class Any(Base):
             self._render_value_item(parent, value)
 
     def _render_value_item(self, parent, value):
-        if not value:
+        if value is None:  # can be an lxml element
             return
 
         # Check if we received a proper value object. If we receive the wrong
