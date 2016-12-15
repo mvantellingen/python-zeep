@@ -4,6 +4,9 @@
    type. Instead log a message (#273)
  - Fix serializing etree.Element instances in the helpers.serialize function
    (#255)
+ - Fix infinite loop during parsing of xsd.Sequence where max_occurs is 
+   unbounded (#256)
+
 
 0.23.0 (2016-11-24)
 -------------------

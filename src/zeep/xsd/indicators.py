@@ -256,8 +256,9 @@ class Choice(OrderIndicator):
         result = []
 
         for i in max_occurs_iter(self.max_occurs):
-            if len(xmlelements) < 1:
+            if not xmlelements:
                 break
+
             for node in list(xmlelements):
 
                 # Choose out of multiple
@@ -460,6 +461,9 @@ class Sequence(OrderIndicator):
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         result = []
         for item in max_occurs_iter(self.max_occurs):
+            if not xmlelements:
+                break
+
             item_result = OrderedDict()
             for elm_name, element in self.elements:
                 item_subresult = element.parse_xmlelements(

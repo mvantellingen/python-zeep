@@ -30,6 +30,33 @@ def test_sequence_parse_basic():
     assert obj.item_2 == 'bar'
 
 
+def test_sequence_parse_max_occurs_infinite_loop():
+    custom_type = xsd.Element(
+        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        xsd.ComplexType(
+            xsd.Sequence([
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
+                    xsd.String()),
+                xsd.Element(
+                    etree.QName('http://tests.python-zeep.org/', 'item_2'),
+                    xsd.String()),
+            ], max_occurs='unbounded')
+        ))
+    expected = etree.fromstring("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>foo</ns0:item_1>
+          <ns0:item_2>bar</ns0:item_2>
+        </ns0:container>
+    """)
+    obj = custom_type.parse(expected, None)
+    assert obj._value_1 == [
+        {
+            'item_1': 'foo',
+            'item_2': 'bar',
+        }
+    ]
+
 def test_sequence_parse_basic_with_attrs():
     custom_element = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'authentication'),
