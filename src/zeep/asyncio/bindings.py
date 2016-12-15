@@ -1,3 +1,6 @@
+
+import asyncio
+
 from zeep.wsdl import bindings
 
 __all__ = ['AsyncSoap11Binding', 'AsyncSoap12Binding']
@@ -5,13 +8,14 @@ __all__ = ['AsyncSoap11Binding', 'AsyncSoap12Binding']
 
 class AsyncSoapBinding(object):
 
-    async def send(self, client, options, operation, args, kwargs):
+    @asyncio.coroutine
+    def send(self, client, options, operation, args, kwargs):
         envelope, http_headers = self._create(
             operation, args, kwargs,
             client=client,
             options=options)
 
-        response = await client.transport.post_xml(
+        response = yield from client.transport.post_xml(
             options['address'], envelope, http_headers)
 
         operation_obj = self.get(operation)
