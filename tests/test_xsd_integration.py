@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 from lxml import etree
 
@@ -125,7 +127,6 @@ def test_array():
     """
     node = etree.Element('document', nsmap=schema._prefix_map_custom)
     address_type.render(node, obj)
-    print(etree.tostring(node))
     assert_nodes_equal(expected, node)
 
 
@@ -902,3 +903,51 @@ def test_empty_xmlns():
     """)
     item = container_elm.parse(node, schema)
     assert item._value_1 == 'foo'
+
+
+def test_keep_objects_intact():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                attributeFormDefault="qualified"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="Address">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="name" type="xsd:string"/>
+                <xsd:element minOccurs="0" name="optional" type="xsd:string"/>
+                <xsd:element name="container" nillable="true" type="tns:Container"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+
+          <xsd:complexType name="Container">
+            <xsd:sequence>
+              <xsd:element maxOccurs="unbounded" minOccurs="0" name="service"
+                           nillable="true" type="tns:ServiceRequestType"/>
+            </xsd:sequence>
+          </xsd:complexType>
+
+          <xsd:complexType name="ServiceRequestType">
+            <xsd:sequence>
+              <xsd:element name="name" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    obj = address_type(name='foo', container={'service': [{'name': 'foo'}]})
+
+    org_obj = copy.deepcopy(obj)
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+
+    print(org_obj)
+    print(obj)
+    assert org_obj['container']['service'] == obj['container']['service']

@@ -55,6 +55,13 @@ class CompoundValue(object):
     def __contains__(self, key):
         return self.__values__.__contains__(key)
 
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+
+        other_values = {key: other[key] for key in other}
+        return other_values == self.__values__
+
     def __len__(self):
         return self.__values__.__len__()
 

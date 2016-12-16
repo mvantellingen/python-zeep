@@ -164,12 +164,7 @@ class OrderIndicator(Indicator, list):
         return self
 
     def render(self, parent, value):
-        """Create subelements in the given parent object.
-
-        To make sure we render values only once the value items are copied
-        and the rendered attribute is removed from it once it is rendered.
-
-        """
+        """Create subelements in the given parent object."""
         if not isinstance(value, list):
             values = [value]
         else:
@@ -180,7 +175,6 @@ class OrderIndicator(Indicator, list):
                 if name:
                     if name in value:
                         element_value = value[name]
-                        del value[name]
                     else:
                         element_value = None
                 else:
