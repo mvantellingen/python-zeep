@@ -179,6 +179,8 @@ class DateTime(_BuiltinType):
 
     @check_no_collection
     def xmlvalue(self, value):
+        if value.microsecond:
+            return isodate.isostrf.strftime(value, '%Y-%m-%dT%H:%M:%S.%f%Z')
         return isodate.isostrf.strftime(value, '%Y-%m-%dT%H:%M:%S%Z')
 
     def pythonvalue(self, value):
@@ -191,6 +193,8 @@ class Time(_BuiltinType):
 
     @check_no_collection
     def xmlvalue(self, value):
+        if value.microsecond:
+            return isodate.isostrf.strftime(value, '%H:%M:%S.%f%Z')
         return isodate.isostrf.strftime(value, '%H:%M:%S%Z')
 
     def pythonvalue(self, value):
