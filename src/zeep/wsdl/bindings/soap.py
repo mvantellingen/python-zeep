@@ -193,7 +193,9 @@ class SoapBinding(Binding):
         soap_node = xmlelement.find('soap:binding', namespaces=cls.nsmap)
         transport = soap_node.get('transport')
         if transport != 'http://schemas.xmlsoap.org/soap/http':
-            raise NotImplementedError("Only soap/http is supported for now")
+            raise NotImplementedError(
+                "The binding transport %s is not supported (only soap/http)" % (
+                    transport))
         default_style = soap_node.get('style', 'document')
 
         obj = cls(definitions.wsdl, name, port_name, transport, default_style)

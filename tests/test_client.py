@@ -16,6 +16,12 @@ def test_bind():
     assert service
 
 
+def test_unknown_transport():
+    client_obj = client.Client('tests/wsdl_files/soap_transport_err.wsdl')
+    service = client_obj.bind()
+    assert service
+
+
 def test_bind_service():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
     service = client_obj.bind('StockQuoteService')

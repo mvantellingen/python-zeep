@@ -9,6 +9,8 @@
  - Make the xsd.Element name kwarg required
  - Improve handling of the xsd:anyType element when passed instances of 
    complexType's (#252)
+ - Silently ignore unsupported binding transports instead of an hard error 
+   (#277)
 
 
 0.23.0 (2016-11-24)
