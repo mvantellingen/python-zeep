@@ -1,4 +1,4 @@
-0.24.0 (unreleased)
+0.24.0 (2016-12-16)
 -------------------
  - Don't fail the parsing of responses if an xsi:type references an non-existing
    type. Instead log a message (#273)
