@@ -97,15 +97,15 @@ class OrderIndicator(Indicator, list):
                 num += element.accept(values)
         return num
 
-    def parse_args(self, args):
+    def parse_args(self, args, index=0):
         result = {}
         for name, element in self.elements:
-            if not args:
+            if index >= len(args):
                 break
-            arg = args.pop(0)
-            result[name] = arg
+            result[name] = args[index]
+            index += 1
 
-        return result, args
+        return result, args, index
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
         """Apply the given kwarg to the element.
@@ -520,8 +520,8 @@ class Group(Indicator):
             return [('_value_1', self.child)]
         return self.child.elements
 
-    def parse_args(self, args):
-        return self.child.parse_args(args)
+    def parse_args(self, args, index=0):
+        return self.child.parse_args(args, index)
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
         if self.accepts_multiple:

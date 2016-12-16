@@ -118,21 +118,24 @@ def _process_signature(xsd_type, args, kwargs):
     if args:
         args = list(args)
         num_args = len(args)
+        index = 0
 
         for element_name, element in xsd_type.elements_nested:
-            values, args = element.parse_args(args)
+            values, args, index = element.parse_args(args, index)
             if not values:
                 break
             result.update(values)
 
-    if args:
         for attribute_name, attribute in xsd_type.attributes:
-            result[attribute_name] = args.pop(0)
+            if num_args <= index:
+                break
+            result[attribute_name] = args[index]
+            index += 1
 
-    if args:
-        raise TypeError(
-            "__init__() takes at most %s positional arguments (%s given)" % (
-                len(result), num_args))
+        if num_args > index:
+            raise TypeError(
+                "__init__() takes at most %s positional arguments (%s given)" % (
+                    len(result), num_args))
 
     # Process the named arguments (sequence/group/all/choice). The
     # available_kwargs set is modified in-place.

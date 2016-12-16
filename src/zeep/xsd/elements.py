@@ -28,13 +28,14 @@ class Base(object):
     def is_optional(self):
         return self.min_occurs == 0
 
-    def parse_args(self, args):
+    def parse_args(self, args, index=0):
         result = {}
         if not args:
-            return result, args
+            return result, args, index
 
-        value = args.pop(0)
-        return {self.attr_name: value}, args
+        value = args[index]
+        index += 1
+        return {self.attr_name: value}, args, index
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
         raise NotImplementedError()
