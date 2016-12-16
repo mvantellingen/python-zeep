@@ -404,7 +404,7 @@ class Choice(OrderIndicator):
             else:
                 num = element.accept(values)
                 nums.add(num)
-        return max(nums)
+        return max(nums) if nums else 0
 
     def _find_element_to_render(self, value):
         """Return a tuple (element, value) for the best matching choice"""
