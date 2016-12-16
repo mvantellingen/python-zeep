@@ -11,6 +11,8 @@
    complexType's (#252)
  - Silently ignore unsupported binding transports instead of an hard error 
    (#277)
+ - Support microseconds for xsd.dateTime and xsd.Time (#280)
+ - Don't mutate passed values to the zeep operations (#280)
 
 
 0.23.0 (2016-11-24)
