@@ -10,6 +10,9 @@ def serialize_object(obj):
     if obj is None:
         return obj
 
+    if isinstance(obj, basestring):
+        return obj
+
     if isinstance(obj, etree._Element):
         return obj
 
