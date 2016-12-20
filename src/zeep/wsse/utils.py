@@ -8,7 +8,7 @@ from zeep.wsdl.utils import get_or_create_header
 NSMAP = {
     'wsse': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd',
 }
-WSSE = ElementMaker(namespace=NSMAP['wsse'])
+WSSE = ElementMaker(namespace=NSMAP['wsse'], nsmap=NSMAP)
 
 
 def get_security_header(doc):
