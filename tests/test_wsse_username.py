@@ -64,12 +64,12 @@ def test_password_text():
             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
           <soap-env:Header>
-            <ns0:Security xmlns:ns0="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
-              <ns0:UsernameToken>
-                <ns0:Username>michael</ns0:Username>
-                <ns0:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">geheim</ns0:Password>
-              </ns0:UsernameToken>
-            </ns0:Security>
+            <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+              <wsse:UsernameToken>
+                <wsse:Username>michael</wsse:Username>
+                <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">geheim</wsse:Password>
+              </wsse:UsernameToken>
+            </wsse:Security>
           </soap-env:Header>
           <soap-env:Body>
             <ns0:TradePriceRequest>
@@ -113,14 +113,14 @@ def test_password_digest(monkeypatch):
             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
           <soap-env:Header>
-            <ns0:Security xmlns:ns0="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
-              <ns0:UsernameToken>
-                <ns0:Username>michael</ns0:Username>
-                <ns0:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">hVicspAQSg70JNhe67OHqD9gexc=</ns0:Password>
-                <ns0:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">bW9ja2VkLXJhbmRvbQ==</ns0:Nonce>
-                <ns0:Created xmlns:ns0="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">2016-05-08T12:00:00+00:00</ns0:Created>
-              </ns0:UsernameToken>
-            </ns0:Security>
+            <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+              <wsse:UsernameToken>
+                <wsse:Username>michael</wsse:Username>
+                <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">hVicspAQSg70JNhe67OHqD9gexc=</wsse:Password>
+                <wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">bW9ja2VkLXJhbmRvbQ==</wsse:Nonce>
+                <wsu:Created xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">2016-05-08T12:00:00+00:00</wsu:Created>
+              </wsse:UsernameToken>
+            </wsse:Security>
           </soap-env:Header>
           <soap-env:Body>
             <ns0:TradePriceRequest>
