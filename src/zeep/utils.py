@@ -40,12 +40,6 @@ def findall_multiple_ns(node, name, namespace_sets):
     return result
 
 
-def get_version():
-    from zeep import __version__  # cyclic import
-
-    return __version__
-
-
 def get_base_class(objects):
     """Return the best base class for multiple objects.
 

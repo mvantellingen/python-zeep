@@ -21,16 +21,16 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class Base(object):
+class Cache(object):
 
     def add(self, url, content):
-        raise NotImplemented()
+        raise NotImplementedError
 
     def get(self, url):
-        raise NotImplemented()
+        raise NotImplementedError
 
 
-class InMemoryCache(Base):
+class InMemoryCache(Cache):
     """Simple in-memory caching using dict lookup with support for timeouts"""
     _cache = {}  # global cache, thread-safe by default
 
@@ -54,7 +54,7 @@ class InMemoryCache(Base):
         return None
 
 
-class SqliteCache(Base):
+class SqliteCache(Cache):
     """Cache contents via an sqlite database on the filesystem"""
     _version = '1'
 
