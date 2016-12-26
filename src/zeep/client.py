@@ -134,19 +134,8 @@ class Client(object):
         if not self.wsdl.services:
             return
 
-        if service_name:
-            service = self.wsdl.services.get(service_name)
-            if not service:
-                raise ValueError("Service not found")
-        else:
-            service = next(iter(self.wsdl.services.values()), None)
-
-        if port_name:
-            port = service.ports.get(port_name)
-            if not port:
-                raise ValueError("Port not found")
-        else:
-            port = list(service.ports.values())[0]
+        service = self._get_service(service_name)
+        port = self._get_port(service, port_name)
         return ServiceProxy(self, port.binding, **port.binding_options)
 
     def create_service(self, binding_name, address):
@@ -163,6 +152,17 @@ class Client(object):
                 "No binding found with the given QName. Available bindings "
                 "are: %s" % (', '.join(self.wsdl.bindings.keys())))
         return ServiceProxy(self, binding, address=address)
+
+    def create_message(self, operation, service_name=None, port_name=None,
+                       args=None, kwargs=None):
+        """Create the payload for the given operation."""
+        service = self._get_service(service_name)
+        port = self._get_port(service, port_name)
+
+        args = args or tuple()
+        kwargs = kwargs or {}
+        envelope, http_headers = port.binding._create(operation, args, kwargs)
+        return envelope
 
     def type_factory(self, namespace):
         return Factory(self.wsdl.types, 'type', namespace)
@@ -186,3 +186,21 @@ class Client(object):
 
         """
         self._default_soapheaders = headers
+
+    def _get_port(self, service, name):
+        if name:
+            port = service.ports.get(name)
+            if not port:
+                raise ValueError("Port not found")
+        else:
+            port = list(service.ports.values())[0]
+        return port
+
+    def _get_service(self, name):
+        if name:
+            service = self.wsdl.services.get(name)
+            if not service:
+                raise ValueError("Service not found")
+        else:
+            service = next(iter(self.wsdl.services.values()), None)
+        return service
