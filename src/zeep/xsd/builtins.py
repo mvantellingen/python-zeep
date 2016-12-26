@@ -179,7 +179,17 @@ class DateTime(_BuiltinType):
 
     @check_no_collection
     def xmlvalue(self, value):
-        if value.microsecond:
+
+        # Bit of a hack, since datetime is a subclass of date we can't just
+        # test it with an isinstance(). And actually, we should not really
+        # care about the type, as long as it has the required attributes
+        if not all(hasattr(value, attr) for attr in ('hour', 'minute', 'second')):
+            value = datetime.datetime.combine(value, datetime.time(
+                getattr(value, 'hour', 0),
+                getattr(value, 'minute', 0),
+                getattr(value, 'second', 0)))
+
+        if getattr(value, 'microsecond', 0):
             return isodate.isostrf.strftime(value, '%Y-%m-%dT%H:%M:%S.%f%Z')
         return isodate.isostrf.strftime(value, '%Y-%m-%dT%H:%M:%S%Z')
 
