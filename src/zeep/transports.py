@@ -14,7 +14,7 @@ class Transport(object):
     supports_async = False
 
     def __init__(self, cache=NotSet, timeout=300, operation_timeout=None,
-                 verify=True, http_auth=None):
+                 verify=True, http_auth=None, cert=None):
         """The transport object handles all communication to the SOAP server.
 
         :param cache: The cache object to be used to cache GET requests
@@ -36,6 +36,7 @@ class Transport(object):
         self.http_headers = {
             'User-Agent': 'Zeep/%s (www.python-zeep.org)' % (get_version())
         }
+        self.cert = cert
         self.session = self.create_session()
 
     def create_session(self):
@@ -43,6 +44,8 @@ class Transport(object):
         session.verify = self.http_verify
         session.auth = self.http_auth
         session.headers = self.http_headers
+        if self.cert:
+            session.cert = self.cert
         return session
 
     def get(self, address, params, headers):
