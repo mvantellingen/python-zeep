@@ -75,6 +75,21 @@ class Factory(object):
 
 
 class Client(object):
+    """The zeep Client.
+
+
+    :param wsdl:
+    :param wsse:
+    :param transport: Custom transport class.
+    :param service_name: The service name for the service binding. Defaults to
+                         the first service in the WSDL document.
+    :param port_name: The port name for the default binding. Defaults to the
+                      first port defined in the service element in the WSDL
+                      document.
+    :param plugins: a list of Plugin instances
+
+
+    """
 
     def __init__(self, wsdl, wsse=None, transport=None,
                  service_name=None, port_name=None, plugins=None):
@@ -110,14 +125,15 @@ class Client(object):
     def options(self, timeout):
         """Context manager to temporarily overrule various options.
 
-        Example::
+        :param timeout: Set the timeout for POST/GET operations (not used for
+                        loading external WSDL or XSD documents)
+
+        To for example set the timeout to 10 seconds use::
 
             client = zeep.Client('foo.wsdl')
             with client.options(timeout=10):
                 client.service.fast_call()
 
-        :param timeout: Set the timeout for POST/GET operations (not used for
-                        loading external WSDL or XSD documents)
 
         """
         with self.transport._options(timeout=timeout):
@@ -165,15 +181,28 @@ class Client(object):
         return envelope
 
     def type_factory(self, namespace):
+        """Return a type factory for the given namespace.
+
+        Example::
+
+            factory = client.type_factory('ns0')
+            user = factory.User(name='John')
+
+        """
         return Factory(self.wsdl.types, 'type', namespace)
 
     def get_type(self, name):
+        """Return the type for the given qualified name."""
         return self.wsdl.types.get_type(name)
 
     def get_element(self, name):
+        """Return the element for the given qualified name."""
         return self.wsdl.types.get_element(name)
 
     def set_ns_prefix(self, prefix, namespace):
+        """Set a shortcut for the given namespace.
+
+        """
         self.wsdl.types.set_ns_prefix(prefix, namespace)
 
     def set_default_soapheaders(self, headers):

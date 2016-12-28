@@ -5,7 +5,7 @@ Zeep: Python SOAP client
 A fast and modern Python SOAP client
 
 Highlights:
- * Modern codebase compatible with Python 2.7, 3.3, 3.4, 3.5 and PyPy
+ * Modern codebase compatible with Python 2.7, 3.3, 3.4, 3.5, 3.6 and PyPy
  * Build on top of lxml and requests
  * Supports recursive WSDL and XSD documents.
  * Supports the xsd:choice and xsd:any elements.
@@ -36,30 +36,57 @@ A simple example:
 Quick Introduction
 ==================
 
-Zeep inspects the wsdl document and generates the corresponding bindings.  This
-provides an easy to use programmatic interface to a soap server.
+Zeep inspects the WSDL document and generates the corresponding code to use the
+services and types in the document.  This provides an easy to use programmatic
+interface to a SOAP server.
 
-The emphasis is on Soap 1.1 and Soap 1.2, however Zeep also offers experimental
-support for HTTP Get and Post bindings.
+The emphasis is on SOAP 1.1 and SOAP 1.2, however Zeep also offers support for
+HTTP Get and Post bindings.
 
-Parsing the XML documents is done by using the lxml library. This is the most
+Parsing the XML documents is done by using the `lxml`_ library. This is the most
 performant and compliant Python XML library currently available. This results
-in major speed benefits when retrieving large soap responses.
+in major speed benefits when processing large SOAP responses.
 
 The SOAP specifications are unfortunately really vague and leave a lot of
 things open for interpretation.  Due to this there are a lot of WSDL documents
 available which are invalid or SOAP servers which contain bugs. Zeep tries to
 be as compatible as possible but there might be cases where you run into 
-problems. Don't hesitate to submit an issue in this case (please see 
-:ref:`reporting_bugs`).
+problems. Don't hesitate to submit an issue in this case (but please first 
+read :ref:`reporting_bugs`).
+
+.. _lxml: http://lxml.de
+
+
+Installation
+============
+
+Zeep is a pure-python module.  This means that there is no C code which needs
+to be compiled.  However the lxml dependency does contain C code since it uses
+libxml2 and libxslt.  For linux/bsd this means you need to install libxml2-dev
+and libxslt-dev packages.  For Windows this is unfortunately a bit more 
+complicated.  The easiest way is to install lxml via wheel files since that
+contains already compiled code for your platform. 
+
+To install wheel files you need a recent pip client.  See
+https://pip.pypa.io/en/stable/installing/ how to install pip on your platform.
+
+
+If you have installed pip then run::
+
+    pip install zeep
+
+
+This assumes that there are wheel files available for the latest lxml release.
+If that is not the case (https://pypi.python.org/pypi/lxml/) then first 
+install lxml 3.7.1 since that release should have the wheel files for all
+platforms::
+
+    pip install lxml==3.7.1 zeep
+
 
 
 Getting started
 ===============
-
-You can install the latest version of zeep using pip::
-
-    pip install zeep
 
 The first thing you generally want to do is inspect the wsdl file you need to
 implement. This can be done with::
@@ -73,12 +100,12 @@ See ``python -mzeep --help`` for more information about this command.
 .. note:: Since this module hasn't reached 1.0.0 yet their might be minor
           releases which introduce backwards compatible changes. While I try 
           to keep this to a minimum it can still happen. So as always pin the 
-          version of zeep you used (e.g. ``zeep==0.14.0``').
+          version of zeep you used (e.g. ``zeep==0.24.0``').
 
 
 
 A simple use-case
------------------
+=================
 
 To give you an idea how zeep works a basic example.
 
@@ -100,21 +127,37 @@ endpoint you can run the following command in your terminal.
     python -mzeep http://www.soapclient.com/xml/soapresponder.wsdl
 
 
-More information
-================
+User guide
+==========
 
 .. toctree::
    :maxdepth: 2
-   :name: mastertoc
 
    in_depth
-   datastructures
+   client
+   headers
    transport
+   datastructures
    wsa
    wsse
    plugins
    helpers
    reporting_bugs
+
+
+API Documentation
+=================
+.. toctree::
+   :maxdepth: 2
+
+   api
+
+
+Changelog
+=========
+.. toctree::
+   :maxdepth: 2
+
    changes
 
 

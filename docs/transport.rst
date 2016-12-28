@@ -1,5 +1,5 @@
-Transport options
-=================
+Transports
+==========
 If you need to change options like cache, timeout or ssl verification
 use `Transport` class.
 
@@ -13,7 +13,8 @@ For instance to disable SSL verification use `verify` option::
     ...     transport=transport)
 
 
-To set a transport timeout use the `timeout` option. The default timeout is 300 seconds::
+To set a transport timeout use the `timeout` option. The default timeout is 300
+seconds::
 
     >>> from zeep import Client
     >>> from zeep.transports import Transport

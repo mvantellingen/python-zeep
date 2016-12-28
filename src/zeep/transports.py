@@ -11,21 +11,21 @@ from zeep.wsdl.utils import etree_to_string
 
 
 class Transport(object):
+    """The transport object handles all communication to the SOAP server.
+
+    :param cache: The cache object to be used to cache GET requests
+    :param timeout: The timeout for loading wsdl and xsd documents.
+    :param operation_timeout: The timeout for operations (POST/GET). By
+                              default this is None (no timeout).
+    :param verify: Boolean to indicate if the SSL certificate needs to be
+                   verified.
+    :param http_auth: HTTP authentication, passed to requests.
+
+    """
     supports_async = False
 
     def __init__(self, cache=NotSet, timeout=300, operation_timeout=None,
                  verify=True, http_auth=None):
-        """The transport object handles all communication to the SOAP server.
-
-        :param cache: The cache object to be used to cache GET requests
-        :param timeout: The timeout for loading wsdl and xsd documents.
-        :param operation_timeout: The timeout for operations (POST/GET). By
-                                  default this is None (no timeout).
-        :param verify: Boolean to indicate if the SSL certificate needs to be
-                       verified.
-        :param http_auth: HTTP authentication, passed to requests.
-
-        """
         self.cache = SqliteCache() if cache is NotSet else cache
         self.load_timeout = timeout
         self.operation_timeout = operation_timeout
