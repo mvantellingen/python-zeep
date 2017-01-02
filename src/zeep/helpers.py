@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import six
 
 from lxml import etree
 
@@ -10,7 +11,7 @@ def serialize_object(obj):
     if obj is None:
         return obj
 
-    if isinstance(obj, basestring):
+    if isinstance(obj, six.text_type) or isinstance(obj, six.string_types):
         return obj
 
     if isinstance(obj, etree._Element):
