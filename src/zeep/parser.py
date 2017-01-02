@@ -8,7 +8,8 @@ from zeep.exceptions import XMLSyntaxError
 
 
 def parse_xml(content, base_url=None, recover=False):
-    parser = etree.XMLParser(remove_comments=True, recover=recover)
+    parser = etree.XMLParser(
+        remove_comments=True, recover=recover, resolve_entities=False)
     try:
         return fromstring(content, parser=parser, base_url=base_url)
     except etree.XMLSyntaxError as exc:

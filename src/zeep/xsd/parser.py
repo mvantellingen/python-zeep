@@ -22,7 +22,7 @@ class ImportResolver(etree.Resolver):
 
 
 def parse_xml(content, transport, parser_context=None, base_url=None):
-    parser = etree.XMLParser(remove_comments=True)
+    parser = etree.XMLParser(remove_comments=True, resolve_entities=False)
     parser.resolvers.add(ImportResolver(transport, parser_context))
     try:
         return fromstring(content, parser=parser, base_url=base_url)

@@ -8,6 +8,7 @@ include README.rst
 include setup.cfg
 include setup.py
 
+graft examples
 graft src
 graft tests
 

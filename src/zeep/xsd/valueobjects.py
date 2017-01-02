@@ -9,6 +9,12 @@ __all__ = ['AnyObject', 'CompoundValue']
 
 
 class AnyObject(object):
+    """Create an any object
+
+    :param xsd_object: the xsd type
+    :param value: The value
+
+    """
     def __init__(self, xsd_object, value):
         self.xsd_obj = xsd_object
         self.value = value

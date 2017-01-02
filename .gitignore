@@ -2,6 +2,7 @@
 *.pyc
 .tox
 .coverage
+.coverage.*
 .eggs
 .cache
 .python-version

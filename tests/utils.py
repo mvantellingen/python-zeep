@@ -4,7 +4,8 @@ from six import binary_type, string_types
 
 
 def load_xml(xml):
-    parser = etree.XMLParser(remove_blank_text=True, remove_comments=True)
+    parser = etree.XMLParser(
+        remove_blank_text=True, remove_comments=True, resolve_entities=False)
     return etree.fromstring(xml.strip(), parser=parser)
 
 
