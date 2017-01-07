@@ -1,5 +1,8 @@
 import logging
 
+import re
+import requests_toolbelt
+
 from lxml import etree
 
 from zeep import plugins, wsa
@@ -127,6 +130,11 @@ class SoapBinding(Binding):
             raise TransportError(
                 u'Server returned HTTP status %d (no content available)'
                 % response.status_code)
+
+        if re.match("multipart", response.headers['Content-Type']):
+            multipart = requests_toolbelt.multipart.decoder.MultipartDecoder.from_response(response)
+            part = multipart.parts[1]
+            return part
 
         try:
             doc = parse_xml(response.content, recover=True)
