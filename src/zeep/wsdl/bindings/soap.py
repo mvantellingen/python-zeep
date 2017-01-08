@@ -2,6 +2,7 @@ import logging
 
 import re
 import requests_toolbelt
+from requests.structures import CaseInsensitiveDict
 
 from lxml import etree
 
@@ -170,6 +171,8 @@ class SoapBinding(Binding):
 
                 parts = []
                 for part in multipart.parts:
+                    headers = ( (k.decode(multipart.encoding), v.decode(multipart.encoding)) for k, v in part.headers.items())
+                    part.headers = CaseInsensitiveDict(headers)
                     if 'Content-Type' in part.headers:
                         if re.match("text/xml", part.headers['Content-Type']):
                             setattr(part, 'status_code', response.status_code)
