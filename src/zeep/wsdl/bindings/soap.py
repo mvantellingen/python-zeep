@@ -115,7 +115,7 @@ class SoapBinding(Binding):
         operation_obj = self.get(operation)
         return self.process_reply(client, operation_obj, response)
 
-    def process_reply(self, client, operation, response):
+    def process_xml_reply(self, client, operation, response):
         """Process the XML reply from the server.
 
         :param client: The client with which the operation was called
@@ -124,17 +124,7 @@ class SoapBinding(Binding):
         :type operation: zeep.wsdl.definitions.Operation
         :param response: The response object returned by the remote server
         :type response: requests.Response
-
         """
-        if response.status_code != 200 and not response.content:
-            raise TransportError(
-                u'Server returned HTTP status %d (no content available)'
-                % response.status_code)
-
-        if re.match("multipart", response.headers['Content-Type']):
-            multipart = requests_toolbelt.multipart.decoder.MultipartDecoder.from_response(response)
-            part = multipart.parts[1]
-            return part
 
         try:
             doc = parse_xml(response.content, recover=True)
@@ -157,6 +147,39 @@ class SoapBinding(Binding):
             return self.process_error(doc, operation)
 
         return operation.process_reply(doc)
+
+    def process_reply(self, client, operation, response):
+        """Process the reply from the server, handle Multipart if needed
+
+        :param client: The client with which the operation was called
+        :type client: zeep.client.Client
+        :param operation: The operation object from which this is a reply
+        :type operation: zeep.wsdl.definitions.Operation
+        :param response: The response object returned by the remote server
+        :type response: requests.Response
+
+        """
+        if response.status_code != 200 and not response.content:
+            raise TransportError(
+                u'Server returned HTTP status %d (no content available)'
+                % response.status_code)
+
+        if 'Content-Type' in response.headers:
+            if re.match("multipart", response.headers['Content-Type']):
+                multipart = requests_toolbelt.multipart.decoder.MultipartDecoder.from_response(response)
+
+                parts = []
+                for part in multipart.parts:
+                    if 'Content-Type' in part.headers:
+                        if re.match("text/xml", part.headers['Content-Type']):
+                            setattr(part, 'status_code', response.status_code)
+                            newpart = self.process_xml_reply(client, operation, part)
+                            if newpart: # if above xml processing is not working, only use if data is returned
+                                part = newpart
+                    parts.append(part)
+                return parts
+
+        return self.process_xml_reply(client, operation, response)
 
     def process_error(self, doc, operation):
         raise NotImplementedError
