@@ -10,6 +10,7 @@ install_requires = [
     'requests>=2.7.0',
     'six>=1.9.0',
     'pytz',
+    'requests_toolbelt',
 ]
 
 docs_require = [
@@ -37,7 +38,7 @@ with open('README.rst') as fh:
 
 setup(
     name='zeep',
-    version='0.24.0.1',
+    version='0.24.0.2',
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=long_description,
     author="Michael van Tellingen",
