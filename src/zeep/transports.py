@@ -1,5 +1,8 @@
-import logging
+
 import os
+import re
+import logging
+import requests_toolbelt
 from contextlib import contextmanager
 
 import requests
@@ -8,6 +11,33 @@ from six.moves.urllib.parse import urlparse
 from zeep.cache import SqliteCache
 from zeep.utils import NotSet, get_version
 from zeep.wsdl.utils import etree_to_string
+
+
+def multipart_log_message(response):
+    """Return a log message of the multipart response content, including headers
+    If the content is not text/xml, return only a byte count
+
+    :param response: response object from requests session
+    :return: log message for use in debug output
+    """
+    log_message = "\n".join([a + ": " + b for a, b in response.headers.items()])
+    multipart = requests_toolbelt.multipart.decoder.MultipartDecoder.from_response(response)
+    for part in multipart.parts:
+        log_message += "\n\n--%s\n%s" % (
+        multipart.boundary.decode(),
+        # The requests_toolbelt multipart decoder returns headers in binary format, need to decode
+        "\n".join([a.decode() + ": " + b.decode() for a, b in part.headers.items()]))
+        if b'Content-Type' in part.headers:
+            m = re.match("text/xml(; charset=(\S+))?", part.headers[b'Content-type'].decode())
+            if m:
+                charset = m.group(2)
+                if not charset:
+                    charset = 'utf-8'
+                log_message += "\n\n%s" % part.content.decode(charset)
+            else:
+                log_message += "\n\n ... %s bytes of data ...\n--%s--" % (
+                len(part.content), multipart.boundary.decode())
+    return log_message
 
 
 class Transport(object):
@@ -81,7 +111,11 @@ class Transport(object):
             timeout=self.operation_timeout)
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            log_message = response.content
+            if "Content-Type" in response.headers:
+                if re.match("multipart", response.headers["Content-Type"]):
+                    log_message = multipart_log_message(response)
+                else:
+                    log_message = response.content
             if isinstance(log_message, bytes):
                 log_message = log_message.decode('utf-8')
 
