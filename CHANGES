@@ -1,3 +1,7 @@
+ - Fix helpers.serialize_object for lists of ints (#123).
+ - Allow to change the dict type used in helpers.serialize_object.
+ 
+ 
 0.24.0 (2016-12-16)
 -------------------
  - Don't fail the parsing of responses if an xsi:type references an non-existing
