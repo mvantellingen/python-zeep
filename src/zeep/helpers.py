@@ -14,15 +14,13 @@ def serialize_object(obj, dict_type=OrderedDict):
         return obj
 
     if isinstance(obj, list):
-        return [serialize_object(sub) for sub in obj]
+        return [serialize_object(sub, dict_type=dict_type) for sub in obj]
 
-    if isinstance(obj, dict):
+    if isinstance(obj, (dict, CompoundValue)):
         result = dict_type()
         for key in obj:
             value = obj[key]
-            if isinstance(value, (list, CompoundValue)):
-                value = serialize_object(value)
-            result[key] = value
+            result[key] = serialize_object(value, dict_type=dict_type)
         return result
-        
+
     return obj
