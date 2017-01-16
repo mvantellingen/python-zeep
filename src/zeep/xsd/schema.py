@@ -34,8 +34,7 @@ class Schema(object):
         documents = []
         for node in schema_nodes:
             document = SchemaDocument(
-                node, self._transport, self, location,
-                self._parser_context, location)
+                node, self._transport, self, location, location)
             documents.append(document)
 
         for document in documents:
@@ -219,6 +218,7 @@ class Schema(object):
     def _add_schema_document(self, document):
         logger.info("Add document with tns %s to schema %s", document._target_namespace, id(self))
         self._schemas[document._target_namespace] = document
+        self._parser_context.schema_objects.add(document)
 
     def _get_schema_document(self, namespace):
         if namespace not in self._schemas:
@@ -228,10 +228,9 @@ class Schema(object):
 
 
 class SchemaDocument(object):
-    def __init__(self, node, transport, schema, location, parser_context, base_url):
+    def __init__(self, node, transport, schema, location, base_url):
         logger.debug("Init schema document for %r", location)
         assert node is not None
-        assert parser_context
 
         # Internal
         self._schema = schema
@@ -255,14 +254,13 @@ class SchemaDocument(object):
         # self._xml_schema = None
 
         self._schema._add_schema_document(self)
-        parser_context.schema_objects.add(self)
 
         if node is not None:
             # Disable XML schema validation for now
             # if len(node) > 0:
             #     self.xml_schema = etree.XMLSchema(node)
 
-            visitor = SchemaVisitor(self, parser_context)
+            visitor = SchemaVisitor(self, self._schema._parser_context)
             visitor.visit_schema(node)
 
     def __repr__(self):

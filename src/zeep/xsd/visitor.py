@@ -195,7 +195,7 @@ class SchemaVisitor(object):
 
         schema = self.document.__class__(
             schema_node, self.document._transport, self.schema, location,
-            self.parser_context, base_url)
+            base_url)
 
         self.document._imports[namespace] = schema
         return schema
