@@ -25,7 +25,7 @@ def load_external(url, transport, base_url=None):
 
 
 def absolute_location(location, base):
-    if location == base or location.startswith('intschema'):
+    if location == base:
         return location
 
     if urlparse(location).scheme in ('http', 'https'):

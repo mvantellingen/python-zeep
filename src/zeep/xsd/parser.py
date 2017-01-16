@@ -12,10 +12,6 @@ class ImportResolver(etree.Resolver):
         self.transport = transport
 
     def resolve(self, url, pubid, context):
-        if url.startswith('intschema'):
-            text = etree.tostring(self.parser_context.schema_nodes.get(url))
-            return self.resolve_string(text, context)
-
         if urlparse(url).scheme in ('http', 'https'):
             content = self.transport.load(url)
             return self.resolve_string(content, context)
@@ -31,10 +27,6 @@ def parse_xml(content, transport, parser_context=None, base_url=None):
 
 
 def load_external(url, transport, parser_context=None, base_url=None):
-    if url.startswith('intschema'):
-        assert parser_context
-        return parser_context.schema_nodes.get(url)
-
     if base_url:
         url = absolute_location(url, base_url)
 

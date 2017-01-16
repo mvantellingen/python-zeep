@@ -1,4 +1,4 @@
-class SchemaRepository(object):
+class _SchemaRepository(object):
     """Mapping between schema target namespace and schema object"""
     def __init__(self):
         self._schemas = {}
@@ -17,26 +17,10 @@ class SchemaRepository(object):
         return len(self._schemas)
 
 
-class SchemaNodeRepository(object):
-    """Mapping between schema target namespace and lxml node"""
-    def __init__(self):
-        self._nodes = {}
-
-    def add(self, key, value):
-        self._nodes[key] = value
-
-    def get(self, key):
-        return self._nodes[key]
-
-    def __len__(self):
-        return len(self._nodes)
-
-
 class ParserContext(object):
     """Parser context when parsing wsdl/xsd files"""
     def __init__(self):
-        self.schema_nodes = SchemaNodeRepository()
-        self.schema_objects = SchemaRepository()
+        self.schema_objects = _SchemaRepository()
 
         # Mapping between internal nodes and original location
         self.schema_locations = {}
