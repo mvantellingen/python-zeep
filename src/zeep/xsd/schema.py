@@ -30,10 +30,7 @@ class Schema(object):
     def add_documents(self, schema_nodes, location):
         documents = []
         for node in schema_nodes:
-            # SchemaDocument registers itself in this object via
-            # _add_schema_document. Should be made more explicit in the future
-            document = SchemaDocument(
-                node, self._transport, self, location, location)
+            document = self.create_new_document(node, location)
             documents.append(document)
 
         for document in documents:
@@ -214,6 +211,16 @@ class Schema(object):
         except KeyError:
             raise ValueError("No such prefix %r" % prefix)
 
+    def create_new_document(self, node, url, base_url=None):
+        namespace = node.get('targetNamespace') if node is not None else None
+        if base_url is None:
+            base_url = url
+
+        schema = SchemaDocument(namespace, self, url, base_url)
+        self._add_schema_document(schema)
+        schema.load(node)
+        return schema
+
     def _has_schema_document(self, namespace):
         return namespace in self._schemas
 
@@ -231,17 +238,14 @@ class Schema(object):
 
 
 class SchemaDocument(object):
-    def __init__(self, node, transport, schema, location, base_url):
+    def __init__(self, namespace, schema, location, base_url):
         logger.debug("Init schema document for %r", location)
-        assert node is not None
 
         # Internal
         self._schema = schema
         self._base_url = base_url or location
         self._location = location
-        self._transport = transport
-        self._target_namespace = (
-            node.get('targetNamespace') if node is not None else None)
+        self._target_namespace = namespace
         self._elm_instances = []
 
         self._attribute_groups = {}
@@ -256,15 +260,20 @@ class SchemaDocument(object):
         self._resolved = False
         # self._xml_schema = None
 
-        self._schema._add_schema_document(self)
+    def load(self, node):
+        if node is None:
+            return
 
-        if node is not None:
-            # Disable XML schema validation for now
-            # if len(node) > 0:
-            #     self.xml_schema = etree.XMLSchema(node)
+        if not self._schema._has_schema_document(self._target_namespace):
+            raise RuntimeError(
+                "The document needs to be registered in the schema before " +
+                "it can be loaded")
 
-            visitor = SchemaVisitor(self)
-            visitor.visit_schema(node)
+        # Disable XML schema validation for now
+        # if len(node) > 0:
+        #     self.xml_schema = etree.XMLSchema(node)
+        visitor = SchemaVisitor(self)
+        visitor.visit_schema(node)
 
     def __repr__(self):
         return '<SchemaDocument(location=%r, tns=%r, is_empty=%r)>' % (

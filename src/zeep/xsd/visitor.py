@@ -164,7 +164,7 @@ class SchemaVisitor(object):
             return
 
         # Load the XML
-        schema_node = load_external(location, self.document._transport)
+        schema_node = load_external(location, self.schema._transport)
 
         # Check if the xsd:import namespace matches the targetNamespace. If
         # the xsd:import statement didn't specify a namespace then make sure
@@ -184,10 +184,7 @@ class SchemaVisitor(object):
                 ) % (location, namespace or '(null)', schema._location)
             warnings.warn(message, ZeepWarning, stacklevel=6)
 
-        schema = self.document.__class__(
-            schema_node, self.document._transport, self.schema, location,
-            location)
-
+        schema = self.schema.create_new_document(schema_node, location)
         self.document.register_import(namespace, schema)
         return schema
 
@@ -208,7 +205,7 @@ class SchemaVisitor(object):
             return
 
         schema_node = load_external(
-            location, self.document._transport, base_url=self.document._base_url)
+            location, self.schema._transport, base_url=self.document._base_url)
         self._includes.add(location)
 
         return self.visit_schema(schema_node)
