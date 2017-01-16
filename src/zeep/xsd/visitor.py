@@ -137,7 +137,11 @@ class SchemaVisitor(object):
         # namespace. Schema's without namespace are registered as 'None'
         schema = self.parser_context.schema_objects.get(namespace)
         if schema:
-            if location and schema._location != location:
+            if location and schema._location == location:
+                logger.debug("Returning existing schema: %r", location)
+                self.document.register_import(namespace, schema)
+                return schema
+            else:
                 # Use same warning message as libxml2
                 message = (
                     "Skipping import of schema located at %r " +
@@ -145,11 +149,7 @@ class SchemaVisitor(object):
                     "already imported with the schema located at %r"
                     ) % (location, namespace or '(null)', schema._location)
                 warnings.warn(message, ZeepWarning, stacklevel=6)
-
                 return
-            logger.debug("Returning existing schema: %r", location)
-            self.document._imports[namespace] = schema
-            return schema
 
         # Hardcode the mapping between the xml namespace and the xsd for now.
         # This seems to fix issues with exchange wsdl's, see #220
@@ -197,7 +197,7 @@ class SchemaVisitor(object):
             schema_node, self.document._transport, self.schema, location,
             base_url)
 
-        self.document._imports[namespace] = schema
+        self.document.register_import(namespace, schema)
         return schema
 
     def visit_include(self, node, parent):
@@ -922,7 +922,7 @@ class SchemaVisitor(object):
         # referenced.
         if (
             name.namespace == 'http://schemas.xmlsoap.org/soap/encoding/' and
-            name.namespace not in self.document._imports
+            not self.document.is_imported(name.namespace)
         ):
             import_node = etree.Element(
                 tags.import_,

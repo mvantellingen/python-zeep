@@ -3,8 +3,8 @@ from lxml import etree
 
 from tests.utils import DummyTransport, load_xml
 from zeep import exceptions, xsd
+from zeep.exceptions import LookupError, ZeepWarning
 from zeep.xsd.builtins import Schema as Schema
-from zeep.exceptions import ZeepWarning
 
 
 def test_default_types():
@@ -395,6 +395,7 @@ def test_duplicate_target_namespace():
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             targetNamespace="http://tests.python-zeep.org/duplicate"
             elementFormDefault="qualified">
+            <xsd:element name="elm-in-b" type="xsd:string"/>
         </xsd:schema>
     """.strip())
 
@@ -404,6 +405,7 @@ def test_duplicate_target_namespace():
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             targetNamespace="http://tests.python-zeep.org/duplicate"
             elementFormDefault="qualified">
+            <xsd:element name="elm-in-c" type="xsd:string"/>
         </xsd:schema>
     """.strip())
 
@@ -412,7 +414,11 @@ def test_duplicate_target_namespace():
     transport.bind('http://tests.python-zeep.org/b.xsd', schema_b)
     transport.bind('http://tests.python-zeep.org/c.xsd', schema_c)
     with pytest.warns(ZeepWarning):
-        xsd.Schema(schema_a, transport=transport)
+        schema = xsd.Schema(schema_a, transport=transport)
+
+    assert schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-b')
+    with pytest.raises(LookupError):
+        schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-c')
 
 
 def test_multiple_no_namespace():

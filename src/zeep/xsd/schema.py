@@ -33,6 +33,8 @@ class Schema(object):
     def add_documents(self, schema_nodes, location):
         documents = []
         for node in schema_nodes:
+            # SchemaDocument registers itself in this object via
+            # _add_schema_document. Should be made more explicit in the future
             document = SchemaDocument(
                 node, self._transport, self, location, location)
             documents.append(document)
@@ -292,6 +294,12 @@ class SchemaDocument(object):
         for element in self._elm_instances:
             element.resolve()
         self._elm_instances = []
+
+    def register_import(self, namespace, schema):
+        self._imports[namespace] = schema
+
+    def is_imported(self, namespace):
+        return namespace in self._imports
 
     def register_type(self, name, value):
         assert not isinstance(value, type)
