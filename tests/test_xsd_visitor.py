@@ -23,7 +23,7 @@ def test_schema_empty():
         </schema>
     """)
     schema = parse_schema_node(node)
-    root = list(schema._schemas.values())[0]
+    root = next(schema.documents)
     assert root._element_form == 'qualified'
     assert root._attribute_form == 'unqualified'
 

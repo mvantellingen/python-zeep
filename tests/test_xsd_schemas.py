@@ -125,7 +125,9 @@ def test_schema_doc_repr_val():
             elementFormDefault="qualified">
         </xs:schema>
     """))
-    doc = schema._get_schema_document('http://tests.python-zeep.org/')
+    docs = schema._get_schema_documents('http://tests.python-zeep.org/')
+    assert len(docs) == 1
+    doc = docs[0]
     assert repr(doc) == "<SchemaDocument(location=None, tns='http://tests.python-zeep.org/', is_empty=True)>"
 
 
@@ -413,12 +415,10 @@ def test_duplicate_target_namespace():
     transport.bind('http://tests.python-zeep.org/a.xsd', schema_a)
     transport.bind('http://tests.python-zeep.org/b.xsd', schema_b)
     transport.bind('http://tests.python-zeep.org/c.xsd', schema_c)
-    with pytest.warns(ZeepWarning):
-        schema = xsd.Schema(schema_a, transport=transport)
+    schema = xsd.Schema(schema_a, transport=transport)
 
     assert schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-b')
-    with pytest.raises(LookupError):
-        schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-c')
+    assert schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-c')
 
 
 def test_multiple_no_namespace():
@@ -446,8 +446,7 @@ def test_multiple_no_namespace():
     transport = DummyTransport()
     transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
     transport.bind('http://tests.python-zeep.org/c.xsd', node_b)
-    with pytest.warns(ZeepWarning):
-        xsd.Schema(node_a, transport=transport)
+    xsd.Schema(node_a, transport=transport)
 
 
 def test_multiple_only_target_ns():
@@ -476,8 +475,7 @@ def test_multiple_only_target_ns():
     transport = DummyTransport()
     transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
     transport.bind('http://tests.python-zeep.org/c.xsd', node_b)
-    with pytest.warns(ZeepWarning):
-        xsd.Schema(node_a, transport=transport)
+    xsd.Schema(node_a, transport=transport)
 
 
 def test_schema_error_handling():

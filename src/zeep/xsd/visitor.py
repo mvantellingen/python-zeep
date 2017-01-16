@@ -134,21 +134,11 @@ class SchemaVisitor(object):
 
         # Check if the schema is already imported before based on the
         # namespace. Schema's without namespace are registered as 'None'
-        schema = self.schema._get_schema_document(namespace, fail_silently=True)
-        if schema:
-            if location and schema._location == location:
-                logger.debug("Returning existing schema: %r", location)
-                self.document.register_import(namespace, schema)
-                return schema
-            else:
-                # Use same warning message as libxml2
-                message = (
-                    "Skipping import of schema located at %r " +
-                    "for the namespace %r, since the namespace was " +
-                    "already imported with the schema located at %r"
-                    ) % (location, namespace or '(null)', schema._location)
-                warnings.warn(message, ZeepWarning, stacklevel=6)
-                return
+        document = self.schema._get_schema_document(namespace, location)
+        if document:
+            logger.debug("Returning existing schema: %r", location)
+            self.document.register_import(namespace, document)
+            return document
 
         # Hardcode the mapping between the xml namespace and the xsd for now.
         # This seems to fix issues with exchange wsdl's, see #220
@@ -175,14 +165,6 @@ class SchemaVisitor(object):
                 "The namespace defined on the xsd:import doesn't match the "
                 "imported targetNamespace located at %r "
                 ) % (location))
-        elif self.schema._has_schema_document(schema_tns):
-            schema = self.schema._get_schema_document(schema_tns)
-            message = (
-                "Skipping import of schema located at %r " +
-                "for the namespace %r, since the namespace was " +
-                "already imported with the schema located at %r"
-                ) % (location, namespace or '(null)', schema._location)
-            warnings.warn(message, ZeepWarning, stacklevel=6)
 
         schema = self.schema.create_new_document(schema_node, location)
         self.document.register_import(namespace, schema)
