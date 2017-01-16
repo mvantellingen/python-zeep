@@ -6,7 +6,6 @@ from lxml import etree
 from zeep import exceptions
 from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import const
-from zeep.xsd.context import ParserContext
 from zeep.xsd.visitor import SchemaVisitor
 
 logger = logging.getLogger(__name__)
@@ -15,9 +14,7 @@ logger = logging.getLogger(__name__)
 class Schema(object):
     """A schema is a collection of schema documents."""
 
-    def __init__(self, node=None, transport=None, location=None,
-                 parser_context=None):
-        self._parser_context = parser_context or ParserContext()
+    def __init__(self, node=None, transport=None, location=None):
         self._transport = transport
 
         self._schemas = OrderedDict()
@@ -217,13 +214,17 @@ class Schema(object):
         except KeyError:
             raise ValueError("No such prefix %r" % prefix)
 
+    def _has_schema_document(self, namespace):
+        return namespace in self._schemas
+
     def _add_schema_document(self, document):
         logger.info("Add document with tns %s to schema %s", document._target_namespace, id(self))
         self._schemas[document._target_namespace] = document
-        self._parser_context.schema_objects.add(document)
 
-    def _get_schema_document(self, namespace):
+    def _get_schema_document(self, namespace, fail_silently=False):
         if namespace not in self._schemas:
+            if fail_silently:
+                return
             raise exceptions.NamespaceError(
                 "No schema available for the namespace %r" % namespace)
         return self._schemas[namespace]
@@ -262,7 +263,7 @@ class SchemaDocument(object):
             # if len(node) > 0:
             #     self.xml_schema = etree.XMLSchema(node)
 
-            visitor = SchemaVisitor(self, self._schema._parser_context)
+            visitor = SchemaVisitor(self)
             visitor.visit_schema(node)
 
     def __repr__(self):

@@ -3,17 +3,14 @@ from lxml import etree
 from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
 from zeep.xsd import builtins
-from zeep.xsd.context import ParserContext
 from zeep.xsd.schema import Schema
 
 
 def parse_schema_node(node):
-    parser_context = ParserContext()
     schema = Schema(
         node=node,
         transport=None,
-        location=None,
-        parser_context=parser_context)
+        location=None)
     return schema
 
 

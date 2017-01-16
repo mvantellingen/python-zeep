@@ -41,10 +41,9 @@ class SchemaVisitor(object):
     types in the given schema.
 
     """
-    def __init__(self, document, parser_context=None):
+    def __init__(self, document):
         self.document = document
         self.schema = document._schema
-        self.parser_context = parser_context
         self._includes = set()
 
     def process(self, node, parent):
@@ -135,7 +134,7 @@ class SchemaVisitor(object):
 
         # Check if the schema is already imported before based on the
         # namespace. Schema's without namespace are registered as 'None'
-        schema = self.parser_context.schema_objects.get(namespace)
+        schema = self.schema._get_schema_document(namespace, fail_silently=True)
         if schema:
             if location and schema._location == location:
                 logger.debug("Returning existing schema: %r", location)
@@ -165,8 +164,7 @@ class SchemaVisitor(object):
             return
 
         # Load the XML
-        schema_node = load_external(
-            location, self.document._transport, self.parser_context)
+        schema_node = load_external(location, self.document._transport)
 
         # Check if the xsd:import namespace matches the targetNamespace. If
         # the xsd:import statement didn't specify a namespace then make sure
@@ -177,8 +175,8 @@ class SchemaVisitor(object):
                 "The namespace defined on the xsd:import doesn't match the "
                 "imported targetNamespace located at %r "
                 ) % (location))
-        elif schema_tns in self.parser_context.schema_objects:
-            schema = self.parser_context.schema_objects.get(schema_tns)
+        elif self.schema._has_schema_document(schema_tns):
+            schema = self.schema._get_schema_document(schema_tns)
             message = (
                 "Skipping import of schema located at %r " +
                 "for the namespace %r, since the namespace was " +
@@ -186,16 +184,9 @@ class SchemaVisitor(object):
                 ) % (location, namespace or '(null)', schema._location)
             warnings.warn(message, ZeepWarning, stacklevel=6)
 
-        # If this schema location is 'internal' then retrieve the original
-        # location since that is used as base url for sub include/imports
-        if location in self.parser_context.schema_locations:
-            base_url = self.parser_context.schema_locations[location]
-        else:
-            base_url = location
-
         schema = self.document.__class__(
             schema_node, self.document._transport, self.schema, location,
-            base_url)
+            location)
 
         self.document.register_import(namespace, schema)
         return schema
@@ -217,8 +208,7 @@ class SchemaVisitor(object):
             return
 
         schema_node = load_external(
-            location, self.document._transport, self.parser_context,
-            base_url=self.document._base_url)
+            location, self.document._transport, base_url=self.document._base_url)
         self._includes.add(location)
 
         return self.visit_schema(schema_node)

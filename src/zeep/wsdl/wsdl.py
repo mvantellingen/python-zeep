@@ -11,7 +11,6 @@ from zeep.parser import absolute_location, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
 from zeep.xsd import Schema
-from zeep.xsd.context import ParserContext
 
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
@@ -52,9 +51,6 @@ class Document(object):
         # Dict with all definition objects within this WSDL
         self._definitions = {}
         self.types = Schema([], transport=self.transport)
-
-        # Dict with internal schema objects, used for lxml.ImportResolver
-        self._parser_context = ParserContext()
 
         document = self._load_content(location)
 
