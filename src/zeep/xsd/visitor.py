@@ -41,9 +41,9 @@ class SchemaVisitor(object):
     types in the given schema.
 
     """
-    def __init__(self, document):
+    def __init__(self, schema, document):
         self.document = document
-        self.schema = document._schema
+        self.schema = schema
         self._includes = set()
 
     def process(self, node, parent):

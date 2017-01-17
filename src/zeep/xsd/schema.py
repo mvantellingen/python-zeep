@@ -148,9 +148,9 @@ class Schema(object):
         if base_url is None:
             base_url = url
 
-        schema = SchemaDocument(namespace, self, url, base_url)
+        schema = SchemaDocument(namespace, url, base_url)
         self._add_schema_document(schema)
-        schema.load(node)
+        schema.load(self, node)
         return schema
 
     def merge(self, schema):
@@ -233,11 +233,10 @@ class Schema(object):
 
 
 class SchemaDocument(object):
-    def __init__(self, namespace, schema, location, base_url):
+    def __init__(self, namespace, location, base_url):
         logger.debug("Init schema document for %r", location)
 
         # Internal
-        self._schema = schema
         self._base_url = base_url or location
         self._location = location
         self._target_namespace = namespace
@@ -255,11 +254,11 @@ class SchemaDocument(object):
         self._resolved = False
         # self._xml_schema = None
 
-    def load(self, node):
+    def load(self, schema, node):
         if node is None:
             return
 
-        if not self._schema._has_schema_document(self._target_namespace):
+        if not schema._has_schema_document(self._target_namespace):
             raise RuntimeError(
                 "The document needs to be registered in the schema before " +
                 "it can be loaded")
@@ -267,7 +266,7 @@ class SchemaDocument(object):
         # Disable XML schema validation for now
         # if len(node) > 0:
         #     self.xml_schema = etree.XMLSchema(node)
-        visitor = SchemaVisitor(self)
+        visitor = SchemaVisitor(schema, self)
         visitor.visit_schema(node)
 
     def __repr__(self):
