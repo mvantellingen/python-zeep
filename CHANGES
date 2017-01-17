@@ -1,3 +1,10 @@
+0.25.0 (unreleased)
+-------------------
+ - Add support for duplicate namespace definitions. Previously imports for
+   namespaces which were already imported were ignored. It will now search
+   through all matching schemas with the tns to find a specific object (#204)
+
+
 0.24.0 (2016-12-16)
 -------------------
  - Don't fail the parsing of responses if an xsi:type references an non-existing
