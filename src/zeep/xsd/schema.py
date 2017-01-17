@@ -254,6 +254,18 @@ class SchemaDocument(object):
         self._resolved = False
         # self._xml_schema = None
 
+    def __repr__(self):
+        return '<SchemaDocument(location=%r, tns=%r, is_empty=%r)>' % (
+            self._location, self._target_namespace, self.is_empty)
+
+    @property
+    def namespace(self):
+        return self._target_namespace
+
+    @property
+    def is_empty(self):
+        return not bool(self._imports or self._types or self._elements)
+
     def load(self, schema, node):
         if node is None:
             return
@@ -268,18 +280,6 @@ class SchemaDocument(object):
         #     self.xml_schema = etree.XMLSchema(node)
         visitor = SchemaVisitor(schema, self)
         visitor.visit_schema(node)
-
-    def __repr__(self):
-        return '<SchemaDocument(location=%r, tns=%r, is_empty=%r)>' % (
-            self._location, self._target_namespace, self.is_empty)
-
-    @property
-    def namespace(self):
-        return self._target_namespace
-
-    @property
-    def is_empty(self):
-        return not bool(self._imports or self._types or self._elements)
 
     def resolve(self):
         logger.info("Resolving in schema %s", self)
