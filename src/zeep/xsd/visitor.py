@@ -1,12 +1,11 @@
 import keyword
 import logging
 import re
-import warnings
 
 from lxml import etree
 
 from zeep import exceptions
-from zeep.exceptions import XMLParseError, ZeepWarning
+from zeep.exceptions import XMLParseError
 from zeep.parser import absolute_location
 from zeep.utils import as_qname, qname_attr
 from zeep.xsd import builtins as xsd_builtins
