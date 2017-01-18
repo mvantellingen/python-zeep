@@ -9,7 +9,7 @@ from cached_property import threaded_cached_property
 from zeep.exceptions import XMLParseError, UnexpectedElementError
 from zeep.xsd.const import xsi_ns
 from zeep.xsd.elements import Any, AnyAttribute, AttributeGroup, Element
-from zeep.xsd.indicators import Group, OrderIndicator, Sequence
+from zeep.xsd.indicators import Group, OrderIndicator, Sequence, Choice
 from zeep.xsd.utils import NamePrefixGenerator
 from zeep.utils import get_base_class
 from zeep.xsd.valueobjects import CompoundValue
@@ -435,6 +435,9 @@ class ComplexType(Type):
 
         Used for handling xsd:extension tags
 
+        TODO: Needs a rewrite where the child containers are responsible for
+        the extend functionality.
+
         """
         if isinstance(base, ComplexType):
             base_attributes = base._attributes_unwrapped
@@ -460,9 +463,13 @@ class ComplexType(Type):
         element = []
         if self._element and base_element:
             element = self._element.clone(self._element.name)
-            if isinstance(element, OrderIndicator) and isinstance(base_element, OrderIndicator):
-                for item in reversed(base_element):
-                    element.insert(0, item)
+            if isinstance(base_element, OrderIndicator):
+                if isinstance(self._element, Choice):
+                    element = base_element.clone(self._element.name)
+                    element.append(self._element)
+                elif isinstance(element, OrderIndicator):
+                    for item in reversed(base_element):
+                        element.insert(0, item)
 
             elif isinstance(self._element, Group):
                 raise NotImplementedError('TODO')

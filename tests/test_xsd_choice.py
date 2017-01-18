@@ -977,3 +977,69 @@ def test_parse_check_mixed_choices():
       </document>
     """
     assert_nodes_equal(expected, node)
+
+
+def test_choice_extend():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema
+                xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+            <xsd:complexType name="BaseType">
+                <xsd:sequence>
+                    <xsd:element name="optional" minOccurs="0"/>
+                </xsd:sequence>
+                <xsd:attribute name="Id"/>
+            </xsd:complexType>
+            <xsd:complexType name="ChildType">
+                <xsd:complexContent>
+                    <xsd:extension base="tns:BaseType">
+                        <xsd:sequence>
+                            <xsd:element name="item-1-1" type="xsd:string"/>
+                            <xsd:element name="item-1-2" type="xsd:string"/>
+                        </xsd:sequence>
+                    </xsd:extension>
+                </xsd:complexContent>
+            </xsd:complexType>
+            <xsd:element name="container">
+                <xsd:complexType>
+                    <xsd:complexContent>
+                        <xsd:extension base="tns:ChildType">
+                            <xsd:choice minOccurs="0" maxOccurs="6">
+                                <xsd:element name="item-2-1" type="xsd:string"/>
+                                <xsd:element name="item-2-2" type="xsd:string"/>
+                            </xsd:choice>
+                            <xsd:attribute name="version" use="required" fixed="10.0.1.2"/>
+                        </xsd:extension>
+                    </xsd:complexContent>
+                </xsd:complexType>
+            </xsd:element>
+        </schema>
+    """))
+
+    element = schema.get_element('ns0:container')
+    node = load_xml("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item-1-1>foo</ns0:item-1-1>
+          <ns0:item-1-2>bar</ns0:item-1-2>
+        </ns0:container>
+    """)
+    value = element.parse(node, schema)
+
+    node = load_xml("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item-1-1>foo</ns0:item-1-1>
+          <ns0:item-1-2>bar</ns0:item-1-2>
+          <ns0:item-2-1>xafoo</ns0:item-2-1>
+          <ns0:item-2-2>xabar</ns0:item-2-2>
+
+        </ns0:container>
+    """)
+    value = element.parse(node, schema)
+    assert value['item-1-1'] == 'foo'
+    assert value['item-1-2'] == 'bar'
+    assert value['_value_1'][0] == {'item-2-1': 'xafoo'}
+    assert value['_value_1'][1] == {'item-2-2': 'xabar'}
