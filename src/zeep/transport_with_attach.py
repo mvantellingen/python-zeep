@@ -19,6 +19,7 @@ from lxml import etree
 from zeep.transports import Transport
 from zeep.wsdl.utils import etree_to_string
 import zeep.xsd.builtins
+import zeep.client
 BOUND = "MTOM".center(40, "=")
 XOP_LINK = "http://www.w3.org/2004/08/xop/include"
 FILETAG = 'xop:Include:'
@@ -41,6 +42,11 @@ zeep.xsd.builtins.Base64Binary.accepted_types += (etree.Element, )
 zeep.xsd.builtins.Base64Binary.xmlvalue = xmlvalue
 zeep.xsd.builtins.Base64Binary.pythonvalue = pythonvalue
 # Base64Binary patched.
+# Update NSMAP
+zeep.client.NSMAP.update({
+    "xop": "http://www.w3.org/2004/08/xop/include",
+    "xmime5": "http://www.w3.org/2005/05/xmlmime"
+})
 
 def attach(filename):
     """Returns the placeholder for the file."""
