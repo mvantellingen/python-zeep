@@ -6,9 +6,10 @@ from itertools import chain
 import six
 from cached_property import threaded_cached_property
 
+from zeep.xsd.any import Any, AnyAttribute
 from zeep.exceptions import XMLParseError, UnexpectedElementError
 from zeep.xsd.const import xsi_ns
-from zeep.xsd.elements import Any, AnyAttribute, AttributeGroup, Element
+from zeep.xsd.elements import AttributeGroup, Element
 from zeep.xsd.indicators import Group, OrderIndicator, Sequence, Choice
 from zeep.xsd.utils import NamePrefixGenerator
 from zeep.utils import get_base_class, NotSet

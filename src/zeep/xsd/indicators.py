@@ -8,7 +8,8 @@ from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError
 from zeep.utils import NotSet
-from zeep.xsd.elements import Any, Base, Element
+from zeep.xsd.any import Any
+from zeep.xsd.elements import Base, Element
 from zeep.xsd.utils import (
     NamePrefixGenerator, UniqueNameGenerator, max_occurs_iter)
 

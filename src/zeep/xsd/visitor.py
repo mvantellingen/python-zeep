@@ -8,6 +8,7 @@ from zeep import exceptions
 from zeep.exceptions import XMLParseError
 from zeep.parser import absolute_location
 from zeep.utils import as_qname, qname_attr
+from zeep import xsd
 from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import indicators as xsd_indicators
@@ -637,7 +638,7 @@ class SchemaVisitor(object):
         """
         min_occurs, max_occurs = _process_occurs_attrs(node)
         process_contents = node.get('processContents', 'strict')
-        return xsd_elements.Any(
+        return xsd.Any(
             max_occurs=max_occurs, min_occurs=min_occurs,
             process_contents=process_contents)
 
@@ -847,7 +848,7 @@ class SchemaVisitor(object):
             </anyAttribute>
         """
         process_contents = node.get('processContents', 'strict')
-        return xsd_elements.AnyAttribute(process_contents=process_contents)
+        return xsd.AnyAttribute(process_contents=process_contents)
 
     def visit_notation(self, node, parent):
         """Contains the definition of a notation to describe the format of
