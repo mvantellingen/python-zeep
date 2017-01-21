@@ -36,11 +36,8 @@ class OrderIndicator(Indicator, list):
     def __init__(self, elements=None, min_occurs=1, max_occurs=1):
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs
-
-        if elements is None:
-            super(OrderIndicator, self).__init__()
-        else:
-            super(OrderIndicator, self).__init__()
+        super(OrderIndicator, self).__init__()
+        if elements is not None:
             self.extend(elements)
 
     def clone(self, name, min_occurs=1, max_occurs=1):
