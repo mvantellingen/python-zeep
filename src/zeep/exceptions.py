@@ -12,7 +12,18 @@ class XMLSyntaxError(Error):
 
 
 class XMLParseError(Error):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.filename = kwargs.pop('filename', None)
+        self.sourceline = kwargs.pop('sourceline', None)
+        super(XMLParseError, self).__init__(*args, **kwargs)
+
+    def __str__(self):
+        location = None
+        if self.filename and self.sourceline:
+            location = '%s:%s' % (self.filename, self.sourceline)
+        if location:
+            return '%s (%s)' % (self.message, location)
+        return self.message
 
 
 class UnexpectedElementError(Error):

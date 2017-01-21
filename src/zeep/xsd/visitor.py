@@ -125,7 +125,9 @@ class SchemaVisitor(object):
         if not namespace and not self.document._target_namespace:
             raise XMLParseError(
                 "The attribute 'namespace' must be existent if the "
-                "importing schema has no target namespace.")
+                "importing schema has no target namespace.",
+                filename=self._document.location,
+                sourceline=node.sourceline)
 
         # Check if the schema is already imported before based on the
         # namespace. Schema's without namespace are registered as 'None'
@@ -159,7 +161,9 @@ class SchemaVisitor(object):
             raise XMLParseError((
                 "The namespace defined on the xsd:import doesn't match the "
                 "imported targetNamespace located at %r "
-                ) % (location))
+                ) % (location),
+                filename=self.document._location,
+                sourceline=node.sourceline)
 
         schema = self.schema.create_new_document(schema_node, location)
         self.document.register_import(namespace, schema)
@@ -911,7 +915,10 @@ class SchemaVisitor(object):
                 attribute = self.process(child, node)
                 attributes.append(attribute)
             else:
-                raise XMLParseError("Unexpected tag: %s" % child.tag)
+                raise XMLParseError(
+                    "Unexpected tag `%s`" % (child.tag),
+                    filename=self.document._location,
+                    sourceline=node.sourceline)
         return attributes
 
     visitors = {
