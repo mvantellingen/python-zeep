@@ -29,6 +29,9 @@ class Type(object):
     def accept(self, value):
         raise NotImplementedError
 
+    def validate(self, value, required=False):
+        return
+
     def parse_kwargs(self, kwargs, name, available_kwargs):
         value = None
         name = name or self.name
@@ -47,7 +50,7 @@ class Type(object):
     def parsexml(self, xml, schema=None):
         raise NotImplementedError
 
-    def render(self, parent, value):
+    def render(self, parent, value, xsd_type=None, render_path=None):
         raise NotImplementedError(
             '%s.render() is not implemented' % self.__class__.__name__)
 
@@ -81,7 +84,7 @@ class UnresolvedType(Type):
     def __repr__(self):
         return '<%s(qname=%r)>' % (self.__class__.__name__, self.qname)
 
-    def render(self, parent, value):
+    def render(self, parent, value, xsd_type=None, render_path=None):
         raise RuntimeError(
             "Unable to render unresolved type %s. This is probably a bug." % (
                 self.qname))
@@ -176,7 +179,7 @@ class SimpleType(Type):
         raise NotImplementedError(
             '%s.pytonvalue() not implemented' % self.__class__.__name__)
 
-    def render(self, parent, value):
+    def render(self, parent, value, xsd_type=None, render_path=None):
         parent.text = self.xmlvalue(value)
 
     def resolve(self):
@@ -330,30 +333,36 @@ class ComplexType(Type):
 
         return self(**init_kwargs)
 
-    def render(self, parent, value, xsd_type=None):
+    def render(self, parent, value, xsd_type=None, render_path=None):
         """Serialize the given value lxml.Element subelements on the parent
         element.
 
         """
+        if not render_path:
+            render_path = [self.name]
+
         if not self.elements_nested and not self.attributes:
             return
 
         # Render attributes
         for name, attribute in self.attributes:
             attr_value = value[name] if name in value else NotSet
-            attribute.render(parent, attr_value)
+            child_path = render_path + [name]
+            attribute.render(parent, attr_value, child_path)
 
         # Render sub elements
         for name, element in self.elements_nested:
             if isinstance(element, Element) or element.accepts_multiple:
                 element_value = value[name] if name in value else NotSet
+                child_path = render_path + [name]
             else:
                 element_value = value
+                child_path = list(render_path)
 
             if isinstance(element, Element):
-                element.type.render(parent, element_value)
+                element.type.render(parent, element_value, None, child_path)
             else:
-                element.render(parent, element_value)
+                element.render(parent, element_value, child_path)
 
         if xsd_type:
             if xsd_type._xsd_name:
@@ -547,7 +556,7 @@ class ListType(SimpleType):
     def __call__(self, value):
         return value
 
-    def render(self, parent, value):
+    def render(self, parent, value, xsd_type=None, render_path=None):
         parent.text = self.xmlvalue(value)
 
     def resolve(self):

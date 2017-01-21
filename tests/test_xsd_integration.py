@@ -774,7 +774,7 @@ def test_complex_type_empty():
     schema = xsd.Schema(node)
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    obj = container_elm()
+    obj = container_elm(something={})
 
     node = etree.Element('document')
     container_elm.render(node, obj)

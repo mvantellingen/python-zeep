@@ -62,6 +62,7 @@ import pytz
 import six
 from lxml import etree
 
+from zeep.exceptions import ValidationError
 from zeep.utils import qname_attr
 from zeep.xsd.const import xsd_ns, xsi_ns, NS_XSD
 from zeep.xsd.elements import Base
@@ -93,6 +94,10 @@ class _BuiltinType(SimpleType):
         if self.qname.namespace == NS_XSD:
             return 'xsd:%s' % self.name
         return self.name
+
+    def validate(self, value, required=False):
+        if required and value is None:
+            raise ValidationError("Value is required")
 
 ##
 # Primitive types
@@ -522,7 +527,7 @@ class PositiveInteger(NonNegativeInteger):
 class AnyType(_BuiltinType):
     _default_qname = xsd_ns('anyType')
 
-    def render(self, parent, value):
+    def render(self, parent, value, xsd_type=None, render_path=None):
         if isinstance(value, AnyObject):
             value.xsd_type.render(parent, value.value)
             parent.set(xsi_ns('type'), value.xsd_type.qname)

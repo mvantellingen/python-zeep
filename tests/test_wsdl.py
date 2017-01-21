@@ -36,6 +36,7 @@ def test_parse_soap_wsdl():
         m.post('http://example.com/stockquote', text=response)
         account_type = client.get_type('stoc:account')
         account = account_type(id=100)
+        account.user = 'mvantellingen'
         country = client.get_element('stoc:country').type()
         country.name = 'The Netherlands'
         country.code = 'NL'
@@ -58,7 +59,7 @@ def test_parse_soap_wsdl():
                 <tickerSymbol>foobar</tickerSymbol>
                 <account>
                   <id>100</id>
-                  <user/>
+                  <user>mvantellingen</user>
                 </account>
                 <stoc:country>
                   <name>The Netherlands</name>

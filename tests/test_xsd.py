@@ -304,7 +304,8 @@ def test_choice_init():
             {'item_2': 'value-2'},
             {'item_1': 'value-3'},
             {'item_4_1': 'value-4-1', 'item_4_2': 'value-4-2'},
-        ])
+        ],
+        post='bar')
 
     assert obj._value_1 == [
         {'item_1': 'value-1'},
@@ -326,7 +327,7 @@ def test_choice_init():
         <ns0:item_1>value-3</ns0:item_1>
         <ns0:item_4_1>value-4-1</ns0:item_4_1>
         <ns0:item_4_2>value-4-2</ns0:item_4_2>
-        <ns0:post/>
+        <ns0:post>bar</ns0:post>
       </ns0:kies>
     </document>
     """.strip()
