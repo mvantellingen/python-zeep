@@ -98,9 +98,9 @@ class Any(Base):
         self.validate(value, render_path)
 
         if self.accepts_multiple and isinstance(value, list):
-            from zeep.xsd import SimpleType
+            from zeep.xsd import AnySimpleType
 
-            if isinstance(self.restrict, SimpleType):
+            if isinstance(self.restrict, AnySimpleType):
                 for val in value:
                     node = etree.SubElement(parent, 'item')
                     node.set(xsi_ns('type'), self.restrict.qname)

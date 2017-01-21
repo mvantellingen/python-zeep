@@ -6,15 +6,14 @@ from itertools import chain
 import six
 from cached_property import threaded_cached_property
 
+from zeep.exceptions import UnexpectedElementError, XMLParseError
+from zeep.utils import NotSet, get_base_class, qname_attr
 from zeep.xsd.any import Any, AnyAttribute
-from zeep.exceptions import XMLParseError, UnexpectedElementError
-from zeep.xsd.const import xsi_ns
+from zeep.xsd.const import xsd_ns, xsi_ns
 from zeep.xsd.elements import AttributeGroup, Element
-from zeep.xsd.indicators import Group, OrderIndicator, Sequence, Choice
+from zeep.xsd.indicators import Choice, Group, OrderIndicator, Sequence
 from zeep.xsd.utils import NamePrefixGenerator
-from zeep.utils import get_base_class, NotSet
-from zeep.xsd.valueobjects import CompoundValue
-
+from zeep.xsd.valueobjects import AnyObject, CompoundValue
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +119,7 @@ class UnresolvedCustomType(Type):
             xsd_type = type(self.name, (base.__class__,), cls_attributes)
             return xsd_type(base.item_types)
 
-        elif issubclass(base.__class__, SimpleType):
+        elif issubclass(base.__class__, AnySimpleType):
             xsd_type = type(self.name, (base.__class__,), cls_attributes)
             return xsd_type(self.qname)
 
@@ -129,9 +128,62 @@ class UnresolvedCustomType(Type):
             return xsd_type(self.qname)
 
 
+class AnyType(Type):
+    _default_qname = xsd_ns('anyType')
+
+    def render(self, parent, value, xsd_type=None, render_path=None):
+        if isinstance(value, AnyObject):
+            value.xsd_type.render(parent, value.value)
+            parent.set(xsi_ns('type'), value.xsd_type.qname)
+        elif hasattr(value, '_xsd_elm'):
+            value._xsd_elm.render(parent, value)
+            parent.set(xsi_ns('type'), value._xsd_elm.qname)
+        else:
+            parent.text = self.xmlvalue(value)
+
+    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
+                         context=None):
+        xsi_type = qname_attr(xmlelement, xsi_ns('type'))
+        xsi_nil = xmlelement.get(xsi_ns('nil'))
+
+        # Handle xsi:nil attribute
+        if xsi_nil == "true":
+            return None
+
+        if xsi_type and schema:
+            xsd_type = schema.get_type(xsi_type, fail_silently=True)
+
+            # If we were unable to resolve a type for the xsi:type (due to
+            # buggy soap servers) then we just return the lxml element.
+            if not xsd_type:
+                return xmlelement.getchildren()
+
+            # If the xsd_type is xsd:anyType then we will recurs so ignore
+            # that.
+            if isinstance(xsd_type, self.__class__):
+                return xmlelement.text or None
+
+            return xsd_type.parse_xmlelement(
+                xmlelement, schema, context=context)
+
+        if xmlelement.text is None:
+            return
+
+        return self.pythonvalue(xmlelement.text)
+
+    def resolve(self):
+        return self
+
+    def xmlvalue(self, value):
+        return value
+
+    def pythonvalue(self, value, schema=None):
+        return value
+
+
 @six.python_2_unicode_compatible
-class SimpleType(Type):
-    accepted_types = six.string_types
+class AnySimpleType(AnyType):
+    _default_qname = xsd_ns('anySimpleType')
 
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.
@@ -183,9 +235,6 @@ class SimpleType(Type):
     def render(self, parent, value, xsd_type=None, render_path=None):
         parent.text = self.xmlvalue(value)
 
-    def resolve(self):
-        return self
-
     def signature(self, depth=()):
         return self.name
 
@@ -194,7 +243,7 @@ class SimpleType(Type):
             '%s.xmlvalue() not implemented' % self.__class__.__name__)
 
 
-class ComplexType(Type):
+class ComplexType(AnyType):
     _xsd_name = None
 
     def __init__(self, element=None, attributes=None,
@@ -297,7 +346,7 @@ class ComplexType(Type):
         # If this complexType extends a simpleType then we have no nested
         # elements. Parse it directly via the type object. This is the case
         # for xsd:simpleContent
-        if isinstance(self._element, Element) and isinstance(self._element.type, SimpleType):
+        if isinstance(self._element, Element) and isinstance(self._element.type, AnySimpleType):
             name, element = self.elements_nested[0]
             init_kwargs[name] = element.type.parse_xmlelement(
                 xmlelement, schema, name, context=context)
@@ -547,7 +596,7 @@ class ComplexType(Type):
         return value
 
 
-class ListType(SimpleType):
+class ListType(AnySimpleType):
     """Space separated list of simpleType values"""
 
     def __init__(self, item_type):
@@ -579,7 +628,7 @@ class ListType(SimpleType):
         return self.item_type.signature(depth) + '[]'
 
 
-class UnionType(SimpleType):
+class UnionType(AnySimpleType):
 
     def __init__(self, item_types):
         self.item_types = item_types

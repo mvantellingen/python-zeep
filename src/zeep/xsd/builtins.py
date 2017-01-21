@@ -66,7 +66,7 @@ from zeep.exceptions import ValidationError
 from zeep.utils import qname_attr
 from zeep.xsd.const import xsd_ns, xsi_ns, NS_XSD
 from zeep.xsd.elements import Base
-from zeep.xsd.types import SimpleType
+from zeep.xsd.types import AnySimpleType, AnyType
 from zeep.xsd.valueobjects import AnyObject
 
 
@@ -85,7 +85,7 @@ def check_no_collection(func):
     return _wrapper
 
 
-class _BuiltinType(SimpleType):
+class _BuiltinType(AnySimpleType):
     def __init__(self, qname=None, is_global=False):
         super(_BuiltinType, self).__init__(
             qname or etree.QName(self._default_qname), is_global)
@@ -99,10 +99,9 @@ class _BuiltinType(SimpleType):
         if required and value is None:
             raise ValidationError("Value is required")
 
+
 ##
 # Primitive types
-
-
 class String(_BuiltinType):
     _default_qname = xsd_ns('string')
     accepted_types = six.string_types
@@ -523,61 +522,6 @@ class PositiveInteger(NonNegativeInteger):
 
 ##
 # Other
-
-class AnyType(_BuiltinType):
-    _default_qname = xsd_ns('anyType')
-
-    def render(self, parent, value, xsd_type=None, render_path=None):
-        if isinstance(value, AnyObject):
-            value.xsd_type.render(parent, value.value)
-            parent.set(xsi_ns('type'), value.xsd_type.qname)
-        elif hasattr(value, '_xsd_elm'):
-            value._xsd_elm.render(parent, value)
-            parent.set(xsi_ns('type'), value._xsd_elm.qname)
-        else:
-            parent.text = self.xmlvalue(value)
-
-    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
-                         context=None):
-        xsi_type = qname_attr(xmlelement, xsi_ns('type'))
-        xsi_nil = xmlelement.get(xsi_ns('nil'))
-
-        # Handle xsi:nil attribute
-        if xsi_nil == "true":
-            return None
-
-        if xsi_type and schema:
-            xsd_type = schema.get_type(xsi_type, fail_silently=True)
-
-            # If we were unable to resolve a type for the xsi:type (due to
-            # buggy soap servers) then we just return the lxml element.
-            if not xsd_type:
-                return xmlelement.getchildren()
-
-            # If the xsd_type is xsd:anyType then we will recurs so ignore
-            # that.
-            if isinstance(xsd_type, self.__class__):
-                return xmlelement.text or None
-
-            return xsd_type.parse_xmlelement(
-                xmlelement, schema, context=context)
-
-        if xmlelement.text is None:
-            return
-
-        return self.pythonvalue(xmlelement.text)
-
-    def xmlvalue(self, value):
-        return value
-
-    def pythonvalue(self, value, schema=None):
-        return value
-
-
-class AnySimpleType(AnyType):
-    _default_qname = xsd_ns('anySimpleType')
-
-
 def _parse_timezone(val):
     """Return a pytz.tzinfo object"""
     if not val:
