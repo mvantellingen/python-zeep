@@ -7,10 +7,11 @@ from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
 from zeep.utils import NotSet
-from zeep.xsd.any import Any, AnyAttribute
 from zeep.xsd.const import xsi_ns
-from zeep.xsd.elements import AttributeGroup, Element
-from zeep.xsd.indicators import Choice, Group, OrderIndicator, Sequence
+from zeep.xsd.elements import (
+    Any, AnyAttribute, AttributeGroup, Choice, Element, Group,
+    Sequence)
+from zeep.xsd.elements.indicators import OrderIndicator
 from zeep.xsd.types.any import AnyType
 from zeep.xsd.types.simple import AnySimpleType
 from zeep.xsd.utils import NamePrefixGenerator

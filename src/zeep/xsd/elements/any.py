@@ -3,11 +3,10 @@ import logging
 from lxml import etree
 
 from zeep import exceptions
-from zeep.utils import qname_attr
+from zeep.utils import NotSet, qname_attr
 from zeep.xsd.const import xsi_ns
-from zeep.xsd.elements import Base
+from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import max_occurs_iter
-from zeep.utils import NotSet
 from zeep.xsd.valueobjects import AnyObject
 
 logger = logging.getLogger(__name__)

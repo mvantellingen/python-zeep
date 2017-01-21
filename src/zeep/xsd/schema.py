@@ -4,7 +4,8 @@ from collections import OrderedDict
 from lxml import etree
 
 from zeep import exceptions
-from zeep.xsd.types import builtins as xsd_builtins
+from zeep.xsd.elements import builtins as xsd_builtins_elements
+from zeep.xsd.types import builtins as xsd_builtins_types
 from zeep.xsd import const
 from zeep.xsd.visitor import SchemaVisitor
 
@@ -88,13 +89,13 @@ class Schema(object):
     def get_element(self, qname):
         """Return a global xsd.Element object with the given qname"""
         qname = self._create_qname(qname)
-        if qname.text in xsd_builtins.default_elements:
-            return xsd_builtins.default_elements[qname]
+        if qname.text in xsd_builtins_elements.default_elements:
+            return xsd_builtins_elements.default_elements[qname]
 
         # Handle XSD namespace items
         if qname.namespace == const.NS_XSD:
             try:
-                return xsd_builtins.default_elements[qname]
+                return xsd_builtins_elements.default_elements[qname]
             except KeyError:
                 raise exceptions.LookupError("No such type %r" % qname.text)
 
@@ -107,7 +108,7 @@ class Schema(object):
         # Handle XSD namespace items
         if qname.namespace == const.NS_XSD:
             try:
-                return xsd_builtins.default_types[qname]
+                return xsd_builtins_types.default_types[qname]
             except KeyError:
                 raise exceptions.LookupError("No such type %r" % qname.text)
 
