@@ -2,7 +2,6 @@ import os
 
 import pytest
 import requests_mock
-from lxml import etree
 
 from tests.utils import load_xml
 from zeep import client, xsd

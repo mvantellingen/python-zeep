@@ -188,7 +188,6 @@ class OrderIndicator(Indicator, list):
                 if element_value is not None or not element.is_optional:
                     element.render(parent, element_value, child_path)
 
-
     def signature(self, depth=()):
         """
         Use a tuple of element names as depth indicator, so that when an element is repeated,

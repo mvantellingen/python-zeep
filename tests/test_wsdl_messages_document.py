@@ -251,9 +251,6 @@ def test_parse_with_header_type():
     assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {auth: ResponseHeaderType}'  # noqa
 
 
-
-
-
 def test_parse_with_header_other_message():
     wsdl_content = StringIO("""
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"

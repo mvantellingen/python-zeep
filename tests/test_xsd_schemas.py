@@ -3,7 +3,6 @@ from lxml import etree
 
 from tests.utils import DummyTransport, load_xml
 from zeep import exceptions, xsd
-from zeep.exceptions import LookupError, ZeepWarning
 from zeep.xsd import Schema
 
 

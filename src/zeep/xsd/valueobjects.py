@@ -1,8 +1,6 @@
 import copy
 from collections import OrderedDict
 
-import six
-
 from zeep.xsd.printer import PrettyPrinter
 
 __all__ = ['AnyObject', 'CompoundValue']

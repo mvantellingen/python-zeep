@@ -30,6 +30,7 @@ class AsyncTransport(Transport):
 
     def _load_remote_data(self, url):
         result = None
+
         async def _load_remote_data_async():
             nonlocal result
             with aiohttp.Timeout(self.load_timeout):
