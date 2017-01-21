@@ -147,3 +147,8 @@ def test_serialize_any_array():
     assert result == {
         '_value_1': [any_obj],
     }
+
+
+def test_serialize_string():
+    result = serialize_object("foobar")
+    assert result == "foobar"
