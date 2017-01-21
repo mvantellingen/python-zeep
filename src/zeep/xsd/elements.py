@@ -126,8 +126,10 @@ class Any(Base):
             result = result[0] if result else None
         return result
 
-    def render(self, parent, value):
+    def render(self, parent, value, render_path=None):
         assert parent is not None
+        self.validate(value, render_path)
+
         if self.accepts_multiple and isinstance(value, list):
             from zeep.xsd import SimpleType
 
@@ -135,19 +137,58 @@ class Any(Base):
                 for val in value:
                     node = etree.SubElement(parent, 'item')
                     node.set(xsi_ns('type'), self.restrict.qname)
-                    self._render_value_item(node, val)
+                    self._render_value_item(node, val, render_path)
             elif self.restrict:
                 for val in value:
                     node = etree.SubElement(parent, self.restrict.name)
                     # node.set(xsi_ns('type'), self.restrict.qname)
-                    self._render_value_item(node, val)
+                    self._render_value_item(node, val, render_path)
             else:
                 for val in value:
-                    self._render_value_item(parent, val)
+                    self._render_value_item(parent, val, render_path)
         else:
-            self._render_value_item(parent, value)
+            self._render_value_item(parent, value, render_path)
 
-    def _render_value_item(self, parent, value):
+    def _render_value_item(self, parent, value, render_path):
+        if value is None:  # can be an lxml element
+            return
+
+        elif isinstance(value, etree._Element):
+            parent.append(value)
+
+        elif self.restrict:
+            if isinstance(value, list):
+                for val in value:
+                    self.restrict.render(parent, val, None, render_path)
+            else:
+                self.restrict.render(parent, value, None, render_path)
+        else:
+            if isinstance(value.value, list):
+                for val in value.value:
+                    value.xsd_elm.render(parent, val, render_path)
+            else:
+                value.xsd_elm.render(parent, value.value, render_path)
+
+    def validate(self, value, render_path):
+        if self.accepts_multiple and isinstance(value, list):
+
+            # Validate bounds
+            if len(value) < self.min_occurs:
+                raise exceptions.ValidationError(
+                    "Expected at least %d items (minOccurs check)" % self.min_occurs)
+            if self.max_occurs != 'unbounded' and len(value) > self.max_occurs:
+                raise exceptions.ValidationError(
+                    "Expected at most %d items (maxOccurs check)" % self.min_occurs)
+
+            for val in value:
+                self._validate_item(val, render_path)
+        else:
+            if not self.is_optional and value in (None, NotSet):
+                raise exceptions.ValidationError("Missing element for Any")
+
+            self._validate_item(value, render_path)
+
+    def _validate_item(self, value, render_path):
         if value is None:  # can be an lxml element
             return
 
@@ -157,7 +198,6 @@ class Any(Base):
             expected_types = (etree._Element,) + self.restrict.accepted_types
         else:
             expected_types = (etree._Element, AnyObject)
-
         if not isinstance(value, expected_types):
             type_names = [
                 '%s.%s' % (t.__module__, t.__name__) for t in expected_types
@@ -170,22 +210,6 @@ class Any(Base):
                 "See http://docs.python-zeep.org/en/master/datastructures.html"
                 "#any-objects for more information"
             )))
-
-        if isinstance(value, etree._Element):
-            parent.append(value)
-
-        elif self.restrict:
-            if isinstance(value, list):
-                for val in value:
-                    self.restrict.render(parent, val)
-            else:
-                self.restrict.render(parent, value)
-        else:
-            if isinstance(value.value, list):
-                for val in value.value:
-                    value.xsd_elm.render(parent, val)
-            else:
-                value.xsd_elm.render(parent, value.value)
 
     def resolve(self):
         return self
@@ -204,6 +228,7 @@ class Any(Base):
 class Element(Base):
     def __init__(self, name, type_=None, min_occurs=1, max_occurs=1,
                  nillable=False, default=None, is_global=False, attr_name=None):
+
         if name is None:
             raise ValueError("name cannot be None", self.__class__)
         if not isinstance(name, etree.QName):
@@ -322,21 +347,25 @@ class Element(Base):
             result = result[0] if result else None
         return result
 
-    def render(self, parent, value):
+    def render(self, parent, value, render_path=None):
         """Render the value(s) on the parent lxml.Element.
 
         This actually just calls _render_value_item for each value.
 
         """
+        if not render_path:
+            render_path = [self.qname.localname]
+
         assert parent is not None
+        self.validate(value, render_path)
 
         if self.accepts_multiple and isinstance(value, list):
             for val in value:
-                self._render_value_item(parent, val)
+                self._render_value_item(parent, val, render_path)
         else:
-            self._render_value_item(parent, value)
+            self._render_value_item(parent, value, render_path)
 
-    def _render_value_item(self, parent, value):
+    def _render_value_item(self, parent, value, render_path):
         """Render the value on the parent lxml.Element"""
         if value is None or value is NotSet:
             if self.is_optional:
@@ -351,8 +380,42 @@ class Element(Base):
         xsd_type = getattr(value, '_xsd_type', self.type)
 
         if xsd_type != self.type:
-            return value._xsd_type.render(node, value, xsd_type)
-        return self.type.render(node, value)
+            return value._xsd_type.render(node, value, xsd_type, render_path)
+        return self.type.render(node, value, None, render_path)
+
+    def validate(self, value, render_path=None):
+        """Validate that the value is valid"""
+        if self.accepts_multiple and isinstance(value, list):
+
+            # Validate bounds
+            if len(value) < self.min_occurs:
+                raise exceptions.ValidationError(
+                    "Expected at least %d items (minOccurs check)" % self.min_occurs,
+                    path=render_path)
+            elif self.max_occurs != 'unbounded' and len(value) > self.max_occurs:
+                raise exceptions.ValidationError(
+                    "Expected at most %d items (maxOccurs check)" % self.min_occurs,
+                    path=render_path)
+
+            for val in value:
+                self._validate_item(val, render_path)
+        else:
+            if not self.is_optional and not self.nillable and value in (None, NotSet):
+                raise exceptions.ValidationError(
+                    "Missing element %s" % (self.name), path=render_path)
+
+            self._validate_item(value, render_path)
+
+    def _validate_item(self, value, render_path):
+        if self.nillable and value in (None, NotSet):
+            return
+
+        try:
+            self.type.validate(value, required=True)
+        except exceptions.ValidationError as exc:
+            raise exceptions.ValidationError(
+                "The element %s is not valid: %s" % (self.qname, exc.message),
+                path=render_path)
 
     def resolve_type(self):
         self.type = self.type.resolve()
@@ -384,12 +447,22 @@ class Attribute(Element):
             logger.exception("Error during xml -> python translation")
             return None
 
-    def render(self, parent, value):
+    def render(self, parent, value, render_path=None):
         if value in (None, NotSet) and not self.required:
             return
 
+        self.validate(value, render_path)
+
         value = self.type.xmlvalue(value)
         parent.set(self.qname, value)
+
+    def validate(self, value, render_path):
+        try:
+            self.type.validate(value, required=self.required)
+        except exceptions.ValidationError as exc:
+            raise exceptions.ValidationError(
+                "The attribute %s is not valid: %s" % (self.qname, exc.message),
+                path=render_path)
 
     def clone(self, *args, **kwargs):
         array_type = kwargs.pop('array_type', None)
@@ -451,7 +524,7 @@ class AnyAttribute(Base):
     def resolve(self):
         return self
 
-    def render(self, parent, value):
+    def render(self, parent, value, render_path=None):
         if value is None:
             return
 

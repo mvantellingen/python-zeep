@@ -135,7 +135,8 @@ def test_any_with_ref():
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
     obj = container_elm(
         item='bar',
-        _value_1=xsd.AnyObject(item_elm, item_elm('argh')))
+        _value_1=xsd.AnyObject(item_elm, item_elm('argh')),
+        _value_2=xsd.AnyObject(item_elm, item_elm('ok')))
 
     node = etree.Element('document')
     container_elm.render(node, obj)
@@ -144,6 +145,7 @@ def test_any_with_ref():
             <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
                 <ns0:item>bar</ns0:item>
                 <ns0:item>argh</ns0:item>
+                <ns0:item>ok</ns0:item>
             </ns0:container>
         </document>
     """

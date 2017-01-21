@@ -7,6 +7,7 @@ from collections import OrderedDict, defaultdict, deque
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError
+from zeep.utils import NotSet
 from zeep.xsd.elements import Any, Base, Element
 from zeep.xsd.utils import (
     NamePrefixGenerator, UniqueNameGenerator, max_occurs_iter)
@@ -163,7 +164,7 @@ class OrderIndicator(Indicator, list):
             self[i] = elm.resolve()
         return self
 
-    def render(self, parent, value):
+    def render(self, parent, value, render_path):
         """Create subelements in the given parent object."""
         if not isinstance(value, list):
             values = [value]
@@ -175,12 +176,17 @@ class OrderIndicator(Indicator, list):
                 if name:
                     if name in value:
                         element_value = value[name]
+                        child_path = render_path + [name]
                     else:
-                        element_value = None
+                        element_value = NotSet
+                        child_path = render_path
                 else:
                     element_value = value
+                    child_path = render_path
+
                 if element_value is not None or not element.is_optional:
-                    element.render(parent, element_value)
+                    element.render(parent, element_value, child_path)
+
 
     def signature(self, depth=()):
         """
@@ -374,7 +380,7 @@ class Choice(OrderIndicator):
             result = {name: result}
         return result
 
-    def render(self, parent, value):
+    def render(self, parent, value, render_path):
         """Render the value to the parent element tree node.
 
         This is a bit more complex then the order render methods since we need
@@ -388,7 +394,7 @@ class Choice(OrderIndicator):
             result = self._find_element_to_render(item)
             if result:
                 element, choice_value = result
-                element.render(parent, choice_value)
+                element.render(parent, choice_value, render_path)
 
     def accept(self, values):
         """Return the number of values which are accepted by this choice.

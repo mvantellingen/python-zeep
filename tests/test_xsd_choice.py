@@ -321,12 +321,12 @@ def test_choice_in_sequence():
 
     assert container_elm.type.signature() == (
         'something: xsd:string, ({item_1: xsd:string} | {item_2: xsd:string} | {item_3: xsd:string})')  # noqa
-    value = container_elm(item_1='item-1')
+    value = container_elm(something='foobar', item_1='item-1')
 
     expected = """
       <document>
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
-          <ns0:something/>
+          <ns0:something>foobar</ns0:something>
           <ns0:item_1>item-1</ns0:item_1>
         </ns0:container>
       </document>

@@ -1,7 +1,8 @@
+import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
-from zeep import xsd
+from zeep import xsd, exceptions
 from zeep.xsd import builtins
 from zeep.xsd.schema import Schema
 
@@ -182,10 +183,15 @@ def test_attribute_required():
     xsd_element = schema.get_element('{http://tests.python-zeep.org/}foo')
     value = xsd_element()
 
+    with pytest.raises(exceptions.ValidationError):
+        node = render_node(xsd_element, value)
+
+    value.base = 'foo'
     node = render_node(xsd_element, value)
+
     expected = """
       <document>
-        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/" base=""/>
+        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/" base="foo"/>
       </document>
     """
     assert_nodes_equal(expected, node)

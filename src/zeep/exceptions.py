@@ -47,3 +47,14 @@ class Fault(Error):
 
 class ZeepWarning(RuntimeWarning):
     pass
+
+
+class ValidationError(Error):
+    def __init__(self, *args, **kwargs):
+        self.path = kwargs.pop('path', [])
+        super(ValidationError, self).__init__(*args, **kwargs)
+
+    def __str__(self):
+        if self.path:
+            return '%s (%s)' % (self.message, '.'.join(x for x in self.path))
+        return self.message
