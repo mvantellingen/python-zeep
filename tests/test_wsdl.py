@@ -7,8 +7,7 @@ from pretend import stub
 from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
-from zeep import wsdl
-from zeep import Client
+from zeep import Client, wsdl
 from zeep.transports import Transport
 
 

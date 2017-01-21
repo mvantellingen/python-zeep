@@ -8,8 +8,8 @@ from zeep.exceptions import UnexpectedElementError
 from zeep.utils import NotSet, qname_attr
 from zeep.xsd.const import xsi_ns
 from zeep.xsd.context import XmlParserContext
-from zeep.xsd.utils import max_occurs_iter
 from zeep.xsd.elements.base import Base
+from zeep.xsd.utils import max_occurs_iter
 
 logger = logging.getLogger(__name__)
 

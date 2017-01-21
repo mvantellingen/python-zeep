@@ -4,9 +4,9 @@ from collections import OrderedDict
 from lxml import etree
 
 from zeep import exceptions
+from zeep.xsd import const
 from zeep.xsd.elements import builtins as xsd_builtins_elements
 from zeep.xsd.types import builtins as xsd_builtins_types
-from zeep.xsd import const
 from zeep.xsd.visitor import SchemaVisitor
 
 logger = logging.getLogger(__name__)

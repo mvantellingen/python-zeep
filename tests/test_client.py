@@ -4,10 +4,9 @@ import pytest
 import requests_mock
 from lxml import etree
 
-from zeep import client
-from zeep import xsd
-from zeep.exceptions import Error
 from tests.utils import load_xml
+from zeep import client, xsd
+from zeep.exceptions import Error
 
 
 def test_bind():

@@ -64,7 +64,7 @@ from lxml import etree
 
 from zeep.exceptions import ValidationError
 from zeep.utils import qname_attr
-from zeep.xsd.const import xsd_ns, xsi_ns, NS_XSD
+from zeep.xsd.const import NS_XSD, xsd_ns, xsi_ns
 from zeep.xsd.types import AnySimpleType, AnyType
 from zeep.xsd.valueobjects import AnyObject
 

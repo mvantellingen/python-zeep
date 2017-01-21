@@ -5,7 +5,6 @@ Adds asyncio support to Zeep. Contains Python 3.5+ only syntax!
 import asyncio
 
 import aiohttp
-
 from zeep.transports import Transport
 from zeep.wsdl.utils import etree_to_string
 

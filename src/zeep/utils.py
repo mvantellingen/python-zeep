@@ -1,6 +1,5 @@
 import inspect
 
-
 from lxml import etree
 
 
