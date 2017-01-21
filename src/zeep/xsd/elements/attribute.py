@@ -1,5 +1,7 @@
 import logging
 
+from lxml import etree
+
 from zeep import exceptions
 from zeep.utils import NotSet
 from zeep.xsd.elements.element import Element
@@ -53,12 +55,16 @@ class Attribute(Element):
         return retval
 
 
-class AttributeGroup(Element):
+class AttributeGroup(object):
     def __init__(self, name, attributes):
-        self.name = name
+        if not isinstance(name, etree.QName):
+            name = etree.QName(name)
+
+        self.name = name.localname
+        self.qname = name
         self.type = None
         self._attributes = attributes
-        super(AttributeGroup, self).__init__(name, is_global=True)
+        self.is_global = True
 
     @property
     def attributes(self):
