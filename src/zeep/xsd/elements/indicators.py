@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import copy
 import operator
 from collections import OrderedDict, defaultdict, deque
@@ -127,7 +125,7 @@ class OrderIndicator(Indicator, list):
                 item_kwargs = [item_kwargs]
 
             result = []
-            for i, item_value in zip(max_occurs_iter(self.max_occurs), item_kwargs):
+            for item_value in max_occurs_iter(self.max_occurs, item_kwargs):
                 item_kwargs = set(item_value.keys())
                 subresult = OrderedDict()
                 for item_name, element in self.elements:
@@ -172,7 +170,7 @@ class OrderIndicator(Indicator, list):
         else:
             values = value
 
-        for i, value in zip(max_occurs_iter(self.max_occurs), values):
+        for value in max_occurs_iter(self.max_occurs, values):
             for name, element in self.elements_nested:
                 if name:
                     if name in value:
@@ -255,7 +253,7 @@ class Choice(OrderIndicator):
         """Return a dictionary"""
         result = []
 
-        for i in max_occurs_iter(self.max_occurs):
+        for _unused in max_occurs_iter(self.max_occurs):
             if not xmlelements:
                 break
 
@@ -460,7 +458,7 @@ class Sequence(OrderIndicator):
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         result = []
-        for item in max_occurs_iter(self.max_occurs):
+        for _unused in max_occurs_iter(self.max_occurs):
             if not xmlelements:
                 break
 
@@ -533,7 +531,7 @@ class Group(Indicator):
 
             result = []
             sub_name = '_value_1' if self.child.accepts_multiple else None
-            for i, sub_kwargs in zip(max_occurs_iter(self.max_occurs), item_kwargs):
+            for sub_kwargs in max_occurs_iter(self.max_occurs, item_kwargs):
                 available_sub_kwargs = set(sub_kwargs.keys())
                 subresult = self.child.parse_kwargs(
                     sub_kwargs, sub_name, available_sub_kwargs)
@@ -549,7 +547,7 @@ class Group(Indicator):
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         result = []
 
-        for i in max_occurs_iter(self.max_occurs):
+        for _unused in max_occurs_iter(self.max_occurs):
             result.append(
                 self.child.parse_xmlelements(
                     xmlelements, schema, name, context=context)

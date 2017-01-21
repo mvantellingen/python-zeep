@@ -79,7 +79,7 @@ class Any(Base):
         """Consume matching xmlelements and call parse() on each of them"""
         result = []
 
-        for i in max_occurs_iter(self.max_occurs):
+        for _unused in max_occurs_iter(self.max_occurs):
             if xmlelements:
                 xmlelement = xmlelements.popleft()
                 item = self.parse(xmlelement, schema, context=context)

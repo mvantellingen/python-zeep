@@ -99,7 +99,7 @@ class Element(Base):
         """Consume matching xmlelements and call parse() on each of them"""
         result = []
         num_matches = 0
-        for i in max_occurs_iter(self.max_occurs):
+        for _unused in max_occurs_iter(self.max_occurs):
             if not xmlelements:
                 break
 

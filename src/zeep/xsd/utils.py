@@ -30,6 +30,7 @@ class UniqueNameGenerator(object):
             self._unique_count[name] = 0
             return name
 
+
 class ImportResolver(etree.Resolver):
     """Custom lxml resolve to use the transport object"""
     def __init__(self, transport):
@@ -58,9 +59,13 @@ def load_external(url, transport, base_url=None):
     return parse_xml(response, transport, base_url)
 
 
-def max_occurs_iter(max_occurs):
+def max_occurs_iter(max_occurs, items=None):
     assert max_occurs is not None
-    if max_occurs == 'unbounded':
-        return range(0, 2**31-1)
+    generator = range(0, max_occurs if max_occurs != 'unbounded' else 2**31-1)
+
+    if items is not None:
+        for i, sub_kwargs in zip(generator, items):
+            yield sub_kwargs
     else:
-        return range(max_occurs)
+        for i in generator:
+            yield i
