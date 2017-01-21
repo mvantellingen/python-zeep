@@ -6,7 +6,7 @@ import pytest
 import pytz
 import six
 
-from zeep.xsd import builtins
+from zeep.xsd.types import builtins
 
 
 class TestString:

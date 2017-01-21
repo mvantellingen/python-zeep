@@ -36,7 +36,7 @@ class Any(Base):
         self.process_contents = process_contents
 
         # cyclic import
-        from zeep.xsd.builtins import AnyType
+        from zeep.xsd import AnyType
         self.type = AnyType()
 
     def __call__(self, any_object):

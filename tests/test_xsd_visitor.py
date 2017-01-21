@@ -3,7 +3,6 @@ from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd, exceptions
-from zeep.xsd import builtins
 from zeep.xsd.schema import Schema
 
 
@@ -68,7 +67,7 @@ def test_element_default_type():
     """)
     schema = parse_schema_node(node)
     element = schema.get_element('{http://tests.python-zeep.org/}foo')
-    assert isinstance(element.type, builtins.AnyType)
+    assert isinstance(element.type, xsd.AnyType)
 
 
 def test_element_simple_type_unresolved():

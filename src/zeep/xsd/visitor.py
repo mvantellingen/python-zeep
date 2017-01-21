@@ -9,7 +9,6 @@ from zeep.exceptions import XMLParseError
 from zeep.parser import absolute_location
 from zeep.utils import as_qname, qname_attr
 from zeep import xsd
-from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import indicators as xsd_indicators
 from zeep.xsd import types as xsd_types
@@ -257,7 +256,7 @@ class SchemaVisitor(object):
             if node_type:
                 xsd_type = self._get_type(node_type.text)
             else:
-                xsd_type = xsd_builtins.AnyType()
+                xsd_type = xsd_types.AnyType()
 
         # Naive workaround to mark fields which are part of a choice element
         # as optional
@@ -329,7 +328,7 @@ class SchemaVisitor(object):
             if node_type:
                 xsd_type = self._get_type(node_type)
             else:
-                xsd_type = xsd_builtins.AnyType()
+                xsd_type = xsd_types.AnyType()
 
         # TODO: We ignore 'prohobited' for now
         required = node.get('use') == 'required'
