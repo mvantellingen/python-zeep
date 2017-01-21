@@ -153,7 +153,7 @@ def test_deserialize():
           </soap-env:Body>
         </soap-env:Envelope>
     """)
-    assert operation.output.signature(True) == 'body: {result: xsd:string}, header: {}'
+    assert operation.output.signature(True) == 'result: xsd:string'
     result = operation.output.deserialize(document)
     assert result == 'ah1'
 

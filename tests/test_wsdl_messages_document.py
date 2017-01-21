@@ -56,13 +56,13 @@ def test_parse():
 
     assert operation.input.body.signature() == 'xsd:string'
     assert operation.input.header.signature() == ''
-    assert operation.input.envelope.signature() == 'body: xsd:string, header: {}'
+    assert operation.input.envelope.signature() == 'body: xsd:string'
     assert operation.input.signature(as_output=False) == 'xsd:string'
 
     assert operation.output.body.signature() == 'xsd:string'
     assert operation.output.header.signature() == ''
-    assert operation.output.envelope.signature() == 'body: xsd:string, header: {}'
-    assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {}'
+    assert operation.output.envelope.signature() == 'body: xsd:string'
+    assert operation.output.signature(as_output=True) == 'xsd:string'
 
 
 def test_empty_input_parse():
@@ -113,7 +113,7 @@ def test_empty_input_parse():
 
     assert operation.input.body.signature() == ''
     assert operation.input.header.signature() == ''
-    assert operation.input.envelope.signature() == 'body: {}, header: {}'
+    assert operation.input.envelope.signature() == 'body: {}'
     assert operation.input.signature(as_output=False) == ''
 
 

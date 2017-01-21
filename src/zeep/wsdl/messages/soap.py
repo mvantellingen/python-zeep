@@ -272,8 +272,12 @@ class SoapMessage(ConcreteMessage):
         """
         all_elements = xsd.Sequence([
             xsd.Element('body', self.body.type),
-            xsd.Element('header', self.header.type),
         ])
+
+        if self.header.type._element:
+            all_elements.append(
+                xsd.Element('header', self.header.type))
+
         return xsd.Element('envelope', xsd.ComplexType(all_elements))
 
     def _serialize_header(self, headers_value, nsmap):
