@@ -911,8 +911,8 @@ class SchemaVisitor(object):
     def _process_attributes(self, node, items):
         attributes = []
         for child in items:
-            attribute = self.process(child, node)
             if child.tag in (tags.attribute, tags.attributeGroup, tags.anyAttribute):
+                attribute = self.process(child, node)
                 attributes.append(attribute)
             else:
                 raise XMLParseError("Unexpected tag: %s" % child.tag)

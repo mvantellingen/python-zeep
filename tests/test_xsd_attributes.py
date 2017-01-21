@@ -418,3 +418,48 @@ def test_attribute_union_type_inline():
 
     attr = schema.get_attribute('{http://tests.python-zeep.org/}something')
     assert attr('foo') == 'foo'
+
+
+def test_attribute_value_retrieval():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <complexType name="Address">
+            <sequence>
+              <element name="Street" type="tns:Street"/>
+            </sequence>
+          </complexType>
+          <complexType name="Street">
+            <sequence>
+                <element name="Name" type="string"/>
+                <element name="Something" type="string" minOccurs="0"/>
+            </sequence>
+            <attribute name="ID" type="int" use="required"/>
+            <attribute name="Postcode" type="string"/>
+          </complexType>
+        </schema>
+    """))
+
+    Addr = schema.get_type('{http://tests.python-zeep.org/}Address')
+
+    address = Addr()
+    address.Street = {
+        'ID': 100,
+        'Name': 'Foo',
+    }
+
+    expected = """
+      <document>
+        <ns0:Street xmlns:ns0="http://tests.python-zeep.org/" ID="100">
+            <ns0:Name>Foo</ns0:Name>
+        </ns0:Street>
+      </document>
+    """
+
+    node = etree.Element('document')
+    Addr.render(node, address)
+    assert_nodes_equal(expected, node)

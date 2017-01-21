@@ -11,7 +11,7 @@ from zeep.xsd.const import xsi_ns
 from zeep.xsd.elements import Any, AnyAttribute, AttributeGroup, Element
 from zeep.xsd.indicators import Group, OrderIndicator, Sequence, Choice
 from zeep.xsd.utils import NamePrefixGenerator
-from zeep.utils import get_base_class
+from zeep.utils import get_base_class, NotSet
 from zeep.xsd.valueobjects import CompoundValue
 
 
@@ -340,13 +340,13 @@ class ComplexType(Type):
 
         # Render attributes
         for name, attribute in self.attributes:
-            attr_value = getattr(value, name, None)
+            attr_value = value[name] if name in value else NotSet
             attribute.render(parent, attr_value)
 
         # Render sub elements
         for name, element in self.elements_nested:
             if isinstance(element, Element) or element.accepts_multiple:
-                element_value = getattr(value, name, None)
+                element_value = value[name] if name in value else NotSet
             else:
                 element_value = value
 

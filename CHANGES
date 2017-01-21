@@ -4,6 +4,7 @@
    namespaces which were already imported were ignored. It will now search
    through all matching schemas with the tns to find a specific object (#204)
  - Fix xsd:extension for sequence -> choice. (#257)
+ - Improve serializing attributes when the values were passed as a dict (#125)
 
 
 0.24.0 (2016-12-16)

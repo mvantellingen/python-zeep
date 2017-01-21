@@ -9,6 +9,7 @@ from zeep.utils import qname_attr
 from zeep.xsd.const import xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.utils import max_occurs_iter
+from zeep.utils import NotSet
 from zeep.xsd.valueobjects import AnyObject  # cyclic import / FIXME
 
 logger = logging.getLogger(__name__)
@@ -337,7 +338,7 @@ class Element(Base):
 
     def _render_value_item(self, parent, value):
         """Render the value on the parent lxml.Element"""
-        if value is None:
+        if value is None or value is NotSet:
             if self.is_optional:
                 return
 
@@ -384,7 +385,7 @@ class Attribute(Element):
             return None
 
     def render(self, parent, value):
-        if value is None and not self.required:
+        if value in (None, NotSet) and not self.required:
             return
 
         value = self.type.xmlvalue(value)
