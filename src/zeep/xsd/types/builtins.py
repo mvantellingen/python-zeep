@@ -1,54 +1,3 @@
-"""
-    Primitive datatypes
-     - string
-     - boolean
-     - decimal
-     - float
-     - double
-     - duration
-     - dateTime
-     - time
-     - date
-     - gYearMonth
-     - gYear
-     - gMonthDay
-     - gDay
-     - gMonth
-     - hexBinary
-     - base64Binary
-     - anyURI
-     - QName
-     - NOTATION
-
-    Derived datatypes
-     - normalizedString
-     - token
-     - language
-     - NMTOKEN
-     - NMTOKENS
-     - Name
-     - NCName
-     - ID
-     - IDREF
-     - IDREFS
-     - ENTITY
-     - ENTITIES
-     - integer
-     - nonPositiveInteger
-     - negativeInteger
-     - long
-     - int
-     - short
-     - byte
-     - nonNegativeInteger
-     - unsignedLong
-     - unsignedInt
-     - unsignedShort
-     - unsignedByte
-     - positiveInteger
-
-
-"""
 import base64
 import datetime
 import math
@@ -58,11 +7,11 @@ from decimal import Decimal as _Decimal
 import isodate
 import pytz
 import six
-from lxml import etree
 
 from zeep.exceptions import ValidationError
 from zeep.xsd.const import NS_XSD, xsd_ns
-from zeep.xsd.types import AnySimpleType, AnyType
+from zeep.xsd.types.any import AnyType
+from zeep.xsd.types.simple import AnySimpleType
 
 
 class ParseError(ValueError):
@@ -80,24 +29,9 @@ def check_no_collection(func):
     return _wrapper
 
 
-class _BuiltinType(AnySimpleType):
-    def __init__(self, qname=None, is_global=False):
-        super(_BuiltinType, self).__init__(
-            qname or etree.QName(self._default_qname), is_global)
-
-    def signature(self, depth=()):
-        if self.qname.namespace == NS_XSD:
-            return 'xsd:%s' % self.name
-        return self.name
-
-    def validate(self, value, required=False):
-        if required and value is None:
-            raise ValidationError("Value is required")
-
-
 ##
 # Primitive types
-class String(_BuiltinType):
+class String(AnySimpleType):
     _default_qname = xsd_ns('string')
     accepted_types = six.string_types
 
@@ -109,7 +43,7 @@ class String(_BuiltinType):
         return value
 
 
-class Boolean(_BuiltinType):
+class Boolean(AnySimpleType):
     _default_qname = xsd_ns('boolean')
     accepted_types = (bool,)
 
@@ -125,7 +59,7 @@ class Boolean(_BuiltinType):
         return value in ('true', '1')
 
 
-class Decimal(_BuiltinType):
+class Decimal(AnySimpleType):
     _default_qname = xsd_ns('decimal')
     accepted_types = (_Decimal, float) + six.string_types
 
@@ -137,7 +71,7 @@ class Decimal(_BuiltinType):
         return _Decimal(value)
 
 
-class Float(_BuiltinType):
+class Float(AnySimpleType):
     _default_qname = xsd_ns('float')
     accepted_types = (float, _Decimal) + six.string_types
 
@@ -148,7 +82,7 @@ class Float(_BuiltinType):
         return float(value)
 
 
-class Double(_BuiltinType):
+class Double(AnySimpleType):
     _default_qname = xsd_ns('double')
     accepted_types = (_Decimal, float) + six.string_types
 
@@ -160,7 +94,7 @@ class Double(_BuiltinType):
         return float(value)
 
 
-class Duration(_BuiltinType):
+class Duration(AnySimpleType):
     _default_qname = xsd_ns('duration')
     accepted_types = (isodate.duration.Duration,) + six.string_types
 
@@ -172,7 +106,7 @@ class Duration(_BuiltinType):
         return isodate.parse_duration(value)
 
 
-class DateTime(_BuiltinType):
+class DateTime(AnySimpleType):
     _default_qname = xsd_ns('dateTime')
     accepted_types = (datetime.datetime,) + six.string_types
 
@@ -196,7 +130,7 @@ class DateTime(_BuiltinType):
         return isodate.parse_datetime(value)
 
 
-class Time(_BuiltinType):
+class Time(AnySimpleType):
     _default_qname = xsd_ns('time')
     accepted_types = (datetime.time,) + six.string_types
 
@@ -210,7 +144,7 @@ class Time(_BuiltinType):
         return isodate.parse_time(value)
 
 
-class Date(_BuiltinType):
+class Date(AnySimpleType):
     _default_qname = xsd_ns('date')
     accepted_types = (datetime.date,) + six.string_types
 
@@ -224,7 +158,7 @@ class Date(_BuiltinType):
         return isodate.parse_date(value)
 
 
-class gYearMonth(_BuiltinType):
+class gYearMonth(AnySimpleType):
     """gYearMonth represents a specific gregorian month in a specific gregorian
     year.
 
@@ -251,7 +185,7 @@ class gYearMonth(_BuiltinType):
             _parse_timezone(group['timezone']))
 
 
-class gYear(_BuiltinType):
+class gYear(AnySimpleType):
     """gYear represents a gregorian calendar year.
 
     Lexical representation: CCYY
@@ -274,7 +208,7 @@ class gYear(_BuiltinType):
         return (int(group['year']), _parse_timezone(group['timezone']))
 
 
-class gMonthDay(_BuiltinType):
+class gMonthDay(AnySimpleType):
     """gMonthDay is a gregorian date that recurs, specifically a day of the
     year such as the third of May.
 
@@ -302,7 +236,7 @@ class gMonthDay(_BuiltinType):
             _parse_timezone(group['timezone']))
 
 
-class gDay(_BuiltinType):
+class gDay(AnySimpleType):
     """gDay is a gregorian day that recurs, specifically a day of the month
     such as the 5th of the month
 
@@ -326,7 +260,7 @@ class gDay(_BuiltinType):
         return (int(group['day']), _parse_timezone(group['timezone']))
 
 
-class gMonth(_BuiltinType):
+class gMonth(AnySimpleType):
     """gMonth is a gregorian month that recurs every year.
 
     Lexical representation: --MM
@@ -349,7 +283,7 @@ class gMonth(_BuiltinType):
         return (int(group['month']), _parse_timezone(group['timezone']))
 
 
-class HexBinary(_BuiltinType):
+class HexBinary(AnySimpleType):
     accepted_types = six.string_types
     _default_qname = xsd_ns('hexBinary')
 
@@ -361,7 +295,7 @@ class HexBinary(_BuiltinType):
         return value
 
 
-class Base64Binary(_BuiltinType):
+class Base64Binary(AnySimpleType):
     accepted_types = six.string_types
     _default_qname = xsd_ns('base64Binary')
 
@@ -373,7 +307,7 @@ class Base64Binary(_BuiltinType):
         return base64.b64decode(value)
 
 
-class AnyURI(_BuiltinType):
+class AnyURI(AnySimpleType):
     accepted_types = six.string_types
     _default_qname = xsd_ns('anyURI')
 
@@ -385,7 +319,7 @@ class AnyURI(_BuiltinType):
         return value
 
 
-class QName(_BuiltinType):
+class QName(AnySimpleType):
     accepted_types = six.string_types
     _default_qname = xsd_ns('QName')
 
@@ -397,7 +331,7 @@ class QName(_BuiltinType):
         return value
 
 
-class Notation(_BuiltinType):
+class Notation(AnySimpleType):
     accepted_types = six.string_types
     _default_qname = xsd_ns('NOTATION')
 

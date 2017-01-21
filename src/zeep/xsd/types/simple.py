@@ -1,8 +1,10 @@
 import logging
 
 import six
+from lxml import etree
 
-from zeep.xsd.const import xsd_ns
+from zeep.exceptions import ValidationError
+from zeep.xsd.const import NS_XSD, xsd_ns
 from zeep.xsd.types.any import AnyType
 
 logger = logging.getLogger(__name__)
@@ -13,6 +15,10 @@ __all__ = ['AnySimpleType']
 @six.python_2_unicode_compatible
 class AnySimpleType(AnyType):
     _default_qname = xsd_ns('anySimpleType')
+
+    def __init__(self, qname=None, is_global=False):
+        super(AnySimpleType, self).__init__(
+            qname or etree.QName(self._default_qname), is_global)
 
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.
@@ -65,7 +71,13 @@ class AnySimpleType(AnyType):
         parent.text = self.xmlvalue(value)
 
     def signature(self, depth=()):
+        if self.qname.namespace == NS_XSD:
+            return 'xsd:%s' % self.name
         return self.name
+
+    def validate(self, value, required=False):
+        if required and value is None:
+            raise ValidationError("Value is required")
 
     def xmlvalue(self, value):
         raise NotImplementedError(

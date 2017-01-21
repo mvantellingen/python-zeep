@@ -37,6 +37,7 @@ class ListType(AnySimpleType):
 
 
 class UnionType(AnySimpleType):
+    """Simple type existing out of multiple other types"""
 
     def __init__(self, item_types):
         self.item_types = item_types
@@ -45,11 +46,9 @@ class UnionType(AnySimpleType):
         super(UnionType, self).__init__(None)
 
     def resolve(self):
-        from zeep.xsd.types.builtins import _BuiltinType
-
         self.item_types = [item.resolve() for item in self.item_types]
         base_class = get_base_class(self.item_types)
-        if issubclass(base_class, _BuiltinType) and base_class != _BuiltinType:
+        if issubclass(base_class, AnySimpleType) and base_class != AnySimpleType:
             self.item_class = base_class
         return self
 

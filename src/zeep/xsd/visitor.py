@@ -4,10 +4,12 @@ import re
 
 from lxml import etree
 
-from zeep import exceptions, xsd
+from zeep import exceptions
 from zeep.exceptions import XMLParseError
 from zeep.parser import absolute_location
 from zeep.utils import as_qname, qname_attr
+from zeep.xsd import elements as xsd_elements
+from zeep.xsd import types as xsd_types
 from zeep.xsd.const import xsd_ns
 from zeep.xsd.utils import load_external
 
@@ -58,7 +60,7 @@ class SchemaVisitor(object):
             # so that it is handled correctly
             if ref.namespace == 'http://www.w3.org/2001/XMLSchema':
                 return
-            return xsd.RefAttribute(
+            return xsd_elements.RefAttribute(
                 node.tag, ref, self.schema, array_type=array_type)
 
     def process_reference(self, node, **kwargs):
@@ -67,13 +69,13 @@ class SchemaVisitor(object):
             return
 
         if node.tag == tags.element:
-            cls = xsd.RefElement
+            cls = xsd_elements.RefElement
         elif node.tag == tags.attribute:
-            cls = xsd.RefAttribute
+            cls = xsd_elements.RefAttribute
         elif node.tag == tags.group:
-            cls = xsd.RefGroup
+            cls = xsd_elements.RefGroup
         elif node.tag == tags.attributeGroup:
-            cls = xsd.RefAttributeGroup
+            cls = xsd_elements.RefAttributeGroup
         return cls(node.tag, ref, self.schema, **kwargs)
 
     def visit_schema(self, node):
@@ -256,7 +258,7 @@ class SchemaVisitor(object):
             if node_type:
                 xsd_type = self._get_type(node_type.text)
             else:
-                xsd_type = xsd.AnyType()
+                xsd_type = xsd_types.AnyType()
 
         # Naive workaround to mark fields which are part of a choice element
         # as optional
@@ -265,7 +267,7 @@ class SchemaVisitor(object):
 
         nillable = node.get('nillable') == 'true'
         default = node.get('default')
-        element = xsd.Element(
+        element = xsd_elements.Element(
             name=qname, type_=xsd_type,
             min_occurs=min_occurs, max_occurs=max_occurs, nillable=nillable,
             default=default, is_global=is_global)
@@ -303,7 +305,7 @@ class SchemaVisitor(object):
                 array_type = match.groups()[0]
                 qname = as_qname(
                     array_type, node.nsmap, self.document._target_namespace)
-                array_type = xsd.UnresolvedType(qname, self.schema)
+                array_type = xsd_types.UnresolvedType(qname, self.schema)
 
         # If the elment has a ref attribute then all other attributes cannot
         # be present. Short circuit that here.
@@ -328,13 +330,13 @@ class SchemaVisitor(object):
             if node_type:
                 xsd_type = self._get_type(node_type)
             else:
-                xsd_type = xsd.AnyType()
+                xsd_type = xsd_types.AnyType()
 
         # TODO: We ignore 'prohobited' for now
         required = node.get('use') == 'required'
         default = node.get('default')
 
-        attr = xsd.Attribute(
+        attr = xsd_elements.Attribute(
             name, type_=xsd_type, default=default, required=required)
         self.document._elm_instances.append(attr)
 
@@ -367,7 +369,7 @@ class SchemaVisitor(object):
         child = items[0]
         if child.tag == tags.restriction:
             base_type = self.visit_restriction_simple_type(child, node)
-            xsd_type = xsd.UnresolvedCustomType(
+            xsd_type = xsd_types.UnresolvedCustomType(
                 qname, base_type, self.schema)
 
         elif child.tag == tags.list:
@@ -416,7 +418,7 @@ class SchemaVisitor(object):
             '__module__': 'zeep.xsd.dynamic_types',
             '_xsd_name': qname,
         }
-        xsd_cls = type(name, (xsd.ComplexType,), cls_attributes)
+        xsd_cls = type(name, (xsd_types.ComplexType,), cls_attributes)
         xsd_type = None
 
         # Process content
@@ -637,7 +639,7 @@ class SchemaVisitor(object):
         """
         min_occurs, max_occurs = _process_occurs_attrs(node)
         process_contents = node.get('processContents', 'strict')
-        return xsd.Any(
+        return xsd_elements.Any(
             max_occurs=max_occurs, min_occurs=min_occurs,
             process_contents=process_contents)
 
@@ -658,7 +660,7 @@ class SchemaVisitor(object):
             tags.group, tags.sequence
         ]
         min_occurs, max_occurs = _process_occurs_attrs(node)
-        result = xsd.Sequence(
+        result = xsd_elements.Sequence(
             min_occurs=min_occurs, max_occurs=max_occurs)
 
         annotation, items = self._pop_annotation(node.getchildren())
@@ -687,7 +689,7 @@ class SchemaVisitor(object):
         sub_types = [
             tags.annotation, tags.element
         ]
-        result = xsd.All()
+        result = xsd_elements.All()
 
         for child in node.iterchildren():
             assert child.tag in sub_types, child
@@ -725,7 +727,7 @@ class SchemaVisitor(object):
         child = children[0]
 
         item = self.process(child, parent)
-        elm = xsd.Group(name=qname, child=item)
+        elm = xsd_elements.Group(name=qname, child=item)
 
         if parent.tag == tags.schema:
             self.document.register_group(qname, elm)
@@ -751,7 +753,7 @@ class SchemaVisitor(object):
             subnodes = node.getchildren()
             child = subnodes[-1]  # skip annotation
             sub_type = self.visit_simple_type(child, node)
-        return xsd.ListType(sub_type)
+        return xsd_types.ListType(sub_type)
 
     def visit_choice(self, node, parent):
         """
@@ -772,7 +774,7 @@ class SchemaVisitor(object):
         for child in children:
             elm = self.process(child, node)
             choices.append(elm)
-        return xsd.Choice(
+        return xsd_elements.Choice(
             choices, min_occurs=min_occurs, max_occurs=max_occurs)
 
     def visit_union(self, node, parent):
@@ -796,7 +798,7 @@ class SchemaVisitor(object):
         else:
             annotation, types = self._pop_annotation(node.getchildren())
             types = [self.visit_simple_type(t, node) for t in types]
-        return xsd.UnionType(types)
+        return xsd_types.UnionType(types)
 
     def visit_unique(self, node, parent):
         """Specifies that an attribute or element value (or a combination of
@@ -832,7 +834,7 @@ class SchemaVisitor(object):
         annotation, children = self._pop_annotation(node.getchildren())
 
         attributes = self._process_attributes(node, children)
-        attribute_group = xsd.AttributeGroup(qname, attributes)
+        attribute_group = xsd_elements.AttributeGroup(qname, attributes)
         self.document.register_attribute_group(qname, attribute_group)
 
     def visit_any_attribute(self, node, parent):
@@ -847,7 +849,7 @@ class SchemaVisitor(object):
             </anyAttribute>
         """
         process_contents = node.get('processContents', 'strict')
-        return xsd.AnyAttribute(process_contents=process_contents)
+        return xsd_elements.AnyAttribute(process_contents=process_contents)
 
     def visit_notation(self, node, parent):
         """Contains the definition of a notation to describe the format of
@@ -872,7 +874,7 @@ class SchemaVisitor(object):
         try:
             retval = self.schema.get_type(name)
         except (exceptions.NamespaceError, exceptions.LookupError):
-            retval = xsd.UnresolvedType(name, self.schema)
+            retval = xsd_types.UnresolvedType(name, self.schema)
         return retval
 
     def _create_qname(self, name):
