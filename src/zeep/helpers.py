@@ -64,6 +64,7 @@ def create_xml_soap_map(values):
 
 
 def guess_xsd_type(obj):
+    """Return the XSD Type for the given object"""
     if isinstance(obj, bool):
         return xsd.Boolean()
     if isinstance(obj, int):
