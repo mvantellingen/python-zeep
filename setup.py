@@ -25,7 +25,7 @@ tests_require = [
     'mock==2.0.0',
     'pretend==1.0.8',
     'pytest-cov==2.4.0',
-    'pytest==3.0.5',
+    'pytest==3.0.6',
     'requests_mock>=0.7.0',
 
     # Linting
