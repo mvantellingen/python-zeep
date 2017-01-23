@@ -15,10 +15,13 @@ class AnyType(Type):
 
     def render(self, parent, value, xsd_type=None, render_path=None):
         if isinstance(value, AnyObject):
-            value.xsd_type.render(parent, value.value)
-            parent.set(xsi_ns('type'), value.xsd_type.qname)
+            if value.xsd_type is None:
+                parent.set(xsi_ns('nil'), 'true')
+            else:
+                value.xsd_type.render(parent, value.value, None, render_path)
+                parent.set(xsi_ns('type'), value.xsd_type.qname)
         elif hasattr(value, '_xsd_elm'):
-            value._xsd_elm.render(parent, value)
+            value._xsd_elm.render(parent, value, render_path)
             parent.set(xsi_ns('type'), value._xsd_elm.qname)
         else:
             parent.text = self.xmlvalue(value)
