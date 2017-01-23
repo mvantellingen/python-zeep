@@ -16,6 +16,10 @@ docs_require = [
     'sphinx>=1.4.0',
 ]
 
+async_require = [
+    'aiohttp>=1.0',
+]
+
 tests_require = [
     'freezegun==0.3.8',
     'mock==2.0.0',
@@ -49,6 +53,7 @@ setup(
     extras_require={
         'docs': docs_require,
         'test': tests_require,
+        'async': async_require,
     },
     entry_points={},
     package_dir={'': 'src'},
