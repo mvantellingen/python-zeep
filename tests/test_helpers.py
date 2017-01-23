@@ -1,7 +1,11 @@
+import datetime
+
 from lxml import etree
 
-from tests.utils import assert_nodes_equal, load_xml
+from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
+from six import binary_type
+from zeep import helpers
 from zeep.helpers import serialize_object
 
 
@@ -147,3 +151,51 @@ def test_serialize_any_array():
     assert result == {
         '_value_1': [any_obj],
     }
+
+
+def test_create_xml_soap_map():
+    data = {
+        'text': u'String',
+        'bytes': b'Bytes',
+        'boolean': True,
+        'integer': 100,
+        'float': 100.1234,
+        'datetime': datetime.datetime(2017, 10, 28, 12, 30, 10),
+        'date': datetime.date(2016, 1, 14),
+    }
+    value = helpers.create_xml_soap_map(data)
+
+    expected = """
+    <document>
+        <item>
+          <key xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">text</key>
+          <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">String</value>
+        </item>
+        <item>
+          <key xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">bytes</key>
+          <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">b'Bytes'</value>
+        </item>
+        <item>
+          <key xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">boolean</key>
+          <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:boolean">true</value>
+        </item>
+        <item>
+          <key xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">integer</key>
+          <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:integer">100</value>
+        </item>
+        <item>
+          <key xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">float</key>
+          <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:float">100.1234</value>
+        </item>
+        <item>
+          <key xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">datetime</key>
+          <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:dateTime">2017-10-28T12:30:10</value>
+        </item>
+        <item>
+          <key xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">date</key>
+          <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:date">2016-01-14</value>
+        </item>
+     </document>
+     """ # noqa
+    node = render_node(value._xsd_type, value)
+    assert_nodes_equal(expected, node)

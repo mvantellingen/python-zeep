@@ -1,3 +1,4 @@
+import datetime
 from collections import OrderedDict
 
 from lxml import etree
@@ -67,6 +68,12 @@ def guess_xsd_type(obj):
         return xsd.Boolean()
     if isinstance(obj, int):
         return xsd.Integer()
+    if isinstance(obj, float):
+        return xsd.Float()
+    if isinstance(obj, datetime.datetime):
+        return xsd.DateTime()
+    if isinstance(obj, datetime.date):
+        return xsd.Date()
     return xsd.String()
 
 
