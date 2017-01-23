@@ -37,6 +37,8 @@ class String(AnySimpleType):
 
     @check_no_collection
     def xmlvalue(self, value):
+        if isinstance(value, bytes):
+            return value.decode('utf-8')
         return six.text_type(value if value is not None else '')
 
     def pythonvalue(self, value):
