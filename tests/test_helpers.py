@@ -1,4 +1,5 @@
 import datetime
+from collections import OrderedDict
 
 from lxml import etree
 
@@ -154,15 +155,15 @@ def test_serialize_any_array():
 
 
 def test_create_xml_soap_map():
-    data = {
-        'text': u'String',
-        'bytes': b'Bytes',
-        'boolean': True,
-        'integer': 100,
-        'float': 100.1234,
-        'datetime': datetime.datetime(2017, 10, 28, 12, 30, 10),
-        'date': datetime.date(2016, 1, 14),
-    }
+    data = OrderedDict([
+        ('text', u'String'),
+        ('bytes', b'Bytes'),
+        ('boolean', True),
+        ('integer', 100),
+        ('float', 100.1234),
+        ('datetime', datetime.datetime(2017, 10, 28, 12, 30, 10)),
+        ('date', datetime.date(2016, 1, 14)),
+    ])
     value = helpers.create_xml_soap_map(data)
 
     expected = """
