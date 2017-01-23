@@ -71,7 +71,7 @@ Usage
 
 To quickly inspect a WSDL file use::
 
-    python -mzeep <url-to-wsdl>
+    python -m zeep <url-to-wsdl>
 
 
 Please see the documentation at http://docs.python-zeep.org for more
