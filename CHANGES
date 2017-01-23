@@ -1,5 +1,7 @@
-0.25.0 (unreleased)
+0.25.0 (2017-01-23)
 -------------------
+ - **Important:** Add basic validation against the xsd. It currently will only
+   validate the minOccurs/maxOccurs but this will be extended in the future.
  - Add support for duplicate namespace definitions. Previously imports for
    namespaces which were already imported were ignored. It will now search
    through all matching schemas with the tns to find a specific object (#204)
