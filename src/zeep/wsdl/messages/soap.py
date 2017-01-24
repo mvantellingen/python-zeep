@@ -303,8 +303,12 @@ class SoapMessage(ConcreteMessage):
                 raise ValueError(
                     "_soapheaders only accepts a dictionary if the wsdl "
                     "defines the headers.")
+
+            # Only render headers for which we have a value
             headers_value = self.header(**headers_value)
-            self.header.type.render(header, headers_value)
+            for name, elm in self.header.type.elements:
+                if name in headers_value and headers_value[name] is not None:
+                    elm.render(header, headers_value[name], ['header', name])
         else:
             raise ValueError("Invalid value given to _soapheaders")
 
