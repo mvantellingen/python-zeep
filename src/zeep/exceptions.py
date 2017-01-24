@@ -67,5 +67,6 @@ class ValidationError(Error):
 
     def __str__(self):
         if self.path:
-            return '%s (%s)' % (self.message, '.'.join(x for x in self.path))
+            path = '.'.join(str(x) for x in self.path)
+            return '%s (%s)' % (self.message, path)
         return self.message
