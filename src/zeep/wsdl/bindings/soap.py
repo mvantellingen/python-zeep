@@ -129,7 +129,7 @@ class SoapBinding(Binding):
                 % response.status_code)
 
         try:
-            doc = parse_xml(response.content, recover=True)
+            doc = parse_xml(response.content)
         except XMLSyntaxError:
             raise TransportError(
                 u'Server returned HTTP status %d (%s)'
