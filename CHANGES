@@ -1,3 +1,10 @@
+0.26.0 (unreleased)
+-------------------
+ - **backwards-incompatible**: Zeep no longer sets a default cache backend.
+   Please see http://docs.python-zeep.org/en/master/transport.html#caching for
+   information about how to configure a cache.
+
+
 0.25.0 (2017-01-23)
 -------------------
  - **Important:** Add basic validation against the xsd. It currently will only

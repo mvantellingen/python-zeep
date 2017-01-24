@@ -26,21 +26,20 @@ seconds::
 
 Caching
 -------
-The default cache backend is SqliteCache.  It caches the WSDL and XSD files for 
-1 hour by default. You can disable caching by passing `None` as value to the
-`Transport.cache` attribute when initializing the client::
+By default zeep doesn't use a caching backend.  For performance benefits it is
+advised to use the SqliteCache backend.  It caches the WSDL and XSD files for 
+1 hour by default. To use the cache backend init the client with::
 
     >>> from zeep import Client
     >>> from zeep.cache import SqliteCache
     >>> from zeep.transports import Transport
-    >>> transport = Transport(cache=None)
+    >>> transport = Transport(cache=SqliteCache())
     >>> client = Client(
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
     ...     transport=transport)
 
 
 Changing the SqliteCache settings can be done via::
-
 
     >>> from zeep import Client
     >>> from zeep.cache import SqliteCache
@@ -51,6 +50,9 @@ Changing the SqliteCache settings can be done via::
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
     ...     transport=transport)
 
+
+Another option is to use the InMemoryCache backend.  It internally uses a 
+global dict to store urls with the corresponding content.
 
 
 HTTP Authentication

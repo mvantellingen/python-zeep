@@ -5,8 +5,7 @@ from contextlib import contextmanager
 import requests
 
 from six.moves.urllib.parse import urlparse
-from zeep.cache import SqliteCache
-from zeep.utils import NotSet, get_version
+from zeep.utils import get_version
 from zeep.wsdl.utils import etree_to_string
 
 
@@ -24,9 +23,9 @@ class Transport(object):
     """
     supports_async = False
 
-    def __init__(self, cache=NotSet, timeout=300, operation_timeout=None,
+    def __init__(self, cache=None, timeout=300, operation_timeout=None,
                  verify=True, http_auth=None):
-        self.cache = SqliteCache() if cache is NotSet else cache
+        self.cache = cache
         self.load_timeout = timeout
         self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)

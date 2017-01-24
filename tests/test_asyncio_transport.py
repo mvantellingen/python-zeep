@@ -7,14 +7,8 @@ from zeep import cache, asyncio
 
 
 @pytest.mark.requests
-def test_default_cache(event_loop):
-    transport = asyncio.AsyncTransport(loop=event_loop)
-    assert isinstance(transport.cache, cache.SqliteCache)
-
-
-@pytest.mark.requests
 def test_no_cache(event_loop):
-    transport = asyncio.AsyncTransport(loop=event_loop, cache=None)
+    transport = asyncio.AsyncTransport(loop=event_loop)
     assert transport.cache is None
 
 
