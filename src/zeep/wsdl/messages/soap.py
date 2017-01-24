@@ -308,6 +308,10 @@ class SoapMessage(ConcreteMessage):
         else:
             raise ValueError("Invalid value given to _soapheaders")
 
+        # remove redundant headers that have no child nodes, text or attributes
+        for x in header:
+            if len(x) == 0 and x.text is None and len(x.attrib) == 0:
+                x.getparent().remove(x)
         return header
 
     def _deserialize_headers(self, xmlelement):
