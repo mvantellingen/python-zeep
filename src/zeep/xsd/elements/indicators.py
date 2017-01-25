@@ -5,7 +5,7 @@ from collections import OrderedDict, defaultdict, deque
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError
-from zeep.utils import NotSet
+from zeep.xsd.const import NotSet, SkipValue
 from zeep.xsd.elements import Any, Element
 from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import (
@@ -179,6 +179,9 @@ class OrderIndicator(Indicator, list):
                 else:
                     element_value = value
                     child_path = render_path
+
+                if element_value is SkipValue:
+                    continue
 
                 if element_value is not None or not element.is_optional:
                     element.render(parent, element_value, child_path)

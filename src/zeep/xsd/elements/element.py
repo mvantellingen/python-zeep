@@ -5,8 +5,8 @@ from lxml import etree
 
 from zeep import exceptions
 from zeep.exceptions import UnexpectedElementError
-from zeep.utils import NotSet, qname_attr
-from zeep.xsd.const import xsi_ns
+from zeep.utils import qname_attr
+from zeep.xsd.const import NotSet, xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import max_occurs_iter

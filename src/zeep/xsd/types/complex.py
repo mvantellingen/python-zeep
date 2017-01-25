@@ -6,8 +6,7 @@ from itertools import chain
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
-from zeep.utils import NotSet
-from zeep.xsd.const import xsi_ns
+from zeep.xsd.const import xsi_ns, SkipValue, NotSet
 from zeep.xsd.elements import (
     Any, AnyAttribute, AttributeGroup, Choice, Element, Group, Sequence)
 from zeep.xsd.elements.indicators import OrderIndicator
@@ -186,6 +185,9 @@ class ComplexType(AnyType):
             else:
                 element_value = value
                 child_path = list(render_path)
+
+            if element_value is SkipValue:
+                continue
 
             if isinstance(element, Element):
                 element.type.render(parent, element_value, None, child_path)

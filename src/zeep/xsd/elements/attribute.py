@@ -3,7 +3,7 @@ import logging
 from lxml import etree
 
 from zeep import exceptions
-from zeep.utils import NotSet
+from zeep.xsd.const import NotSet
 from zeep.xsd.elements.element import Element
 
 logger = logging.getLogger(__name__)
