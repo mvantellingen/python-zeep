@@ -1,4 +1,5 @@
 from lxml import etree
+from six.moves.urllib.parse import urlparse, urlunparse
 
 from zeep.utils import detect_soap_env
 
@@ -18,3 +19,17 @@ def get_or_create_header(envelope):
 def etree_to_string(node):
     return etree.tostring(
         node, pretty_print=True, xml_declaration=True, encoding='utf-8')
+
+
+def url_http_to_https(value):
+    parts = urlparse(value)
+    if parts.scheme != 'http':
+        return value
+
+    # Check if the url contains ':80' and remove it if that is the case
+    netloc_parts = parts.netloc.rsplit(':', 1)
+    if len(netloc_parts) == 2 and netloc_parts[1] == '80':
+        netloc = netloc_parts[0]
+    else:
+        netloc = parts.netloc
+    return urlunparse(['https', netloc, *parts[2:]])

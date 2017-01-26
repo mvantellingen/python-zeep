@@ -8,7 +8,7 @@ from zeep.parser import parse_xml
 from zeep.utils import as_qname, qname_attr
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
-from zeep.wsdl.utils import etree_to_string
+from zeep.wsdl.utils import etree_to_string, url_http_to_https
 
 logger = logging.getLogger(__name__)
 
@@ -158,9 +158,10 @@ class SoapBinding(Binding):
 
         # Force the usage of HTTPS when the force_https boolean is true
         location = address_node.get('location')
-        if force_https and location and location.startswith('http://'):
-            logger.warning("Forcing soap:address location to HTTPS")
-            location = 'https://' + location[7:]
+        if force_https and location:
+            location = url_http_to_https(location)
+            if location != address_node.get('location'):
+                logger.warning("Forcing soap:address location to HTTPS")
 
         return {
             'address': location
