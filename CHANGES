@@ -5,6 +5,7 @@
    information about how to configure a cache.
  - Add ``zeep.xsd.SkipValue`` which instructs the serialize to ignore the 
    element.
+ - Support duplicate target namespaces in the wsdl definition (#320)
 
 
 0.25.0 (2017-01-23)

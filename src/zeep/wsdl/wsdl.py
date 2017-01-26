@@ -2,12 +2,14 @@ from __future__ import print_function
 
 import logging
 import operator
+import os
 from collections import OrderedDict
 
 import six
 from lxml import etree
 
-from zeep.parser import absolute_location, load_external, parse_xml
+from zeep.parser import (
+    absolute_location, is_relative_path, load_external, parse_xml)
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
 from zeep.xsd import Schema
@@ -34,7 +36,7 @@ class Document(object):
 
     """
 
-    def __init__(self, location, transport):
+    def __init__(self, location, transport, base=None):
         """Initialize a WSDL document.
 
         The root definition properties are exposed as entry points.
@@ -45,12 +47,18 @@ class Document(object):
         :type transport: zeep.transports.Transport
 
         """
-        self.location = location if not hasattr(location, 'read') else None
+        if isinstance(location, six.string_types):
+            if is_relative_path(location):
+                location = os.path.abspath(location)
+            self.location = location
+        else:
+            self.location = base
+
         self.transport = transport
 
         # Dict with all definition objects within this WSDL
         self._definitions = {}
-        self.types = Schema([], transport=self.transport)
+        self.types = Schema([], transport=self.transport, location=self.location)
 
         document = self._load_content(location)
 
@@ -122,6 +130,10 @@ class Document(object):
             return parse_xml(location.read())
         return load_external(location, self.transport, self.location)
 
+    def _add_definition(self, definition):
+        key = (definition.target_namespace, definition.location)
+        self._definitions[key] = definition
+
 
 class Definition(object):
     """The Definition represents one wsdl:definition within a Document."""
@@ -141,7 +153,7 @@ class Definition(object):
         self._resolved_imports = False
 
         self.target_namespace = doc.get('targetNamespace')
-        self.wsdl._definitions[self.target_namespace] = self
+        self.wsdl._add_definition(self)
         self.nsmap = doc.nsmap
 
         # Process the definitions
@@ -214,18 +226,20 @@ class Definition(object):
 
         """
         for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
-            location = import_node.get('location')
             namespace = import_node.get('namespace')
-            if namespace in self.wsdl._definitions:
-                self.imports[namespace] = self.wsdl._definitions[namespace]
+            location = import_node.get('location')
+            location = absolute_location(location, self.location)
+
+            key = (namespace, location)
+            if key in self.wsdl._definitions:
+                self.imports[key] = self.wsdl._definitions[key]
             else:
                 document = self.wsdl._load_content(location)
-                location = absolute_location(location, self.location)
                 if etree.QName(document.tag).localname == 'schema':
                     self.types.add_documents([document], location)
                 else:
                     wsdl = Definition(self.wsdl, document, location)
-                    self.imports[namespace] = wsdl
+                    self.imports[key] = wsdl
 
     def parse_types(self, doc):
         """Return an xsd.Schema() instance for the given wsdl:types element.
