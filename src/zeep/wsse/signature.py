@@ -35,12 +35,13 @@ class Signature(object):
         self.certfile = certfile
         self.password = password
 
-    def sign(self, envelope):
-        return sign_envelope(
-            envelope, self.key_file, self.certfile, self.password)
+    def apply(self, envelope, headers):
+        sign_envelope(envelope, self.key_file, self.certfile, self.password)
+        return envelope, headers
 
     def verify(self, envelope):
-        return verify_envelope(envelope, self.certfile)
+        verify_envelope(envelope, self.certfile)
+        return envelope
 
 
 def check_xmlsec_import():

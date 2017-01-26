@@ -7,7 +7,7 @@ from freezegun import freeze_time
 
 from tests.utils import assert_nodes_equal, load_xml
 from zeep import client
-from zeep.wsse.username import UsernameToken
+from zeep.wsse import UsernameToken
 
 
 @pytest.mark.requests
@@ -55,7 +55,7 @@ def test_password_text():
     """)
 
     token = UsernameToken('michael', 'geheim')
-    envelope, headers = token.sign(envelope, {})
+    envelope, headers = token.apply(envelope, {})
     expected = """
         <soap-env:Envelope
             xmlns:ns0="http://example.com/stockquote.xsd"
@@ -104,7 +104,7 @@ def test_password_digest(monkeypatch):
     """)
 
     token = UsernameToken('michael', 'geheim', use_digest=True)
-    envelope, headers = token.sign(envelope, {})
+    envelope, headers = token.apply(envelope, {})
     expected = """
         <soap-env:Envelope
             xmlns:ns0="http://example.com/stockquote.xsd"
@@ -158,7 +158,7 @@ def test_password_digest_custom(monkeypatch):
     token = UsernameToken(
         'michael', password_digest='12345', use_digest=True,
         nonce='iets', created=created)
-    envelope, headers = token.sign(envelope, {})
+    envelope, headers = token.apply(envelope, {})
     expected = """
         <soap-env:Envelope
             xmlns:ns0="http://example.com/stockquote.xsd"
@@ -211,7 +211,7 @@ def test_password_prepared():
     """)  # noqa
 
     token = UsernameToken('michael', 'geheim')
-    envelope, headers = token.sign(envelope, {})
+    envelope, headers = token.apply(envelope, {})
     expected = """
         <soap-env:Envelope
             xmlns:ns0="http://example.com/stockquote.xsd"

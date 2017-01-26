@@ -46,7 +46,7 @@ class UsernameToken(object):
         self.created = created
         self.use_digest = use_digest
 
-    def sign(self, envelope, headers):
+    def apply(self, envelope, headers):
         security = utils.get_security_header(envelope)
 
         # The token placeholder might already exists since it is specified in

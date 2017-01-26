@@ -4,6 +4,7 @@ import pytest
 
 from tests.utils import load_xml
 from zeep.exceptions import SignatureVerificationFailed
+from zeep import wsse
 from zeep.wsse import signature
 
 DS_NS = 'http://www.w3.org/2000/09/xmldsig#'
@@ -97,6 +98,6 @@ def test_signature():
         </soapenv:Envelope>
     """)
 
-    plugin = signature.Signature(KEY_FILE_PW, KEY_FILE_PW, 'geheim')
-    plugin.sign(envelope)
+    plugin = wsse.Signature(KEY_FILE_PW, KEY_FILE_PW, 'geheim')
+    envelope, headers = plugin.apply(envelope, {})
     plugin.verify(envelope)
