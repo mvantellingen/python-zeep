@@ -59,7 +59,7 @@ def main(args):
         profile = cProfile.Profile()
         profile.enable()
 
-    cache = SqliteCache() if args.cache else InMemoryCache()
+    cache = SqliteCache() if args.cache else None
     transport_kwargs = {'cache': cache}
 
     if args.no_verify:
