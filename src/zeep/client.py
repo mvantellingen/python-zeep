@@ -5,12 +5,6 @@ from contextlib import contextmanager
 from zeep.transports import Transport
 from zeep.wsdl import Document
 
-NSMAP = {
-    'xsd': 'http://www.w3.org/2001/XMLSchema',
-    'soap': 'http://schemas.xmlsoap.org/wsdl/soap/',
-    'soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
-}
-
 
 logger = logging.getLogger(__name__)
 

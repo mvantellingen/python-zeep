@@ -2,7 +2,7 @@ import six
 from defusedxml.lxml import fromstring
 from lxml import etree
 
-from zeep import xsd
+from zeep import ns, xsd
 from zeep.helpers import serialize_object
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
 from zeep.wsdl.utils import etree_to_string
@@ -16,7 +16,7 @@ __all__ = [
 
 class MimeMessage(ConcreteMessage):
     _nsmap = {
-        'mime': 'http://schemas.xmlsoap.org/wsdl/mime/',
+        'mime': ns.MIME,
     }
 
     def __init__(self, wsdl, name, operation, part_name):

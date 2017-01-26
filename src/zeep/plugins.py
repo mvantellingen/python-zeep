@@ -5,9 +5,25 @@ class Plugin(object):
     """Base plugin"""
 
     def ingress(self, envelope, http_headers, operation):
+        """Override to update the envelope or http headers when receiving a
+        message.
+
+        :param envelope: The envelope as XML node
+        :param http_headers: Dict with the HTTP headers
+
+        """
         return envelope, http_headers
 
     def egress(self, envelope, http_headers, operation, binding_options):
+        """Override to update the envelope or http headers when sending a
+        message.
+
+        :param envelope: The envelope as XML node
+        :param http_headers: Dict with the HTTP headers
+        :param operation: The associated Operation instance
+        :param binding_options: Binding specific options for the operation
+
+        """
         return envelope, http_headers
 
 

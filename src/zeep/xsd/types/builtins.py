@@ -8,8 +8,7 @@ import isodate
 import pytz
 import six
 
-from zeep.exceptions import ValidationError
-from zeep.xsd.const import NS_XSD, xsd_ns
+from zeep.xsd.const import xsd_ns
 from zeep.xsd.types.any import AnyType
 from zeep.xsd.types.simple import AnySimpleType
 

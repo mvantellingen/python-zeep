@@ -2,7 +2,7 @@ import logging
 
 from lxml import etree
 
-from zeep import plugins, wsa
+from zeep import ns, plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.parser import parse_xml
 from zeep.utils import as_qname, qname_attr
@@ -207,10 +207,10 @@ class SoapBinding(Binding):
 
 class Soap11Binding(SoapBinding):
     nsmap = {
-        'soap': 'http://schemas.xmlsoap.org/wsdl/soap/',
-        'soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
-        'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
-        'xsd': 'http://www.w3.org/2001/XMLSchema',
+        'soap': ns.SOAP_11,
+        'soap-env': ns.SOAP_ENV_11,
+        'wsdl': ns.WSDL,
+        'xsd': ns.XSD,
     }
 
     def process_error(self, doc, operation):
@@ -241,10 +241,10 @@ class Soap11Binding(SoapBinding):
 
 class Soap12Binding(SoapBinding):
     nsmap = {
-        'soap': 'http://schemas.xmlsoap.org/wsdl/soap12/',
-        'soap-env': 'http://www.w3.org/2003/05/soap-envelope',
-        'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
-        'xsd': 'http://www.w3.org/2001/XMLSchema',
+        'soap': ns.SOAP_12,
+        'soap-env': ns.SOAP_ENV_12,
+        'wsdl': ns.WSDL,
+        'xsd': ns.XSD,
     }
 
     def process_error(self, doc, operation):
