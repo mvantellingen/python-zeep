@@ -433,7 +433,8 @@ def test_duplicate_target_namespace():
 
     elm_b = schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-b')
     elm_c = schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-c')
-    import pdb; pdb.set_trace()
+    assert not isinstance(elm_b.type, xsd.UnresolvedType)
+    assert not isinstance(elm_c.type, xsd.UnresolvedType)
 
 
 def test_multiple_no_namespace():

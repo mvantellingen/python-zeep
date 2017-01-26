@@ -289,8 +289,9 @@ class SchemaDocument(object):
             return
         self._resolved = True
 
-        for schema in self._imports.values():
-            schema.resolve()
+        for schemas in self._imports.values():
+            for schema in schemas:
+                schema.resolve()
 
         def _resolve_dict(val):
             for key, obj in val.items():
@@ -309,7 +310,8 @@ class SchemaDocument(object):
         self._elm_instances = []
 
     def register_import(self, namespace, schema):
-        self._imports[namespace] = schema
+        schemas = self._imports.setdefault(namespace, [])
+        schemas.append(schema)
 
     def is_imported(self, namespace):
         return namespace in self._imports

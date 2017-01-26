@@ -6,6 +6,7 @@
  - Add ``zeep.xsd.SkipValue`` which instructs the serialize to ignore the 
    element.
  - Support duplicate target namespaces in the wsdl definition (#320)
+ - Fix resolving element/types for xsd schema's with duplicate tns (#319)
 
 
 0.25.0 (2017-01-23)
