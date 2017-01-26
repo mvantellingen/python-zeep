@@ -10,12 +10,12 @@ from zeep.xsd.valueobjects import CompoundValue
 def serialize_object(obj, target_cls=OrderedDict):
     """Serialize zeep objects to native python data structures"""
     if isinstance(obj, list):
-        return [serialize_object(sub) for sub in obj]
+        return [serialize_object(sub, target_cls) for sub in obj]
 
     if isinstance(obj, (dict, CompoundValue)):
         result = target_cls()
         for key in obj:
-            result[key] = serialize_object(obj[key])
+            result[key] = serialize_object(obj[key], target_cls)
         return result
 
     return obj
