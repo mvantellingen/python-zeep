@@ -5,6 +5,7 @@ import logging
 import logging.config
 import time
 
+import requests
 from six.moves.urllib.parse import urlparse
 from zeep.cache import SqliteCache
 from zeep.client import Client
@@ -60,16 +61,16 @@ def main(args):
         profile.enable()
 
     cache = SqliteCache() if args.cache else None
-    transport_kwargs = {'cache': cache}
+    session = requests.Session()
 
     if args.no_verify:
-        transport_kwargs['verify'] = False
+        session.verify = False
 
     result = urlparse(args.wsdl_file)
     if result.username or result.password:
-        transport_kwargs['http_auth'] = (result.username, result.password)
+        session.auth = (result.username, result.password)
 
-    transport = Transport(**transport_kwargs)
+    transport = Transport(cache=cache, session=session)
     st = time.time()
     client = Client(args.wsdl_file, transport=transport)
     logger.debug("Loading WSDL took %sms", (time.time() - st) * 1000)

@@ -28,4 +28,4 @@ def test_main_extract_auth(monkeypatch):
         assert mock_transport.call_count == 1
 
         args, kwargs = mock_transport.call_args
-        assert kwargs['http_auth'] == ('user', 'secret')
+        assert kwargs['session'].auth == ('user', 'secret')

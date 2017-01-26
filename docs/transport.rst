@@ -59,16 +59,19 @@ HTTP Authentication
 -------------------
 While some providers incorporate security features in the header of a SOAP message,
 others use the HTTP Authentication header.  In the latter case,
-you can use any method supported by ``requests``.
+you can just create a requests.Session() object with the auth set and pass it
+to the Transport class.
 
 .. code-block:: python
 
+    from requests import Session
     from requests.auth import HTTPBasicAuth  # or HTTPDigestAuth, or OAuth1, etc.
     from zeep import Client
     from zeep.transports import Transport
 
+    session = Session(auth=HTTPBasicAuth(user, password))
     client = Client('http://my-endpoint.com/production.svc?wsdl',
-        transport=Transport(http_auth=HTTPBasicAuth(user, password)))
+        transport=Transport(session=session))
 
 
 .. _debugging:

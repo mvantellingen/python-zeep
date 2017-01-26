@@ -1,5 +1,11 @@
 0.26.0 (unreleased)
 -------------------
+This release again introduces some backwords incompatibilties. The next release
+will hopefully be 1.0 which will introduce semver.
+
+ - **backwards-incompatible**: The Transport class now accepts a 
+   ``requests.Session()`` object instead of ``http_auth`` and ``verify``. This
+   allows for more flexibility.
  - **backwards-incompatible**: Zeep no longer sets a default cache backend.
    Please see http://docs.python-zeep.org/en/master/transport.html#caching for
    information about how to configure a cache.

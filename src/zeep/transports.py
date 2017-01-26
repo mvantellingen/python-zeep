@@ -16,33 +16,21 @@ class Transport(object):
     :param timeout: The timeout for loading wsdl and xsd documents.
     :param operation_timeout: The timeout for operations (POST/GET). By
                               default this is None (no timeout).
-    :param verify: Boolean to indicate if the SSL certificate needs to be
-                   verified.
-    :param http_auth: HTTP authentication, passed to requests.
+    :param session: A request.Session() object (optional)
 
     """
     supports_async = False
 
     def __init__(self, cache=None, timeout=300, operation_timeout=None,
-                 verify=True, http_auth=None):
+                 session=None):
         self.cache = cache
         self.load_timeout = timeout
         self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)
 
-        self.http_verify = verify
-        self.http_auth = http_auth
-        self.http_headers = {
-            'User-Agent': 'Zeep/%s (www.python-zeep.org)' % (get_version())
-        }
-        self.session = self.create_session()
-
-    def create_session(self):
-        session = requests.Session()
-        session.verify = self.http_verify
-        session.auth = self.http_auth
-        session.headers = self.http_headers
-        return session
+        self.session = session or requests.Session()
+        self.session.headers['User-Agent'] = (
+            'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
     def get(self, address, params, headers):
         """Proxy to requests.get()

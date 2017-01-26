@@ -3,9 +3,11 @@ Adds asyncio support to Zeep. Contains Python 3.5+ only syntax!
 
 """
 import asyncio
+import logging
 
 import aiohttp
 from zeep.transports import Transport
+from zeep.utils import get_version
 from zeep.wsdl.utils import etree_to_string
 
 __all__ = ['AsyncTransport']
@@ -15,18 +17,18 @@ class AsyncTransport(Transport):
     """Asynchronous Transport class using aiohttp."""
     supports_async = True
 
-    def __init__(self, loop, *args, **kwargs):
+    def __init__(self, loop, cache=None, timeout=300, operation_timeout=None,
+                 session=None):
+
         self.loop = loop if loop else asyncio.get_event_loop()
-        super().__init__(*args, **kwargs)
+        self.cache = cache
+        self.load_timeout = timeout
+        self.operation_timeout = operation_timeout
+        self.logger = logging.getLogger(__name__)
 
-    def create_session(self):
-        connector = aiohttp.TCPConnector(verify_ssl=self.http_verify)
-
-        return aiohttp.ClientSession(
-            connector=connector,
-            loop=self.loop,
-            headers=self.http_headers,
-            auth=self.http_auth)
+        self.session = session or aiohttp.ClientSession(loop=self.loop)
+        self.session._default_headers['User-Agent'] = (
+            'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
     def _load_remote_data(self, url):
         result = None
