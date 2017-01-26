@@ -7,13 +7,13 @@ from zeep import xsd
 from zeep.xsd.valueobjects import CompoundValue
 
 
-def serialize_object(obj):
+def serialize_object(obj, target_cls=OrderedDict):
     """Serialize zeep objects to native python data structures"""
     if isinstance(obj, list):
         return [serialize_object(sub) for sub in obj]
 
     if isinstance(obj, (dict, CompoundValue)):
-        result = OrderedDict()
+        result = target_cls()
         for key in obj:
             result[key] = serialize_object(obj[key])
         return result
