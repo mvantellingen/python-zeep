@@ -32,4 +32,4 @@ def url_http_to_https(value):
         netloc = netloc_parts[0]
     else:
         netloc = parts.netloc
-    return urlunparse(['https', netloc, *parts[2:]])
+    return urlunparse(['https', netloc] + parts[2:])
