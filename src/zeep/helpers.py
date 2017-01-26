@@ -9,22 +9,16 @@ from zeep.xsd.valueobjects import CompoundValue
 
 def serialize_object(obj):
     """Serialize zeep objects to native python data structures"""
-    if obj is None:
-        return obj
-
-    if isinstance(obj, etree._Element):
-        return obj
-
     if isinstance(obj, list):
         return [serialize_object(sub) for sub in obj]
 
-    result = OrderedDict()
-    for key in obj:
-        value = obj[key]
-        if isinstance(value, (dict, list, CompoundValue)):
-            value = serialize_object(value)
-        result[key] = value
-    return result
+    if isinstance(obj, (dict, CompoundValue)):
+        result = OrderedDict()
+        for key in obj:
+            result[key] = serialize_object(obj[key])
+        return result
+
+    return obj
 
 
 def create_xml_soap_map(values):
