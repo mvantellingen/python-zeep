@@ -394,9 +394,16 @@ def test_duplicate_target_namespace():
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/duplicate"
             targetNamespace="http://tests.python-zeep.org/duplicate"
             elementFormDefault="qualified">
-            <xsd:element name="elm-in-b" type="xsd:string"/>
+            <xsd:element name="elm-in-b" type="tns:item-c"/>
+            <xsd:complexType name="item-c">
+              <xsd:sequence>
+                <xsd:element name="item-a" type="xsd:string"/>
+                <xsd:element name="item-b" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
         </xsd:schema>
     """.strip())
 
@@ -404,9 +411,17 @@ def test_duplicate_target_namespace():
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/duplicate"
             targetNamespace="http://tests.python-zeep.org/duplicate"
             elementFormDefault="qualified">
-            <xsd:element name="elm-in-c" type="xsd:string"/>
+            <xsd:element name="elm-in-c" type="tns:item-c"/>
+            <xsd:complexType name="item-c">
+              <xsd:sequence>
+                <xsd:element name="item-a" type="xsd:string"/>
+                <xsd:element name="item-b" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
+
         </xsd:schema>
     """.strip())
 
@@ -416,8 +431,9 @@ def test_duplicate_target_namespace():
     transport.bind('http://tests.python-zeep.org/c.xsd', schema_c)
     schema = xsd.Schema(schema_a, transport=transport)
 
-    assert schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-b')
-    assert schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-c')
+    elm_b = schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-b')
+    elm_c = schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-c')
+    import pdb; pdb.set_trace()
 
 
 def test_multiple_no_namespace():
