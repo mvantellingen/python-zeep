@@ -131,6 +131,7 @@ User guide
    headers
    transport
    datastructures
+   attachments
    wsa
    wsse
    plugins

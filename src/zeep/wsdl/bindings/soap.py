@@ -1,11 +1,13 @@
 import logging
 
 from lxml import etree
+from requests_toolbelt.multipart.decoder import MultipartDecoder
 
 from zeep import ns, plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.parser import parse_xml
 from zeep.utils import as_qname, qname_attr
+from zeep.wsdl.attachments import MessagePack
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
 from zeep.wsdl.utils import etree_to_string, url_http_to_https
@@ -128,8 +130,18 @@ class SoapBinding(Binding):
                 u'Server returned HTTP status %d (no content available)'
                 % response.status_code)
 
+        content_type = response.headers.get('Content-Type', 'text/xml')
+        if 'multipart/related' in content_type:
+            decoder = MultipartDecoder(response.content, content_type, 'utf-8')
+            content = decoder.parts[0].content
+            if len(decoder.parts) > 1:
+                message_pack = MessagePack(parts=decoder.parts[1:])
+        else:
+            content = response.content
+            message_pack = None
+
         try:
-            doc = parse_xml(response.content)
+            doc = parse_xml(content)
         except XMLSyntaxError:
             raise TransportError(
                 u'Server returned HTTP status %d (%s)'
@@ -148,7 +160,12 @@ class SoapBinding(Binding):
         if response.status_code != 200 or fault_node is not None:
             return self.process_error(doc, operation)
 
-        return operation.process_reply(doc)
+        result = operation.process_reply(doc)
+
+        if message_pack:
+            message_pack._set_root(result)
+            return message_pack
+        return result
 
     def process_error(self, doc, operation):
         raise NotImplementedError
