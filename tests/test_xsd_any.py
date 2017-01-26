@@ -220,6 +220,47 @@ def test_element_any_type():
     assert item.something == 'bar'
 
 
+def test_element_any_type_check_declaration():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+            attributeFormDefault="unqualified"
+                elementFormDefault="qualified">
+
+
+          <element name="container" type="tns:Item"/>
+          <complexType name="Item">
+            <sequence>
+              <element name="value" type="anyType"/>
+            </sequence>
+            <attribute name="name" type="string"/>
+          </complexType>
+        </schema>
+    """.strip())
+    schema = xsd.Schema(node)
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = container_elm(name="foo", value=xsd.AnyObject(xsd.String(), 'bar'))
+
+    node = etree.Element('document')
+
+    container_elm.render(node, obj)
+    etree.cleanup_namespaces(node)
+    expected = """
+        <document>
+          <ns0:container xmlns:ns0="http://tests.python-zeep.org/" name="foo">
+            <ns0:value
+                  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:type="xs:string">bar</ns0:value>
+          </ns0:container>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+
 def test_any_in_nested_sequence():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
