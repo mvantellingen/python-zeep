@@ -1,4 +1,4 @@
-0.26.0 (unreleased)
+0.26.0 (2017-01-26)
 -------------------
 This release again introduces some backwords incompatibilties. The next release
 will hopefully be 1.0 which will introduce semver.
