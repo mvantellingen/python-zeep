@@ -79,7 +79,7 @@ example is the following.
     client = Client('YOUR-WSDL')
     response = pretend.stub(
         status_code=200,
-        headers=[],
+        headers={},
         content="""
             <!-- The response from the server -->
         """)
