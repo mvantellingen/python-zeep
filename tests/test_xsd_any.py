@@ -220,6 +220,54 @@ def test_element_any_type():
     assert item.something == 'bar'
 
 
+def test_element_any_type_elements():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="something" type="anyType"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+    schema = xsd.Schema(node)
+
+    Child = xsd.ComplexType(
+        xsd.Sequence([
+            xsd.Element('{http://tests.python-zeep.org/}item_1', xsd.String()),
+            xsd.Element('{http://tests.python-zeep.org/}item_2', xsd.String()),
+        ])
+    )
+    child = Child(item_1='item-1', item_2='item-2')
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = container_elm(something=child)
+
+    node = etree.Element('document')
+    container_elm.render(node, obj)
+    expected = """
+        <document>
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:something>
+                    <ns0:item_1>item-1</ns0:item_1>
+                    <ns0:item_2>item-2</ns0:item_2>
+                </ns0:something>
+            </ns0:container>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+    item = container_elm.parse(node.getchildren()[0], schema)
+    assert len(item.something) == 2
+    assert item.something[0].text == 'item-1'
+    assert item.something[1].text == 'item-2'
+
+
 def test_any_in_nested_sequence():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>

@@ -30,18 +30,21 @@ class AnyType(Type):
                          context=None):
         xsi_type = qname_attr(xmlelement, xsi_ns('type'))
         xsi_nil = xmlelement.get(xsi_ns('nil'))
+        children = list(xmlelement.getchildren())
 
         # Handle xsi:nil attribute
-        if xsi_nil == "true":
+        if xsi_nil == 'true':
             return None
 
+        # Check if a xsi:type is defined and try to parse the xml according
+        # to that type.
         if xsi_type and schema:
             xsd_type = schema.get_type(xsi_type, fail_silently=True)
 
             # If we were unable to resolve a type for the xsi:type (due to
             # buggy soap servers) then we just return the lxml element.
             if not xsd_type:
-                return xmlelement.getchildren()
+                return children
 
             # If the xsd_type is xsd:anyType then we will recurs so ignore
             # that.
@@ -51,10 +54,15 @@ class AnyType(Type):
             return xsd_type.parse_xmlelement(
                 xmlelement, schema, context=context)
 
-        if xmlelement.text is None:
-            return
+        # If no xsi:type is set and the element has children then there is
+        # not much we can do. Just return the children
+        elif children:
+            return children
 
-        return self.pythonvalue(xmlelement.text)
+        elif xmlelement.text is not None:
+            return self.pythonvalue(xmlelement.text)
+
+        return None
 
     def resolve(self):
         return self
