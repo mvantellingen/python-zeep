@@ -51,16 +51,24 @@ class Any(Base):
         if self.process_contents == 'skip':
             return xmlelement
 
+        # If a schema was passed inline then check for a matching one
         qname = etree.QName(xmlelement.tag)
-        for context_schema in context.schemas:
-            if context_schema._has_schema_document(qname.namespace):
-                schema = context_schema
-                break
+        if context and context.schemas:
+            for context_schema in context.schemas:
+                if context_schema._has_schema_document(qname.namespace):
+                    schema = context_schema
+                    break
 
+        # Lookup type via xsi:type attribute
         xsd_type = qname_attr(xmlelement, xsi_ns('type'))
         if xsd_type is not None:
             xsd_type = schema.get_type(xsd_type)
             return xsd_type.parse_xmlelement(xmlelement, schema, context=context)
+
+        # Check if a restrict is used
+        if self.restrict:
+            return self.restrict.parse_xmlelement(
+                xmlelement, schema, context=context)
 
         try:
             element = schema.get_element(xmlelement.tag)

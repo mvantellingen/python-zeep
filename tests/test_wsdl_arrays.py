@@ -168,6 +168,15 @@ def test_complex_type_without_name():
         </document>
     """
     assert_nodes_equal(expected, node)
+    data = ArrayOfObject.parse_xmlelement(node, schema)
+
+    assert len(data._value_1) == 3
+    assert data._value_1[0]['attr_1'] == 'attr-1'
+    assert data._value_1[0]['attr_2'] == 'attr-2'
+    assert data._value_1[1]['attr_1'] == 'attr-3'
+    assert data._value_1[1]['attr_2'] == 'attr-4'
+    assert data._value_1[2]['attr_1'] == 'attr-5'
+    assert data._value_1[2]['attr_2'] == 'attr-6'
 
 
 def test_soap_array_parse_remote_ns():

@@ -3,6 +3,7 @@
  - Add support for SOAP attachments (multipart responses). (Dave Wapstra, #302)
  - Update xsd:anyType to return the xml elements when no type is given via the
    xsi:type attribute (#284)
+ - Fix parsing Any elements when a restriction is used (soap-enc:array) (#322)
 
 
 0.26.0 (2017-01-26)
