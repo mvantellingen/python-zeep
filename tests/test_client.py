@@ -43,6 +43,13 @@ def test_service_proxy_non_existing():
         assert client_obj.service.NonExisting
 
 
+def test_open_from_file_object():
+    with open('tests/wsdl_files/soap_transport_err.wsdl', 'rb') as fh:
+        client_obj = client.Client(fh)
+        service = client_obj.bind()
+        assert service
+
+
 def test_client_no_wsdl():
     with pytest.raises(ValueError):
         client.Client(None)
