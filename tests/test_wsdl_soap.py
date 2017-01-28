@@ -165,5 +165,5 @@ def test_mime_multipart():
     assert result.root is None
     assert len(result.attachments) == 2
 
-    assert result.attachments[0].data.read() == b'...Base64 encoded TIFF image...'
-    assert result.attachments[1].data.read() == b'...Raw JPEG image..'
+    assert result.attachments[0].content == b'...Base64 encoded TIFF image...'
+    assert result.attachments[1].content == b'...Raw JPEG image..'
