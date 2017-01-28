@@ -1,4 +1,4 @@
-0.27.0 (unreleased)
+0.27.0 (2017-01-28)
 -------------------
  - Add support for SOAP attachments (multipart responses). (Dave Wapstra, #302)
  - Update xsd:anyType to return the xml elements when no type is given via the
