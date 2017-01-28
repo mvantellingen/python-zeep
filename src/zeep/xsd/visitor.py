@@ -871,11 +871,7 @@ class SchemaVisitor(object):
     def _get_type(self, name):
         assert name is not None
         name = self._create_qname(name)
-        try:
-            retval = self.schema.get_type(name)
-        except (exceptions.NamespaceError, exceptions.LookupError):
-            retval = xsd_types.UnresolvedType(name, self.schema)
-        return retval
+        return xsd_types.UnresolvedType(name, self.schema)
 
     def _create_qname(self, name):
         if not isinstance(name, etree.QName):
