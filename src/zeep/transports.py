@@ -68,9 +68,12 @@ class Transport(object):
             timeout=self.operation_timeout)
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            log_message = response.content
-            if isinstance(log_message, bytes):
-                log_message = log_message.decode('utf-8')
+            if 'multipart/related' in response.headers.get('Content-Type'):
+                log_message = response.content
+            else:
+                log_message = response.content
+                if isinstance(log_message, bytes):
+                    log_message = log_message.decode('utf-8')
 
             self.logger.debug(
                 "HTTP Response from %s (status: %d):\n%s",

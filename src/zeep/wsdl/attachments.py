@@ -14,6 +14,10 @@ class MessagePack(object):
     def __init__(self, parts):
         self._parts = parts
 
+    def __repr__(self):
+        return '<MessagePack(attachments=[%s])>' % (
+            ', '.join(repr(a) for a in self.attachments))
+
     @property
     def root(self):
         return self._root
@@ -43,15 +47,17 @@ class Attachment(object):
         self.content_location = self.headers.get('Content-Location', None)
         self._part = part
 
+    def __repr__(self):
+        return '<Attachment(%r, %r)>' % (self.content_id, self.content_type)
+
     @cached_property
-    def data(self):
+    def content(self):
         encoding = self.headers.get('Content-Transfer-Encoding', None)
         content = self._part.content
 
         if encoding == 'base64':
-            content = base64.b64decode(content)
-            return BytesIO(content)
+            return base64.b64decode(content)
         elif encoding == 'binary':
-            return BytesIO(content)
+            return content
         else:
             return content
