@@ -329,9 +329,9 @@ class SoapMessage(ConcreteMessage):
     def _resolve_header(self, info, definitions, parts):
         name = etree.QName(self.nsmap['soap-env'], 'Header')
 
-        sequence = xsd.Sequence()
+        container = xsd.All()
         if not info:
-            return xsd.Element(name, xsd.ComplexType(sequence))
+            return xsd.Element(name, xsd.ComplexType(container))
 
         for item in info:
             message_name = item['message'].text
@@ -347,8 +347,8 @@ class SoapMessage(ConcreteMessage):
                 element.attr_name = part_name
             else:
                 element = xsd.Element(part_name, part.type)
-            sequence.append(element)
-        return xsd.Element(name, xsd.ComplexType(sequence))
+            container.append(element)
+        return xsd.Element(name, xsd.ComplexType(container))
 
 
 class DocumentMessage(SoapMessage):
