@@ -9,7 +9,8 @@ from zeep.xsd.const import NotSet, SkipValue
 from zeep.xsd.elements import Any, Element
 from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import (
-    NamePrefixGenerator, UniqueNameGenerator, max_occurs_iter)
+    NamePrefixGenerator, UniqueNameGenerator, create_prefixed_name,
+    max_occurs_iter)
 
 __all__ = ['All', 'Choice', 'Group', 'Sequence']
 
@@ -233,6 +234,7 @@ class All(OrderIndicator):
 
 
 class Choice(OrderIndicator):
+    """Permits one and only one of the elements contained in the group."""
 
     @property
     def is_optional(self):
@@ -448,7 +450,10 @@ class Choice(OrderIndicator):
 
 
 class Sequence(OrderIndicator):
+    """Requires the elements in the group to appear in the specified sequence
+    within the containing element.
 
+    """
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         result = []
         for _unused in max_occurs_iter(self.max_occurs):
@@ -491,15 +496,8 @@ class Group(Indicator):
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
 
-    def clone(self, name, min_occurs=1, max_occurs=1):
-        return self.__class__(
-            name=self.qname,
-            child=self.child,
-            min_occurs=min_occurs,
-            max_occurs=max_occurs)
-
     def __str__(self):
-        return '%s(%s)' % (self.name, self.signature())
+        return self.signature()
 
     def __iter__(self, *args, **kwargs):
         for item in self.child:
@@ -529,6 +527,11 @@ class Group(Indicator):
                 subresult = self.child.parse_kwargs(
                     sub_kwargs, sub_name, available_sub_kwargs)
 
+                if available_sub_kwargs:
+                    raise TypeError((
+                        "%s() got an unexpected keyword argument %r."
+                    ) % (self, list(available_sub_kwargs)[0]))
+
                 if subresult:
                     result.append(subresult)
             if result:
@@ -549,12 +552,23 @@ class Group(Indicator):
             return result[0]
         return {name: result}
 
-    def render(self, *args, **kwargs):
-        return self.child.render(*args, **kwargs)
+    def render(self, parent, value, render_path):
+        if not isinstance(value, list):
+            values = [value]
+        else:
+            values = value
+
+        for value in values:
+            self.child.render(parent, value, render_path)
 
     def resolve(self):
         self.child = self.child.resolve()
         return self
 
     def signature(self, schema=None, standalone=True):
-        return self.child.signature(schema)
+        name = create_prefixed_name(self.qname, schema)
+        if standalone:
+            return '%s(%s)' % (
+                name, self.child.signature(schema, standalone=False))
+        else:
+            return  self.child.signature(schema, standalone=False)
