@@ -156,6 +156,8 @@ class SoapMessage(ConcreteMessage):
         body_data = None
         header_data = None
 
+        # After some profiling it turns out that .find() and .findall() in this
+        # case are twice as fast as the xpath method
         body = xmlelement.find('soap:body', namespaces=operation.binding.nsmap)
         if body is not None:
             body_data = cls._parse_body(body)
