@@ -3,6 +3,7 @@ from lxml import etree
 
 from six.moves import range
 from six.moves.urllib.parse import urlparse
+from zeep import ns
 from zeep.exceptions import XMLSyntaxError
 from zeep.parser import absolute_location
 
@@ -69,3 +70,20 @@ def max_occurs_iter(max_occurs, items=None):
     else:
         for i in generator:
             yield i
+
+
+def create_prefixed_name(qname, schema):
+    if not qname:
+        return
+
+    if schema and qname.namespace:
+        prefix = schema.get_shorthand_for_ns(qname.namespace)
+        if prefix:
+            return '%s:%s' % (prefix, qname.localname)
+    elif qname.namespace in ns.NAMESPACE_TO_PREFIX:
+        prefix = ns.NAMESPACE_TO_PREFIX[qname.namespace]
+        return '%s:%s' % (prefix, qname.localname)
+
+    if qname.namespace:
+        return qname.text
+    return qname.localname

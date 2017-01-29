@@ -23,7 +23,7 @@ def test_schema_empty():
         </schema>
     """)
     schema = parse_schema_node(node)
-    root = next(schema.documents)
+    root = schema._get_schema_documents('http://tests.python-zeep.org/')[0]
     assert root._element_form == 'qualified'
     assert root._attribute_form == 'unqualified'
 

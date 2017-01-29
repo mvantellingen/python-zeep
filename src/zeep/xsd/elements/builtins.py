@@ -35,6 +35,6 @@ class Schema(Base):
         return self
 
 
-default_elements = {
-    xsd_ns('schema'): Schema(),
-}
+_elements = [
+    Schema
+]

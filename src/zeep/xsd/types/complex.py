@@ -353,25 +353,18 @@ class ComplexType(AnyType):
             qname=self.qname)
         return new.resolve()
 
-    def signature(self, depth=()):
-        if len(depth) > 0 and self.is_global:
-            return self.name
-
+    def signature(self, schema=None, standalone=True):
         parts = []
-        depth += (self.name,)
         for name, element in self.elements_nested:
-            # http://schemas.xmlsoap.org/soap/encoding/ contains cyclic type
-            if isinstance(element, Element) and element.type == self:
-                continue
-
-            part = element.signature(depth)
+            part = element.signature(schema, standalone=False)
             parts.append(part)
 
         for name, attribute in self.attributes:
-            part = '%s: %s' % (name, attribute.signature(depth))
+            part = '%s: %s' % (name, attribute.signature(schema, standalone=False))
             parts.append(part)
 
         value = ', '.join(parts)
-        if len(depth) > 1:
-            value = '{%s}' % value
-        return value
+        if standalone:
+            return '%s(%s)' % (self.get_prefixed_name(schema), value)
+        else:
+            return value

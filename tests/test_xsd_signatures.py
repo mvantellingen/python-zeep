@@ -16,7 +16,7 @@ def test_signature_complex_type_choice():
                     xsd.String()),
             ])
         ))
-    assert custom_type.signature() == '({item_1: xsd:string} | {item_2: xsd:string})'
+    assert custom_type.signature() == '{http://tests.python-zeep.org/}authentication(({item_1: xsd:string} | {item_2: xsd:string}))'
 
 
 def test_signature_complex_type_choice_sequence():
@@ -38,7 +38,7 @@ def test_signature_complex_type_choice_sequence():
             ])
         ))
     assert custom_type.signature() == (
-        '({item_1: xsd:string} | {item_2_1: xsd:string, item_2_2: xsd:string})')
+        '{http://tests.python-zeep.org/}authentication(({item_1: xsd:string} | {item_2_1: xsd:string, item_2_2: xsd:string}))')
 
 
 def test_signature_nested_sequences():
@@ -80,7 +80,7 @@ def test_signature_nested_sequences():
         ))
 
     assert custom_type.signature() == (
-        'item_1: xsd:string, item_2: xsd:string, item_3: xsd:string, item_4: xsd:string, ({item_5: xsd:string} | {item_6: xsd:string} | {item_5: xsd:string, item_6: xsd:string})'  # noqa
+        '{http://tests.python-zeep.org/}authentication(item_1: xsd:string, item_2: xsd:string, item_3: xsd:string, item_4: xsd:string, ({item_5: xsd:string} | {item_6: xsd:string} | {item_5: xsd:string, item_6: xsd:string}))'
     )
 
 
@@ -123,7 +123,7 @@ def test_signature_nested_sequences_multiple():
         ))
 
     assert custom_type.signature() == (
-        'item_1: xsd:string, item_2: xsd:string, item_3: xsd:string, item_4: xsd:string, _value_1: ({item_5: xsd:string} | {item_6: xsd:string} | {item_5: xsd:string, item_6: xsd:string})[]'  # noqa
+        '{http://tests.python-zeep.org/}authentication(item_1: xsd:string, item_2: xsd:string, item_3: xsd:string, item_4: xsd:string, ({item_5: xsd:string} | {item_6: xsd:string} | {item_5: xsd:string, item_6: xsd:string})[])'
     )
 
 
@@ -138,7 +138,7 @@ def test_signature_complex_type_any():
                 xsd.Any()
             ])
         ))
-    assert custom_type.signature() == '({item_1: xsd:string} | {_value_1: ANY})'
+    assert custom_type.signature() == '{http://tests.python-zeep.org/}authentication(({item_1: xsd:string} | {_value_1: ANY}))'
     custom_type(item_1='foo')
 
 
@@ -161,7 +161,7 @@ def test_signature_complex_type_sequence_with_any():
             ])
         ))
     assert custom_type.signature() == (
-        '({item_1: xsd:string} | {item_2: {_value_1: ANY}})')
+        '{http://tests.python-zeep.org/}authentication(({item_1: xsd:string} | {item_2: {_value_1: ANY}}))')
 
 
 def test_signature_complex_type_sequence_with_anys():
@@ -184,4 +184,6 @@ def test_signature_complex_type_sequence_with_anys():
             ])
         ))
     assert custom_type.signature() == (
-        '({item_1: xsd:string} | {item_2: {_value_1: ANY, _value_2: ANY}})')
+        '{http://tests.python-zeep.org/}authentication(' +
+        '({item_1: xsd:string} | {item_2: {_value_1: ANY, _value_2: ANY}})' +
+        ')')

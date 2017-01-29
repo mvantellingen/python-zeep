@@ -123,7 +123,8 @@ def test_complex_content_with_recursive_elements():
         </xsd:schema>
     """))
     pet_type = schema.get_element('{http://tests.python-zeep.org/}Pet')
-    assert(pet_type.signature() == 'name: xsd:string, common_name: xsd:string, children: Pet')
+    assert(pet_type.signature(schema=schema) == 'ns0:Pet(ns0:Pet)')
+    assert(pet_type.type.signature(schema=schema) == 'ns0:Pet(name: xsd:string, common_name: xsd:string, children: ns0:Pet[])')
 
     obj = pet_type(
         name='foo', common_name='bar',

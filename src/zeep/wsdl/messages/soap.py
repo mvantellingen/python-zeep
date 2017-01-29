@@ -110,14 +110,16 @@ class SoapMessage(ConcreteMessage):
             if isinstance(self.envelope.type, xsd.ComplexType):
                 try:
                     if len(self.envelope.type.elements) == 1:
-                        return self.envelope.type.elements[0][1].type.signature()
+                        return self.envelope.type.elements[0][1].type.signature(
+                            schema=self.wsdl.types, standalone=False)
                 except AttributeError:
                     return None
-            return self.envelope.type.signature()
+            return self.envelope.type.signature(schema=self.wsdl.types, standalone=False)
 
-        parts = [self.body.type.signature()]
+        parts = [self.body.type.signature(schema=self.wsdl.types, standalone=False)]
         if self.header.type._element:
-            parts.append('_soapheaders={%s}' % self.header.signature())
+            parts.append('_soapheaders={%s}' % self.header.type.signature(
+                schema=self.wsdl.types, standalone=False))
         return ', '.join(part for part in parts if part)
 
     @classmethod
@@ -272,15 +274,16 @@ class SoapMessage(ConcreteMessage):
         elements from the body and the headers.
 
         """
-        all_elements = xsd.Sequence([
-            xsd.Element('body', self.body.type),
-        ])
+        all_elements = xsd.Sequence([])
 
         if self.header.type._element:
             all_elements.append(
-                xsd.Element('header', self.header.type))
+                xsd.Element('{%s}header' % self.nsmap['soap-env'], self.header.type))
 
-        return xsd.Element('envelope', xsd.ComplexType(all_elements))
+        all_elements.append(
+            xsd.Element('{%s}body' % self.nsmap['soap-env'], self.body.type))
+
+        return xsd.Element('{%s}envelope' % self.nsmap['soap-env'], xsd.ComplexType(all_elements))
 
     def _serialize_header(self, headers_value, nsmap):
         if not headers_value:

@@ -515,7 +515,7 @@ def test_duplicate_element_names():
         ))
 
     # sequences
-    expected = 'item: xsd:string, item__1: xsd:string, item__2: xsd:string'
+    expected = '{http://tests.python-zeep.org/}container(item: xsd:string, item__1: xsd:string, item__2: xsd:string)'
     assert custom_type.signature() == expected
     obj = custom_type(item='foo', item__1='bar', item__2='lala')
 
@@ -548,7 +548,7 @@ def test_element_attribute_name_conflict():
         ))
 
     # sequences
-    expected = 'item: xsd:string, foo: xsd:string, attr__item: xsd:string'
+    expected = '{http://tests.python-zeep.org/}container(item: xsd:string, foo: xsd:string, attr__item: xsd:string)'
     assert custom_type.signature() == expected
     obj = custom_type(item='foo', foo='x', attr__item='bar')
 

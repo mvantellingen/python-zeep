@@ -98,7 +98,7 @@ def test_invalid_localname_handling():
 
 def test_schema_repr_none():
     schema = xsd.Schema()
-    assert repr(schema) == "<Schema(location='<none>')>"
+    assert repr(schema) == "<Schema()>"
 
 
 def test_schema_repr_val():
@@ -111,7 +111,7 @@ def test_schema_repr_val():
             elementFormDefault="qualified">
         </xs:schema>
     """))
-    assert repr(schema) == "<Schema(location=None)>"
+    assert repr(schema) == "<Schema(location=None, tns='http://tests.python-zeep.org/')>"
 
 
 def test_schema_doc_repr_val():

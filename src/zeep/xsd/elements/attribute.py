@@ -88,5 +88,5 @@ class AttributeGroup(object):
         self._attributes = resolved
         return self
 
-    def signature(self, depth=()):
-        return ', '.join(attr.signature() for attr in self._attributes)
+    def signature(self, schema=None, standalone=True):
+        return ', '.join(attr.signature(schema) for attr in self._attributes)

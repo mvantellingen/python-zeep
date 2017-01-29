@@ -4,7 +4,7 @@ import six
 from lxml import etree
 
 from zeep.exceptions import ValidationError
-from zeep.xsd.const import NS_XSD, xsd_ns
+from zeep.xsd.const import xsd_ns
 from zeep.xsd.types.any import AnyType
 
 logger = logging.getLogger(__name__)
@@ -70,10 +70,8 @@ class AnySimpleType(AnyType):
     def render(self, parent, value, xsd_type=None, render_path=None):
         parent.text = self.xmlvalue(value)
 
-    def signature(self, depth=()):
-        if self.qname.namespace == NS_XSD:
-            return 'xsd:%s' % self.name
-        return self.name
+    def signature(self, schema=None, standalone=True):
+        return self.get_prefixed_name(schema)
 
     def validate(self, value, required=False):
         if required and value is None:

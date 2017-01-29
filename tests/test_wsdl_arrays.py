@@ -284,9 +284,9 @@ def test_wsdl_array_type():
 
     array = array_elm([item_1, item_2])
     node = etree.Element('document')
-    assert array_elm.signature() == (
-        '_value_1: base[], arrayType: xsd:string, offset: arrayCoordinate, ' +
-        'id: xsd:ID, href: xsd:anyURI, _attr_1: {}')
+    assert array_elm.signature(schema=schema) == (
+        'ns0:array(_value_1: base[], arrayType: xsd:string, ' +
+        'offset: ns1:arrayCoordinate, id: xsd:ID, href: xsd:anyURI, _attr_1: {})')
     array_elm.render(node, array)
     expected = """
         <document>

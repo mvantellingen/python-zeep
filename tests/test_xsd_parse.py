@@ -239,7 +239,7 @@ def test_sequence_parse_anytype_obj():
             '{http://www.w3.org/2001/XMLSchema}Schema',
             targetNamespace='http://tests.python-zeep.org/'))
 
-    root = next(schema.documents)
+    root = schema.root_document
     root.register_type('{http://tests.python-zeep.org/}something', value_type)
 
     custom_type = xsd.Element(
