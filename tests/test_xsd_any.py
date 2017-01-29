@@ -298,8 +298,8 @@ def test_any_in_nested_sequence():
     """))   # noqa
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    assert container_elm.signature() == (
-        'items: {_value_1: ANY}, version: xsd:string, _value_1: ANY[]')
+    assert container_elm.signature(schema) == (
+        'ns0:container(items: {_value_1: ANY}, version: xsd:string, _value_1: ANY[])')
 
     something = schema.get_element('{http://tests.python-zeep.org/}something')
     foobar = schema.get_element('{http://tests.python-zeep.org/}foobar')

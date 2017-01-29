@@ -16,3 +16,7 @@ WSA = 'http://www.w3.org/2005/08/addressing'
 DS = 'http://www.w3.org/2000/09/xmldsig#'
 WSSE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
 WSU = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
+
+NAMESPACE_TO_PREFIX = {
+    XSD: 'xsd',
+}

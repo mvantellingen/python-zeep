@@ -1,3 +1,6 @@
+from zeep.xsd.utils import create_prefixed_name
+
+
 class Type(object):
 
     def __init__(self, qname=None, is_global=False):
@@ -5,6 +8,9 @@ class Type(object):
         self.name = qname.localname if qname else None
         self._resolved = False
         self.is_global = is_global
+
+    def get_prefixed_name(self, schema):
+        return create_prefixed_name(self.qname, schema)
 
     def accept(self, value):
         raise NotImplementedError
@@ -51,7 +57,7 @@ class Type(object):
         return []
 
     @classmethod
-    def signature(cls, depth=()):
+    def signature(cls, schema=None, standalone=True):
         return ''
 
 

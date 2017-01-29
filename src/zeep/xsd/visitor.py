@@ -4,7 +4,6 @@ import re
 
 from lxml import etree
 
-from zeep import exceptions
 from zeep.exceptions import XMLParseError
 from zeep.parser import absolute_location
 from zeep.utils import as_qname, qname_attr

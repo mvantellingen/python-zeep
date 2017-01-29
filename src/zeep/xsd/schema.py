@@ -4,7 +4,7 @@ from collections import OrderedDict
 from lxml import etree
 
 from zeep import exceptions
-from zeep.xsd import const
+from zeep import ns
 from zeep.xsd.elements import builtins as xsd_builtins_elements
 from zeep.xsd.types import builtins as xsd_builtins_types
 from zeep.xsd.visitor import SchemaVisitor
@@ -21,6 +21,8 @@ class Schema(object):
         self._documents = OrderedDict()
         self._prefix_map_auto = {}
         self._prefix_map_custom = {}
+
+        self._load_default_documents()
 
         if not isinstance(node, list):
             nodes = [node] if node is not None else []
@@ -43,6 +45,12 @@ class Schema(object):
             if v not in retval.values()
         })
         return retval
+
+    @property
+    def root_document(self):
+        return next(
+            (doc for doc in self.documents if not doc._is_internal),
+            None)
 
     @property
     def is_empty(self):
@@ -68,12 +76,11 @@ class Schema(object):
                 yield type_
 
     def __repr__(self):
-        if self._documents:
-            main_doc = next(self.documents)
-            location = main_doc._location
-        else:
-            location = '<none>'
-        return '<Schema(location=%r)>' % location
+        main_doc = self.root_document
+        if main_doc:
+            return '<Schema(location=%r, tns=%r)>' % (
+                main_doc._location, main_doc._target_namespace)
+        return '<Schema()>'
 
     def add_documents(self, schema_nodes, location):
         documents = []
@@ -89,29 +96,11 @@ class Schema(object):
     def get_element(self, qname):
         """Return a global xsd.Element object with the given qname"""
         qname = self._create_qname(qname)
-        if qname.text in xsd_builtins_elements.default_elements:
-            return xsd_builtins_elements.default_elements[qname]
-
-        # Handle XSD namespace items
-        if qname.namespace == const.NS_XSD:
-            try:
-                return xsd_builtins_elements.default_elements[qname]
-            except KeyError:
-                raise exceptions.LookupError("No such type %r" % qname.text)
-
         return self._get_instance(qname, 'get_element', 'element')
 
     def get_type(self, qname, fail_silently=False):
         """Return a global xsd.Type object with the given qname"""
         qname = self._create_qname(qname)
-
-        # Handle XSD namespace items
-        if qname.namespace == const.NS_XSD:
-            try:
-                return xsd_builtins_types.default_types[qname]
-            except KeyError:
-                raise exceptions.LookupError("No such type %r" % qname.text)
-
         try:
             return self._get_instance(qname, 'get_type', 'type')
         except exceptions.NamespaceError as exc:
@@ -144,6 +133,18 @@ class Schema(object):
         except KeyError:
             raise ValueError("No such prefix %r" % prefix)
 
+    def get_shorthand_for_ns(self, namespace):
+        for prefix, other_namespace in self._prefix_map_auto.items():
+            if namespace == other_namespace:
+                return prefix
+        for prefix, other_namespace in self._prefix_map_custom.items():
+            if namespace == other_namespace:
+                return prefix
+
+        if namespace == 'http://schemas.xmlsoap.org/soap/envelope/':
+            return 'soap-env'
+        return namespace
+
     def create_new_document(self, node, url, base_url=None):
         namespace = node.get('targetNamespace') if node is not None else None
         if base_url is None:
@@ -159,6 +160,21 @@ class Schema(object):
         for document in schema.documents:
             self._add_schema_document(document)
         self._prefix_map_auto = self._create_prefix_map()
+
+    def _load_default_documents(self):
+        schema = SchemaDocument(ns.XSD, None, None)
+
+        for cls in xsd_builtins_types._types:
+            instance = cls(is_global=True)
+            schema.register_type(cls._default_qname, instance)
+
+        for cls in xsd_builtins_elements._elements:
+            instance = cls()
+            schema.register_element(cls.qname, instance)
+
+        schema._is_internal = True
+        self._add_schema_document(schema)
+        return schema
 
     def _get_instance(self, qname, method_name, name):
         """Return an object from one of the SchemaDocument's"""
@@ -205,10 +221,13 @@ class Schema(object):
         prefix_map = {
             'xsd': 'http://www.w3.org/2001/XMLSchema',
         }
-        for i, namespace in enumerate(self._documents.keys()):
-            if namespace is None:
+        i = 0
+        for namespace in self._documents.keys():
+            if namespace is None or namespace in prefix_map.values():
                 continue
+
             prefix_map['ns%d' % i] = namespace
+            i += 1
         return prefix_map
 
     def _has_schema_document(self, namespace):
@@ -242,6 +261,7 @@ class SchemaDocument(object):
         self._location = location
         self._target_namespace = namespace
         self._elm_instances = []
+        self._is_internal = False
 
         self._attribute_groups = {}
         self._attributes = {}

@@ -1,5 +1,6 @@
 import pytest
 import six
+from lxml.etree import QName
 
 from zeep import xsd
 from zeep.xsd import valueobjects
@@ -214,9 +215,10 @@ def test_choice_mixed():
                 xsd.Element('item_2', xsd.String()),
             ]),
             xsd.Element('item_2', xsd.String())
-        ])
+        ]),
+        qname=QName('http://tests.python-zeep.org', 'container')
     )
-    expected = '({item_1: xsd:string} | {item_2: xsd:string}), item_2__1: xsd:string'
+    expected = '{http://tests.python-zeep.org}container(({item_1: xsd:string} | {item_2: xsd:string}), item_2__1: xsd:string)'
     assert xsd_type.signature() == expected
 
     args = tuple([])

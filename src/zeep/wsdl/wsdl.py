@@ -75,8 +75,6 @@ class Document(object):
         return '<WSDL(location=%r)>' % self.location
 
     def dump(self):
-        namespaces = {v: k for k, v in self.types.prefix_map.items()}
-
         print('')
         print("Prefixes:")
         for prefix, namespace in self.types.prefix_map.items():
@@ -84,18 +82,14 @@ class Document(object):
 
         print('')
         print("Global elements:")
-        for elm_obj in sorted(self.types.elements, key=lambda k: six.text_type(k)):
-            value = six.text_type(elm_obj)
-            if hasattr(elm_obj, 'qname') and elm_obj.qname.namespace:
-                value = '%s:%s' % (namespaces[elm_obj.qname.namespace], value)
+        for elm_obj in sorted(self.types.elements, key=lambda k: k.qname):
+            value = elm_obj.signature(schema=self.types)
             print(' ' * 4, value)
 
         print('')
         print("Global types:")
         for type_obj in sorted(self.types.types, key=lambda k: k.qname or ''):
-            value = six.text_type(type_obj)
-            if getattr(type_obj, 'qname', None) and type_obj.qname.namespace:
-                value = '%s:%s' % (namespaces[type_obj.qname.namespace], value)
+            value = type_obj.signature(schema=self.types)
             print(' ' * 4, value)
 
         print('')

@@ -489,58 +489,60 @@ def _unparse_timezone(tzinfo):
     return '-%02d:%02d' % (abs(hours), minutes)
 
 
+_types = [
+    # Primitive
+    String,
+    Boolean,
+    Decimal,
+    Float,
+    Double,
+    Duration,
+    DateTime,
+    Time,
+    Date,
+    gYearMonth,
+    gYear,
+    gMonthDay,
+    gDay,
+    gMonth,
+    HexBinary,
+    Base64Binary,
+    AnyURI,
+    QName,
+    Notation,
+
+    # Derived
+    NormalizedString,
+    Token,
+    Language,
+    NmToken,
+    NmTokens,
+    Name,
+    NCName,
+    ID,
+    IDREF,
+    IDREFS,
+    Entity,
+    Entities,
+    Integer,
+    NonPositiveInteger,  # noqa
+    NegativeInteger,
+    Long,
+    Int,
+    Short,
+    Byte,
+    NonNegativeInteger,  # noqa
+    UnsignedByte,
+    UnsignedInt,
+    UnsignedLong,
+    UnsignedShort,
+    PositiveInteger,
+
+    # Other
+    AnyType,
+    AnySimpleType,
+]
+
 default_types = {
-    cls._default_qname: cls() for cls in [
-        # Primitive
-        String,
-        Boolean,
-        Decimal,
-        Float,
-        Double,
-        Duration,
-        DateTime,
-        Time,
-        Date,
-        gYearMonth,
-        gYear,
-        gMonthDay,
-        gDay,
-        gMonth,
-        HexBinary,
-        Base64Binary,
-        AnyURI,
-        QName,
-        Notation,
-
-        # Derived
-        NormalizedString,
-        Token,
-        Language,
-        NmToken,
-        NmTokens,
-        Name,
-        NCName,
-        ID,
-        IDREF,
-        IDREFS,
-        Entity,
-        Entities,
-        Integer,
-        NonPositiveInteger,  # noqa
-        NegativeInteger,
-        Long,
-        Int,
-        Short,
-        Byte,
-        NonNegativeInteger,  # noqa
-        UnsignedByte,
-        UnsignedInt,
-        UnsignedLong,
-        UnsignedShort,
-        PositiveInteger,
-
-        # Other
-        AnyType,
-        AnySimpleType,
-    ]
+    cls._default_qname: cls(is_global=True) for cls in _types
 }

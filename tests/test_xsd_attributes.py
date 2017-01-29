@@ -26,8 +26,8 @@ def test_anyattribute():
     """))
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    assert container_elm.signature() == (
-        'foo: xsd:string, _attr_1: {}')
+    assert container_elm.signature(schema) == (
+        'ns0:container(foo: xsd:string, _attr_1: {})')
     obj = container_elm(foo='bar', _attr_1=OrderedDict([
         ('hiep', 'hoi'), ('hoi', 'hiep')
     ]))
@@ -73,7 +73,8 @@ def test_attribute_list_type():
     """))
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    assert container_elm.signature() == ('foo: xsd:string, lijst: xsd:int[]')
+    assert container_elm.signature(schema) == (
+        'ns0:container(foo: xsd:string, lijst: xsd:int[])')
     obj = container_elm(foo='bar', lijst=[1, 2, 3])
     expected = """
       <document>
@@ -341,7 +342,8 @@ def test_nested_attribute():
     """))
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    assert container_elm.signature() == 'item: {x: xsd:string, y: xsd:string}'
+    assert container_elm.signature(schema) == (
+        'ns0:container(item: {x: xsd:string, y: xsd:string})')
     obj = container_elm(item={'x': 'foo', 'y': 'bar'})
 
     expected = """

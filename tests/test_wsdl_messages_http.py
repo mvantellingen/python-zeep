@@ -52,10 +52,10 @@ def test_urlencoded_serialize():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.body.signature() == 'arg1: xsd:string, arg2: xsd:string'
+    assert operation.input.body.signature(schema=root.types) == 'TestOperation(arg1: xsd:string, arg2: xsd:string)'
     assert operation.input.signature(as_output=False) == 'arg1: xsd:string, arg2: xsd:string'
 
-    assert operation.output.body.signature() == 'Body: xsd:string'
+    assert operation.output.body.signature(schema=root.types) == 'TestOperation(Body: xsd:string)'
     assert operation.output.signature(as_output=True) == 'xsd:string'
 
     serialized = operation.input.serialize(arg1='ah1', arg2='ah2')
@@ -112,10 +112,10 @@ def test_urlreplacement_serialize():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.body.signature() == 'arg1: xsd:string, arg2: xsd:string'
+    assert operation.input.body.signature(schema=root.types) == 'TestOperation(arg1: xsd:string, arg2: xsd:string)'
     assert operation.input.signature(as_output=False) == 'arg1: xsd:string, arg2: xsd:string'
 
-    assert operation.output.body.signature() == 'Body: xsd:string'
+    assert operation.output.body.signature(schema=root.types) == 'TestOperation(Body: xsd:string)'
     assert operation.output.signature(as_output=True) == 'xsd:string'
 
     serialized = operation.input.serialize(arg1='ah1', arg2='ah2')
@@ -172,10 +172,10 @@ def test_mime_content_serialize_form_urlencoded():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.body.signature() == 'arg1: xsd:string, arg2: xsd:string'
+    assert operation.input.body.signature(schema=root.types) == 'TestOperation(arg1: xsd:string, arg2: xsd:string)'
     assert operation.input.signature(as_output=False) == 'arg1: xsd:string, arg2: xsd:string'
 
-    assert operation.output.body.signature() == 'Body: xsd:string'
+    assert operation.output.body.signature(schema=root.types) == 'TestOperation(Body: xsd:string)'
     assert operation.output.signature(as_output=True) == 'xsd:string'
 
     serialized = operation.input.serialize(arg1='ah1', arg2='ah2')
@@ -229,10 +229,10 @@ def test_mime_content_serialize_text_xml():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.body.signature() == 'arg1: xsd:string, arg2: xsd:string'
+    assert operation.input.body.signature(schema=root.types) == 'TestOperation(arg1: xsd:string, arg2: xsd:string)'
     assert operation.input.signature(as_output=False) == 'arg1: xsd:string, arg2: xsd:string'
 
-    assert operation.output.body.signature() == 'Body: xsd:string'
+    assert operation.output.body.signature(schema=root.types) == 'TestOperation(Body: xsd:string)'
     assert operation.output.signature(as_output=True) == 'xsd:string'
 
     serialized = operation.input.serialize(arg1='ah1', arg2='ah2')

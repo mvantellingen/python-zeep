@@ -9,7 +9,7 @@ from zeep.utils import qname_attr
 from zeep.xsd.const import NotSet, xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.elements.base import Base
-from zeep.xsd.utils import max_occurs_iter
+from zeep.xsd.utils import max_occurs_iter, create_prefixed_name
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +59,9 @@ class Element(Base):
             other is not None and
             self.__class__ == other.__class__ and
             self.__dict__ == other.__dict__)
+
+    def get_prefixed_name(self, schema):
+        return create_prefixed_name(self.qname, schema)
 
     @property
     def default_value(self):
@@ -218,14 +221,19 @@ class Element(Base):
         self.resolve_type()
         return self
 
-    def signature(self, depth=()):
-        if len(depth) > 0 and self.is_global:
-            return self.name + '()'
-
+    def signature(self, schema=None, standalone=True):
+        from zeep.xsd import ComplexType
         if self.type.is_global:
-            value = self.type.qname
+            value = self.type.get_prefixed_name(schema)
         else:
-            value = self.type.signature(depth)
+            value = self.type.signature(schema, standalone=False)
+
+            if not standalone and isinstance(self.type, ComplexType):
+                value = '{%s}' % value
+
+        if standalone:
+            value = '%s(%s)' % (self.get_prefixed_name(schema), value)
+
         if self.accepts_multiple:
             return '%s[]' % value
         return value

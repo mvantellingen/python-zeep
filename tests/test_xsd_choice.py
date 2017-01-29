@@ -319,8 +319,8 @@ def test_choice_in_sequence():
     schema = xsd.Schema(node)
     container_elm = schema.get_element('ns0:container')
 
-    assert container_elm.type.signature() == (
-        'something: xsd:string, ({item_1: xsd:string} | {item_2: xsd:string} | {item_3: xsd:string})')  # noqa
+    assert container_elm.type.signature(schema=schema) == (
+        'ns0:container(something: xsd:string, ({item_1: xsd:string} | {item_2: xsd:string} | {item_3: xsd:string}))')
     value = container_elm(something='foobar', item_1='item-1')
 
     expected = """
@@ -362,8 +362,8 @@ def test_choice_with_sequence():
     """)
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:container')
-    assert element.type.signature() == (
-        '({item_1: xsd:string, item_2: xsd:string} | {item_3: xsd:string, item_4: xsd:string})')
+    assert element.type.signature(schema=schema) == (
+        'ns0:container(({item_1: xsd:string, item_2: xsd:string} | {item_3: xsd:string, item_4: xsd:string}))')
     value = element(item_1='foo', item_2='bar')
 
     expected = """
@@ -404,8 +404,8 @@ def test_choice_with_sequence_once():
     """)
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:container')
-    assert element.type.signature() == (
-        'item_0: xsd:string, ({item_1: xsd:string, item_2: xsd:string})')
+    assert element.type.signature(schema=schema) == (
+        'ns0:container(item_0: xsd:string, ({item_1: xsd:string, item_2: xsd:string}))')
     value = element(item_0='nul', item_1='foo', item_2='bar')
 
     expected = """
@@ -448,8 +448,8 @@ def test_choice_with_sequence_once_extra_data():
     """)
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:container')
-    assert element.type.signature() == (
-        'item_0: xsd:string, ({item_1: xsd:string, item_2: xsd:string}), item_3: xsd:string')
+    assert element.type.signature(schema=schema) == (
+        'ns0:container(item_0: xsd:string, ({item_1: xsd:string, item_2: xsd:string}), item_3: xsd:string)')
     value = element(item_0='nul', item_1='foo', item_2='bar', item_3='item-3')
 
     expected = """
@@ -493,8 +493,8 @@ def test_choice_with_sequence_second():
     """)
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:container')
-    assert element.type.signature() == (
-        '({item_1: xsd:string, item_2: xsd:string} | {item_3: xsd:string, item_4: xsd:string})')
+    assert element.type.signature(schema=schema) == (
+        'ns0:container(({item_1: xsd:string, item_2: xsd:string} | {item_3: xsd:string, item_4: xsd:string}))')
     value = element(item_3='foo', item_4='bar')
 
     expected = """
@@ -536,8 +536,8 @@ def test_choice_with_sequence_invalid():
     """)
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:container')
-    assert element.type.signature() == (
-        '({item_1: xsd:string, item_2: xsd:string} | {item_3: xsd:string, item_4: xsd:string})')
+    assert element.type.signature(schema=schema) == (
+        'ns0:container(({item_1: xsd:string, item_2: xsd:string} | {item_3: xsd:string, item_4: xsd:string}))')
 
     with pytest.raises(TypeError):
         element(item_1='foo', item_4='bar')
@@ -666,8 +666,8 @@ def test_choice_with_sequence_multiple():
     """)
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:container')
-    assert element.type.signature() == (
-        '({item_1: xsd:string, item_2: xsd:string} | {item_3: xsd:string, item_4: xsd:string})[]')
+    assert element.type.signature(schema=schema) == (
+        'ns0:container(({item_1: xsd:string, item_2: xsd:string} | {item_3: xsd:string, item_4: xsd:string})[])')
     value = element(_value_1=[
         dict(item_1='foo', item_2='bar'),
         dict(item_3='foo', item_4='bar'),
@@ -713,8 +713,8 @@ def test_choice_with_sequence_and_element():
     """)
     schema = xsd.Schema(node)
     element = schema.get_element('ns0:container')
-    assert element.type.signature() == (
-        '({item_1: xsd:string} | {({item_2: xsd:string} | {item_3: xsd:string})})')
+    assert element.type.signature(schema=schema) == (
+        'ns0:container(({item_1: xsd:string} | {({item_2: xsd:string} | {item_3: xsd:string})}))')
 
     value = element(item_2='foo')
 

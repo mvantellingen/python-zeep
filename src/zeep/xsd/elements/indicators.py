@@ -186,22 +186,15 @@ class OrderIndicator(Indicator, list):
                 if element_value is not None or not element.is_optional:
                     element.render(parent, element_value, child_path)
 
-    def signature(self, depth=()):
-        """
-        Use a tuple of element names as depth indicator, so that when an element is repeated,
-        do not try to create its signature, as it would lead to infinite recursion
-        """
-        depth += (self.name,)
+    def signature(self, schema=None, standalone=True):
         parts = []
         for name, element in self.elements_nested:
-            if hasattr(element, 'type') and element.type.name and element.type.name in depth:
-                parts.append('{}: {}'.format(name, element.type.name))
-            elif name:
-                parts.append('%s: %s' % (name, element.signature(depth)))
-            elif isinstance(element,  Indicator):
-                parts.append('%s' % (element.signature(depth)))
+            if isinstance(element,  Indicator):
+                parts.append(element.signature(schema))
             else:
-                parts.append('%s: %s' % (name, element.signature(depth)))
+                value = element.signature(schema, standalone=False)
+                parts.append('%s: %s' % (name, value))
+
         part = ', '.join(parts)
 
         if self.accepts_multiple:
@@ -441,13 +434,13 @@ class Choice(OrderIndicator):
             matches = sorted(matches, key=operator.itemgetter(0), reverse=True)
             return matches[0][1:]
 
-    def signature(self, depth=()):
+    def signature(self, schema=None, standalone=True):
         parts = []
         for name, element in self.elements_nested:
             if isinstance(element, OrderIndicator):
-                parts.append('{%s}' % (element.signature(depth)))
+                parts.append('{%s}' % (element.signature(schema, standalone=False)))
             else:
-                parts.append('{%s: %s}' % (name, element.signature(depth)))
+                parts.append('{%s: %s}' % (name, element.signature(schema, standalone=False)))
         part = '(%s)' % ' | '.join(parts)
         if self.accepts_multiple:
             return '%s[]' % (part,)
@@ -563,5 +556,5 @@ class Group(Indicator):
         self.child = self.child.resolve()
         return self
 
-    def signature(self, depth=()):
-        return self.child.signature(depth)
+    def signature(self, schema=None, standalone=True):
+        return self.child.signature(schema)

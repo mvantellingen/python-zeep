@@ -32,8 +32,8 @@ class ListType(AnySimpleType):
         item_type = self.item_type
         return [item_type.pythonvalue(v) for v in value.split()]
 
-    def signature(self, depth=()):
-        return self.item_type.signature(depth) + '[]'
+    def signature(self, schema=None, standalone=True):
+        return self.item_type.signature(schema) + '[]'
 
 
 class UnionType(AnySimpleType):
@@ -52,7 +52,7 @@ class UnionType(AnySimpleType):
             self.item_class = base_class
         return self
 
-    def signature(self, depth=()):
+    def signature(self, schema=None, standalone=True):
         return ''
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
