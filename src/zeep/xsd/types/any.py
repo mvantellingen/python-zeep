@@ -13,6 +13,11 @@ __all__ = ['AnyType']
 class AnyType(Type):
     _default_qname = xsd_ns('anyType')
 
+    def __init__(self, qname=None, is_global=False):
+        if not qname:
+            is_global = True
+        super(AnyType, self).__init__(qname, is_global)
+
     def render(self, parent, value, xsd_type=None, render_path=None):
         if isinstance(value, AnyObject):
             if value.xsd_type is None:

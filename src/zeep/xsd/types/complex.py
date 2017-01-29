@@ -323,7 +323,8 @@ class ComplexType(AnyType):
         new = self.__class__(
             element=element,
             attributes=attributes,
-            qname=self.qname)
+            qname=self.qname,
+            is_global=self.is_global)
         return new
 
     def restrict(self, base):

@@ -448,7 +448,7 @@ class SchemaVisitor(object):
                 element=element, attributes=attributes, qname=qname,
                 is_global=is_global)
         else:
-            xsd_type = xsd_cls(qname=qname)
+            xsd_type = xsd_cls(qname=qname, is_global=is_global)
 
         if is_global:
             self.document.register_type(qname, xsd_type)

@@ -38,7 +38,10 @@ class Element(Base):
 
     def __str__(self):
         if self.type:
-            return '%s(%s)' % (self.name, self.type.signature())
+            if self.type.is_global:
+                return '%s(%s)' % (self.name, self.type.qname)
+            else:
+                return '%s(%s)' % (self.name, self.type.signature())
         return '%s()' % self.name
 
     def __call__(self, *args, **kwargs):
@@ -219,7 +222,10 @@ class Element(Base):
         if len(depth) > 0 and self.is_global:
             return self.name + '()'
 
-        value = self.type.signature(depth)
+        if self.type.is_global:
+            value = self.type.qname
+        else:
+            value = self.type.signature(depth)
         if self.accepts_multiple:
             return '%s[]' % value
         return value
