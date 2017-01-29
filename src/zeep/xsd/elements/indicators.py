@@ -116,6 +116,7 @@ class OrderIndicator(Indicator, list):
             assert name
 
         if name and name in available_kwargs:
+            assert self.accepts_multiple
 
             # Make sure we have a list, lame lame
             item_kwargs = kwargs.get(name)
@@ -131,12 +132,14 @@ class OrderIndicator(Indicator, list):
                     if value is not None:
                         subresult.update(value)
 
+                if item_kwargs:
+                    raise TypeError((
+                        "%s() got an unexpected keyword argument %r."
+                    ) % (self, list(item_kwargs)[0]))
+
                 result.append(subresult)
 
-            if self.accepts_multiple:
-                result = {name: result}
-            else:
-                result = result[0] if result else None
+            result = {name: result}
 
             # All items consumed
             if not any(filter(None, item_kwargs)):
@@ -145,14 +148,13 @@ class OrderIndicator(Indicator, list):
             return result
 
         else:
+            assert not name
+            assert not self.accepts_multiple
             result = OrderedDict()
             for elm_name, element in self.elements_nested:
                 sub_result = element.parse_kwargs(kwargs, elm_name, available_kwargs)
                 if sub_result:
                     result.update(sub_result)
-
-            if name:
-                result = {name: result}
 
             return result
 
@@ -315,6 +317,8 @@ class Choice(OrderIndicator):
 
         """
         if name and name in available_kwargs:
+            assert self.accepts_multiple
+
             values = kwargs[name] or []
             available_kwargs.remove(name)
             result = []
@@ -322,9 +326,9 @@ class Choice(OrderIndicator):
             if isinstance(values, dict):
                 values = [values]
 
+            # TODO: Use most greedy choice instead of first matching
             for value in values:
                 for element in self:
-                    # TODO: Use most greedy choice instead of first matching
                     if isinstance(element, OrderIndicator):
                         choice_value = value[name] if name in value else value
                         if element.accept(choice_value):

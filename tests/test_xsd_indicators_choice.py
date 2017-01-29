@@ -3,7 +3,7 @@ from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
-from zeep.exceptions import XMLParseError
+from zeep.exceptions import XMLParseError, ValidationError
 from zeep.helpers import serialize_object
 
 
@@ -420,6 +420,36 @@ def test_choice_with_sequence_once():
     node = etree.Element('document')
     element.render(node, value)
     assert_nodes_equal(expected, node)
+
+
+def test_choice_with_sequence_missing_elements():
+    node = load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+              <xsd:choice maxOccurs="2">
+                <xsd:sequence>
+                    <xsd:element name="item_1" type="xsd:string"/>
+                    <xsd:element name="item_2" type="xsd:string"/>
+                </xsd:sequence>
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """)
+    schema = xsd.Schema(node)
+    element = schema.get_element('ns0:container')
+    assert element.type.signature(schema=schema) == (
+        'ns0:container(({item_1: xsd:string, item_2: xsd:string})[])')
+
+    value = element(_value_1={'item_1': 'foo'})
+    with pytest.raises(ValidationError):
+        render_node(element, value)
 
 
 def test_choice_with_sequence_once_extra_data():
