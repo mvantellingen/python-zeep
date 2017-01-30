@@ -6,7 +6,7 @@ from requests_toolbelt.multipart.decoder import MultipartDecoder
 from zeep import ns, plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.parser import parse_xml
-from zeep.utils import as_qname, qname_attr
+from zeep.utils import as_qname, qname_attr, get_media_type
 from zeep.wsdl.attachments import MessagePack
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
@@ -131,8 +131,12 @@ class SoapBinding(Binding):
                 % response.status_code)
 
         content_type = response.headers.get('Content-Type', 'text/xml')
-        if 'multipart/related' in content_type:
-            decoder = MultipartDecoder(response.content, content_type, 'utf-8')
+        media_type = get_media_type(content_type)
+
+        if media_type == 'multipart/related':
+            decoder = MultipartDecoder(
+                response.content, content_type, response.encoding)
+
             content = decoder.parts[0].content
             if len(decoder.parts) > 1:
                 message_pack = MessagePack(parts=decoder.parts[1:])

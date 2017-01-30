@@ -5,7 +5,7 @@ from contextlib import contextmanager
 import requests
 
 from six.moves.urllib.parse import urlparse
-from zeep.utils import get_version
+from zeep.utils import get_version, get_media_type
 from zeep.wsdl.utils import etree_to_string
 
 
@@ -68,7 +68,10 @@ class Transport(object):
             timeout=self.operation_timeout)
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            if 'multipart/related' in response.headers.get('Content-Type'):
+            media_type = get_media_type(
+                response.headers.get('Content-Type', 'text/xml'))
+
+            if media_type == 'multipart/related':
                 log_message = response.content
             else:
                 log_message = response.content

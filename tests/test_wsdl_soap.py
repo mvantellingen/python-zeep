@@ -112,6 +112,37 @@ def test_soap12_process_error():
         assert exc.subcodes[1].localname == 'fault-subcode2'
 
 
+def test_no_content_type():
+    data = """
+        <?xml version="1.0"?>
+        <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:stoc="http://example.com/stockquote.xsd">
+           <soapenv:Header/>
+           <soapenv:Body>
+              <stoc:TradePrice>
+                 <price>120.123</price>
+              </stoc:TradePrice>
+           </soapenv:Body>
+        </soapenv:Envelope>
+    """.strip()
+
+    client = Client('tests/wsdl_files/soap.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=200,
+        content=data,
+        encoding='utf-8',
+        headers={}
+    )
+
+    result = binding.process_reply(
+        client, binding.get('GetLastTradePrice'), response)
+
+    assert result == 120.123
+
+
 def test_mime_multipart():
     data = '\r\n'.join(line.strip() for line in """
         --MIME_boundary
@@ -154,6 +185,7 @@ def test_mime_multipart():
     response = stub(
         status_code=200,
         content=data,
+        encoding='utf-8',
         headers={
             'Content-Type': 'multipart/related; type="text/xml"; start="<claim061400a.xml@claiming-it.com>"; boundary="MIME_boundary"'
         }

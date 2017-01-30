@@ -1,3 +1,4 @@
+import cgi
 import inspect
 
 from lxml import etree
@@ -61,3 +62,9 @@ def get_base_class(objects):
 def detect_soap_env(envelope):
     root_tag = etree.QName(envelope)
     return root_tag.namespace
+
+
+def get_media_type(value):
+    """Parse a HTTP content-type header and return the media-type"""
+    main_value, parameters = cgi.parse_header(value)
+    return main_value
