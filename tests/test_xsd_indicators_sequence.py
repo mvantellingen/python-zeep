@@ -366,3 +366,45 @@ def test_xml_sequence_with_choice_max_occurs_3():
         {'item_3': 'text-3'},
     ]
     assert result.item_4 == 'text-4'
+
+
+def test_xml_sequence_with_nil_element():
+    schema = xsd.Schema(load_xml("""
+        <schema
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="item" type="xsd:string" maxOccurs="unbounded"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """))
+
+    xml = load_xml("""
+        <tns:container
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:tns="http://tests.python-zeep.org/">
+          <tns:item>text-1</tns:item>
+          <tns:item>text-2</tns:item>
+          <tns:item/>
+          <tns:item>text-4</tns:item>
+          <tns:item>text-5</tns:item>
+        </tns:container>
+    """)
+
+    elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    result = elm.parse(xml, schema)
+    assert result.item == [
+        'text-1',
+        'text-2',
+        None,
+        'text-4',
+        'text-5',
+    ]

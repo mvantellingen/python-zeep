@@ -285,7 +285,7 @@ def test_nested_complex_type_optional():
     """)
     obj = custom_type.parse(expected, None)
     assert obj.item_1 == 'foo'
-    assert obj.item_2 == []
+    assert obj.item_2 == [None]
 
     expected = etree.fromstring("""
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">

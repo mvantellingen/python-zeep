@@ -129,8 +129,7 @@ class Element(Base):
                 num_matches += 1
                 item = self.parse(
                     xmlelement, schema, allow_none=True, context=context)
-                if item is not None:
-                    result.append(item)
+                result.append(item)
             else:
                 # If the element passed doesn't match and the current one is
                 # not optional then throw an error
