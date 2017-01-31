@@ -27,9 +27,21 @@ class MessagePack(object):
 
     @cached_property
     def attachments(self):
+        """Return a list of attachments.
+
+        :rtype: list of Attachment
+
+        """
         return [Attachment(part) for part in self._parts]
 
     def get_by_content_id(self, content_id):
+        """get_by_content_id
+
+        :param content_id: The content-id to return
+        :type content_id: str
+        :rtype: Attachment
+
+        """
         for attachment in self.attachments:
             if attachment.content_id == content_id:
                 return attachment
@@ -51,6 +63,11 @@ class Attachment(object):
 
     @cached_property
     def content(self):
+        """Return the content of the attachment
+
+        :rtype: bytes or str
+
+        """
         encoding = self.headers.get('Content-Transfer-Encoding', None)
         content = self._part.content
 

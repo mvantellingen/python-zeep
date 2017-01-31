@@ -20,7 +20,7 @@ Complex types can be retrieve using the `client.get_type()` method.
 
 However instead of creating an object from a type defined in the XSD you can
 also pass in a dictionary. Zeep will automatically convert this dict to the
-required object during the call.
+required object (and nested child objects) during the call. 
 
 
 .. code-block:: python
@@ -184,3 +184,20 @@ an xsd type is passed.
     client = Client('http://my-entrprisy-endpoint.com')
     value = xsd.AnyObject(xsd.String(), 'foobar')
     client.service.submit_something(user_id=1, my_string=value)
+
+
+SkipValue
+---------
+
+Zeep will automatically validate that all the required values are set when 
+calling an operation. If you want to force a value to be ignored and left out
+of the generated XML then you can assign the ``zeep.xsd.SkipValue`` constant.
+
+
+.. code-block:: python
+
+    from zeep import Client
+    from zeep import xsd
+
+    client = Client('http://my-entrprisy-endpoint.com')
+    client.service.submit_something(user_id=1, my_string=xsd.SkipValue)

@@ -77,6 +77,16 @@ platforms::
     pip install lxml==3.7.1 zeep
 
 
+When you want to use wsse.Signature() you will need to install the python
+xmlsec module. This can be done by install the ``xlmsec`` extras::
+
+    pip install zeep[xmlsec]
+
+For the asyncio support in Python 3.5+ the aiohttp module is required, this 
+can be installed with the ``async`` extras::
+
+    pip install zeep[async]
+
 
 Getting started
 ===============

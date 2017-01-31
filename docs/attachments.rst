@@ -16,8 +16,8 @@ Example based on https://www.w3.org/TR/SOAP-attachments
     pack = client.service.GetClaimDetails('061400a')
 
     ClaimDetails = pack.root
-    SignedFormTiffImage = pack.attachments[0].data
-    CrashPhotoJpeg = pack.attachments[1].data
+    SignedFormTiffImage = pack.attachments[0].content
+    CrashPhotoJpeg = pack.attachments[1].content
 
     # Or lookup by content_id
-    pack.get_by_content_id('<claim061400a.tiff@claiming-it.com>').data
+    pack.get_by_content_id('<claim061400a.tiff@claiming-it.com>').content
