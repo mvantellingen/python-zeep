@@ -15,6 +15,12 @@ class OperationProxy(object):
         self._op_name = operation_name
 
     def __call__(self, *args, **kwargs):
+        """Call the operation with the given args and kwargs.
+
+        :rtype: zeep.xsd.CompoundValue
+
+        """
+
         if self._proxy._client._default_soapheaders:
             op_soapheaders = kwargs.get('_soapheaders')
             if op_soapheaders:
@@ -42,9 +48,19 @@ class ServiceProxy(object):
         self._binding = binding
 
     def __getattr__(self, key):
+        """Return the OperationProxy for the given key.
+
+        :rtype: OperationProxy
+
+        """
         return self[key]
 
     def __getitem__(self, key):
+        """Return the OperationProxy for the given key.
+
+        :rtype: OperationProxy
+
+        """
         try:
             self._binding.get(key)
         except ValueError:
@@ -62,9 +78,19 @@ class Factory(object):
             self._ns = types.get_ns_prefix(namespace)
 
     def __getattr__(self, key):
+        """Return the complexType or simpleType for the given localname.
+
+        :rtype: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
+
+        """
         return self[key]
 
     def __getitem__(self, key):
+        """Return the complexType or simpleType for the given localname.
+
+        :rtype: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
+
+        """
         return self._method('{%s}%s' % (self._ns, key))
 
 
@@ -102,7 +128,11 @@ class Client(object):
 
     @property
     def service(self):
-        """The default ServiceProxy instance"""
+        """The default ServiceProxy instance
+
+        :rtype: ServiceProxy
+
+        """
         if self._default_service:
             return self._default_service
 
@@ -182,15 +212,25 @@ class Client(object):
             factory = client.type_factory('ns0')
             user = factory.User(name='John')
 
+        :rtype: Factory
+
         """
         return Factory(self.wsdl.types, 'type', namespace)
 
     def get_type(self, name):
-        """Return the type for the given qualified name."""
+        """Return the type for the given qualified name.
+
+        :rtype: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
+
+        """
         return self.wsdl.types.get_type(name)
 
     def get_element(self, name):
-        """Return the element for the given qualified name."""
+        """Return the element for the given qualified name.
+
+        :rtype: zeep.xsd.Element
+
+        """
         return self.wsdl.types.get_element(name)
 
     def set_ns_prefix(self, prefix, namespace):

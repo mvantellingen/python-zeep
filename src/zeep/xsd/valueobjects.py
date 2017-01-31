@@ -34,6 +34,7 @@ class AnyObject(object):
 
 
 class CompoundValue(object):
+    """Represents a data object for a specific xsd:complexType."""
 
     def __init__(self, *args, **kwargs):
         values = OrderedDict()

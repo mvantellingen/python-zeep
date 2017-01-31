@@ -63,14 +63,22 @@ class Schema(object):
 
     @property
     def elements(self):
-        """Yield all globla xsd.Type objects"""
+        """Yield all globla xsd.Type objects
+
+        :rtype: Iterable of zeep.xsd.Element
+
+        """
         for document in self.documents:
             for element in document._elements.values():
                 yield element
 
     @property
     def types(self):
-        """Yield all globla xsd.Type objects"""
+        """Yield all global xsd.Type objects
+
+        :rtype: Iterable of zeep.xsd.ComplexType
+
+        """
         for document in self.documents:
             for type_ in document._types.values():
                 yield type_
@@ -94,12 +102,20 @@ class Schema(object):
         self._prefix_map_auto = self._create_prefix_map()
 
     def get_element(self, qname):
-        """Return a global xsd.Element object with the given qname"""
+        """Return a global xsd.Element object with the given qname
+
+        :rtype: zeep.xsd.Group
+
+        """
         qname = self._create_qname(qname)
         return self._get_instance(qname, 'get_element', 'element')
 
     def get_type(self, qname, fail_silently=False):
-        """Return a global xsd.Type object with the given qname"""
+        """Return a global xsd.Type object with the given qname
+
+        :rtype: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
+
+        """
         qname = self._create_qname(qname)
         try:
             return self._get_instance(qname, 'get_type', 'type')
@@ -110,15 +126,27 @@ class Schema(object):
                 raise
 
     def get_group(self, qname):
-        """Return a global xsd.Group object with the given qname"""
+        """Return a global xsd.Group object with the given qname.
+
+        :rtype: zeep.xsd.Group
+
+        """
         return self._get_instance(qname, 'get_group', 'group')
 
     def get_attribute(self, qname):
-        """Return a global xsd.attributeGroup object with the given qname"""
+        """Return a global xsd.attributeGroup object with the given qname
+
+        :rtype: zeep.xsd.Attribute
+
+        """
         return self._get_instance(qname, 'get_attribute', 'attribute')
 
     def get_attribute_group(self, qname):
-        """Return a global xsd.attributeGroup object with the given qname"""
+        """Return a global xsd.attributeGroup object with the given qname
+
+        :rtype: zeep.xsd.AttributeGroup
+
+        """
         return self._get_instance(qname, 'get_attribute_group', 'attributeGroup')
 
     def set_ns_prefix(self, prefix, namespace):
@@ -201,6 +229,8 @@ class Schema(object):
 
         This also expands the shorthand notation.
 
+        :rtype: lxml.etree.QNaame
+
         """
         if isinstance(name, etree.QName):
             return name
@@ -231,6 +261,11 @@ class Schema(object):
         return prefix_map
 
     def _has_schema_document(self, namespace):
+        """Return a boolean if there is a SchemaDocumnet for the namespace.
+
+        :rtype: boolean
+
+        """
         return namespace in self._documents
 
     def _add_schema_document(self, document):
@@ -239,11 +274,22 @@ class Schema(object):
         documents.append(document)
 
     def _get_schema_document(self, namespace, location):
+        """Return a list of SchemaDocument's for the given namespace AND
+        location.
+
+        :rtype: SchemaDocument
+
+        """
         for document in self._documents.get(namespace, []):
             if document._location == location:
                 return document
 
     def _get_schema_documents(self, namespace, fail_silently=False):
+        """Return a list of SchemaDocument's for the given namespace.
+
+        :rtype: list of SchemaDocument
+
+        """
         if namespace not in self._documents:
             if fail_silently:
                 return []
@@ -370,23 +416,43 @@ class SchemaDocument(object):
         self._attribute_groups[name] = value
 
     def get_type(self, qname):
-        """Return a xsd.Type object from this schema"""
+        """Return a xsd.Type object from this schema
+
+        :rtype: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
+
+        """
         return self._get_instance(qname, self._types, 'type')
 
     def get_element(self, qname):
-        """Return a xsd.Element object from this schema"""
+        """Return a xsd.Element object from this schema
+
+        :rtype: zeep.xsd.Element
+
+        """
         return self._get_instance(qname, self._elements, 'element')
 
     def get_group(self, qname):
-        """Return a xsd.Group object from this schema"""
+        """Return a xsd.Group object from this schema.
+
+        :rtype: zeep.xsd.Group
+
+        """
         return self._get_instance(qname, self._groups, 'group')
 
     def get_attribute(self, qname):
-        """Return a xsd.Attribute object from this schema"""
+        """Return a xsd.Attribute object from this schema
+
+        :rtype: zeep.xsd.Attribute
+
+        """
         return self._get_instance(qname, self._attributes, 'attribute')
 
     def get_attribute_group(self, qname):
-        """Return a xsd.AttributeGroup object from this schema"""
+        """Return a xsd.AttributeGroup object from this schema
+
+        :rtype: zeep.xsd.AttributeGroup
+
+        """
         return self._get_instance(qname, self._attribute_groups, 'attributeGroup')
 
     def _get_instance(self, qname, items, item_name):
