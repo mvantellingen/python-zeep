@@ -37,7 +37,5 @@ class WsAddressingPlugin(Plugin):
                 keep_ns_prefixes=header.nsmap,
                 top_nsmap=self.nsmap)
         else:
-            etree.cleanup_namespaces(
-                header,
-                keep_ns_prefixes=header.nsmap)
+            etree.cleanup_namespaces(header)
         return envelope, http_headers
