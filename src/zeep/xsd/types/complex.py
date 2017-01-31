@@ -220,7 +220,7 @@ class ComplexType(AnyType):
         if isinstance(value, list):
             return [self._create_object(val, name) for val in value]
 
-        if isinstance(value, CompoundValue):
+        if isinstance(value, CompoundValue) or value is SkipValue:
             return value
 
         if isinstance(value, dict):
