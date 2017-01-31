@@ -1,5 +1,5 @@
-0.28.0 (unreleased)
--------------------
+1.0.0 (2017-01-31)
+------------------
  - Use cgi.parse_header() to extract media_type for multipart/related checks 
    (#327)
  - Don't ignore nil elements, instead return None when parsing xml (#328)
