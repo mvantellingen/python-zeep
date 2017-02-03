@@ -50,7 +50,7 @@ class ServiceProxy(object):
     def __getattr__(self, key):
         """Return the OperationProxy for the given key.
 
-        :rtype: OperationProxy
+        :rtype: OperationProxy()
 
         """
         return self[key]
@@ -58,7 +58,7 @@ class ServiceProxy(object):
     def __getitem__(self, key):
         """Return the OperationProxy for the given key.
 
-        :rtype: OperationProxy
+        :rtype: OperationProxy()
 
         """
         try:

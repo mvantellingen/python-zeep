@@ -16,7 +16,7 @@ class Transport(object):
     :param timeout: The timeout for loading wsdl and xsd documents.
     :param operation_timeout: The timeout for operations (POST/GET). By
                               default this is None (no timeout).
-    :param session: A request.Session() object (optional)
+    :param session: A :py:class:`request.Session()` object (optional)
 
     """
     supports_async = False

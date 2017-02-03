@@ -1,54 +1,70 @@
 Transports
 ==========
-If you need to change options like cache, timeout or ssl verification
-use `Transport` class.
+If you need to change options like cache, timeout or ssl verification you will
+need to create an instance of the Transport class yourself.
 
-For instance to disable SSL verification use `verify` option::
+For instance to disable SSL verification you will need to create a new
+:py:class:`requests.Session` instance and set the ``verify`` attribute to
+``False``. 
 
-    >>> from zeep import Client
-    >>> from zeep.transports import Transport
-    >>> transport = Transport(verify=False)
-    >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
-    ...     transport=transport)
+.. code-block:: python
+
+    from requests import Session
+    from zeep import Client
+    from zeep.transports import Transport
+
+    session = Session()
+    session.verify = False
+    transport = Transport(session=session)
+    client = Client(
+        'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
+        transport=transport)
 
 
 To set a transport timeout use the `timeout` option. The default timeout is 300
-seconds::
+seconds:
 
-    >>> from zeep import Client
-    >>> from zeep.transports import Transport
-    >>> transport = Transport(timeout=10)
-    >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
-    ...     transport=transport)
+.. code-block:: python
+
+    from zeep import Client
+    from zeep.transports import Transport
+
+    transport = Transport(timeout=10)
+    client = Client(
+        'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
+        transport=transport)
 
 
 Caching
 -------
 By default zeep doesn't use a caching backend.  For performance benefits it is
 advised to use the SqliteCache backend.  It caches the WSDL and XSD files for 
-1 hour by default. To use the cache backend init the client with::
+1 hour by default. To use the cache backend init the client with:
 
-    >>> from zeep import Client
-    >>> from zeep.cache import SqliteCache
-    >>> from zeep.transports import Transport
-    >>> transport = Transport(cache=SqliteCache())
-    >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
-    ...     transport=transport)
+.. code-block:: python
+
+    from zeep import Client
+    from zeep.cache import SqliteCache
+    from zeep.transports import Transport
+
+    transport = Transport(cache=SqliteCache())
+    client = Client(
+        'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
+        transport=transport)
 
 
-Changing the SqliteCache settings can be done via::
+Changing the SqliteCache settings can be done via:
 
-    >>> from zeep import Client
-    >>> from zeep.cache import SqliteCache
-    >>> from zeep.transports import Transport
-    >>> cache = SqliteCache(persistent=True, timeout=60)
-    >>> transport = Transport(cache=cache)
-    >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
-    ...     transport=transport)
+.. code-block:: python
+
+    from zeep import Client
+    from zeep.cache import SqliteCache
+    from zeep.transports import Transport
+    cache = SqliteCache(persistent=True, timeout=60)
+    transport = Transport(cache=cache)
+    client = Client(
+        'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
+        transport=transport)
 
 
 Another option is to use the InMemoryCache backend.  It internally uses a 
@@ -69,7 +85,8 @@ to the Transport class.
     from zeep import Client
     from zeep.transports import Transport
 
-    session = Session(auth=HTTPBasicAuth(user, password))
+    session = Session()
+    session.auth = HTTPBasicAuth(user, password)
     client = Client('http://my-endpoint.com/production.svc?wsdl',
         transport=Transport(session=session))
 
