@@ -136,7 +136,7 @@ class SoapBinding(Binding):
 
         if media_type == 'multipart/related':
             decoder = MultipartDecoder(
-                response.content, content_type, response.encoding)
+                response.content, content_type, response.encoding or 'utf-8')
 
             content = decoder.parts[0].content
             if len(decoder.parts) > 1:
