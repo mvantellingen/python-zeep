@@ -132,6 +132,7 @@ class SoapBinding(Binding):
 
         content_type = response.headers.get('Content-Type', 'text/xml')
         media_type = get_media_type(content_type)
+        message_pack = None
 
         if media_type == 'multipart/related':
             decoder = MultipartDecoder(
@@ -142,7 +143,6 @@ class SoapBinding(Binding):
                 message_pack = MessagePack(parts=decoder.parts[1:])
         else:
             content = response.content
-            message_pack = None
 
         try:
             doc = parse_xml(content)
