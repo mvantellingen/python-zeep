@@ -49,8 +49,9 @@ class MessagePack(object):
 
 class Attachment(object):
     def __init__(self, part):
+        encoding = part.encoding or 'utf-8'
         self.headers = CaseInsensitiveDict({
-            k.decode(part.encoding): v.decode(part.encoding)
+            k.decode(encoding): v.decode(encoding)
             for k, v in part.headers.items()
         })
         self.content_type = self.headers.get('Content-Type', None)
