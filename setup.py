@@ -9,7 +9,7 @@ install_requires = [
     'isodate>=0.5.4',
     'lxml>=3.0.0',
     'requests>=2.7.0',
-    'requests-toolbelt>=0.7.0',
+    'requests-toolbelt>=0.7.1',
     'six>=1.9.0',
     'pytz',
 ]
