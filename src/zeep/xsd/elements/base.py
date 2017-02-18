@@ -28,5 +28,5 @@ class Base(object):
         """Consume matching xmlelements and call parse() on each of them"""
         raise NotImplementedError()
 
-    def signature(self, schema=None):
+    def signature(self, schema=None, standalone=False):
         return ''
