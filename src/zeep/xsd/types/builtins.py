@@ -395,6 +395,7 @@ class Entities(Entity):
 
 class Integer(Decimal):
     _default_qname = xsd_ns('integer')
+    accepted_types = (int, float) + six.string_types
 
     def xmlvalue(self, value):
         return str(value)
