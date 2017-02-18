@@ -3,7 +3,7 @@ import datetime
 import pytest
 from lxml import etree
 
-from tests.utils import assert_nodes_equal, load_xml
+from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
 
 
@@ -107,6 +107,41 @@ def test_any_value_invalid():
 
     with pytest.raises(TypeError):
         container_elm.render(node, obj)
+
+
+def test_any_without_element():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="qualified">
+          <element name="item">
+            <complexType>
+              <sequence>
+                <any minOccurs="0" maxOccurs="1"/>
+              </sequence>
+              <attribute name="type" type="string"/>
+              <attribute name="title" type="string"/>
+            </complexType>
+          </element>
+        </schema>
+    """))
+    item_elm = schema.get_element('{http://tests.python-zeep.org/}item')
+    item = item_elm(xsd.AnyObject(xsd.String(), 'foobar'), type='attr-1', title='attr-2')
+
+    node = render_node(item_elm, item)
+    expected = """
+        <document>
+          <ns0:item xmlns:ns0="http://tests.python-zeep.org/" type="attr-1" title="attr-2">foobar</ns0:item>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    item = item_elm.parse(node.getchildren()[0], schema)
+    assert item.type == 'attr-1'
+    assert item.title == 'attr-2'
+    assert item._value_1 is None
 
 
 def test_any_with_ref():
