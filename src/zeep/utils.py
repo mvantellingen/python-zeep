@@ -2,6 +2,7 @@ import cgi
 import inspect
 
 from lxml import etree
+from zeep.ns import XSD
 
 
 def qname_attr(node, attr_name, target_namespace=None):
@@ -15,6 +16,11 @@ def as_qname(value, nsmap, target_namespace):
     if ':' in value:
         prefix, local = value.split(':')
         namespace = nsmap.get(prefix, prefix)
+
+        # Workaround for https://github.com/mvantellingen/python-zeep/issues/349
+        if not local:
+            return etree.QName(XSD, 'anyType')
+
         return etree.QName(namespace, local)
 
     if target_namespace:

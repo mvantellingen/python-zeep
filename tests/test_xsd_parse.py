@@ -447,3 +447,19 @@ def test_parse_invalid_values():
     assert result.item_2 == datetime.date(2016, 10, 20)
     assert result.attr_1 is None
     assert result.attr_2 == datetime.date(2013, 10, 20)
+
+
+def test_xsd_missing_localname():
+    schema = xsd.Schema(load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <schema
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/">
+          <element name="container" type="xsd:"/>
+        </schema>
+    """))
+
+    schema.get_element('{http://tests.python-zeep.org/}container')
