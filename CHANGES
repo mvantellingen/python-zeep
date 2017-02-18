@@ -2,6 +2,7 @@
 ------------------
  - Fix an attribute error when an complexType used xsd:anyType as base 
    restriction (#352)
+ - Update asyncio transport to return requests.Response objects (#335)
 
  
 1.0.0 (2017-01-31)
