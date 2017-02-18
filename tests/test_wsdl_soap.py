@@ -204,7 +204,7 @@ def test_mime_multipart():
 def test_mime_multipart_no_encoding():
     data = '\r\n'.join(line.strip() for line in """
         --MIME_boundary
-        Content-Type: text/xml; charset=UTF-8
+        Content-Type: text/xml
         Content-Transfer-Encoding: 8bit
         Content-ID: <claim061400a.xml@claiming-it.com>
 
@@ -229,8 +229,7 @@ def test_mime_multipart_no_encoding():
         Li4uQmFzZTY0IGVuY29kZWQgVElGRiBpbWFnZS4uLg==
 
         --MIME_boundary
-        Content-Type: image/jpeg
-        Content-Transfer-Encoding: binary
+        Content-Type: text/xml
         Content-ID: <claim061400a.jpeg@claiming-it.com>
 
         ...Raw JPEG image..
@@ -243,6 +242,7 @@ def test_mime_multipart_no_encoding():
     response = stub(
         status_code=200,
         content=data,
+        encoding=None,
         headers={
             'Content-Type': 'multipart/related; type="text/xml"; start="<claim061400a.xml@claiming-it.com>"; boundary="MIME_boundary"'
         }
