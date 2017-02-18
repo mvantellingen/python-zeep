@@ -6,6 +6,8 @@ import asyncio
 import logging
 
 import aiohttp
+from requests import Response
+
 from zeep.transports import Transport
 from zeep.utils import get_version
 from zeep.wsdl.utils import etree_to_string
@@ -56,20 +58,21 @@ class AsyncTransport(Transport):
     async def post_xml(self, address, envelope, headers):
         message = etree_to_string(envelope)
         response = await self.post(address, message, headers)
-
-        from pretend import stub
-        return stub(
-            content=await response.read(),
-            status_code=response.status,
-            headers=response.headers)
+        return await self.new_response(response)
 
     async def get(self, address, params, headers):
         with aiohttp.Timeout(self.operation_timeout):
             response = await self.session.get(
                 address, params=params, headers=headers)
 
-            from pretend import stub
-            return await stub(
-                content=await response.read(),
-                status_code=response.status,
-                headers=response.headers)
+            return await self.new_response(response)
+
+    async def new_response(self, response):
+        """Convert an aiohttp.Response object to a requests.Response object"""
+        new = Response()
+        new._content = await response.read()
+        new.status_code = response.status
+        new.headers = response.headers
+        new.cookies = response.cookies
+        new.encoding = response.charset
+        return new
