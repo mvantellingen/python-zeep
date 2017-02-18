@@ -12,6 +12,8 @@ __all__ = ['AnyType']
 
 class AnyType(Type):
     _default_qname = xsd_ns('anyType')
+    _attributes_unwrapped = []
+    _element = None
 
     def render(self, parent, value, xsd_type=None, render_path=None):
         if isinstance(value, AnyObject):

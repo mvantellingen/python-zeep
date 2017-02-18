@@ -603,3 +603,40 @@ def test_extension_abstract_complex_type():
         </document>
     """
     assert_nodes_equal(expected, node)
+
+
+def test_extension_base_anytype():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+
+            <xsd:element name="container">
+              <xsd:complexType>
+                <xsd:complexContent>
+                  <xsd:restriction base="xsd:anyType">
+                    <xsd:attribute name="attr" type="xsd:unsignedInt" use="required"/>
+                    <xsd:anyAttribute namespace="##other" processContents="lax"/>
+                  </xsd:restriction>
+                 </xsd:complexContent>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:schema>
+    """))
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+
+    assert container_elm.signature() == (
+        '{http://tests.python-zeep.org/}container(attr: xsd:unsignedInt, _attr_1: {})')
+
+    obj = container_elm(attr='foo')
+
+    node = render_node(container_elm, obj)
+    expected = """
+        <document>
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/" attr="foo"/>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
