@@ -4,7 +4,7 @@ from collections import OrderedDict, defaultdict, deque
 
 from cached_property import threaded_cached_property
 
-from zeep.exceptions import UnexpectedElementError
+from zeep.exceptions import UnexpectedElementError, ValidationError
 from zeep.xsd.const import NotSet, SkipValue
 from zeep.xsd.elements import Any, Element
 from zeep.xsd.elements.base import Base
@@ -115,7 +115,10 @@ class OrderIndicator(Indicator, list):
         if self.accepts_multiple:
             assert name
 
-        if name and name in available_kwargs:
+        if name:
+            if name not in available_kwargs:
+                return {}
+
             assert self.accepts_multiple
 
             # Make sure we have a list, lame lame
@@ -125,7 +128,12 @@ class OrderIndicator(Indicator, list):
 
             result = []
             for item_value in max_occurs_iter(self.max_occurs, item_kwargs):
-                item_kwargs = set(item_value.keys())
+                try:
+                    item_kwargs = set(item_value.keys())
+                except AttributeError:
+                    raise TypeError(
+                        "A list of dicts is expected for unbounded Sequences")
+
                 subresult = OrderedDict()
                 for item_name, element in self.elements:
                     value = element.parse_kwargs(item_value, item_name, item_kwargs)
@@ -148,7 +156,6 @@ class OrderIndicator(Indicator, list):
             return result
 
         else:
-            assert not name
             assert not self.accepts_multiple
             result = OrderedDict()
             for elm_name, element in self.elements_nested:
@@ -170,6 +177,8 @@ class OrderIndicator(Indicator, list):
         else:
             values = value
 
+        self.validate(values, render_path)
+
         for value in max_occurs_iter(self.max_occurs, values):
             for name, element in self.elements_nested:
                 if name:
@@ -188,6 +197,11 @@ class OrderIndicator(Indicator, list):
 
                 if element_value is not None or not element.is_optional:
                     element.render(parent, element_value, child_path)
+
+    def validate(self, value, render_path):
+        for item in value:
+            if item is NotSet:
+                raise ValidationError("No value set", path=render_path)
 
     def signature(self, schema=None, standalone=True):
         parts = []

@@ -408,3 +408,33 @@ def test_xml_sequence_with_nil_element():
         'text-4',
         'text-5',
     ]
+
+
+def test_xml_sequence_unbounded():
+    schema = xsd.Schema(load_xml("""
+        <schema
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/">
+          <complexType name="ValueListType">
+            <sequence maxOccurs="unbounded" minOccurs="0">
+              <element ref="tns:Value"/>
+            </sequence>
+          </complexType>
+          <element name="ValueList" type="tns:ValueListType"/>
+          <element name="Value" type="tns:LongName"/>
+          <simpleType name="LongName">
+            <restriction base="string">
+              <maxLength value="256"/>
+           </restriction>
+          </simpleType>
+        </schema>
+    """))
+
+    elm_type = schema.get_type('{http://tests.python-zeep.org/}ValueListType')
+
+    with pytest.raises(TypeError):
+        elm_type(Value='bla')
+    elm_type(_value_1={'Value': 'bla'})
