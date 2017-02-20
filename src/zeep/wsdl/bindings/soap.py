@@ -214,7 +214,13 @@ class SoapBinding(Binding):
         # default style attribute for the operations.
         soap_node = xmlelement.find('soap:binding', namespaces=cls.nsmap)
         transport = soap_node.get('transport')
-        if transport != 'http://schemas.xmlsoap.org/soap/http':
+
+        supported_transports = [
+            'http://schemas.xmlsoap.org/soap/http',
+            'http://www.w3.org/2003/05/soap/bindings/HTTP/',
+        ]
+
+        if transport not in supported_transports:
             raise NotImplementedError(
                 "The binding transport %s is not supported (only soap/http)" % (
                     transport))
