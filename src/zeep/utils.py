@@ -15,6 +15,7 @@ def as_qname(value, nsmap, target_namespace):
     """Convert the given value to a QName"""
     if ':' in value:
         prefix, local = value.split(':')
+        local = 'anyType' if local == '' else local
         namespace = nsmap.get(prefix, prefix)
 
         # Workaround for https://github.com/mvantellingen/python-zeep/issues/349
