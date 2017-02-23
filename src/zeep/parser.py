@@ -28,10 +28,10 @@ def absolute_location(location, base):
     if location == base:
         return location
 
-    if urlparse(location).scheme in ('http', 'https'):
+    if urlparse(location).scheme in ('http', 'https'. 'file'):
         return location
 
-    if base and urlparse(base).scheme in ('http', 'https'):
+    if base and urlparse(base).scheme in ('http', 'https', 'file'):
         return urljoin(base, location)
     else:
         if os.path.isabs(location):
