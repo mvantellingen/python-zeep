@@ -2,6 +2,8 @@
 ------------------
  - Support the SOAP 1.2 'http://www.w3.org/2003/05/soap/bindings/HTTP/' 
    transport uri (#355)
+ - Fallback to matching wsdl lookups to matching when the target namespace is
+   empty (#356)
 
 
 1.1.0 (2017-02-18)

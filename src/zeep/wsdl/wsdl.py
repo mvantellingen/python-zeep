@@ -177,7 +177,16 @@ class Definition(object):
                 try:
                     return definition.get(name, key, _processed)
                 except IndexError:
-                    pass
+                    # Try to see if there is an item which has no namespace
+                    # but where the localname matches. This is basically for
+                    # #356 but in the future we should also ignore mismatching
+                    # namespaces as last fallback
+                    fallback_key = etree.QName(key).localname
+                    try:
+                        return definition.get(name, fallback_key, _processed)
+                    except IndexError:
+                        pass
+
         raise IndexError("No definition %r in %r found" % (key, name))
 
     def resolve_imports(self):
