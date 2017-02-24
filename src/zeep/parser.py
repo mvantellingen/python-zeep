@@ -28,7 +28,7 @@ def absolute_location(location, base):
     if location == base:
         return location
 
-    if urlparse(location).scheme in ('http', 'https'. 'file'):
+    if urlparse(location).scheme in ('http', 'https', 'file'):
         return location
 
     if base and urlparse(base).scheme in ('http', 'https', 'file'):
