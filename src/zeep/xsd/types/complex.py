@@ -350,7 +350,8 @@ class ComplexType(AnyType):
         new = self.__class__(
             element=self._element or base._element,
             attributes=attributes,
-            qname=self.qname)
+            qname=self.qname,
+            is_global=self.is_global)
         return new.resolve()
 
     def signature(self, schema=None, standalone=True):

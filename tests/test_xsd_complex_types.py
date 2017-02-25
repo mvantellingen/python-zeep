@@ -86,6 +86,36 @@ def test_nested_sequence():
     assert obj.item.y == 2
 
 
+def test_restriction_self():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="container" type="tns:container"/>
+          <complexType name="container">
+            <complexContent>
+              <restriction base="anyType">
+                <sequence>
+                  <element minOccurs="0" maxOccurs="1" name="item">
+                    <complexType>
+                      <sequence>
+                        <element name="child" type="tns:container"/>
+                      </sequence>
+                    </complexType>
+                  </element>
+                </sequence>
+              </restriction>
+            </complexContent>
+          </complexType>
+        </schema>
+    """))
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    container_elm = schema.get_element('tns:container')
+    container_elm.signature(schema)
+
+
 def test_single_node_array():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>

@@ -6,6 +6,8 @@
    empty (#356)
  - Improve the handling of xsd:includes, the default namespace of the parent
    schema is now also used during resolving of the included schema. (#360)
+ - Properly propagate the global flag for complex types when an xsd:restriction
+   is used (#360)
 
 
 1.1.0 (2017-02-18)

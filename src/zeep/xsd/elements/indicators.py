@@ -207,7 +207,7 @@ class OrderIndicator(Indicator, list):
         parts = []
         for name, element in self.elements_nested:
             if isinstance(element,  Indicator):
-                parts.append(element.signature(schema))
+                parts.append(element.signature(schema, standalone=False))
             else:
                 value = element.signature(schema, standalone=False)
                 parts.append('%s: %s' % (name, value))
