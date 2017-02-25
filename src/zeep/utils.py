@@ -3,6 +3,7 @@ import inspect
 
 from lxml import etree
 from zeep.ns import XSD
+from zeep.exceptions import XMLParseError
 
 
 def qname_attr(node, attr_name, target_namespace=None):
@@ -15,7 +16,9 @@ def as_qname(value, nsmap, target_namespace):
     """Convert the given value to a QName"""
     if ':' in value:
         prefix, local = value.split(':')
-        namespace = nsmap.get(prefix, prefix)
+        namespace = nsmap.get(prefix)
+        if not namespace:
+            raise XMLParseError("No namespace defined for %r" % prefix)
 
         # Workaround for https://github.com/mvantellingen/python-zeep/issues/349
         if not local:

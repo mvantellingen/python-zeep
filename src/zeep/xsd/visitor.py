@@ -1,3 +1,4 @@
+import copy
 import keyword
 import logging
 import re
@@ -103,9 +104,8 @@ class SchemaVisitor(object):
         self.document._element_form = node.get('elementFormDefault', 'unqualified')
         self.document._attribute_form = node.get('attributeFormDefault', 'unqualified')
 
-        parent = node
-        for node in node.iterchildren():
-            self.process(node, parent=parent)
+        for child in node:
+            self.process(child, parent=node)
 
     def visit_import(self, node, parent):
         """
@@ -190,7 +190,22 @@ class SchemaVisitor(object):
             location, self.schema._transport, base_url=self.document._base_url)
         self._includes.add(location)
 
-        return self.visit_schema(schema_node)
+        # When the included document has no default namespace defined but the
+        # parent document does have this then we should (atleast for #360)
+        # transfer the default namespace to the included schema. We can't
+        # update the nsmap of elements in lxml so we create a new schema with
+        # the correct nsmap and move all the content there.
+        if not schema_node.nsmap.get(None) and node.nsmap.get(None):
+            nsmap = {None: node.nsmap[None]}
+            nsmap.update(schema_node.nsmap)
+            new = etree.Element(schema_node.tag, nsmap=nsmap)
+            for child in schema_node:
+                new.append(child)
+            schema_node = new
+
+        # Iterate directly over the children
+        for child in schema_node:
+            self.process(child, parent=schema_node)
 
     def visit_element(self, node, parent):
         """
@@ -315,9 +330,8 @@ class SchemaVisitor(object):
                 return result
 
         attribute_form = node.get('form', self.document._attribute_form)
-        qname = qname_attr(node, 'name', self.document._target_namespace)
         if attribute_form == 'qualified' or is_global:
-            name = qname
+            name = qname_attr(node, 'name', self.document._target_namespace)
         else:
             name = etree.QName(node.get('name'))
 
@@ -341,7 +355,7 @@ class SchemaVisitor(object):
 
         # Only register global elements
         if is_global:
-            self.document.register_attribute(qname, attr)
+            self.document.register_attribute(name, attr)
         return attr
 
     def visit_simple_type(self, node, parent):

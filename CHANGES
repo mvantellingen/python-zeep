@@ -4,6 +4,8 @@
    transport uri (#355)
  - Fallback to matching wsdl lookups to matching when the target namespace is
    empty (#356)
+ - Improve the handling of xsd:includes, the default namespace of the parent
+   schema is now also used during resolving of the included schema. (#360)
 
 
 1.1.0 (2017-02-18)
