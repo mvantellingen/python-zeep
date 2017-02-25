@@ -68,9 +68,12 @@ class Schema(object):
         :rtype: Iterable of zeep.xsd.Element
 
         """
+        seen = set()
         for document in self.documents:
             for element in document._elements.values():
-                yield element
+                if element.qname not in seen:
+                    yield element
+                    seen.add(element.qname)
 
     @property
     def types(self):
@@ -79,9 +82,12 @@ class Schema(object):
         :rtype: Iterable of zeep.xsd.ComplexType
 
         """
+        seen = set()
         for document in self.documents:
             for type_ in document._types.values():
-                yield type_
+                if type_.qname not in seen:
+                    yield type_
+                    seen.add(type_.qname)
 
     def __repr__(self):
         main_doc = self.root_document
