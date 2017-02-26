@@ -267,3 +267,20 @@ class Client(object):
         else:
             service = next(iter(self.wsdl.services.values()), None)
         return service
+
+
+class CachingClient(Client):
+    """Shortcut to create a caching client, for the lazy people.
+
+    This enables the SqliteCache by default in the transport as was the default
+    in earlier versions of zeep.
+
+    """
+    def __init__(self, *args, **kwargs):
+
+        # Don't use setdefault since we want to lazily init the Transport cls
+        from zeep.cache import SqliteCache
+        kwargs['transport'] = (
+            kwargs.get('transport') or Transport(cache=SqliteCache()))
+
+        super(CachingClient, self).__init__(*args, **kwargs)
