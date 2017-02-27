@@ -84,3 +84,50 @@ def test_union_mixed():
     assert_nodes_equal(expected, node)
     value = elm.parse(node.getchildren()[0], schema)
     assert value == '2018'
+
+
+def test_union_mixed_2():
+    schema = xsd.Schema(load_xml("""
+            <?xml version="1.0"?>
+            <schema
+                xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+              <element name="item" type="tns:Date"/>
+              <simpleType name="Date">
+                <union memberTypes="date gYear gYearMonth tns:MMYY tns:MMYYYY"/>
+              </simpleType>
+              <simpleType name="MMYY">
+                <restriction base="string">
+                  <pattern value="(0[123456789]|1[012]){1}\d{2}"/>
+                </restriction>
+              </simpleType>
+              <simpleType name="MMYYYY">
+                <restriction base="string">
+                  <pattern value="(0[123456789]|1[012]){1}\d{4}"/>
+                </restriction>
+              </simpleType>
+            </schema>
+        """))
+
+    elm = schema.get_element('ns0:item')
+    node = render_node(elm, '102018')
+    expected = """
+            <document>
+              <ns0:item xmlns:ns0="http://tests.python-zeep.org/">102018</ns0:item>
+            </document>
+        """
+    assert_nodes_equal(expected, node)
+    value = elm.parse(node.getchildren()[0], schema)
+    assert value == '102018'
+
+    node = render_node(elm, '2018')
+    expected = """
+            <document>
+              <ns0:item xmlns:ns0="http://tests.python-zeep.org/">2018</ns0:item>
+            </document>
+        """
+    assert_nodes_equal(expected, node)
+    value = elm.parse(node.getchildren()[0], schema)
+    assert value == '2018'

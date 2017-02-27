@@ -802,10 +802,11 @@ class SchemaVisitor(object):
         """
         # TODO
         members = node.get('memberTypes')
+        default_namespace = node.nsmap.get(None)
         types = []
         if members:
             for member in members.split():
-                qname = as_qname(member, node.nsmap, self.document._target_namespace)
+                qname = as_qname(member, node.nsmap, default_namespace or self.document._target_namespace)
                 xsd_type = self._get_type(qname)
                 types.append(xsd_type)
         else:
