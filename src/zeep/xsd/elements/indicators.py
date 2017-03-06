@@ -527,6 +527,14 @@ class Group(Indicator):
             return [('_value_1', self.child)]
         return self.child.elements
 
+    def accept(self, values):
+        """Return the number of values which are accepted by this choice.
+
+        If not all required elements are available then 0 is returned.
+
+        """
+        return self.child.accept(values)
+
     def parse_args(self, args, index=0):
         return self.child.parse_args(args, index)
 
