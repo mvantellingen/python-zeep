@@ -1,7 +1,7 @@
 .PHONY: install clean test retest coverage docs
 
 install:
-	pip install -e .[docs,test]
+	pip install -e .[docs,test,async]
 	pip install bumpversion twine wheel
 
 lint:

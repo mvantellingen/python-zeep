@@ -20,6 +20,7 @@ docs_require = [
 
 async_require = [
     'aiohttp>=1.0',
+    'aioresponses>=0.1.3',
 ]
 
 xmlsec_require = [
