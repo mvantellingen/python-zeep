@@ -25,7 +25,19 @@ class Base(object):
         raise NotImplementedError()
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
-        """Consume matching xmlelements and call parse() on each of them"""
+        """Consume matching xmlelements and call parse() on each of them
+
+        :param xmlelements: Dequeue of XML element objects
+        :type xmlelements: collections.deque of lxml.etree._Element
+        :param schema: The parent XML schema
+        :type schema: zeep.xsd.Schema
+        :param name: The name of the parent element
+        :type name: str
+        :param context: Optional parsing context (for inline schemas)
+        :type context: zeep.xsd.context.XmlParserContext
+        :return: dict or None
+
+        """
         raise NotImplementedError()
 
     def signature(self, schema=None, standalone=False):

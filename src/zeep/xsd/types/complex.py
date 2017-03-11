@@ -110,9 +110,21 @@ class ComplexType(AnyType):
             result.append((generator.get_name(), self._element))
         return result
 
-    def parse_xmlelement(self, xmlelement, schema, allow_none=True,
+    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
                          context=None):
-        """Consume matching xmlelements and call parse() on each"""
+        """Consume matching xmlelements and call parse() on each
+
+        :param xmlelement: XML element objects
+        :type xmlelement: lxml.etree._Element
+        :param schema: The parent XML schema
+        :type schema: zeep.xsd.Schema
+        :param allow_none: Allow none
+        :type allow_none: bool
+        :param context: Optional parsing context (for inline schemas)
+        :type context: zeep.xsd.context.XmlParserContext
+        :return: dict or None
+
+        """
         # If this is an empty complexType (<xsd:complexType name="x"/>)
         if not self.attributes and not self.elements:
             return None
