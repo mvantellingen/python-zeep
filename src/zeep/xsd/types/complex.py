@@ -6,7 +6,7 @@ from itertools import chain
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
-from zeep.xsd.const import xsi_ns, SkipValue, NotSet
+from zeep.xsd.const import NotSet, SkipValue, xsi_ns
 from zeep.xsd.elements import (
     Any, AnyAttribute, AttributeGroup, Choice, Element, Group, Sequence)
 from zeep.xsd.elements.indicators import OrderIndicator
@@ -146,6 +146,7 @@ class ComplexType(AnyType):
 
             # Parse elements. These are always indicator elements (all, choice,
             # group, sequence)
+            assert len(self.elements_nested) < 2
             for name, element in self.elements_nested:
                 try:
                     result = element.parse_xmlelements(

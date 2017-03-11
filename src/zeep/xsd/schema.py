@@ -15,7 +15,16 @@ logger = logging.getLogger(__name__)
 class Schema(object):
     """A schema is a collection of schema documents."""
 
-    def __init__(self, node=None, transport=None, location=None):
+    def __init__(self, node=None, transport=None, location=None, strict=True):
+        """
+        :param node:
+        :param transport:
+        :param location:
+        :param strict: Boolean to indicate if the parsing is strict (default)
+
+        """
+        self.strict = strict
+
         self._transport = transport
 
         self._documents = OrderedDict()

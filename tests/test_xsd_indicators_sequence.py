@@ -438,3 +438,40 @@ def test_xml_sequence_unbounded():
     with pytest.raises(TypeError):
         elm_type(Value='bla')
     elm_type(_value_1={'Value': 'bla'})
+
+
+def test_xml_sequence_recover_from_missing_element():
+    schema = xsd.Schema(load_xml("""
+        <schema
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/">
+          <complexType name="container">
+            <sequence>
+              <element name="item_1" type="xsd:string"/>
+              <element name="item_2" type="xsd:string"/>
+              <element name="item_3" type="xsd:string"/>
+              <element name="item_4" type="xsd:string"/>
+            </sequence>
+          </complexType>
+        </schema>
+    """), strict=False)
+
+    xml = load_xml("""
+        <tns:container
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:tns="http://tests.python-zeep.org/">
+          <tns:item_1>text-1</tns:item_1>
+          <tns:item_3>text-3</tns:item_3>
+          <tns:item_4>text-4</tns:item_4>
+        </tns:container>
+    """)
+    elm_type = schema.get_type('{http://tests.python-zeep.org/}container')
+    result = elm_type.parse_xmlelement(xml, schema)
+    assert result.item_1 == 'text-1'
+    assert result.item_2 is None
+    assert result.item_3 == 'text-3'
+    assert result.item_4 == 'text-4'

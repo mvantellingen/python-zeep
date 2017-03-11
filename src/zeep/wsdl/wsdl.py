@@ -36,7 +36,7 @@ class Document(object):
 
     """
 
-    def __init__(self, location, transport, base=None):
+    def __init__(self, location, transport, base=None, strict=True):
         """Initialize a WSDL document.
 
         The root definition properties are exposed as entry points.
@@ -55,10 +55,15 @@ class Document(object):
             self.location = base
 
         self.transport = transport
+        self.strict = strict
 
         # Dict with all definition objects within this WSDL
         self._definitions = {}
-        self.types = Schema([], transport=self.transport, location=self.location)
+        self.types = Schema(
+            node=None,
+            transport=self.transport,
+            location=self.location,
+            strict=self.strict)
 
         document = self._load_content(location)
 

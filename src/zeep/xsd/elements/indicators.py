@@ -493,8 +493,13 @@ class Sequence(OrderIndicator):
 
             item_result = OrderedDict()
             for elm_name, element in self.elements:
-                item_subresult = element.parse_xmlelements(
-                    xmlelements, schema, name, context=context)
+                try:
+                    item_subresult = element.parse_xmlelements(
+                        xmlelements, schema, name, context=context)
+                except UnexpectedElementError:
+                    if schema.strict:
+                        raise
+                    item_subresult = None
 
                 # Unwrap if allowed
                 if isinstance(element, OrderIndicator):
