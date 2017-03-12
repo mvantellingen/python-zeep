@@ -5,8 +5,8 @@ from requests_toolbelt.multipart.decoder import MultipartDecoder
 
 from zeep import ns, plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
-from zeep.parser import parse_xml
-from zeep.utils import as_qname, qname_attr, get_media_type
+from zeep.loader import parse_xml
+from zeep.utils import as_qname, get_media_type, qname_attr
 from zeep.wsdl.attachments import MessagePack
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
@@ -145,7 +145,7 @@ class SoapBinding(Binding):
             content = response.content
 
         try:
-            doc = parse_xml(content)
+            doc = parse_xml(content, self.transport)
         except XMLSyntaxError:
             raise TransportError(
                 u'Server returned HTTP status %d (%s)'

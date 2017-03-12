@@ -6,12 +6,11 @@ import re
 from lxml import etree
 
 from zeep.exceptions import XMLParseError
-from zeep.parser import absolute_location
+from zeep.loader import absolute_location, load_external
 from zeep.utils import as_qname, qname_attr
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import types as xsd_types
 from zeep.xsd.const import xsd_ns
-from zeep.xsd.utils import load_external
 
 logger = logging.getLogger(__name__)
 

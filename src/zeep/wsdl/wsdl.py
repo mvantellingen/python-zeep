@@ -8,7 +8,7 @@ from collections import OrderedDict
 import six
 from lxml import etree
 
-from zeep.parser import (
+from zeep.loader import (
     absolute_location, is_relative_path, load_external, parse_xml)
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
@@ -65,7 +65,7 @@ class Document(object):
             location=self.location,
             strict=self.strict)
 
-        document = self._load_content(location)
+        document = self._get_xml_document(location)
 
         root_definitions = Definition(self, document, self.location)
         root_definitions.resolve_imports()
@@ -117,7 +117,7 @@ class Document(object):
                     print('%s%s' % (' ' * 12, six.text_type(operation)))
                 print('')
 
-    def _load_content(self, location):
+    def _get_xml_document(self, location):
         """Load the XML content from the given location and return an
         lxml.Element object.
 
@@ -125,8 +125,6 @@ class Document(object):
         :type location: string
 
         """
-        if hasattr(location, 'read'):
-            return parse_xml(location.read())
         return load_external(location, self.transport, self.location)
 
     def _add_definition(self, definition):
@@ -242,7 +240,7 @@ class Definition(object):
             if key in self.wsdl._definitions:
                 self.imports[key] = self.wsdl._definitions[key]
             else:
-                document = self.wsdl._load_content(location)
+                document = self.wsdl._get_xml_document(location)
                 if etree.QName(document.tag).localname == 'schema':
                     self.types.add_documents([document], location)
                 else:
