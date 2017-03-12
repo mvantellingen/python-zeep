@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 install_requires = [
     'appdirs>=1.4.0',
-    'cached-property>=1.1.0',
+    'cached-property>=1.2.0',
     'defusedxml>=0.4.1',
     'isodate>=0.5.4',
     'lxml>=3.0.0',
@@ -48,7 +48,7 @@ with open('README.rst') as fh:
 
 setup(
     name='zeep',
-    version='1.1.0',
+    version='1.2.0',
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=long_description,
     author="Michael van Tellingen",
