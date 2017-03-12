@@ -321,7 +321,6 @@ class SchemaDocument(object):
         self._base_url = base_url or location
         self._location = location
         self._target_namespace = namespace
-        self._elm_instances = []
         self._is_internal = False
 
         self._attribute_groups = {}
@@ -385,10 +384,6 @@ class SchemaDocument(object):
         _resolve_dict(self._elements)
         _resolve_dict(self._groups)
         _resolve_dict(self._types)
-
-        for element in self._elm_instances:
-            element.resolve()
-        self._elm_instances = []
 
     def register_import(self, namespace, schema):
         schemas = self._imports.setdefault(namespace, [])

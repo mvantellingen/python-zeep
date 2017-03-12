@@ -68,7 +68,7 @@ class UnresolvedType(Type):
         self.schema = schema
 
     def __repr__(self):
-        return '<%s(qname=%r)>' % (self.__class__.__name__, self.qname)
+        return '<%s(qname=%r)>' % (self.__class__.__name__, self.qname.text)
 
     def render(self, parent, value, xsd_type=None, render_path=None):
         raise RuntimeError(

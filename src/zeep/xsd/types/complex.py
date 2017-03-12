@@ -255,9 +255,6 @@ class ComplexType(AnyType):
             return self._resolved
         self._resolved = self
 
-        if self._element:
-            self._element = self._element.resolve()
-
         resolved = []
         for attribute in self._attributes:
             value = attribute.resolve()
@@ -271,15 +268,13 @@ class ComplexType(AnyType):
         if self._extension:
             self._extension = self._extension.resolve()
             self._resolved = self.extend(self._extension)
-            return self._resolved
-
         elif self._restriction:
             self._restriction = self._restriction.resolve()
             self._resolved = self.restrict(self._restriction)
-            return self._resolved
 
-        else:
-            return self._resolved
+        if self._element:
+            self._element = self._element.resolve()
+        return self._resolved
 
     def extend(self, base):
         """Create a new complextype instance which is the current type

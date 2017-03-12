@@ -351,6 +351,9 @@ class Definition(object):
 
         :param doc: The source document
         :type doc: lxml.etree._Element
+        :returns: Dictionary with binding name as key and Binding instance as
+          value
+        :rtype: dict
 
         """
         result = {}
