@@ -8,8 +8,7 @@ from collections import OrderedDict
 import six
 from lxml import etree
 
-from zeep.loader import (
-    absolute_location, is_relative_path, load_external, parse_xml)
+from zeep.loader import absolute_location, is_relative_path, load_external
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
 from zeep.xsd import Schema
@@ -125,7 +124,8 @@ class Document(object):
         :type location: string
 
         """
-        return load_external(location, self.transport, self.location)
+        return load_external(
+            location, self.transport, self.location, strict=self.strict)
 
     def _add_definition(self, definition):
         key = (definition.target_namespace, definition.location)

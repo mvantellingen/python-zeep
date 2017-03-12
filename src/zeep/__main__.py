@@ -27,6 +27,9 @@ def parse_arguments(args=None):
         '--verbose', action='store_true', help='Enable verbose output')
     parser.add_argument(
         '--profile', help="Enable profiling and save output to given file")
+    parser.add_argument(
+        '--no-strict', action='store_true', default=False,
+        help="Disable strict mode")
     return parser.parse_args(args)
 
 
@@ -72,7 +75,9 @@ def main(args):
 
     transport = Transport(cache=cache, session=session)
     st = time.time()
-    client = Client(args.wsdl_file, transport=transport)
+
+    strict = not args.no_strict
+    client = Client(args.wsdl_file, transport=transport, strict=strict)
     logger.debug("Loading WSDL took %sms", (time.time() - st) * 1000)
 
     if args.profile:

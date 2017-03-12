@@ -1,5 +1,9 @@
 1.2.0 (unreleased)
 ------------------
+ - Add flag to disable strict mode in the Client. This allows zeep to better
+   work with non standard compliant SOAP Servers. See the documentation for
+   usage and potential downsides.
+ - Minor refactor of resolving of elements for improved performance
  - Support the SOAP 1.2 'http://www.w3.org/2003/05/soap/bindings/HTTP/' 
    transport uri (#355)
  - Fallback to matching wsdl lookups to matching when the target namespace is
@@ -10,6 +14,7 @@
    is used (#360)
  - Filter out duplicate types and elements when dump the wsdl schema (#360)
  - Add ``zeep.CachingClient()`` which enables the SqliteCache by default
+
 
 1.1.0 (2017-02-18)
 ------------------

@@ -12,6 +12,20 @@ Otherwise the first service and first port within that service are used as the
 default.
 
 
+Strict mode
+-----------
+By default zeep will operate in 'strict' mode. This can be disabled if you are
+working with a SOAP server which is not standards compliant by passing the
+kwarg ``strict=False`` to the ``Client``.  Disabling strict mode will change
+the following behaviour:
+
+ - The XML is parsed with the recover mode enabled
+ - Non optional elements are allowed to be missing in xsd:sequences
+
+Note that disabling strict mode should be considered a last resort since it
+might result in data-loss between the XML and the returned response.
+
+
 The ServiceProxy object
 -----------------------
 

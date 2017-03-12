@@ -35,7 +35,13 @@ class SchemaVisitor(object):
     """Visitor which processes XSD files and registers global elements and
     types in the given schema.
 
+    :param schema:
+    :type schema: zeep.xsd.schema.Schema
+    :param document:
+    :type document: zeep.xsd.schema.SchemaDocument
+
     """
+
     def __init__(self, schema, document):
         self.document = document
         self.schema = schema
@@ -183,7 +189,10 @@ class SchemaVisitor(object):
             return
 
         # Load the XML
-        schema_node = load_external(location, self.schema._transport)
+        schema_node = load_external(
+            location,
+            self.schema._transport,
+            strict=self.schema.strict)
 
         # Check if the xsd:import namespace matches the targetNamespace. If
         # the xsd:import statement didn't specify a namespace then make sure
@@ -227,7 +236,9 @@ class SchemaVisitor(object):
             return
 
         schema_node = load_external(
-            location, self.schema._transport, base_url=self.document._base_url)
+            location, self.schema._transport,
+            base_url=self.document._base_url,
+            strict=self.schema.strict)
         self._includes.add(location)
 
         # When the included document has no default namespace defined but the

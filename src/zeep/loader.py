@@ -18,7 +18,7 @@ class ImportResolver(etree.Resolver):
             return self.resolve_string(content, context)
 
 
-def parse_xml(content, transport, base_url=None, recover=False):
+def parse_xml(content, transport, base_url=None, strict=False):
     """Parse an XML string and return the root Element.
 
     :param content: The XML string
@@ -28,14 +28,17 @@ def parse_xml(content, transport, base_url=None, recover=False):
     :param base_url: The base url of the document, used to make relative
       lookups absolute.
     :type base_url: str
-    :param recover: boolean to indicate if the lxml recover mode should be
-      enabled. Recover mode tries to parse invalid XML as best as it can.
-    :type recover: boolean
+    :param strict: boolean to indicate if the lxml should be parsed a 'strict'.
+      If false then the recover mode is enabled which tries to parse invalid
+      XML as best as it can.
+    :type strict: boolean
     :returns: The document root
     :rtype: lxml.etree._Element
 
     """
-    parser = etree.XMLParser(remove_comments=True, resolve_entities=False)
+    recover = not strict
+    parser = etree.XMLParser(
+        remove_comments=True, resolve_entities=False, recover=recover)
     parser.resolvers.add(ImportResolver(transport))
     try:
         return fromstring(content, parser=parser, base_url=base_url)
@@ -43,12 +46,16 @@ def parse_xml(content, transport, base_url=None, recover=False):
         raise XMLSyntaxError("Invalid XML content received (%s)" % exc.message)
 
 
-def load_external(url, transport, base_url=None):
+def load_external(url, transport, base_url=None, strict=True):
     """Load an external XML document.
 
     :param url:
     :param transport:
     :param base_url:
+    :param strict: boolean to indicate if the lxml should be parsed a 'strict'.
+      If false then the recover mode is enabled which tries to parse invalid
+      XML as best as it can.
+    :type strict: boolean
 
     """
     if hasattr(url, 'read'):
@@ -57,7 +64,7 @@ def load_external(url, transport, base_url=None):
         if base_url:
             url = absolute_location(url, base_url)
         content = transport.load(url)
-    return parse_xml(content, transport, base_url)
+    return parse_xml(content, transport, base_url, strict=strict)
 
 
 def absolute_location(location, base):
