@@ -1,4 +1,4 @@
-1.2.0 (unreleased)
+1.2.0 (2017-03-12)
 ------------------
  - Add flag to disable strict mode in the Client. This allows zeep to better
    work with non standard compliant SOAP Servers. See the documentation for
