@@ -1073,3 +1073,59 @@ def test_choice_extend():
     assert value['item-1-2'] == 'bar'
     assert value['_value_1'][0] == {'item-2-1': 'xafoo'}
     assert value['_value_1'][1] == {'item-2-2': 'xabar'}
+
+
+def test_nested_choice():
+    schema = xsd.Schema(load_xml("""
+            <?xml version="1.0"?>
+            <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                    xmlns:tns="http://tests.python-zeep.org/"
+                    targetNamespace="http://tests.python-zeep.org/"
+                    elementFormDefault="qualified">
+                <element name="container">
+                    <complexType>
+                        <sequence>
+                            <choice>
+                                <choice minOccurs="2" maxOccurs="unbounded">
+                                    <element ref="tns:a" />
+                                </choice>
+                                <element ref="tns:b" />
+                            </choice>
+                        </sequence>
+                    </complexType>
+                </element>
+                <element name="a" type="string" />
+                <element name="b" type="string" />
+            </schema>
+        """))
+
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    container_type = schema.get_element('tns:container')
+
+    item = container_type(_value_1=[{'a': 'item-1'}, {'a': 'item-2'}])
+    assert item._value_1[0] == {'a': 'item-1'}
+    assert item._value_1[1] == {'a': 'item-2'}
+
+    expected = load_xml("""
+        <document>
+           <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+               <ns0:a>item-1</ns0:a>
+               <ns0:a>item-2</ns0:a>
+           </ns0:container>
+        </document>
+       """)
+    node = render_node(container_type, item)
+    assert_nodes_equal(node, expected)
+
+    result = container_type.parse(expected[0], schema)
+    assert result._value_1[0] == {'a': 'item-1'}
+    assert result._value_1[1] == {'a': 'item-2'}
+
+    expected = load_xml("""
+        <container xmlns="http://tests.python-zeep.org/">
+          <b>1</b>
+        </container>
+   """)
+
+    result = container_type.parse(expected, schema)
+    assert result.b == '1'

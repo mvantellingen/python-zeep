@@ -226,6 +226,19 @@ class All(OrderIndicator):
     """
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
+        """Consume matching xmlelements
+
+        :param xmlelements: Dequeue of XML element objects
+        :type xmlelements: collections.deque of lxml.etree._Element
+        :param schema: The parent XML schema
+        :type schema: zeep.xsd.Schema
+        :param name: The name of the parent element
+        :type name: str
+        :param context: Optional parsing context (for inline schemas)
+        :type context: zeep.xsd.context.XmlParserContext
+        :rtype: dict or None
+
+        """
         result = OrderedDict()
         expected_tags = {element.qname for __, element in self.elements}
         consumed_tags = set()
@@ -261,7 +274,19 @@ class Choice(OrderIndicator):
         return OrderedDict()
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
-        """Return a dictionary"""
+        """Consume matching xmlelements
+
+        :param xmlelements: Dequeue of XML element objects
+        :type xmlelements: collections.deque of lxml.etree._Element
+        :param schema: The parent XML schema
+        :type schema: zeep.xsd.Schema
+        :param name: The name of the parent element
+        :type name: str
+        :param context: Optional parsing context (for inline schemas)
+        :type context: zeep.xsd.context.XmlParserContext
+        :rtype: dict or None
+
+        """
         result = []
 
         for _unused in max_occurs_iter(self.max_occurs):
@@ -319,7 +344,7 @@ class Choice(OrderIndicator):
         This handles two distinct initialization methods:
 
         1. Passing the choice elements directly to the kwargs (unnested)
-        2. Passing the choice elements into the `name` kwarg (_alue_1) (nested).
+        2. Passing the choice elements into the `name` kwarg (_value_1) (nested).
            This case is required when multiple choice elements are given.
 
         :param name: Name of the choice element (_value_1)
@@ -369,9 +394,9 @@ class Choice(OrderIndicator):
 
             # When choice elements are specified directly in the kwargs
             found = False
-            for i, choice in enumerate(self):
+            for name, choice in self.elements_nested:
                 temp_kwargs = copy.copy(available_kwargs)
-                subresult = choice.parse_kwargs(kwargs, None, temp_kwargs)
+                subresult = choice.parse_kwargs(kwargs, name, temp_kwargs)
 
                 if subresult:
                     if not any(subresult.values()):
@@ -416,8 +441,12 @@ class Choice(OrderIndicator):
         nums = set()
         for name, element in self.elements_nested:
             if isinstance(element, Element):
-                if name in values and values[name]:
-                    nums.add(1)
+                if self.accepts_multiple:
+                    if all(name in item and item[name] for item in values):
+                        nums.add(1)
+                else:
+                    if name in values and values[name]:
+                        nums.add(1)
             else:
                 num = element.accept(values)
                 nums.add(num)
@@ -473,7 +502,8 @@ class Sequence(OrderIndicator):
 
     """
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
-        """
+        """Consume matching xmlelements
+
         :param xmlelements: Dequeue of XML element objects
         :type xmlelements: collections.deque of lxml.etree._Element
         :param schema: The parent XML schema
@@ -482,7 +512,7 @@ class Sequence(OrderIndicator):
         :type name: str
         :param context: Optional parsing context (for inline schemas)
         :type context: zeep.xsd.context.XmlParserContext
-        :return: dict or None
+        :rtype: dict or None
 
         """
         result = []
@@ -585,6 +615,19 @@ class Group(Indicator):
         return result
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
+        """Consume matching xmlelements
+
+        :param xmlelements: Dequeue of XML element objects
+        :type xmlelements: collections.deque of lxml.etree._Element
+        :param schema: The parent XML schema
+        :type schema: zeep.xsd.Schema
+        :param name: The name of the parent element
+        :type name: str
+        :param context: Optional parsing context (for inline schemas)
+        :type context: zeep.xsd.context.XmlParserContext
+        :rtype: dict or None
+
+        """
         result = []
 
         for _unused in max_occurs_iter(self.max_occurs):
