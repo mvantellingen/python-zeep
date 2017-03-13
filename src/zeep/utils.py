@@ -12,7 +12,7 @@ def qname_attr(node, attr_name, target_namespace=None):
         return as_qname(value, node.nsmap, target_namespace)
 
 
-def as_qname(value, nsmap, target_namespace):
+def as_qname(value, nsmap, target_namespace=None):
     """Convert the given value to a QName"""
     if ':' in value:
         prefix, local = value.split(':')

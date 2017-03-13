@@ -373,7 +373,7 @@ def test_attribute_union_type():
             <restriction base="xsd:string"/>
           </simpleType>
           <simpleType name="parent">
-            <union memberTypes="one two"/>
+            <union memberTypes="tns:one tns:two"/>
           </simpleType>
           <simpleType name="two">
             <restriction base="xsd:string"/>

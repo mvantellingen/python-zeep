@@ -383,8 +383,7 @@ class SchemaVisitor(object):
             match = re.match('([^\[]+)', array_type)
             if match:
                 array_type = match.groups()[0]
-                qname = as_qname(
-                    array_type, node.nsmap, self.document._target_namespace)
+                qname = as_qname(array_type, node.nsmap)
                 array_type = xsd_types.UnresolvedType(qname, self.schema)
 
         # If the elment has a ref attribute then all other attributes cannot
@@ -987,7 +986,7 @@ class SchemaVisitor(object):
         types = []
         if members:
             for member in members.split():
-                qname = as_qname(member, node.nsmap, self.document._target_namespace)
+                qname = as_qname(member, node.nsmap)
                 xsd_type = self._get_type(qname)
                 types.append(xsd_type)
         else:

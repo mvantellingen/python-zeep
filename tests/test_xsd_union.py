@@ -6,6 +6,7 @@ def test_union_same_types():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <xsd:schema
+            xmlns="http://tests.python-zeep.org/"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:tns="http://tests.python-zeep.org/"
             targetNamespace="http://tests.python-zeep.org/"
@@ -21,7 +22,7 @@ def test_union_same_types():
           </xsd:simpleType>
 
           <xsd:simpleType name="Date">
-            <xsd:union memberTypes="MMYY MMYYYY"/>
+            <xsd:union memberTypes="tns:MMYY MMYYYY"/>
           </xsd:simpleType>
           <xsd:element name="item" type="tns:Date"/>
         </xsd:schema>
@@ -49,7 +50,7 @@ def test_union_mixed():
             elementFormDefault="qualified">
           <xsd:element name="item" type="tns:Date"/>
           <xsd:simpleType name="Date">
-            <xsd:union memberTypes="xsd:date xsd:gYear xsd:gYearMonth MMYY MMYYYY"/>
+            <xsd:union memberTypes="xsd:date xsd:gYear xsd:gYearMonth tns:MMYY tns:MMYYYY"/>
           </xsd:simpleType>
           <xsd:simpleType name="MMYY">
             <xsd:restriction base="xsd:string">
