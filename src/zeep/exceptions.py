@@ -39,7 +39,11 @@ class TransportError(Error):
 
 
 class LookupError(Error):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.qname = kwargs.pop('qname', None)
+        self.item_name = kwargs.pop('item_name', None)
+        self.location = kwargs.pop('location', None)
+        super(LookupError, self).__init__(*args, **kwargs)
 
 
 class NamespaceError(Error):

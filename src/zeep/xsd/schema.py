@@ -374,10 +374,23 @@ class SchemaDocument(object):
                 schema.resolve()
 
         def _resolve_dict(val):
-            for key, obj in val.items():
-                new = obj.resolve()
-                assert new is not None, "resolve() should return an object"
-                val[key] = new
+            try:
+                for key, obj in val.items():
+                    new = obj.resolve()
+                    assert new is not None, "resolve() should return an object"
+                    val[key] = new
+            except exceptions.LookupError as exc:
+                raise exceptions.LookupError(
+                    (
+                        "Unable to resolve %(item_name)s %(qname)s in "
+                        "%(file)s. (via %(parent)s)"
+                    ) % {
+                        'item_name': exc.item_name,
+                        'item_name': exc.item_name,
+                        'qname': exc.qname,
+                        'file': exc.location,
+                        'parent': obj.qname,
+                    })
 
         _resolve_dict(self._attribute_groups)
         _resolve_dict(self._attributes)
@@ -473,10 +486,13 @@ class SchemaDocument(object):
             raise exceptions.LookupError((
                 "No %(item_name)s '%(localname)s' in namespace %(namespace)s. " +
                 "Available %(item_name_plural)s are: %(known_items)s"
-            ) % {
-                'item_name': item_name,
-                'item_name_plural': item_name + 's',
-                'localname': qname.localname,
-                'namespace': qname.namespace,
-                'known_items': known_items or ' - '
-            })
+                ) % {
+                    'item_name': item_name,
+                    'item_name_plural': item_name + 's',
+                    'localname': qname.localname,
+                    'namespace': qname.namespace,
+                    'known_items': known_items or ' - '
+                },
+                qname=qname,
+                item_name=item_name,
+                location=self._location)
