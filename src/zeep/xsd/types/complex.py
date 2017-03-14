@@ -274,6 +274,7 @@ class ComplexType(AnyType):
 
         if self._element:
             self._element = self._element.resolve()
+
         return self._resolved
 
     def extend(self, base):
@@ -309,6 +310,9 @@ class ComplexType(AnyType):
         # container a placeholder element).
         element = []
         if self._element and base_element:
+            self._element = self._element.resolve()
+            base_element = base_element.resolve()
+
             element = self._element.clone(self._element.name)
             if isinstance(base_element, OrderIndicator):
                 if isinstance(self._element, Choice):
@@ -354,6 +358,9 @@ class ComplexType(AnyType):
                 else:
                     new_attributes[attr.qname.text] = attr
             attributes = new_attributes.values()
+
+        if base._element:
+            base._element.resolve()
 
         new = self.__class__(
             element=self._element or base._element,

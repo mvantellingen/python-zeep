@@ -640,3 +640,64 @@ def test_extension_base_anytype():
         </document>
     """
     assert_nodes_equal(expected, node)
+
+
+def test_extension_on_ref():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+          <xsd:complexType name="type">
+            <xsd:complexContent>
+              <xsd:extension base="tns:base">
+                <xsd:sequence>
+                  <xsd:element ref="tns:extra"/>
+                </xsd:sequence>
+              </xsd:extension>
+            </xsd:complexContent>
+          </xsd:complexType>
+          <xsd:complexType name="base">
+            <xsd:sequence>
+              <xsd:element name="item-1" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:element name="extra" type="xsd:string"/>
+        </xsd:schema>
+    """))
+
+    type_cls = schema.get_type('ns0:type')
+    assert type_cls.signature()
+
+
+def test_restrict_on_ref():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+          <xsd:complexType name="type">
+            <xsd:complexContent>
+              <xsd:restriction base="tns:base">
+                <xsd:sequence>
+                  <xsd:element ref="tns:extra"/>
+                </xsd:sequence>
+              </xsd:restriction>
+            </xsd:complexContent>
+          </xsd:complexType>
+          <xsd:complexType name="base">
+            <xsd:sequence>
+              <xsd:element name="item-1" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:element name="extra" type="xsd:string"/>
+        </xsd:schema>
+    """))
+
+    type_cls = schema.get_type('ns0:type')
+    assert type_cls.signature()
+
