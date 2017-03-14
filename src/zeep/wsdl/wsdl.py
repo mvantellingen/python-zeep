@@ -1,3 +1,8 @@
+"""
+    zeep.wsdl.wsdl
+    ~~~~~~~~~~~~~~
+
+"""
 from __future__ import print_function
 
 import logging
@@ -19,7 +24,6 @@ NSMAP = {
 
 logger = logging.getLogger(__name__)
 
-
 class Document(object):
     """A WSDL Document exists out of one or more definitions.
 
@@ -33,17 +37,22 @@ class Document(object):
     resolves references which were not yet available during the initial
     parsing phase.
 
+
+    :param location: Location of this WSDL
+    :type location: string
+    :param transport: The transport object to be used
+    :type transport: zeep.transports.Transport
+    :param base: The base location of this document
+    :type base: str
+    :param strict: Indicates if strict mode is enabled
+    :type strict: bool
+
     """
 
     def __init__(self, location, transport, base=None, strict=True):
         """Initialize a WSDL document.
 
         The root definition properties are exposed as entry points.
-
-        :param location: Location of this WSDL
-        :type location: string
-        :param transport: The transport object to be used
-        :type transport: zeep.transports.Transport
 
         """
         if isinstance(location, six.string_types):
@@ -133,9 +142,18 @@ class Document(object):
 
 
 class Definition(object):
-    """The Definition represents one wsdl:definition within a Document."""
+    """The Definition represents one wsdl:definition within a Document.
+
+    :param wsdl: The wsdl
+
+    """
 
     def __init__(self, wsdl, doc, location):
+        """fo
+
+        :param wsdl: The wsdl
+
+        """
         logger.debug("Creating definition for %s", location)
         self.wsdl = wsdl
         self.location = location
@@ -257,6 +275,8 @@ class Definition(object):
         If the wsdl:types doesn't container an xml schema then an empty schema
         is returned instead.
 
+        Definition::
+
             <definitions .... >
                 <types>
                     <xsd:schema .... />*
@@ -285,6 +305,9 @@ class Definition(object):
 
     def parse_messages(self, doc):
         """
+
+        Definition::
+
             <definitions .... >
                 <message name="nmtoken"> *
                     <part name="nmtoken" element="qname"? type="qname"?/> *
@@ -304,6 +327,8 @@ class Definition(object):
 
     def parse_ports(self, doc):
         """Return dict with `PortType` instances as values
+
+        Definition::
 
             <wsdl:definitions .... >
                 <wsdl:portType name="nmtoken">
@@ -329,7 +354,7 @@ class Definition(object):
         HTTP Post. The detection of the type of bindings is done by the
         bindings themselves using the introspection of the xml nodes.
 
-        XML Structure::
+        Definition::
 
             <wsdl:definitions .... >
                 <wsdl:binding name="nmtoken" type="qname"> *
@@ -391,6 +416,9 @@ class Definition(object):
 
     def parse_service(self, doc):
         """
+
+        Definition::
+
             <wsdl:definitions .... >
                 <wsdl:service .... > *
                     <wsdl:port name="nmtoken" binding="qname"> *

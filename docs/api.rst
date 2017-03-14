@@ -1,7 +1,7 @@
 .. _api:
 
-API
-===
+Public API
+==========
 
 .. module:: zeep
 

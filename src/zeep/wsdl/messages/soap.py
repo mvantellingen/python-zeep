@@ -1,3 +1,8 @@
+"""
+    zeep.wsdl.messages.soap
+    ~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 import copy
 from collections import OrderedDict
 
@@ -15,8 +20,19 @@ __all__ = [
 
 
 class SoapMessage(ConcreteMessage):
-    """Base class for the SOAP Document and RPC messages"""
+    """Base class for the SOAP Document and RPC messages
 
+    :param wsdl: The main wsdl document
+    :type wsdl: zeep.wsdl.Document
+    :param name:
+    :param operation: The operation to which this message belongs
+    :type operation: zeep.wsdl.bindings.soap.SoapOperation
+    :param type: 'input' or 'output'
+    :type type: str
+    :param nsmap: The namespace mapping
+    :type nsmap: dict
+
+    """
     def __init__(self, wsdl, name, operation, type, nsmap):
         super(SoapMessage, self).__init__(wsdl, name, operation)
         self.nsmap = nsmap
@@ -358,6 +374,20 @@ class DocumentMessage(SoapMessage):
     """In the document message there are no additional wrappers, and the
     message parts appear directly under the SOAP Body element.
 
+    .. inheritance-diagram:: zeep.wsdl.messages.soap.DocumentMessage
+       :parts: 1
+
+    :param wsdl: The main wsdl document
+    :type wsdl: zeep.wsdl.Document
+    :param name:
+    :param operation: The operation to which this message belongs
+    :type operation: zeep.wsdl.bindings.soap.SoapOperation
+    :param type: 'input' or 'output'
+    :type type: str
+    :param nsmap: The namespace mapping
+    :type nsmap: dict
+
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -411,6 +441,20 @@ class RpcMessage(SoapMessage):
     (parameter) appears under the wrapper, represented by an accessor named
     identically to the corresponding parameter of the call.  Parts are arranged
     in the same order as the parameters of the call.
+
+    .. inheritance-diagram:: zeep.wsdl.messages.soap.DocumentMessage
+       :parts: 1
+
+
+    :param wsdl: The main wsdl document
+    :type wsdl: zeep.wsdl.Document
+    :param name:
+    :param operation: The operation to which this message belongs
+    :type operation: zeep.wsdl.bindings.soap.SoapOperation
+    :param type: 'input' or 'output'
+    :type type: str
+    :param nsmap: The namespace mapping
+    :type nsmap: dict
 
     """
 

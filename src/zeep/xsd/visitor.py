@@ -551,6 +551,7 @@ class SchemaVisitor(object):
         complex type that contains mixed content or elements only.
 
         Definition::
+
             <complexContent
               id = ID
               mixed = Boolean
@@ -590,6 +591,7 @@ class SchemaVisitor(object):
         elements.
 
         Definition::
+
             <simpleContent
               id = ID
               {any attributes with non-schema Namespace}...>
@@ -614,6 +616,7 @@ class SchemaVisitor(object):
     def visit_restriction_simple_type(self, node, parent):
         """
         Definition::
+
             <restriction
               base = QName
               id = ID
@@ -642,6 +645,7 @@ class SchemaVisitor(object):
     def visit_restriction_simple_content(self, node, parent):
         """
         Definition::
+
             <restriction
               base = QName
               id = ID
@@ -666,6 +670,7 @@ class SchemaVisitor(object):
 
     def visit_restriction_complex_content(self, node, parent):
         """
+
         Definition::
 
             <restriction
@@ -699,6 +704,7 @@ class SchemaVisitor(object):
 
     def visit_extension_complex_content(self, node, parent):
         """
+
         Definition::
 
             <extension
@@ -734,7 +740,9 @@ class SchemaVisitor(object):
 
     def visit_extension_simple_content(self, node, parent):
         """
+
         Definition::
+
             <extension
               base = QName
               id = ID

@@ -97,9 +97,9 @@ class SoapBinding(Binding):
         :type options: dict
         :param operation: The operation object from which this is a reply
         :type operation: zeep.wsdl.definitions.Operation
-        :param args: The *args to pass to the operation
+        :param args: The args to pass to the operation
         :type args: tuple
-        :param kwargs: The **kwargs to pass to the operation
+        :param kwargs: The kwargs to pass to the operation
         :type kwargs: dict
 
         """
@@ -191,6 +191,9 @@ class SoapBinding(Binding):
     @classmethod
     def parse(cls, definitions, xmlelement):
         """
+
+        Definition::
+
             <wsdl:binding name="nmtoken" type="qname"> *
                 <-- extensibility element (1) --> *
                 <wsdl:operation name="nmtoken"> *
@@ -343,6 +346,8 @@ class SoapOperation(Operation):
     @classmethod
     def parse(cls, definitions, xmlelement, binding, nsmap):
         """
+
+        Definition::
 
             <wsdl:operation name="nmtoken"> *
                 <soap:operation soapAction="uri"? style="rpc|document"?>?

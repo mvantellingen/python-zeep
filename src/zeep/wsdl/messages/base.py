@@ -1,3 +1,8 @@
+"""
+    zeep.wsdl.messages.base
+    ~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 from collections import namedtuple
 
 from zeep import xsd

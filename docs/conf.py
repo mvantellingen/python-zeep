@@ -32,6 +32,9 @@ import pkg_resources
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.inheritance_diagram',
+
 ]
 
 # Add any paths that contain templates here, relative to this directory.

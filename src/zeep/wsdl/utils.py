@@ -1,3 +1,8 @@
+"""
+    zeep.wsdl.utils
+    ~~~~~~~~~~~~~~~
+
+"""
 from lxml import etree
 from six.moves.urllib.parse import urlparse, urlunparse
 
