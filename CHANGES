@@ -1,4 +1,4 @@
-1.3.0 (unreleased)
+1.3.0 (2017-03-14)
 ------------------
  - Add support for nested xsd:choice elements (#370)
  - Fix unresolved elements for xsd:extension, this was a regression introduced
