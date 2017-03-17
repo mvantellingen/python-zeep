@@ -476,6 +476,44 @@ def test_defaults():
     assert_nodes_equal(expected, node)
 
 
+def test_boolean_defaults():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="foo" type="xsd:boolean" default="false"/>
+              </xsd:sequence>
+              <xsd:attribute name="bar" type="xsd:boolean" default="0"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """.strip())
+
+    schema = xsd.Schema(node)
+    container_type = schema.get_element(
+        '{http://tests.python-zeep.org/}container')
+    obj = container_type()
+    assert obj.foo == "false"
+    assert obj.bar == "0"
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" bar="false">
+          <ns0:foo>false</ns0:foo>
+        </ns0:container>
+      </document>
+    """
+    node = etree.Element('document')
+    container_type.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+
 def test_defaults_parse():
     node = etree.fromstring("""
         <?xml version="1.0"?>
