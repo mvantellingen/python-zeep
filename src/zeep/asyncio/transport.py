@@ -6,8 +6,8 @@ import asyncio
 import logging
 
 import aiohttp
-import requests.cookies
 import requests.auth
+import requests.cookies
 from requests import Response
 
 from zeep.transports import Transport
