@@ -6,6 +6,8 @@ import asyncio
 import logging
 
 import aiohttp
+import requests.cookies
+import requests.auth
 from requests import Response
 
 from zeep.transports import Transport
@@ -42,7 +44,34 @@ class AsyncTransport(Transport):
                 result = await response.read()
 
         # Block until we have the data
-        self.loop.run_until_complete(_load_remote_data_async())
+        if self.loop.is_running():
+            # Use requests session due to loop is blocked for now.
+            # pylint: disable=protected-access
+            with requests.Session() as session:
+                # Copy headers
+                # noinspection PyProtectedMember
+                session.headers = dict(self.session._default_headers)
+                # Copy cookies
+                session.cookies = requests.cookies.cookiejar_from_dict(
+                    dict(self.session.cookie_jar)
+                )
+                # Copy basic auth, if presents
+                # noinspection PyProtectedMember
+                if isinstance(self.session._default_auth, aiohttp.BasicAuth):
+                    # noinspection PyProtectedMember
+                    login, password, _ = self.session._default_auth
+                    session.auth = requests.auth.HTTPBasicAuth(
+                        username=login,
+                        password=password
+                    )
+
+                # Standard sync logic
+                response = session.get(url, timeout=self.load_timeout)
+                response.raise_for_status()
+                result = response.content
+                # pylint: enable=protected-access
+        else:
+            self.loop.run_until_complete(_load_remote_data_async())
         return result
 
     async def post(self, address, message, headers):
