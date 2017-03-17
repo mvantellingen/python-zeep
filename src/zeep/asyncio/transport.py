@@ -65,6 +65,9 @@ class AsyncTransport(Transport):
                         password=password
                     )
 
+                # SSL verification settings copy
+                session.verify = self.session.connector.verify_ssl
+
                 # Standard sync logic
                 response = session.get(url, timeout=self.load_timeout)
                 response.raise_for_status()
