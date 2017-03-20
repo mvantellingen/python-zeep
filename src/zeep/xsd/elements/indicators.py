@@ -23,9 +23,13 @@ class Indicator(Base):
 
     @threaded_cached_property
     def default_value(self):
-        return OrderedDict([
+        values = OrderedDict([
             (name, element.default_value) for name, element in self.elements
         ])
+
+        if self.accepts_multiple:
+            return {'_value_1': values}
+        return values
 
     def clone(self, name, min_occurs=1, max_occurs=1):
         raise NotImplementedError()
@@ -86,14 +90,20 @@ class OrderIndicator(Indicator, list):
         If not all required elements are available then 0 is returned.
 
         """
-        num = 0
-        for name, element in self.elements_nested:
-            if isinstance(element, Element):
-                if element.name in values and values[element.name] is not None:
-                    num += 1
-            else:
-                num += element.accept(values)
-        return num
+        if not self.accepts_multiple:
+            values = [values]
+
+        results = set()
+        for value in values:
+            num = 0
+            for name, element in self.elements_nested:
+                if isinstance(element, Element):
+                    if element.name in value and value[element.name] is not None:
+                        num += 1
+                else:
+                    num += element.accept(value)
+            results.add(num)
+        return max(results)
 
     def parse_args(self, args, index=0):
         result = {}
@@ -303,14 +313,14 @@ class Choice(OrderIndicator):
 
                     try:
                         sub_result = element.parse_xmlelements(
-                            local_xmlelements, schema, context=context)
+                            xmlelements=local_xmlelements,
+                            schema=schema,
+                            name=element_name,
+                            context=context)
                     except UnexpectedElementError:
                         continue
 
-                    if isinstance(element, OrderIndicator):
-                        if element.accepts_multiple:
-                            sub_result = {element_name: sub_result}
-                    else:
+                    if isinstance(element, Element):
                         sub_result = {element_name: sub_result}
 
                     num_consumed = len(xmlelements) - len(local_xmlelements)
@@ -426,11 +436,24 @@ class Choice(OrderIndicator):
         if not self.accepts_multiple:
             value = [value]
 
+        self.validate(value, render_path)
+
         for item in value:
             result = self._find_element_to_render(item)
             if result:
                 element, choice_value = result
                 element.render(parent, choice_value, render_path)
+
+    def validate(self, value, render_path):
+        found = 0
+        for item in value:
+            result = self._find_element_to_render(item)
+            if result:
+                found += 1
+
+        if not found and not self.is_optional:
+            raise ValidationError("Missing choice values", path=render_path)
+
 
     def accept(self, values):
         """Return the number of values which are accepted by this choice.
@@ -453,7 +476,12 @@ class Choice(OrderIndicator):
         return max(nums) if nums else 0
 
     def _find_element_to_render(self, value):
-        """Return a tuple (element, value) for the best matching choice"""
+        """Return a tuple (element, value) for the best matching choice.
+
+        This is used to decide which choice child is best suitable for
+        rendering the available data.
+
+        """
         matches = []
 
         for name, element in self.elements_nested:
@@ -517,6 +545,9 @@ class Sequence(OrderIndicator):
         """
         result = []
 
+        if self.accepts_multiple:
+            assert name
+
         for _unused in max_occurs_iter(self.max_occurs):
             if not xmlelements:
                 break
@@ -544,7 +575,6 @@ class Sequence(OrderIndicator):
 
         if not self.accepts_multiple:
             return result[0] if result else None
-
         return {name: result}
 
 

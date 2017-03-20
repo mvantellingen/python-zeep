@@ -1,6 +1,7 @@
 1.4.0 (unreleased)
 ------------------
  - Hardcode the xml prefix to the xml namespace as defined in the specs (#367)
+ - Fix parsing of unbound sequences within xsd choices (#380)
 
 
 1.3.0 (2017-03-14)
