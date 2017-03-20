@@ -16,7 +16,14 @@ def as_qname(value, nsmap, target_namespace=None):
     """Convert the given value to a QName"""
     if ':' in value:
         prefix, local = value.split(':')
-        namespace = nsmap.get(prefix)
+
+        # The xml: prefix is always bound to the XML namespace, see
+        # https://www.w3.org/TR/xml-names/
+        if prefix == 'xml':
+            namespace = 'http://www.w3.org/XML/1998/namespace'
+        else:
+            namespace = nsmap.get(prefix)
+
         if not namespace:
             raise XMLParseError("No namespace defined for %r" % prefix)
 

@@ -718,3 +718,37 @@ def test_merge():
 
     schema_a.get_element('{http://tests.python-zeep.org/a}foo')
     schema_a.get_element('{http://tests.python-zeep.org/b}foo')
+
+
+def test_xml_namespace():
+    xmlns = load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xml="http://www.w3.org/XML/1998/namespace"
+            targetNamespace="http://www.w3.org/XML/1998/namespace"
+            elementFormDefault="qualified">
+          <xs:attribute name="lang" type="xs:string"/>
+        </xs:schema>
+    """)
+
+    transport = DummyTransport()
+    transport.bind('http://www.w3.org/2001/xml.xsd', xmlns)
+
+    xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+          <xs:import namespace="http://www.w3.org/XML/1998/namespace"
+                     schemaLocation="http://www.w3.org/2001/xml.xsd"/>
+          <xs:element name="container">
+            <xs:complexType>
+              <xs:sequence/>
+              <xs:attribute ref="xml:lang"/>
+            </xs:complexType>
+          </xs:element>
+        </xs:schema>
+    """), transport=transport)
