@@ -4,7 +4,7 @@ If you need to change options like cache, timeout or ssl verification you will
 need to create an instance of the Transport class yourself.
 
 For instance to disable SSL verification you will need to create a new
-:py:class:`requests.Session` instance and set the ``verify`` attribute to
+:class:`requests.Session` instance and set the ``verify`` attribute to
 ``False``. 
 
 .. code-block:: python
@@ -75,7 +75,7 @@ HTTP Authentication
 -------------------
 While some providers incorporate security features in the header of a SOAP message,
 others use the HTTP Authentication header.  In the latter case,
-you can just create a requests.Session() object with the auth set and pass it
+you can just create a :class:`requests.Session` object with the auth set and pass it
 to the Transport class.
 
 .. code-block:: python
