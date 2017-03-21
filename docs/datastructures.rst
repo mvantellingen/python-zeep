@@ -6,7 +6,7 @@ Creating objects
 ----------------
 
 Most of the times you need to pass nested data to the soap client.  These 
-Complex types can be retrieve using the `client.get_type()` method.
+Complex types can be retrieve using the :meth:`client.get_type` method.
 
 .. code-block:: python
 
@@ -37,7 +37,7 @@ required object (and nested child objects) during the call.
 Using factories
 ---------------
 
-When you need to create multiple types the ``Client.get_type()`` calls to 
+When you need to create multiple types the :meth:`Client.get_type()` calls to 
 retrieve the type class and then instantiating them can be a bit verbose. To
 simplify this you can use a factory object.
 
@@ -153,7 +153,7 @@ Any objects
 Zeep offers full support for xsd:any elements. xsd:any elements are used as 
 a kind of wildcard and basically allows any element to be used. Zeep needs to
 know the element name you want to serialize, so the value needs to be wrapped
-in a special object. This is the xsd.AnyObject(). It takes two parameters, the
+in a special object. This is the :class:`~zeep.xsd.AnyObject`. It takes two parameters, the
 xsd Element first and the value as the second arg.
 
 .. code-block:: python
@@ -173,8 +173,8 @@ AnyType objects
 
 xsd:anyType is used as a wildcard type. Where the xsd:Any element allows any
 element the xsd:anyType allows any type for a specific element. The usage from
-zeep is almost the same. Instead of passing an Element class to the AnyObject
-an xsd type is passed.
+zeep is almost the same. Instead of passing an :class:`~zeep.xsd.Element` class
+to the AnyObject an xsd type is passed.
 
 .. code-block:: python
 
@@ -191,7 +191,7 @@ SkipValue
 
 Zeep will automatically validate that all the required values are set when 
 calling an operation. If you want to force a value to be ignored and left out
-of the generated XML then you can assign the ``zeep.xsd.SkipValue`` constant.
+of the generated XML then you can assign the :const:`zeep.xsd.SkipValue` constant.
 
 
 .. code-block:: python

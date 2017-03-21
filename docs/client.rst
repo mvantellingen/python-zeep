@@ -6,7 +6,7 @@ The Client object
 
 The :class:`Client` is the main interface for interacting with a SOAP server.
 It provides a ``service`` attribute which references the default binding of
-the client (via a ServiceProxy object). The default binding can be specified
+the client (via a :class:`ServiceProxy` object). The default binding can be specified
 when initating the client by passing the ``service_name`` and ``port_name``.
 Otherwise the first service and first port within that service are used as the
 default.
