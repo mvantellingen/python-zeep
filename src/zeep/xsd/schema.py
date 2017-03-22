@@ -136,7 +136,7 @@ class Schema(object):
             return self._get_instance(qname, 'get_type', 'type')
         except exceptions.NamespaceError as exc:
             if fail_silently:
-                logger.info(str(exc))
+                logger.debug(str(exc))
             else:
                 raise
 
@@ -284,7 +284,7 @@ class Schema(object):
         return namespace in self._documents
 
     def _add_schema_document(self, document):
-        logger.info("Add document with tns %s to schema %s", document.namespace, id(self))
+        logger.debug("Add document with tns %s to schema %s", document.namespace, id(self))
         documents = self._documents.setdefault(document.namespace, [])
         documents.append(document)
 
@@ -363,7 +363,7 @@ class SchemaDocument(object):
         visitor.visit_schema(node)
 
     def resolve(self):
-        logger.info("Resolving in schema %s", self)
+        logger.debug("Resolving in schema %s", self)
 
         if self._resolved:
             return
