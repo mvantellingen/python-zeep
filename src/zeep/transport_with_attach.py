@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-=======================
-Utils :mod:`zeep_utils`
-=======================
+==================================
+Utils :mod:`transport_with_attach`
+==================================
 Utils to add basic MTOMS attachment
 
 author: ellethee <luca800@gmail.com>
@@ -18,8 +18,9 @@ from base64 import b64decode, b64encode
 from lxml import etree
 from zeep.transports import Transport
 from zeep.wsdl.utils import etree_to_string
-import zeep.xsd.builtins
-import zeep.client
+from zeep.xsd import builtins
+from zeep.wsdl.bindings import http
+import zeep.ns
 BOUND = "MTOM".center(40, "=")
 XOP_LINK = "http://www.w3.org/2004/08/xop/include"
 FILETAG = 'xop:Include:'
@@ -38,14 +39,16 @@ def pythonvalue(self, value):
         return value
     return b64decode(value)
 
-zeep.xsd.builtins.Base64Binary.accepted_types += (etree.Element, )
-zeep.xsd.builtins.Base64Binary.xmlvalue = xmlvalue
-zeep.xsd.builtins.Base64Binary.pythonvalue = pythonvalue
+builtins.Base64Binary.accepted_types += (etree.Element, )
+builtins.Base64Binary.xmlvalue = xmlvalue
+builtins.Base64Binary.pythonvalue = pythonvalue
 # Base64Binary patched.
 # Update NSMAP
-zeep.client.NSMAP.update({
-    "xop": "http://www.w3.org/2004/08/xop/include",
-    "xmime5": "http://www.w3.org/2005/05/xmlmime"
+zeep.ns.xop = "http://www.w3.org/2004/08/xop/include"
+zeep.ns.xmime5 = "http://www.w3.org/2005/05/xmlmime"
+http.NSMAP.update({
+    "xop": zeep.ns.xop,
+    "xmime5": zeep.ns.xmime5
 })
 
 def attach(filename):
