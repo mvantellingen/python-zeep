@@ -117,7 +117,10 @@ class Client(object):
         if not wsdl:
             raise ValueError("No URL given for the wsdl")
 
-        self.transport = transport or Transport()
+        if transport is None:
+            self.transport = Transport()
+        else:
+            self.transport = transport
         self.wsdl = Document(wsdl, self.transport, strict=strict)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
