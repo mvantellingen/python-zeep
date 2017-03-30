@@ -5,7 +5,7 @@ need to create an instance of the Transport class yourself.
 
 For instance to disable SSL verification you will need to create a new
 :class:`requests.Session` instance and set the ``verify`` attribute to
-``False``. 
+``False``.
 
 .. code-block:: python
 
@@ -38,7 +38,7 @@ seconds:
 Caching
 -------
 By default zeep doesn't use a caching backend.  For performance benefits it is
-advised to use the SqliteCache backend.  It caches the WSDL and XSD files for 
+advised to use the SqliteCache backend.  It caches the WSDL and XSD files for
 1 hour by default. To use the cache backend init the client with:
 
 .. code-block:: python
@@ -49,7 +49,7 @@ advised to use the SqliteCache backend.  It caches the WSDL and XSD files for
 
     transport = Transport(cache=SqliteCache())
     client = Client(
-        'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
+        'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
         transport=transport)
 
 
@@ -60,14 +60,14 @@ Changing the SqliteCache settings can be done via:
     from zeep import Client
     from zeep.cache import SqliteCache
     from zeep.transports import Transport
-    cache = SqliteCache(persistent=True, timeout=60)
+    cache = SqliteCache(path='/tmp/sqlite.db', timeout=60)
     transport = Transport(cache=cache)
     client = Client(
         'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
         transport=transport)
 
 
-Another option is to use the InMemoryCache backend.  It internally uses a 
+Another option is to use the InMemoryCache backend.  It internally uses a
 global dict to store urls with the corresponding content.
 
 
@@ -95,7 +95,7 @@ to the Transport class.
 
 Debugging
 ---------
-To see the SOAP XML messages which are sent to the remote server and the 
+To see the SOAP XML messages which are sent to the remote server and the
 response received you can set the Python logger level to DEBUG for the
 ``zeep.transports`` module. Since 0.15 this can also be achieved via the
 :ref:`plugin-history`.
