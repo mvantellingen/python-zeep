@@ -15,6 +15,9 @@ class AnyType(Type):
     _attributes_unwrapped = []
     _element = None
 
+    def __call__(self, value=None):
+        return value or ''
+
     def render(self, parent, value, xsd_type=None, render_path=None):
         if isinstance(value, AnyObject):
             if value.xsd_type is None:
