@@ -131,7 +131,8 @@ class Element(Base):
             element_tag = etree.QName(xmlelements[0].tag)
             if (
                 element_tag.namespace and self.qname.namespace and
-                element_tag.namespace != self.qname.namespace
+                element_tag.namespace != self.qname.namespace and
+                schema.strict
             ):
                 break
 
