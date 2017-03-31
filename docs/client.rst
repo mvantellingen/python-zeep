@@ -26,6 +26,31 @@ Note that disabling strict mode should be considered a last resort since it
 might result in data-loss between the XML and the returned response.
 
 
+Setting options
+---------------
+You can set various options directly as attribute on the client or via a
+context manager.
+
+For example to let zeep return the raw response directly instead of processing
+it you can do the following:
+
+.. code-block:: python
+    
+    from zeep import Client
+    from zeep import xsd
+
+    client = Client('http://my-endpoint.com/production.svc?wsdl')
+
+    with client.options(raw_response=True):
+        response = client.service.myoperation()
+
+        # response is now a regular requests.Response object
+        assert response.status_code == 200
+        assert response.content
+
+
+
+
 The ServiceProxy object
 -----------------------
 

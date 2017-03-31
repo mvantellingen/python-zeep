@@ -2,6 +2,7 @@ import copy
 import logging
 from contextlib import contextmanager
 
+from zeep.xsd.const import NotSet
 from zeep.transports import Transport
 from zeep.wsdl import Document
 
@@ -121,6 +122,9 @@ class Client(object):
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
 
+        # options
+        self.raw_response = False
+
         self._default_service = None
         self._default_service_name = service_name
         self._default_port_name = port_name
@@ -146,7 +150,7 @@ class Client(object):
         return self._default_service
 
     @contextmanager
-    def options(self, timeout):
+    def options(self, timeout=NotSet, raw_response=NotSet):
         """Context manager to temporarily overrule various options.
 
         :param timeout: Set the timeout for POST/GET operations (not used for
@@ -160,8 +164,22 @@ class Client(object):
 
 
         """
-        with self.transport._options(timeout=timeout):
-            yield
+        # Store current options
+        old_raw_raw_response = self.raw_response
+
+        # Set new options
+        self.raw_response = raw_response
+
+        if timeout is not NotSet:
+            timeout_ctx = self.transport._options(timeout=timeout)
+            timeout_ctx.__enter__()
+
+        yield
+
+        self.raw_response = old_raw_raw_response
+
+        if timeout is not NotSet:
+            timeout_ctx.__exit__(None, None, None)
 
     def bind(self, service_name=None, port_name=None):
         """Create a new ServiceProxy for the given service_name and port_name.
@@ -195,7 +213,11 @@ class Client(object):
 
     def create_message(self, operation, service_name=None, port_name=None,
                        args=None, kwargs=None):
-        """Create the payload for the given operation."""
+        """Create the payload for the given operation.
+
+        :rtype: lxml.etree._Element
+
+        """
         service = self._get_service(service_name)
         port = self._get_port(service, port_name)
 

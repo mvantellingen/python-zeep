@@ -112,6 +112,11 @@ class SoapBinding(Binding):
             options['address'], envelope, http_headers)
 
         operation_obj = self.get(operation)
+
+        # If the client wants to return the raw data then let's do that.
+        if client.raw_response:
+            return response
+
         return self.process_reply(client, operation_obj, response)
 
     def process_reply(self, client, operation, response):

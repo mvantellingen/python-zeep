@@ -3,6 +3,8 @@
  - Hardcode the xml prefix to the xml namespace as defined in the specs (#367)
  - Fix parsing of unbound sequences within xsd choices (#380)
  - Use logger.debug() for debug related logging (#369)
+ - Add the ``Client.raw_response`` option to let zeep return the raw 
+   transport response (requests.Response) instead of trying to parse it.
 
 
 1.3.0 (2017-03-14)
