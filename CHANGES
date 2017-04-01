@@ -7,6 +7,7 @@
    transport response (requests.Response) instead of trying to parse it.
  - Handle minOccurs/maxOccurs properlhy for xsd:Group elements. This also 
    fixes a bug in the xsd:Choice handling for multiple elements (#374, #410)
+ - Fix raising XMLSyntaxError when loading invalid XML (Antanas Sinica, #396)
 
 
 1.3.0 (2017-03-14)
