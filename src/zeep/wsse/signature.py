@@ -25,25 +25,49 @@ except ImportError:
 # SOAP envelope
 SOAP_NS = 'http://schemas.xmlsoap.org/soap/envelope/'
 
+def _read_file(f_name):
+    with open(f_name, "rb") as f:
+        return f.read()
 
-class Signature(object):
+def _make_sign_key(key_data, cert_data, password):
+    key = xmlsec.Key.from_memory(key_data,
+                                 xmlsec.KeyFormat.PEM, password)
+    key.load_cert_from_memory(cert_data,
+                              xmlsec.KeyFormat.PEM)
+    return key
+
+def _make_verify_key(cert_data):
+    key = xmlsec.Key.from_memory(cert_data,
+                                 xmlsec.KeyFormat.CERT_PEM, None)
+    return key
+
+class MemorySignature(object):
     """Sign given SOAP envelope with WSSE sig using given key and cert."""
 
-    def __init__(self, key_file, certfile, password=None):
+    def __init__(self, key_data, cert_data, password=None):
         check_xmlsec_import()
 
-        self.key_file = key_file
-        self.certfile = certfile
+        self.key_data = key_data
+        self.cert_data = cert_data
         self.password = password
 
     def apply(self, envelope, headers):
-        sign_envelope(envelope, self.key_file, self.certfile, self.password)
+        key = _make_sign_key(self.key_data, self.cert_data, self.password)
+        _sign_envelope_with_key(envelope, key)
         return envelope, headers
 
     def verify(self, envelope):
-        verify_envelope(envelope, self.certfile)
+        key = _make_verify_key(self.cert_data)
+        _verify_envelope_with_key(envelope, key)
         return envelope
 
+class Signature(MemorySignature):
+    """Sign given SOAP envelope with WSSE sig using given key file and cert file."""
+
+    def __init__(self, key_file, certfile, password=None):
+        super(Signature, self).__init__(_read_file(key_file),
+                                        _read_file(certfile),
+                                        password)
 
 def check_xmlsec_import():
     if xmlsec is None:
@@ -142,6 +166,12 @@ def sign_envelope(envelope, keyfile, certfile, password=None):
     </soap:Envelope>
 
     """
+    # Load the signing key and certificate.
+    key = _make_sign_key(_read_file(keyfile), _read_file(certfile), password)
+    return _sign_envelope_with_key(envelope, key)
+
+def _sign_envelope_with_key(envelope, key):
+
     # Create the Signature node.
     signature = xmlsec.template.create(
         envelope,
@@ -155,10 +185,6 @@ def sign_envelope(envelope, keyfile, certfile, password=None):
     x509_data = xmlsec.template.add_x509_data(key_info)
     xmlsec.template.x509_data_add_issuer_serial(x509_data)
     xmlsec.template.x509_data_add_certificate(x509_data)
-
-    # Load the signing key and certificate.
-    key = xmlsec.Key.from_file(keyfile, xmlsec.KeyFormat.PEM, password=password)
-    key.load_cert_from_file(certfile, xmlsec.KeyFormat.PEM)
 
     # Insert the Signature node in the wsse:Security header.
     security = get_security_header(envelope)
@@ -194,6 +220,10 @@ def verify_envelope(envelope, certfile):
     Raise SignatureVerificationFailed on failure, silent on success.
 
     """
+    key = _make_verify_key(_read_file(certfile))
+    return _verify_envelope_with_key(envelope, key)
+
+def _verify_envelope_with_key(envelope, key):
     soap_env = detect_soap_env(envelope)
 
     header = envelope.find(QName(soap_env, 'Header'))
@@ -217,7 +247,6 @@ def verify_envelope(envelope, certfile):
         )[0]
         ctx.register_id(referenced, 'Id', ns.WSU)
 
-    key = xmlsec.Key.from_file(certfile, xmlsec.KeyFormat.CERT_PEM, None)
     ctx.key = key
 
     try:
