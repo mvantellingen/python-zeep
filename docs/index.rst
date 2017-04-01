@@ -100,11 +100,12 @@ implement. This can be done with::
 See ``python -mzeep --help`` for more information about this command.
 
 
-.. note:: Since this module hasn't reached 1.0.0 yet their might be minor
-          releases which introduce backwards compatible changes. While I try 
-          to keep this to a minimum it can still happen. So as always pin the 
-          version of zeep you used (e.g. ``zeep==0.24.0``').
+.. note:: Zeep follows `semver`_ for versioning, however bugs can always occur.  
+          So as always pin the version of zeep you tested with 
+          (e.g. ``zeep==1.4.0``').
 
+
+.. _semver: http://semver.org/
 
 
 A simple use-case
