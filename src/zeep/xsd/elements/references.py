@@ -37,4 +37,8 @@ class RefAttributeGroup(RefElement):
 
 class RefGroup(RefElement):
     def resolve(self):
-        return self._schema.get_group(self._ref)
+        elm = self._schema.get_group(self._ref)
+        elm = elm.clone(
+            elm.qname, min_occurs=self.min_occurs, max_occurs=self.max_occurs)
+        return elm
+

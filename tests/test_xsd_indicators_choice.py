@@ -1,3 +1,4 @@
+from collections import deque
 import pytest
 from lxml import etree
 
@@ -1197,3 +1198,82 @@ def test_nested_choice():
 
     result = container_type.parse(expected, schema)
     assert result.b == '1'
+
+
+def test_unit_choice_parse_xmlelements_max_1():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:choice>
+                <xsd:element name="item_1" type="xsd:string" />
+                <xsd:element name="item_2" type="xsd:string" />
+                <xsd:element name="item_3" type="xsd:string" />
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """))
+    element = schema.get_element('ns0:container')
+
+    def create_elm(name, text):
+        elm = etree.Element(name)
+        elm.text = text
+        return elm
+
+    data = deque([
+        create_elm('item_1', 'item-1'),
+        create_elm('item_2', 'item-2'),
+        create_elm('item_1', 'item-3'),
+    ])
+
+    result = element.type._element.parse_xmlelements(data, schema)
+    assert result == {'item_1': 'item-1'}
+    assert len(data) == 2
+
+
+def test_unit_choice_parse_xmlelements_max_2():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:choice maxOccurs="2">
+                <xsd:element name="item_1" type="xsd:string" />
+                <xsd:element name="item_2" type="xsd:string" />
+                <xsd:element name="item_3" type="xsd:string" />
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """))
+    element = schema.get_element('ns0:container')
+
+    def create_elm(name, text):
+        elm = etree.Element(name)
+        elm.text = text
+        return elm
+
+    data = deque([
+        create_elm('item_1', 'item-1'),
+        create_elm('item_2', 'item-2'),
+        create_elm('item_1', 'item-3'),
+    ])
+
+    result = element.type._element.parse_xmlelements(data, schema, name='items')
+    assert result == {
+        'items': [
+            {'item_1': 'item-1'},
+            {'item_2': 'item-2'},
+        ]
+    }
+    assert len(data) == 1

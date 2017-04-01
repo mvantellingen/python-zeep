@@ -280,6 +280,58 @@ def test_xml_group_via_ref():
     assert_nodes_equal(expected, node)
 
 
+def test_xml_group_via_ref_max_occurs_unbounded():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://tests.python-zeep.org/"
+                   targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="qualified">
+
+          <xs:element name="Address">
+            <xs:complexType>
+              <xs:group ref="tns:Name" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:complexType>
+          </xs:element>
+
+          <xs:group name="Name">
+            <xs:sequence>
+              <xs:element name="first_name" type="xs:string" />
+              <xs:element name="last_name" type="xs:string" />
+            </xs:sequence>
+          </xs:group>
+
+        </xs:schema>
+    """))
+    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+
+    obj = address_type(
+        _value_1=[
+            {'first_name': 'foo-1', 'last_name': 'bar-1'},
+            {'first_name': 'foo-2', 'last_name': 'bar-2'},
+        ])
+
+    node = etree.Element('document')
+    address_type.render(node, obj)
+    expected = """
+        <document>
+            <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:first_name>foo-1</ns0:first_name>
+                <ns0:last_name>bar-1</ns0:last_name>
+                <ns0:first_name>foo-2</ns0:first_name>
+                <ns0:last_name>bar-2</ns0:last_name>
+            </ns0:Address>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    obj = address_type.parse(node[0], None)
+    assert obj._value_1[0]['first_name'] == 'foo-1'
+    assert obj._value_1[0]['last_name'] == 'bar-1'
+    assert obj._value_1[1]['first_name'] == 'foo-2'
+    assert obj._value_1[1]['last_name'] == 'bar-2'
+
+
 def test_xml_multiple_groups_in_sequence():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>

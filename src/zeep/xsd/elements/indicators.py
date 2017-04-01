@@ -303,42 +303,40 @@ class Choice(OrderIndicator):
             if not xmlelements:
                 break
 
-            for node in list(xmlelements):
+            # Choose out of multiple
+            options = []
+            for element_name, element in self.elements_nested:
 
-                # Choose out of multiple
-                options = []
-                for element_name, element in self.elements_nested:
+                local_xmlelements = copy.copy(xmlelements)
 
-                    local_xmlelements = copy.copy(xmlelements)
+                try:
+                    sub_result = element.parse_xmlelements(
+                        xmlelements=local_xmlelements,
+                        schema=schema,
+                        name=element_name,
+                        context=context)
+                except UnexpectedElementError:
+                    continue
 
-                    try:
-                        sub_result = element.parse_xmlelements(
-                            xmlelements=local_xmlelements,
-                            schema=schema,
-                            name=element_name,
-                            context=context)
-                    except UnexpectedElementError:
-                        continue
+                if isinstance(element, Element):
+                    sub_result = {element_name: sub_result}
 
-                    if isinstance(element, Element):
-                        sub_result = {element_name: sub_result}
+                num_consumed = len(xmlelements) - len(local_xmlelements)
+                if num_consumed:
+                    options.append((num_consumed, sub_result))
 
-                    num_consumed = len(xmlelements) - len(local_xmlelements)
-                    if num_consumed:
-                        options.append((num_consumed, sub_result))
+            if not options:
+                xmlelements = []
+                break
 
-                if not options:
-                    xmlelements = []
-                    break
-
-                # Sort on least left
-                options = sorted(options, key=operator.itemgetter(0), reverse=True)
-                if options:
-                    result.append(options[0][1])
-                    for i in range(options[0][0]):
-                        xmlelements.popleft()
-                else:
-                    break
+            # Sort on least left
+            options = sorted(options, key=operator.itemgetter(0), reverse=True)
+            if options:
+                result.append(options[0][1])
+                for i in range(options[0][0]):
+                    xmlelements.popleft()
+            else:
+                break
 
         if self.accepts_multiple:
             result = {name: result}
@@ -605,6 +603,13 @@ class Group(Indicator):
             return [('_value_1', self.child)]
         return self.child.elements
 
+    def clone(self, name, min_occurs=1, max_occurs=1):
+        return self.__class__(
+            name=name,
+            child=self.child,
+            min_occurs=min_occurs,
+            max_occurs=max_occurs)
+
     def accept(self, values):
         """Return the number of values which are accepted by this choice.
 
@@ -619,7 +624,7 @@ class Group(Indicator):
     def parse_kwargs(self, kwargs, name, available_kwargs):
         if self.accepts_multiple:
             if name not in kwargs:
-                return {}, kwargs
+                return {}
 
             available_kwargs.remove(name)
             item_kwargs = kwargs[name]
@@ -665,6 +670,8 @@ class Group(Indicator):
                 self.child.parse_xmlelements(
                     xmlelements, schema, name, context=context)
             )
+            if not xmlelements:
+                break
         if not self.accepts_multiple and result:
             return result[0]
         return {name: result}

@@ -899,8 +899,10 @@ class SchemaVisitor(object):
         :type parent: lxml.etree._Element
 
         """
+        min_occurs, max_occurs = _process_occurs_attrs(node)
 
-        result = self.process_reference(node)
+        result = self.process_reference(
+            node, min_occurs=min_occurs, max_occurs=max_occurs)
         if result:
             return result
 

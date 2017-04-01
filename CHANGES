@@ -5,6 +5,8 @@
  - Use logger.debug() for debug related logging (#369)
  - Add the ``Client.raw_response`` option to let zeep return the raw 
    transport response (requests.Response) instead of trying to parse it.
+ - Handle minOccurs/maxOccurs properlhy for xsd:Group elements. This also 
+   fixes a bug in the xsd:Choice handling for multiple elements (#374, #410)
 
 
 1.3.0 (2017-03-14)
