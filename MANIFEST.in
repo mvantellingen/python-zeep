@@ -2,7 +2,9 @@
 exclude *
 recursive-exclude * *
 
+include MANIFEST.in
 include CHANGES
+include CONTRIBUTORS.rst
 include LICENSE
 include README.rst
 include setup.cfg

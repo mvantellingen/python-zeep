@@ -1,6 +1,17 @@
 ---
 sudo: false
+dist: trusty
 language: python
+
+addons:
+  apt:
+    packages:
+      - libssl-dev
+      - libxmlsec1
+      - libxmlsec1-dev
+      - libxmlsec1-openssl
+      - libxslt1-dev
+      - pkg-config
 
 matrix:
   include:

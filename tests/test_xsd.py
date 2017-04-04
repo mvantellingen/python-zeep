@@ -149,39 +149,6 @@ def test_invalid_kwarg_simple_type():
         elm(something='is-wrong')
 
 
-def test_group_mixed():
-    custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
-        xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'username'),
-                    xsd.String()),
-                xsd.Group(
-                    etree.QName('http://tests.python-zeep.org/', 'groupie'),
-                    xsd.Sequence([
-                        xsd.Element(
-                            etree.QName('http://tests.python-zeep.org/', 'password'),
-                            xsd.String(),
-                        )
-                    ])
-                )
-            ])
-        ))
-    assert custom_type.signature()
-    obj = custom_type(username='foo', password='bar')
-
-    expected = """
-      <document>
-        <ns0:authentication xmlns:ns0="http://tests.python-zeep.org/">
-          <ns0:username>foo</ns0:username>
-          <ns0:password>bar</ns0:password>
-        </ns0:authentication>
-      </document>
-    """
-    node = etree.Element('document')
-    custom_type.render(node, obj)
-    assert_nodes_equal(expected, node)
 
 
 def test_any():
@@ -304,7 +271,8 @@ def test_choice_init():
             {'item_2': 'value-2'},
             {'item_1': 'value-3'},
             {'item_4_1': 'value-4-1', 'item_4_2': 'value-4-2'},
-        ])
+        ],
+        post='bar')
 
     assert obj._value_1 == [
         {'item_1': 'value-1'},
@@ -326,7 +294,7 @@ def test_choice_init():
         <ns0:item_1>value-3</ns0:item_1>
         <ns0:item_4_1>value-4-1</ns0:item_4_1>
         <ns0:item_4_2>value-4-2</ns0:item_4_2>
-        <ns0:post/>
+        <ns0:post>bar</ns0:post>
       </ns0:kies>
     </document>
     """.strip()
@@ -514,7 +482,7 @@ def test_duplicate_element_names():
         ))
 
     # sequences
-    expected = 'item: xsd:string, item__1: xsd:string, item__2: xsd:string'
+    expected = '{http://tests.python-zeep.org/}container(item: xsd:string, item__1: xsd:string, item__2: xsd:string)'
     assert custom_type.signature() == expected
     obj = custom_type(item='foo', item__1='bar', item__2='lala')
 
@@ -547,7 +515,7 @@ def test_element_attribute_name_conflict():
         ))
 
     # sequences
-    expected = 'item: xsd:string, foo: xsd:string, attr__item: xsd:string'
+    expected = '{http://tests.python-zeep.org/}container(item: xsd:string, foo: xsd:string, attr__item: xsd:string)'
     assert custom_type.signature() == expected
     obj = custom_type(item='foo', foo='x', attr__item='bar')
 

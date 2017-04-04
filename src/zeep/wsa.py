@@ -3,15 +3,16 @@ import uuid
 from lxml import etree
 from lxml.builder import ElementMaker
 
+from zeep import ns
 from zeep.plugins import Plugin
 from zeep.wsdl.utils import get_or_create_header
 
-WSA = ElementMaker(namespace='http://www.w3.org/2005/08/addressing')
+WSA = ElementMaker(namespace=ns.WSA, nsmap={'wsa': ns.WSA})
 
 
 class WsAddressingPlugin(Plugin):
     nsmap = {
-        'wsa': 'http://www.w3.org/2005/08/addressing'
+        'wsa': ns.WSA
     }
 
     def egress(self, envelope, http_headers, operation, binding_options):
@@ -36,7 +37,5 @@ class WsAddressingPlugin(Plugin):
                 keep_ns_prefixes=header.nsmap,
                 top_nsmap=self.nsmap)
         else:
-            etree.cleanup_namespaces(
-                header,
-                keep_ns_prefixes=header.nsmap)
+            etree.cleanup_namespaces(header)
         return envelope, http_headers

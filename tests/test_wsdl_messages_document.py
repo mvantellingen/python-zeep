@@ -54,15 +54,15 @@ def test_parse():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.body.signature() == 'xsd:string'
-    assert operation.input.header.signature() == ''
-    assert operation.input.envelope.signature() == 'body: xsd:string, header: {}'
+    assert operation.input.body.signature(schema=root.types) == 'ns0:Request(xsd:string)'
+    assert operation.input.header.signature(schema=root.types) == 'soap-env:Header()'
+    assert operation.input.envelope.signature(schema=root.types) == 'soap-env:envelope(body: xsd:string)'
     assert operation.input.signature(as_output=False) == 'xsd:string'
 
-    assert operation.output.body.signature() == 'xsd:string'
-    assert operation.output.header.signature() == ''
-    assert operation.output.envelope.signature() == 'body: xsd:string, header: {}'
-    assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {}'
+    assert operation.output.body.signature(schema=root.types) == 'ns0:Response(xsd:string)'
+    assert operation.output.header.signature(schema=root.types) == 'soap-env:Header()'
+    assert operation.output.envelope.signature(schema=root.types) == 'soap-env:envelope(body: xsd:string)'
+    assert operation.output.signature(as_output=True) == 'xsd:string'
 
 
 def test_empty_input_parse():
@@ -111,9 +111,9 @@ def test_empty_input_parse():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.body.signature() == ''
-    assert operation.input.header.signature() == ''
-    assert operation.input.envelope.signature() == 'body: {}, header: {}'
+    assert operation.input.body.signature(schema=root.types) == 'soap-env:Body()'
+    assert operation.input.header.signature(schema=root.types) == 'soap-env:Header()'
+    assert operation.input.envelope.signature(schema=root.types) == 'soap-env:envelope(body: {})'
     assert operation.input.signature(as_output=False) == ''
 
 
@@ -171,15 +171,15 @@ def test_parse_with_header():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.body.signature() == 'xsd:string'
-    assert operation.input.header.signature() == 'auth: RequestHeader()'
-    assert operation.input.envelope.signature() == 'body: xsd:string, header: {auth: RequestHeader()}'  # noqa
-    assert operation.input.signature(as_output=False) == 'xsd:string, _soapheaders={auth: RequestHeader()}'  # noqa
+    assert operation.input.body.signature(schema=root.types) == 'ns0:Request(xsd:string)'
+    assert operation.input.header.signature(schema=root.types) == 'soap-env:Header(auth: xsd:string)'
+    assert operation.input.envelope.signature(schema=root.types) == 'soap-env:envelope(header: {auth: xsd:string}, body: xsd:string)'  # noqa
+    assert operation.input.signature(as_output=False) == 'xsd:string, _soapheaders={auth: xsd:string}'  # noqa
 
-    assert operation.output.body.signature() == 'xsd:string'
-    assert operation.output.header.signature() == 'auth: ResponseHeader()'
-    assert operation.output.envelope.signature() == 'body: xsd:string, header: {auth: ResponseHeader()}'  # noqa
-    assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {auth: ResponseHeader()}'  # noqa
+    assert operation.output.body.signature(schema=root.types) == 'ns0:Response(xsd:string)'
+    assert operation.output.header.signature(schema=root.types) == 'soap-env:Header(auth: xsd:string)'
+    assert operation.output.envelope.signature(schema=root.types) == 'soap-env:envelope(header: {auth: xsd:string}, body: xsd:string)'  # noqa
+    assert operation.output.signature(as_output=True) == 'header: {auth: xsd:string}, body: xsd:string'  # noqa
 
 
 def test_parse_with_header_type():
@@ -240,18 +240,15 @@ def test_parse_with_header_type():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.body.signature() == 'xsd:string'
-    assert operation.input.header.signature() == 'auth: RequestHeaderType'
-    assert operation.input.envelope.signature() == 'body: xsd:string, header: {auth: RequestHeaderType}'  # noqa
-    assert operation.input.signature(as_output=False) == 'xsd:string, _soapheaders={auth: RequestHeaderType}'  # noqa
+    assert operation.input.body.signature(schema=root.types) == 'ns0:Request(xsd:string)'
+    assert operation.input.header.signature(schema=root.types) == 'soap-env:Header(auth: ns0:RequestHeaderType)'
+    assert operation.input.envelope.signature(schema=root.types) == 'soap-env:envelope(header: {auth: ns0:RequestHeaderType}, body: xsd:string)'  # noqa
+    assert operation.input.signature(as_output=False) == 'xsd:string, _soapheaders={auth: ns0:RequestHeaderType}'  # noqa
 
-    assert operation.output.body.signature() == 'xsd:string'
-    assert operation.output.header.signature() == 'auth: ResponseHeaderType'
-    assert operation.output.envelope.signature() == 'body: xsd:string, header: {auth: ResponseHeaderType}'  # noqa
-    assert operation.output.signature(as_output=True) == 'body: xsd:string, header: {auth: ResponseHeaderType}'  # noqa
-
-
-
+    assert operation.output.body.signature(schema=root.types) == 'ns0:Response(xsd:string)'
+    assert operation.output.header.signature(schema=root.types) == 'soap-env:Header(auth: ns0:ResponseHeaderType)'
+    assert operation.output.envelope.signature(schema=root.types) == 'soap-env:envelope(header: {auth: ns0:ResponseHeaderType}, body: xsd:string)'  # noqa
+    assert operation.output.signature(as_output=True) == 'header: {auth: ns0:ResponseHeaderType}, body: xsd:string'  # noqa
 
 
 def test_parse_with_header_other_message():
@@ -295,12 +292,13 @@ def test_parse_with_header_other_message():
     """.strip())
 
     root = wsdl.Document(wsdl_content, None)
+    root.types.set_ns_prefix('soap-env', 'http://schemas.xmlsoap.org/soap/envelope/')
 
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.header.signature() == 'header: RequestHeader()'
-    assert operation.input.body.signature() == 'xsd:string'
+    assert operation.input.header.signature(schema=root.types) == 'soap-env:Header(header: xsd:string)'
+    assert operation.input.body.signature(schema=root.types) == 'ns0:Request(xsd:string)'
 
     header = root.types.get_element(
         '{http://tests.python-zeep.org/tns}RequestHeader'
@@ -1196,7 +1194,7 @@ def test_deserialize_with_headers():
     serialized = operation.process_reply(response_body)
 
     assert operation.output.signature(as_output=True) == (
-        'body: {request_1: Request1(), request_2: Request2()}, header: {header_1: Header1(), header_2: Header2()}')  # noqa
+        'header: {header_1: {username: xsd:string}, header_2: xsd:string}, body: {request_1: {arg1: xsd:string}, request_2: {arg2: xsd:string}}')  # noqa
     assert serialized.body.request_1.arg1 == 'ah1'
     assert serialized.body.request_2.arg2 == 'ah2'
     assert serialized.header.header_1.username == 'mvantellingen'

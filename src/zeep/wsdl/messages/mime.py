@@ -1,8 +1,13 @@
+"""
+    zeep.wsdl.messages.mime
+    ~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 import six
 from defusedxml.lxml import fromstring
 from lxml import etree
 
-from zeep import xsd
+from zeep import ns, xsd
 from zeep.helpers import serialize_object
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
 from zeep.wsdl.utils import etree_to_string
@@ -16,7 +21,7 @@ __all__ = [
 
 class MimeMessage(ConcreteMessage):
     _nsmap = {
-        'mime': 'http://schemas.xmlsoap.org/wsdl/mime/',
+        'mime': ns.MIME,
     }
 
     def __init__(self, wsdl, name, operation, part_name):
@@ -79,6 +84,14 @@ class MimeContent(MimeMessage):
     The set of defined MIME types is both large and evolving, so it is not a
     goal for WSDL to exhaustively define XML grammar for each MIME type.
 
+    :param wsdl: The main wsdl document
+    :type wsdl: zeep.wsdl.wsdl.Document
+    :param name:
+    :param operation: The operation to which this message belongs
+    :type operation: zeep.wsdl.bindings.soap.SoapOperation
+    :param part_name:
+    :type type: str
+
     """
     def __init__(self, wsdl, name, operation, content_type, part_name):
         super(MimeContent, self).__init__(wsdl, name, operation, part_name)
@@ -131,6 +144,14 @@ class MimeXML(MimeMessage):
     only a single part. The part references a concrete schema using the element
     attribute for simple parts or type attribute for composite parts
 
+    :param wsdl: The main wsdl document
+    :type wsdl: zeep.wsdl.wsdl.Document
+    :param name:
+    :param operation: The operation to which this message belongs
+    :type operation: zeep.wsdl.bindings.soap.SoapOperation
+    :param part_name:
+    :type type: str
+
     """
     def serialize(self, *args, **kwargs):
         raise NotImplementedError()
@@ -169,6 +190,14 @@ class MimeMultipart(MimeMessage):
     MIME elements appear within mime:part to specify the concrete MIME type for
     the part. If more than one MIME element appears inside a mime:part, they
     are alternatives.
+
+    :param wsdl: The main wsdl document
+    :type wsdl: zeep.wsdl.wsdl.Document
+    :param name:
+    :param operation: The operation to which this message belongs
+    :type operation: zeep.wsdl.bindings.soap.SoapOperation
+    :param part_name:
+    :type type: str
 
     """
     pass

@@ -4,16 +4,12 @@ import re
 
 from lxml import etree
 
-from zeep import exceptions
 from zeep.exceptions import XMLParseError
-from zeep.parser import absolute_location
+from zeep.loader import absolute_location, load_external
 from zeep.utils import as_qname, qname_attr
-from zeep.xsd import builtins as xsd_builtins
 from zeep.xsd import elements as xsd_elements
-from zeep.xsd import indicators as xsd_indicators
 from zeep.xsd import types as xsd_types
 from zeep.xsd.const import xsd_ns
-from zeep.xsd.parser import load_external
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +35,35 @@ class SchemaVisitor(object):
     """Visitor which processes XSD files and registers global elements and
     types in the given schema.
 
+    :param schema:
+    :type schema: zeep.xsd.schema.Schema
+    :param document:
+    :type document: zeep.xsd.schema.SchemaDocument
+
     """
+
     def __init__(self, schema, document):
         self.document = document
         self.schema = schema
         self._includes = set()
+
+    def register_element(self, qname, instance):
+        self.document.register_element(qname, instance)
+
+    def register_attribute(self, name, instance):
+        self.document.register_attribute(name, instance)
+
+    def register_type(self, qname, instance):
+        self.document.register_type(qname, instance)
+
+    def register_group(self, qname, instance):
+        self.document.register_group(qname, instance)
+
+    def register_attribute_group(self, qname, instance):
+        self.document.register_attribute_group(qname, instance)
+
+    def register_import(self, namespace, document):
+        self.document.register_import(namespace, document)
 
     def process(self, node, parent):
         visit_func = self.visitors.get(node.tag)
@@ -81,7 +101,10 @@ class SchemaVisitor(object):
         return cls(node.tag, ref, self.schema, **kwargs)
 
     def visit_schema(self, node):
-        """
+        """Visit the xsd:schema element and process all the child elements
+
+        Definition::
+
             <schema
               attributeFormDefault = (qualified | unqualified): unqualified
               blockDefault = (#all | List of (extension | restriction | substitution) : ''
@@ -99,6 +122,9 @@ class SchemaVisitor(object):
                  annotation*)*)
             </schema>
 
+        :param node: The XML node
+        :type node: lxml.etree._Element
+
         """
         assert node is not None
 
@@ -106,12 +132,14 @@ class SchemaVisitor(object):
         self.document._element_form = node.get('elementFormDefault', 'unqualified')
         self.document._attribute_form = node.get('attributeFormDefault', 'unqualified')
 
-        parent = node
-        for node in node.iterchildren():
-            self.process(node, parent=parent)
+        for child in node:
+            self.process(child, parent=node)
 
     def visit_import(self, node, parent):
         """
+
+        Definition::
+
             <import
               id = ID
               namespace = anyURI
@@ -119,6 +147,12 @@ class SchemaVisitor(object):
               {any attributes with non-schema Namespace}...>
             Content: (annotation?)
             </import>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         schema_node = None
         namespace = node.get('namespace')
@@ -129,14 +163,16 @@ class SchemaVisitor(object):
         if not namespace and not self.document._target_namespace:
             raise XMLParseError(
                 "The attribute 'namespace' must be existent if the "
-                "importing schema has no target namespace.")
+                "importing schema has no target namespace.",
+                filename=self._document.location,
+                sourceline=node.sourceline)
 
         # Check if the schema is already imported before based on the
         # namespace. Schema's without namespace are registered as 'None'
         document = self.schema._get_schema_document(namespace, location)
         if document:
             logger.debug("Returning existing schema: %r", location)
-            self.document.register_import(namespace, document)
+            self.register_import(namespace, document)
             return document
 
         # Hardcode the mapping between the xml namespace and the xsd for now.
@@ -153,7 +189,10 @@ class SchemaVisitor(object):
             return
 
         # Load the XML
-        schema_node = load_external(location, self.schema._transport)
+        schema_node = load_external(
+            location,
+            self.schema._transport,
+            strict=self.schema.strict)
 
         # Check if the xsd:import namespace matches the targetNamespace. If
         # the xsd:import statement didn't specify a namespace then make sure
@@ -163,20 +202,31 @@ class SchemaVisitor(object):
             raise XMLParseError((
                 "The namespace defined on the xsd:import doesn't match the "
                 "imported targetNamespace located at %r "
-                ) % (location))
+                ) % (location),
+                filename=self.document._location,
+                sourceline=node.sourceline)
 
         schema = self.schema.create_new_document(schema_node, location)
-        self.document.register_import(namespace, schema)
+        self.register_import(namespace, schema)
         return schema
 
     def visit_include(self, node, parent):
         """
-        <include
-          id = ID
-          schemaLocation = anyURI
-          {any attributes with non-schema Namespace}...>
-        Content: (annotation?)
-        </include>
+
+        Definition::
+
+            <include
+              id = ID
+              schemaLocation = anyURI
+              {any attributes with non-schema Namespace}...>
+            Content: (annotation?)
+            </include>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         if not node.get('schemaLocation'):
             raise NotImplementedError("schemaLocation is required")
@@ -186,13 +236,33 @@ class SchemaVisitor(object):
             return
 
         schema_node = load_external(
-            location, self.schema._transport, base_url=self.document._base_url)
+            location, self.schema._transport,
+            base_url=self.document._base_url,
+            strict=self.schema.strict)
         self._includes.add(location)
 
-        return self.visit_schema(schema_node)
+        # When the included document has no default namespace defined but the
+        # parent document does have this then we should (atleast for #360)
+        # transfer the default namespace to the included schema. We can't
+        # update the nsmap of elements in lxml so we create a new schema with
+        # the correct nsmap and move all the content there.
+        if not schema_node.nsmap.get(None) and node.nsmap.get(None):
+            nsmap = {None: node.nsmap[None]}
+            nsmap.update(schema_node.nsmap)
+            new = etree.Element(schema_node.tag, nsmap=nsmap)
+            for child in schema_node:
+                new.append(child)
+            schema_node = new
+
+        # Iterate directly over the children
+        for child in schema_node:
+            self.process(child, parent=schema_node)
 
     def visit_element(self, node, parent):
         """
+
+        Definition::
+
             <element
               abstract = Boolean : false
               block = (#all | List of (extension | restriction | substitution))
@@ -212,6 +282,12 @@ class SchemaVisitor(object):
             Content: (annotation?, (
                       (simpleType | complexType)?, (unique | key | keyref)*))
             </element>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         is_global = parent.tag == tags.schema
 
@@ -256,7 +332,7 @@ class SchemaVisitor(object):
             if node_type:
                 xsd_type = self._get_type(node_type.text)
             else:
-                xsd_type = xsd_builtins.AnyType()
+                xsd_type = xsd_types.AnyType()
 
         # Naive workaround to mark fields which are part of a choice element
         # as optional
@@ -270,15 +346,15 @@ class SchemaVisitor(object):
             min_occurs=min_occurs, max_occurs=max_occurs, nillable=nillable,
             default=default, is_global=is_global)
 
-        self.document._elm_instances.append(element)
-
         # Only register global elements
         if is_global:
-            self.document.register_element(qname, element)
+            self.register_element(qname, element)
         return element
 
     def visit_attribute(self, node, parent):
         """Declares an attribute.
+
+        Definition::
 
             <attribute
               default = string
@@ -292,6 +368,12 @@ class SchemaVisitor(object):
               {any attributes with non-schema Namespace...}>
             Content: (annotation?, (simpleType?))
             </attribute>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         is_global = parent.tag == tags.schema
 
@@ -301,8 +383,7 @@ class SchemaVisitor(object):
             match = re.match('([^\[]+)', array_type)
             if match:
                 array_type = match.groups()[0]
-                qname = as_qname(
-                    array_type, node.nsmap, self.document._target_namespace)
+                qname = as_qname(array_type, node.nsmap)
                 array_type = xsd_types.UnresolvedType(qname, self.schema)
 
         # If the elment has a ref attribute then all other attributes cannot
@@ -314,9 +395,8 @@ class SchemaVisitor(object):
                 return result
 
         attribute_form = node.get('form', self.document._attribute_form)
-        qname = qname_attr(node, 'name', self.document._target_namespace)
         if attribute_form == 'qualified' or is_global:
-            name = qname
+            name = qname_attr(node, 'name', self.document._target_namespace)
         else:
             name = etree.QName(node.get('name'))
 
@@ -328,7 +408,7 @@ class SchemaVisitor(object):
             if node_type:
                 xsd_type = self._get_type(node_type)
             else:
-                xsd_type = xsd_builtins.AnyType()
+                xsd_type = xsd_types.AnyType()
 
         # TODO: We ignore 'prohobited' for now
         required = node.get('use') == 'required'
@@ -336,15 +416,16 @@ class SchemaVisitor(object):
 
         attr = xsd_elements.Attribute(
             name, type_=xsd_type, default=default, required=required)
-        self.document._elm_instances.append(attr)
 
         # Only register global elements
         if is_global:
-            self.document.register_attribute(qname, attr)
+            self.register_attribute(name, attr)
         return attr
 
     def visit_simple_type(self, node, parent):
         """
+        Definition::
+
             <simpleType
               final = (#all | (list | union | restriction))
               id = ID
@@ -352,6 +433,12 @@ class SchemaVisitor(object):
               {any attributes with non-schema Namespace}...>
             Content: (annotation?, (restriction | list | union))
             </simpleType>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
 
         if parent.tag == tags.schema:
@@ -380,23 +467,30 @@ class SchemaVisitor(object):
 
         assert xsd_type is not None
         if is_global:
-            self.document.register_type(qname, xsd_type)
+            self.register_type(qname, xsd_type)
         return xsd_type
 
     def visit_complex_type(self, node, parent):
         """
-        <complexType
-          abstract = Boolean : false
-          block = (#all | List of (extension | restriction))
-          final = (#all | List of (extension | restriction))
-          id = ID
-          mixed = Boolean : false
-          name = NCName
-          {any attributes with non-schema Namespace...}>
-        Content: (annotation?, (simpleContent | complexContent |
-                  ((group | all | choice | sequence)?,
-                  ((attribute | attributeGroup)*, anyAttribute?))))
-        </complexType>
+        Definition::
+
+            <complexType
+              abstract = Boolean : false
+              block = (#all | List of (extension | restriction))
+              final = (#all | List of (extension | restriction))
+              id = ID
+              mixed = Boolean : false
+              name = NCName
+              {any attributes with non-schema Namespace...}>
+            Content: (annotation?, (simpleContent | complexContent |
+                      ((group | all | choice | sequence)?,
+                      ((attribute | attributeGroup)*, anyAttribute?))))
+            </complexType>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
 
         """
         children = []
@@ -446,15 +540,17 @@ class SchemaVisitor(object):
                 element=element, attributes=attributes, qname=qname,
                 is_global=is_global)
         else:
-            xsd_type = xsd_cls(qname=qname)
+            xsd_type = xsd_cls(qname=qname, is_global=is_global)
 
         if is_global:
-            self.document.register_type(qname, xsd_type)
+            self.register_type(qname, xsd_type)
         return xsd_type
 
-    def visit_complex_content(self, node, parent, namespace=None):
+    def visit_complex_content(self, node, parent):
         """The complexContent element defines extensions or restrictions on a
         complex type that contains mixed content or elements only.
+
+        Definition::
 
             <complexContent
               id = ID
@@ -462,6 +558,12 @@ class SchemaVisitor(object):
               {any attributes with non-schema Namespace}...>
             Content: (annotation?,  (restriction | extension))
             </complexContent>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
 
         child = node.getchildren()[-1]
@@ -483,16 +585,24 @@ class SchemaVisitor(object):
                 'extension': base,
             }
 
-    def visit_simple_content(self, node, parent, namespace=None):
+    def visit_simple_content(self, node, parent):
         """Contains extensions or restrictions on a complexType element with
         character data or a simpleType element as content and contains no
         elements.
+
+        Definition::
 
             <simpleContent
               id = ID
               {any attributes with non-schema Namespace}...>
             Content: (annotation?, (restriction | extension))
             </simpleContent>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
 
         child = node.getchildren()[-1]
@@ -503,8 +613,10 @@ class SchemaVisitor(object):
             return self.visit_extension_simple_content(child, node)
         raise AssertionError("Expected restriction or extension")
 
-    def visit_restriction_simple_type(self, node, parent, namespace=None):
+    def visit_restriction_simple_type(self, node, parent):
         """
+        Definition::
+
             <restriction
               base = QName
               id = ID
@@ -515,6 +627,12 @@ class SchemaVisitor(object):
                     totalDigits |fractionDigits | length | minLength |
                     maxLength | enumeration | whiteSpace | pattern)*))
             </restriction>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         base_name = qname_attr(node, 'base')
         if base_name:
@@ -524,8 +642,10 @@ class SchemaVisitor(object):
         if children[0].tag == tags.simpleType:
             return self.visit_simple_type(children[0], node)
 
-    def visit_restriction_simple_content(self, node, parent, namespace=None):
+    def visit_restriction_simple_content(self, node, parent):
         """
+        Definition::
+
             <restriction
               base = QName
               id = ID
@@ -537,13 +657,21 @@ class SchemaVisitor(object):
                     maxLength | enumeration | whiteSpace | pattern)*
                 )?, ((attribute | attributeGroup)*, anyAttribute?))
             </restriction>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         base_name = qname_attr(node, 'base')
         base_type = self._get_type(base_name)
         return base_type, []
 
-    def visit_restriction_complex_content(self, node, parent, namespace=None):
+    def visit_restriction_complex_content(self, node, parent):
         """
+
+        Definition::
 
             <restriction
               base = QName
@@ -552,6 +680,12 @@ class SchemaVisitor(object):
             Content: (annotation?, (group | all | choice | sequence)?,
                     ((attribute | attributeGroup)*, anyAttribute?))
             </restriction>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         base_name = qname_attr(node, 'base')
         base_type = self._get_type(base_name)
@@ -570,6 +704,9 @@ class SchemaVisitor(object):
 
     def visit_extension_complex_content(self, node, parent):
         """
+
+        Definition::
+
             <extension
               base = QName
               id = ID
@@ -578,6 +715,12 @@ class SchemaVisitor(object):
                         (group | all | choice | sequence)?,
                         ((attribute | attributeGroup)*, anyAttribute?)))
             </extension>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         base_name = qname_attr(node, 'base')
         base_type = self._get_type(base_name)
@@ -597,6 +740,9 @@ class SchemaVisitor(object):
 
     def visit_extension_simple_content(self, node, parent):
         """
+
+        Definition::
+
             <extension
               base = QName
               id = ID
@@ -614,16 +760,27 @@ class SchemaVisitor(object):
     def visit_annotation(self, node, parent):
         """Defines an annotation.
 
+        Definition::
+
             <annotation
               id = ID
               {any attributes with non-schema Namespace}...>
             Content: (appinfo | documentation)*
             </annotation>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         return
 
     def visit_any(self, node, parent):
         """
+
+        Definition::
+
             <any
               id = ID
               maxOccurs = (nonNegativeInteger | unbounded) : 1
@@ -634,6 +791,12 @@ class SchemaVisitor(object):
               {any attributes with non-schema Namespace...}>
             Content: (annotation?)
             </any>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         min_occurs, max_occurs = _process_occurs_attrs(node)
         process_contents = node.get('processContents', 'strict')
@@ -643,6 +806,8 @@ class SchemaVisitor(object):
 
     def visit_sequence(self, node, parent):
         """
+        Definition::
+
             <sequence
               id = ID
               maxOccurs = (nonNegativeInteger | unbounded) : 1
@@ -651,6 +816,12 @@ class SchemaVisitor(object):
             Content: (annotation?,
                       (element | group | choice | sequence | any)*)
             </sequence>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
 
         sub_types = [
@@ -658,7 +829,7 @@ class SchemaVisitor(object):
             tags.group, tags.sequence
         ]
         min_occurs, max_occurs = _process_occurs_attrs(node)
-        result = xsd_indicators.Sequence(
+        result = xsd_elements.Sequence(
             min_occurs=min_occurs, max_occurs=max_occurs)
 
         annotation, items = self._pop_annotation(node.getchildren())
@@ -675,6 +846,8 @@ class SchemaVisitor(object):
         """Allows the elements in the group to appear (or not appear) in any
         order in the containing element.
 
+        Definition::
+
             <all
               id = ID
               maxOccurs= 1: 1
@@ -682,12 +855,18 @@ class SchemaVisitor(object):
               {any attributes with non-schema Namespace...}>
             Content: (annotation?, element*)
             </all>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
 
         sub_types = [
             tags.annotation, tags.element
         ]
-        result = xsd_indicators.All()
+        result = xsd_elements.All()
 
         for child in node.iterchildren():
             assert child.tag in sub_types, child
@@ -701,6 +880,8 @@ class SchemaVisitor(object):
         """Groups a set of element declarations so that they can be
         incorporated as a group into complex type definitions.
 
+        Definition::
+
             <group
               name= NCName
               id = ID
@@ -712,9 +893,16 @@ class SchemaVisitor(object):
             Content: (annotation?, (all | choice | sequence))
             </group>
 
-        """
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
 
-        result = self.process_reference(node)
+        """
+        min_occurs, max_occurs = _process_occurs_attrs(node)
+
+        result = self.process_reference(
+            node, min_occurs=min_occurs, max_occurs=max_occurs)
         if result:
             return result
 
@@ -725,14 +913,16 @@ class SchemaVisitor(object):
         child = children[0]
 
         item = self.process(child, parent)
-        elm = xsd_indicators.Group(name=qname, child=item)
+        elm = xsd_elements.Group(name=qname, child=item)
 
         if parent.tag == tags.schema:
-            self.document.register_group(qname, elm)
+            self.register_group(qname, elm)
         return elm
 
     def visit_list(self, node, parent):
         """
+        Definition::
+
             <list
               id = ID
               itemType = QName
@@ -742,6 +932,12 @@ class SchemaVisitor(object):
 
         The use of the simpleType element child and the itemType attribute is
         mutually exclusive.
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
 
         """
         item_type = qname_attr(node, 'itemType')
@@ -755,6 +951,8 @@ class SchemaVisitor(object):
 
     def visit_choice(self, node, parent):
         """
+        Definition::
+
             <choice
               id = ID
               maxOccurs= (nonNegativeInteger | unbounded) : 1
@@ -772,11 +970,13 @@ class SchemaVisitor(object):
         for child in children:
             elm = self.process(child, node)
             choices.append(elm)
-        return xsd_indicators.Choice(
+        return xsd_elements.Choice(
             choices, min_occurs=min_occurs, max_occurs=max_occurs)
 
     def visit_union(self, node, parent):
         """Defines a collection of multiple simpleType definitions.
+
+        Definition::
 
             <union
               id = ID
@@ -784,13 +984,19 @@ class SchemaVisitor(object):
               {any attributes with non-schema Namespace}...>
             Content: (annotation?, (simpleType*))
             </union>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         # TODO
         members = node.get('memberTypes')
         types = []
         if members:
             for member in members.split():
-                qname = as_qname(member, node.nsmap, self.document._target_namespace)
+                qname = as_qname(member, node.nsmap)
                 xsd_type = self._get_type(qname)
                 types.append(xsd_type)
         else:
@@ -803,18 +1009,28 @@ class SchemaVisitor(object):
         attribute or element values) must be unique within the specified scope.
         The value must be unique or nil.
 
+        Definition::
+
             <unique
               id = ID
               name = NCName
               {any attributes with non-schema Namespace}...>
             Content: (annotation?, (selector, field+))
             </unique>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         # TODO
         pass
 
     def visit_attribute_group(self, node, parent):
         """
+        Definition::
+
             <attributeGroup
               id = ID
               name = NCName
@@ -823,6 +1039,12 @@ class SchemaVisitor(object):
             Content: (annotation?),
                      ((attribute | attributeGroup)*, anyAttribute?))
             </attributeGroup>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         ref = self.process_reference(node)
         if ref:
@@ -833,10 +1055,12 @@ class SchemaVisitor(object):
 
         attributes = self._process_attributes(node, children)
         attribute_group = xsd_elements.AttributeGroup(qname, attributes)
-        self.document.register_attribute_group(qname, attribute_group)
+        self.register_attribute_group(qname, attribute_group)
 
     def visit_any_attribute(self, node, parent):
         """
+        Definition::
+
             <anyAttribute
               id = ID
               namespace = ((##any | ##other) |
@@ -845,6 +1069,12 @@ class SchemaVisitor(object):
               {any attributes with non-schema Namespace...}>
             Content: (annotation?)
             </anyAttribute>
+
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         process_contents = node.get('processContents', 'strict')
         return xsd_elements.AnyAttribute(process_contents=process_contents)
@@ -853,6 +1083,8 @@ class SchemaVisitor(object):
         """Contains the definition of a notation to describe the format of
         non-XML data within an XML document. An XML Schema notation declaration
         is a reconstruction of XML 1.0 NOTATION declarations.
+
+        Definition::
 
             <notation
               id = ID
@@ -863,17 +1095,18 @@ class SchemaVisitor(object):
             Content: (annotation?)
             </notation>
 
+        :param node: The XML node
+        :type node: lxml.etree._Element
+        :param parent: The parent XML node
+        :type parent: lxml.etree._Element
+
         """
         pass
 
     def _get_type(self, name):
         assert name is not None
         name = self._create_qname(name)
-        try:
-            retval = self.schema.get_type(name)
-        except (exceptions.NamespaceError, exceptions.LookupError):
-            retval = xsd_types.UnresolvedType(name, self.schema)
-        return retval
+        return xsd_types.UnresolvedType(name, self.schema)
 
     def _create_qname(self, name):
         if not isinstance(name, etree.QName):
@@ -911,11 +1144,14 @@ class SchemaVisitor(object):
     def _process_attributes(self, node, items):
         attributes = []
         for child in items:
-            attribute = self.process(child, node)
             if child.tag in (tags.attribute, tags.attributeGroup, tags.anyAttribute):
+                attribute = self.process(child, node)
                 attributes.append(attribute)
             else:
-                raise XMLParseError("Unexpected tag: %s" % child.tag)
+                raise XMLParseError(
+                    "Unexpected tag `%s`" % (child.tag),
+                    filename=self.document._location,
+                    sourceline=node.sourceline)
         return attributes
 
     visitors = {

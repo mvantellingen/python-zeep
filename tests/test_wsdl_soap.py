@@ -1,6 +1,8 @@
 from lxml import etree
+from pretend import stub
 
 from tests.utils import load_xml
+from zeep import Client
 from zeep.exceptions import Fault
 from zeep.wsdl import bindings
 
@@ -108,3 +110,149 @@ def test_soap12_process_error():
         assert exc.subcodes[0].localname == 'fault-subcode1'
         assert exc.subcodes[1].namespace == 'http://example.com/example2'
         assert exc.subcodes[1].localname == 'fault-subcode2'
+
+
+def test_no_content_type():
+    data = """
+        <?xml version="1.0"?>
+        <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:stoc="http://example.com/stockquote.xsd">
+           <soapenv:Header/>
+           <soapenv:Body>
+              <stoc:TradePrice>
+                 <price>120.123</price>
+              </stoc:TradePrice>
+           </soapenv:Body>
+        </soapenv:Envelope>
+    """.strip()
+
+    client = Client('tests/wsdl_files/soap.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=200,
+        content=data,
+        encoding='utf-8',
+        headers={}
+    )
+
+    result = binding.process_reply(
+        client, binding.get('GetLastTradePrice'), response)
+
+    assert result == 120.123
+
+
+def test_mime_multipart():
+    data = '\r\n'.join(line.strip() for line in """
+        --MIME_boundary
+        Content-Type: text/xml; charset=UTF-8
+        Content-Transfer-Encoding: 8bit
+        Content-ID: <claim061400a.xml@claiming-it.com>
+
+        <?xml version='1.0' ?>
+        <SOAP-ENV:Envelope
+        xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+        <SOAP-ENV:Body>
+        <claim:insurance_claim_auto id="insurance_claim_document_id"
+        xmlns:claim="http://schemas.risky-stuff.com/Auto-Claim">
+        <theSignedForm href="cid:claim061400a.tiff@claiming-it.com"/>
+        <theCrashPhoto href="cid:claim061400a.jpeg@claiming-it.com"/>
+        <!-- ... more claim details go here... -->
+        </claim:insurance_claim_auto>
+        </SOAP-ENV:Body>
+        </SOAP-ENV:Envelope>
+
+        --MIME_boundary
+        Content-Type: image/tiff
+        Content-Transfer-Encoding: base64
+        Content-ID: <claim061400a.tiff@claiming-it.com>
+
+        Li4uQmFzZTY0IGVuY29kZWQgVElGRiBpbWFnZS4uLg==
+
+        --MIME_boundary
+        Content-Type: image/jpeg
+        Content-Transfer-Encoding: binary
+        Content-ID: <claim061400a.jpeg@claiming-it.com>
+
+        ...Raw JPEG image..
+        --MIME_boundary--
+    """.splitlines()).encode('utf-8')
+
+    client = Client('tests/wsdl_files/claim.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=200,
+        content=data,
+        encoding='utf-8',
+        headers={
+            'Content-Type': 'multipart/related; type="text/xml"; start="<claim061400a.xml@claiming-it.com>"; boundary="MIME_boundary"'
+        }
+    )
+
+    result = binding.process_reply(
+        client, binding.get('GetClaimDetails'), response)
+
+    assert result.root is None
+    assert len(result.attachments) == 2
+
+    assert result.attachments[0].content == b'...Base64 encoded TIFF image...'
+    assert result.attachments[1].content == b'...Raw JPEG image..'
+
+
+def test_mime_multipart_no_encoding():
+    data = '\r\n'.join(line.strip() for line in """
+        --MIME_boundary
+        Content-Type: text/xml
+        Content-Transfer-Encoding: 8bit
+        Content-ID: <claim061400a.xml@claiming-it.com>
+
+        <?xml version='1.0' ?>
+        <SOAP-ENV:Envelope
+        xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+        <SOAP-ENV:Body>
+        <claim:insurance_claim_auto id="insurance_claim_document_id"
+        xmlns:claim="http://schemas.risky-stuff.com/Auto-Claim">
+        <theSignedForm href="cid:claim061400a.tiff@claiming-it.com"/>
+        <theCrashPhoto href="cid:claim061400a.jpeg@claiming-it.com"/>
+        <!-- ... more claim details go here... -->
+        </claim:insurance_claim_auto>
+        </SOAP-ENV:Body>
+        </SOAP-ENV:Envelope>
+
+        --MIME_boundary
+        Content-Type: image/tiff
+        Content-Transfer-Encoding: base64
+        Content-ID: <claim061400a.tiff@claiming-it.com>
+
+        Li4uQmFzZTY0IGVuY29kZWQgVElGRiBpbWFnZS4uLg==
+
+        --MIME_boundary
+        Content-Type: text/xml
+        Content-ID: <claim061400a.jpeg@claiming-it.com>
+
+        ...Raw JPEG image..
+        --MIME_boundary--
+    """.splitlines()).encode('utf-8')
+
+    client = Client('tests/wsdl_files/claim.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=200,
+        content=data,
+        encoding=None,
+        headers={
+            'Content-Type': 'multipart/related; type="text/xml"; start="<claim061400a.xml@claiming-it.com>"; boundary="MIME_boundary"'
+        }
+    )
+
+    result = binding.process_reply(
+        client, binding.get('GetClaimDetails'), response)
+
+    assert result.root is None
+    assert len(result.attachments) == 2
+
+    assert result.attachments[0].content == b'...Base64 encoded TIFF image...'
+    assert result.attachments[1].content == b'...Raw JPEG image..'

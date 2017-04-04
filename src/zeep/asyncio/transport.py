@@ -3,10 +3,13 @@ Adds asyncio support to Zeep. Contains Python 3.5+ only syntax!
 
 """
 import asyncio
+import logging
 
 import aiohttp
+from requests import Response
 
 from zeep.transports import Transport
+from zeep.utils import get_version
 from zeep.wsdl.utils import etree_to_string
 
 __all__ = ['AsyncTransport']
@@ -16,21 +19,27 @@ class AsyncTransport(Transport):
     """Asynchronous Transport class using aiohttp."""
     supports_async = True
 
-    def __init__(self, loop, *args, **kwargs):
+    def __init__(self, loop, cache=None, timeout=300, operation_timeout=None,
+                 session=None):
+
         self.loop = loop if loop else asyncio.get_event_loop()
-        super().__init__(*args, **kwargs)
+        self.cache = cache
+        self.load_timeout = timeout
+        self.operation_timeout = operation_timeout
+        self.logger = logging.getLogger(__name__)
 
-    def create_session(self):
-        connector = aiohttp.TCPConnector(verify_ssl=self.http_verify)
+        self.session = session or aiohttp.ClientSession(loop=self.loop)
+        self._close_session = session is None
+        self.session._default_headers['User-Agent'] = (
+            'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
-        return aiohttp.ClientSession(
-            connector=connector,
-            loop=self.loop,
-            headers=self.http_headers,
-            auth=self.http_auth)
+    def __del__(self):
+        if self._close_session:
+            self.session.close()
 
     def _load_remote_data(self, url):
         result = None
+
         async def _load_remote_data_async():
             nonlocal result
             with aiohttp.Timeout(self.load_timeout):
@@ -54,20 +63,21 @@ class AsyncTransport(Transport):
     async def post_xml(self, address, envelope, headers):
         message = etree_to_string(envelope)
         response = await self.post(address, message, headers)
-
-        from pretend import stub
-        return stub(
-            content=await response.read(),
-            status_code=response.status,
-            headers=response.headers)
+        return await self.new_response(response)
 
     async def get(self, address, params, headers):
         with aiohttp.Timeout(self.operation_timeout):
             response = await self.session.get(
                 address, params=params, headers=headers)
 
-            from pretend import stub
-            return await stub(
-                content=await response.read(),
-                status_code=response.status,
-                headers=response.headers)
+            return await self.new_response(response)
+
+    async def new_response(self, response):
+        """Convert an aiohttp.Response object to a requests.Response object"""
+        new = Response()
+        new._content = await response.read()
+        new.status_code = response.status
+        new.headers = response.headers
+        new.cookies = response.cookies
+        new.encoding = response.charset
+        return new

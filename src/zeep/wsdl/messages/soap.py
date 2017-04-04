@@ -1,3 +1,8 @@
+"""
+    zeep.wsdl.messages.soap
+    ~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 import copy
 from collections import OrderedDict
 
@@ -15,8 +20,19 @@ __all__ = [
 
 
 class SoapMessage(ConcreteMessage):
-    """Base class for the SOAP Document and RPC messages"""
+    """Base class for the SOAP Document and RPC messages
 
+    :param wsdl: The main wsdl document
+    :type wsdl: zeep.wsdl.Document
+    :param name:
+    :param operation: The operation to which this message belongs
+    :type operation: zeep.wsdl.bindings.soap.SoapOperation
+    :param type: 'input' or 'output'
+    :type type: str
+    :param nsmap: The namespace mapping
+    :type nsmap: dict
+
+    """
     def __init__(self, wsdl, name, operation, type, nsmap):
         super(SoapMessage, self).__init__(wsdl, name, operation)
         self.nsmap = nsmap
@@ -110,14 +126,16 @@ class SoapMessage(ConcreteMessage):
             if isinstance(self.envelope.type, xsd.ComplexType):
                 try:
                     if len(self.envelope.type.elements) == 1:
-                        return self.envelope.type.elements[0][1].type.signature()
+                        return self.envelope.type.elements[0][1].type.signature(
+                            schema=self.wsdl.types, standalone=False)
                 except AttributeError:
                     return None
-            return self.envelope.type.signature()
+            return self.envelope.type.signature(schema=self.wsdl.types, standalone=False)
 
-        parts = [self.body.type.signature()]
+        parts = [self.body.type.signature(schema=self.wsdl.types, standalone=False)]
         if self.header.type._element:
-            parts.append('_soapheaders={%s}' % self.header.signature())
+            parts.append('_soapheaders={%s}' % self.header.type.signature(
+                schema=self.wsdl.types, standalone=False))
         return ', '.join(part for part in parts if part)
 
     @classmethod
@@ -156,6 +174,8 @@ class SoapMessage(ConcreteMessage):
         body_data = None
         header_data = None
 
+        # After some profiling it turns out that .find() and .findall() in this
+        # case are twice as fast as the xpath method
         body = xmlelement.find('soap:body', namespaces=operation.binding.nsmap)
         if body is not None:
             body_data = cls._parse_body(body)
@@ -270,11 +290,16 @@ class SoapMessage(ConcreteMessage):
         elements from the body and the headers.
 
         """
-        all_elements = xsd.Sequence([
-            xsd.Element('body', self.body.type),
-            xsd.Element('header', self.header.type),
-        ])
-        return xsd.Element('envelope', xsd.ComplexType(all_elements))
+        all_elements = xsd.Sequence([])
+
+        if self.header.type._element:
+            all_elements.append(
+                xsd.Element('{%s}header' % self.nsmap['soap-env'], self.header.type))
+
+        all_elements.append(
+            xsd.Element('{%s}body' % self.nsmap['soap-env'], self.body.type))
+
+        return xsd.Element('{%s}envelope' % self.nsmap['soap-env'], xsd.ComplexType(all_elements))
 
     def _serialize_header(self, headers_value, nsmap):
         if not headers_value:
@@ -299,8 +324,12 @@ class SoapMessage(ConcreteMessage):
                 raise ValueError(
                     "_soapheaders only accepts a dictionary if the wsdl "
                     "defines the headers.")
+
+            # Only render headers for which we have a value
             headers_value = self.header(**headers_value)
-            self.header.type.render(header, headers_value)
+            for name, elm in self.header.type.elements:
+                if name in headers_value and headers_value[name] is not None:
+                    elm.render(header, headers_value[name], ['header', name])
         else:
             raise ValueError("Invalid value given to _soapheaders")
 
@@ -319,9 +348,9 @@ class SoapMessage(ConcreteMessage):
     def _resolve_header(self, info, definitions, parts):
         name = etree.QName(self.nsmap['soap-env'], 'Header')
 
-        sequence = xsd.Sequence()
+        container = xsd.All()
         if not info:
-            return xsd.Element(name, xsd.ComplexType(sequence))
+            return xsd.Element(name, xsd.ComplexType(container))
 
         for item in info:
             message_name = item['message'].text
@@ -337,13 +366,27 @@ class SoapMessage(ConcreteMessage):
                 element.attr_name = part_name
             else:
                 element = xsd.Element(part_name, part.type)
-            sequence.append(element)
-        return xsd.Element(name, xsd.ComplexType(sequence))
+            container.append(element)
+        return xsd.Element(name, xsd.ComplexType(container))
 
 
 class DocumentMessage(SoapMessage):
     """In the document message there are no additional wrappers, and the
     message parts appear directly under the SOAP Body element.
+
+    .. inheritance-diagram:: zeep.wsdl.messages.soap.DocumentMessage
+       :parts: 1
+
+    :param wsdl: The main wsdl document
+    :type wsdl: zeep.wsdl.Document
+    :param name:
+    :param operation: The operation to which this message belongs
+    :type operation: zeep.wsdl.bindings.soap.SoapOperation
+    :param type: 'input' or 'output'
+    :type type: str
+    :param nsmap: The namespace mapping
+    :type nsmap: dict
+
 
     """
 
@@ -398,6 +441,20 @@ class RpcMessage(SoapMessage):
     (parameter) appears under the wrapper, represented by an accessor named
     identically to the corresponding parameter of the call.  Parts are arranged
     in the same order as the parameters of the call.
+
+    .. inheritance-diagram:: zeep.wsdl.messages.soap.DocumentMessage
+       :parts: 1
+
+
+    :param wsdl: The main wsdl document
+    :type wsdl: zeep.wsdl.Document
+    :param name:
+    :param operation: The operation to which this message belongs
+    :type operation: zeep.wsdl.bindings.soap.SoapOperation
+    :param type: 'input' or 'output'
+    :type type: str
+    :param nsmap: The namespace mapping
+    :type nsmap: dict
 
     """
 

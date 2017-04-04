@@ -10,7 +10,8 @@ advanced routing of the SOAP messages.
 
 If the WSDL documnt defines that WSA is required then Zeep will automatically
 add the required headers to the SOAP envelope. In case you want to customize
-this then you can add the ``WsAddressPlugin()`` to the ``Client.plugins`` list.
+this then you can add the :class:`~zeep.wsa.WsAddressPlugin` to the
+:attr:`Client.plugins` list.
 
 For example:
 

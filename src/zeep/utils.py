@@ -1,15 +1,9 @@
+import cgi
 import inspect
 
-
 from lxml import etree
-
-
-class _NotSetClass(object):
-    def __repr__(self):
-        return 'NotSet'
-
-
-NotSet = _NotSetClass()
+from zeep.ns import XSD
+from zeep.exceptions import XMLParseError
 
 
 def qname_attr(node, attr_name, target_namespace=None):
@@ -18,11 +12,25 @@ def qname_attr(node, attr_name, target_namespace=None):
         return as_qname(value, node.nsmap, target_namespace)
 
 
-def as_qname(value, nsmap, target_namespace):
+def as_qname(value, nsmap, target_namespace=None):
     """Convert the given value to a QName"""
     if ':' in value:
         prefix, local = value.split(':')
-        namespace = nsmap.get(prefix, prefix)
+
+        # The xml: prefix is always bound to the XML namespace, see
+        # https://www.w3.org/TR/xml-names/
+        if prefix == 'xml':
+            namespace = 'http://www.w3.org/XML/1998/namespace'
+        else:
+            namespace = nsmap.get(prefix)
+
+        if not namespace:
+            raise XMLParseError("No namespace defined for %r" % prefix)
+
+        # Workaround for https://github.com/mvantellingen/python-zeep/issues/349
+        if not local:
+            return etree.QName(XSD, 'anyType')
+
         return etree.QName(namespace, local)
 
     if target_namespace:
@@ -65,3 +73,14 @@ def get_base_class(objects):
             break
         base_class = bases[0][i]
     return base_class
+
+
+def detect_soap_env(envelope):
+    root_tag = etree.QName(envelope)
+    return root_tag.namespace
+
+
+def get_media_type(value):
+    """Parse a HTTP content-type header and return the media-type"""
+    main_value, parameters = cgi.parse_header(value)
+    return main_value

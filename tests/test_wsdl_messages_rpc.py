@@ -153,7 +153,7 @@ def test_deserialize():
           </soap-env:Body>
         </soap-env:Envelope>
     """)
-    assert operation.output.signature(True) == 'body: {result: xsd:string}, header: {}'
+    assert operation.output.signature(True) == 'result: xsd:string'
     result = operation.output.deserialize(document)
     assert result == 'ah1'
 
@@ -381,7 +381,7 @@ def test_deserialize_rpc_literal():
     assert deserialized == 'foobar'
 
 
-def test_deserialize():
+def test_deserialize_x():
     wsdl_content = StringIO("""
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
@@ -398,8 +398,10 @@ def test_deserialize():
 
       <portType name="TestPortType">
         <operation name="clearFoo">
-          <input wsam:Action="http://foo.services.example.com/Util/clearFooRequest" message="tns:clearFoo"/>
-          <output wsam:Action="http://foo.services.example.com/Util/clearFooResponse" message="tns:clearFooResponse"/>
+          <input wsam:Action="http://foo.services.example.com/Util/clearFooRequest"
+                 message="tns:clearFoo"/>
+          <output wsam:Action="http://foo.services.example.com/Util/clearFooResponse"
+                  message="tns:clearFooResponse"/>
         </operation>
       </portType>
 

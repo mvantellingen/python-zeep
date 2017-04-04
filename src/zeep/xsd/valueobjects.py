@@ -1,8 +1,6 @@
 import copy
 from collections import OrderedDict
 
-import six
-
 from zeep.xsd.printer import PrettyPrinter
 
 __all__ = ['AnyObject', 'CompoundValue']
@@ -36,6 +34,7 @@ class AnyObject(object):
 
 
 class CompoundValue(object):
+    """Represents a data object for a specific xsd:complexType."""
 
     def __init__(self, *args, **kwargs):
         values = OrderedDict()
@@ -174,10 +173,10 @@ def _process_signature(xsd_type, args, kwargs):
     if available_kwargs:
         raise TypeError((
             "%s() got an unexpected keyword argument %r. " +
-            "Signature: (%s)"
+            "Signature: `%s`"
         ) % (
             xsd_type.qname or 'ComplexType',
             next(iter(available_kwargs)),
-            xsd_type.signature()))
+            xsd_type.signature(standalone=False)))
 
     return result

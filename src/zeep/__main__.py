@@ -5,8 +5,9 @@ import logging
 import logging.config
 import time
 
+import requests
 from six.moves.urllib.parse import urlparse
-from zeep.cache import InMemoryCache, SqliteCache
+from zeep.cache import SqliteCache
 from zeep.client import Client
 from zeep.transports import Transport
 
@@ -26,6 +27,9 @@ def parse_arguments(args=None):
         '--verbose', action='store_true', help='Enable verbose output')
     parser.add_argument(
         '--profile', help="Enable profiling and save output to given file")
+    parser.add_argument(
+        '--no-strict', action='store_true', default=False,
+        help="Disable strict mode")
     return parser.parse_args(args)
 
 
@@ -59,19 +63,21 @@ def main(args):
         profile = cProfile.Profile()
         profile.enable()
 
-    cache = SqliteCache() if args.cache else InMemoryCache()
-    transport_kwargs = {'cache': cache}
+    cache = SqliteCache() if args.cache else None
+    session = requests.Session()
 
     if args.no_verify:
-        transport_kwargs['verify'] = False
+        session.verify = False
 
     result = urlparse(args.wsdl_file)
     if result.username or result.password:
-        transport_kwargs['http_auth'] = (result.username, result.password)
+        session.auth = (result.username, result.password)
 
-    transport = Transport(**transport_kwargs)
+    transport = Transport(cache=cache, session=session)
     st = time.time()
-    client = Client(args.wsdl_file, transport=transport)
+
+    strict = not args.no_strict
+    client = Client(args.wsdl_file, transport=transport, strict=strict)
     logger.debug("Loading WSDL took %sms", (time.time() - st) * 1000)
 
     if args.profile:

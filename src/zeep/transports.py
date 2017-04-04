@@ -5,8 +5,7 @@ from contextlib import contextmanager
 import requests
 
 from six.moves.urllib.parse import urlparse
-from zeep.cache import SqliteCache
-from zeep.utils import NotSet, get_version
+from zeep.utils import get_version, get_media_type
 from zeep.wsdl.utils import etree_to_string
 
 
@@ -17,33 +16,21 @@ class Transport(object):
     :param timeout: The timeout for loading wsdl and xsd documents.
     :param operation_timeout: The timeout for operations (POST/GET). By
                               default this is None (no timeout).
-    :param verify: Boolean to indicate if the SSL certificate needs to be
-                   verified.
-    :param http_auth: HTTP authentication, passed to requests.
+    :param session: A :py:class:`request.Session()` object (optional)
 
     """
     supports_async = False
 
-    def __init__(self, cache=NotSet, timeout=300, operation_timeout=None,
-                 verify=True, http_auth=None):
-        self.cache = SqliteCache() if cache is NotSet else cache
+    def __init__(self, cache=None, timeout=300, operation_timeout=None,
+                 session=None):
+        self.cache = cache
         self.load_timeout = timeout
         self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)
 
-        self.http_verify = verify
-        self.http_auth = http_auth
-        self.http_headers = {
-            'User-Agent': 'Zeep/%s (www.python-zeep.org)' % (get_version())
-        }
-        self.session = self.create_session()
-
-    def create_session(self):
-        session = requests.Session()
-        session.verify = self.http_verify
-        session.auth = self.http_auth
-        session.headers = self.http_headers
-        return session
+        self.session = session or requests.Session()
+        self.session.headers['User-Agent'] = (
+            'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
     def get(self, address, params, headers):
         """Proxy to requests.get()
@@ -81,9 +68,15 @@ class Transport(object):
             timeout=self.operation_timeout)
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            log_message = response.content
-            if isinstance(log_message, bytes):
-                log_message = log_message.decode('utf-8')
+            media_type = get_media_type(
+                response.headers.get('Content-Type', 'text/xml'))
+
+            if media_type == 'multipart/related':
+                log_message = response.content
+            else:
+                log_message = response.content
+                if isinstance(log_message, bytes):
+                    log_message = log_message.decode('utf-8')
 
             self.logger.debug(
                 "HTTP Response from %s (status: %d):\n%s",

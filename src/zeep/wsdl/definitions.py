@@ -1,3 +1,20 @@
+"""
+    zeep.wsdl.definitions
+    ~~~~~~~~~~~~~~~~~~~~~
+
+    A WSDL document exists out of a number of definitions. There are 6 major
+    definitions, these are:
+
+     - types
+     - message
+     - portType
+     - binding
+     - port
+     - service
+
+    This module defines the definitions which occur within a WSDL document,
+
+"""
 from collections import OrderedDict, namedtuple
 
 from six import python_2_unicode_compatible
@@ -13,8 +30,8 @@ class AbstractMessage(object):
     extensible. WSDL defines several such message-typing attributes for use
     with XSD:
 
-        element: Refers to an XSD element using a QName.
-        type: Refers to an XSD simpleType or complexType using a QName.
+        - element: Refers to an XSD element using a QName.
+        - type: Refers to an XSD simpleType or complexType using a QName.
 
     """
     def __init__(self, name):
@@ -71,6 +88,8 @@ class PortType(object):
 @python_2_unicode_compatible
 class Binding(object):
     """Base class for the various bindings (SoapBinding / HttpBinding)
+
+    .. raw:: ascii
 
         Binding
            |
@@ -170,6 +189,9 @@ class Operation(object):
     @classmethod
     def parse(cls, wsdl, xmlelement, binding):
         """
+
+        Definition::
+
             <wsdl:operation name="nmtoken"> *
                <-- extensibility element (2) --> *
                <wsdl:input name="nmtoken"? > ?
@@ -182,12 +204,17 @@ class Operation(object):
                    <-- extensibility element (5) --> *
                </wsdl:fault>
             </wsdl:operation>
+
         """
         raise NotImplementedError()
 
 
 @python_2_unicode_compatible
 class Port(object):
+    """Specifies an address for a binding, thus defining a single communication
+    endpoint.
+
+    """
     def __init__(self, name, binding_name, xmlelement):
         self.name = name
         self._resolve_context = {
@@ -231,7 +258,9 @@ class Port(object):
 
 @python_2_unicode_compatible
 class Service(object):
+    """Used to aggregate a set of related ports.
 
+    """
     def __init__(self, name):
         self.ports = OrderedDict()
         self.name = name

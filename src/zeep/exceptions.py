@@ -1,5 +1,5 @@
 class Error(Exception):
-    def __init__(self, message):
+    def __init__(self, message=''):
         super(Exception, self).__init__(message)
         self.message = message
 
@@ -12,7 +12,18 @@ class XMLSyntaxError(Error):
 
 
 class XMLParseError(Error):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.filename = kwargs.pop('filename', None)
+        self.sourceline = kwargs.pop('sourceline', None)
+        super(XMLParseError, self).__init__(*args, **kwargs)
+
+    def __str__(self):
+        location = None
+        if self.filename and self.sourceline:
+            location = '%s:%s' % (self.filename, self.sourceline)
+        if location:
+            return '%s (%s)' % (self.message, location)
+        return self.message
 
 
 class UnexpectedElementError(Error):
@@ -28,7 +39,11 @@ class TransportError(Error):
 
 
 class LookupError(Error):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.qname = kwargs.pop('qname', None)
+        self.item_name = kwargs.pop('item_name', None)
+        self.location = kwargs.pop('location', None)
+        super(LookupError, self).__init__(*args, **kwargs)
 
 
 class NamespaceError(Error):
@@ -46,4 +61,20 @@ class Fault(Error):
 
 
 class ZeepWarning(RuntimeWarning):
+    pass
+
+
+class ValidationError(Error):
+    def __init__(self, *args, **kwargs):
+        self.path = kwargs.pop('path', [])
+        super(ValidationError, self).__init__(*args, **kwargs)
+
+    def __str__(self):
+        if self.path:
+            path = '.'.join(str(x) for x in self.path)
+            return '%s (%s)' % (self.message, path)
+        return self.message
+
+
+class SignatureVerificationFailed(Error):
     pass

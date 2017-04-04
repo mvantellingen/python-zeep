@@ -3,8 +3,7 @@ from lxml import etree
 
 from tests.utils import DummyTransport, load_xml
 from zeep import exceptions, xsd
-from zeep.exceptions import LookupError, ZeepWarning
-from zeep.xsd.builtins import Schema as Schema
+from zeep.xsd import Schema
 
 
 def test_default_types():
@@ -99,7 +98,7 @@ def test_invalid_localname_handling():
 
 def test_schema_repr_none():
     schema = xsd.Schema()
-    assert repr(schema) == "<Schema(location='<none>')>"
+    assert repr(schema) == "<Schema()>"
 
 
 def test_schema_repr_val():
@@ -112,7 +111,7 @@ def test_schema_repr_val():
             elementFormDefault="qualified">
         </xs:schema>
     """))
-    assert repr(schema) == "<Schema(location=None)>"
+    assert repr(schema) == "<Schema(location=None, tns='http://tests.python-zeep.org/')>"
 
 
 def test_schema_doc_repr_val():
@@ -395,9 +394,16 @@ def test_duplicate_target_namespace():
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/duplicate"
             targetNamespace="http://tests.python-zeep.org/duplicate"
             elementFormDefault="qualified">
-            <xsd:element name="elm-in-b" type="xsd:string"/>
+            <xsd:element name="elm-in-b" type="tns:item-c"/>
+            <xsd:complexType name="item-c">
+              <xsd:sequence>
+                <xsd:element name="item-a" type="xsd:string"/>
+                <xsd:element name="item-b" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
         </xsd:schema>
     """.strip())
 
@@ -405,9 +411,17 @@ def test_duplicate_target_namespace():
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/duplicate"
             targetNamespace="http://tests.python-zeep.org/duplicate"
             elementFormDefault="qualified">
-            <xsd:element name="elm-in-c" type="xsd:string"/>
+            <xsd:element name="elm-in-c" type="tns:item-c"/>
+            <xsd:complexType name="item-c">
+              <xsd:sequence>
+                <xsd:element name="item-a" type="xsd:string"/>
+                <xsd:element name="item-b" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
+
         </xsd:schema>
     """.strip())
 
@@ -417,8 +431,10 @@ def test_duplicate_target_namespace():
     transport.bind('http://tests.python-zeep.org/c.xsd', schema_c)
     schema = xsd.Schema(schema_a, transport=transport)
 
-    assert schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-b')
-    assert schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-c')
+    elm_b = schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-b')
+    elm_c = schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-c')
+    assert not isinstance(elm_b.type, xsd.UnresolvedType)
+    assert not isinstance(elm_c.type, xsd.UnresolvedType)
 
 
 def test_multiple_no_namespace():
@@ -628,6 +644,50 @@ def test_include_recursion():
     schema.get_element('{http://tests.python-zeep.org/b}bar')
 
 
+def test_include_no_default_namespace():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns="http://tests.python-zeep.org/tns"
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/tns"
+            elementFormDefault="qualified">
+
+            <xs:include
+                schemaLocation="http://tests.python-zeep.org/b.xsd"/>
+
+            <xs:element name="container" type="foo"/>
+        </xs:schema>
+    """.strip())
+
+    # include without default namespace, other xsd prefix
+    node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b">
+
+            <xsd:simpleType name="my-string">
+              <xsd:restriction base="xsd:boolean"/>
+            </xsd:simpleType>
+
+            <xsd:complexType name="foo">
+              <xsd:sequence>
+                <xsd:element name="item" type="my-string"/>
+              </xsd:sequence>
+
+            </xsd:complexType>
+        </xsd:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
+
+    schema = xsd.Schema(node_a, transport=transport)
+    item = schema.get_element('{http://tests.python-zeep.org/tns}container')
+    assert item
+
+
 def test_merge():
     node_a = etree.fromstring("""
         <?xml version="1.0"?>
@@ -658,3 +718,37 @@ def test_merge():
 
     schema_a.get_element('{http://tests.python-zeep.org/a}foo')
     schema_a.get_element('{http://tests.python-zeep.org/b}foo')
+
+
+def test_xml_namespace():
+    xmlns = load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xml="http://www.w3.org/XML/1998/namespace"
+            targetNamespace="http://www.w3.org/XML/1998/namespace"
+            elementFormDefault="qualified">
+          <xs:attribute name="lang" type="xs:string"/>
+        </xs:schema>
+    """)
+
+    transport = DummyTransport()
+    transport.bind('http://www.w3.org/2001/xml.xsd', xmlns)
+
+    xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+          <xs:import namespace="http://www.w3.org/XML/1998/namespace"
+                     schemaLocation="http://www.w3.org/2001/xml.xsd"/>
+          <xs:element name="container">
+            <xs:complexType>
+              <xs:sequence/>
+              <xs:attribute ref="xml:lang"/>
+            </xs:complexType>
+          </xs:element>
+        </xs:schema>
+    """), transport=transport)

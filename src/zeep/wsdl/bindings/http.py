@@ -3,6 +3,7 @@ import logging
 import six
 from lxml import etree
 
+from zeep import ns
 from zeep.exceptions import Fault
 from zeep.utils import qname_attr
 from zeep.wsdl import messages
@@ -11,9 +12,9 @@ from zeep.wsdl.definitions import Binding, Operation
 logger = logging.getLogger(__name__)
 
 NSMAP = {
-    'http': 'http://schemas.xmlsoap.org/wsdl/http/',
-    'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
-    'mime': 'http://schemas.xmlsoap.org/wsdl/mime/',
+    'http': ns.HTTP,
+    'wsdl': ns.WSDL,
+    'mime': ns.MIME,
 }
 
 
@@ -114,7 +115,7 @@ class HttpGetBinding(HttpBinding):
         :type node: lxml.etree._Element
 
         """
-        http_node = node.find(etree.QName(NSMAP['http'], 'binding'))
+        http_node = node.find(etree.QName(ns.HTTP, 'binding'))
         return http_node is not None and http_node.get('verb') == 'GET'
 
 
@@ -158,13 +159,13 @@ class HttpOperation(Operation):
                 message_node = node.getchildren()[0]
             message_class = None
             if message_node is not None:
-                if message_node.tag == etree.QName(NSMAP['http'], 'urlEncoded'):
+                if message_node.tag == etree.QName(ns.HTTP, 'urlEncoded'):
                     message_class = messages.UrlEncoded
-                elif message_node.tag == etree.QName(NSMAP['http'], 'urlReplacement'):
+                elif message_node.tag == etree.QName(ns.HTTP, 'urlReplacement'):
                     message_class = messages.UrlReplacement
-                elif message_node.tag == etree.QName(NSMAP['mime'], 'content'):
+                elif message_node.tag == etree.QName(ns.MIME, 'content'):
                     message_class = messages.MimeContent
-                elif message_node.tag == etree.QName(NSMAP['mime'], 'mimeXml'):
+                elif message_node.tag == etree.QName(ns.MIME, 'mimeXml'):
                     message_class = messages.MimeXML
 
             if message_class:

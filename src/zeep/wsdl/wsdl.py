@@ -1,13 +1,19 @@
+"""
+    zeep.wsdl.wsdl
+    ~~~~~~~~~~~~~~
+
+"""
 from __future__ import print_function
 
 import logging
 import operator
+import os
 from collections import OrderedDict
 
 import six
 from lxml import etree
 
-from zeep.parser import absolute_location, load_external, parse_xml
+from zeep.loader import absolute_location, is_relative_path, load_external
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
 from zeep.xsd import Schema
@@ -17,7 +23,6 @@ NSMAP = {
 }
 
 logger = logging.getLogger(__name__)
-
 
 class Document(object):
     """A WSDL Document exists out of one or more definitions.
@@ -32,27 +37,43 @@ class Document(object):
     resolves references which were not yet available during the initial
     parsing phase.
 
+
+    :param location: Location of this WSDL
+    :type location: string
+    :param transport: The transport object to be used
+    :type transport: zeep.transports.Transport
+    :param base: The base location of this document
+    :type base: str
+    :param strict: Indicates if strict mode is enabled
+    :type strict: bool
+
     """
 
-    def __init__(self, location, transport):
+    def __init__(self, location, transport, base=None, strict=True):
         """Initialize a WSDL document.
 
         The root definition properties are exposed as entry points.
 
-        :param location: Location of this WSDL
-        :type location: string
-        :param transport: The transport object to be used
-        :type transport: zeep.transports.Transport
-
         """
-        self.location = location if not hasattr(location, 'read') else None
+        if isinstance(location, six.string_types):
+            if is_relative_path(location):
+                location = os.path.abspath(location)
+            self.location = location
+        else:
+            self.location = base
+
         self.transport = transport
+        self.strict = strict
 
         # Dict with all definition objects within this WSDL
         self._definitions = {}
-        self.types = Schema([], transport=self.transport)
+        self.types = Schema(
+            node=None,
+            transport=self.transport,
+            location=self.location,
+            strict=self.strict)
 
-        document = self._load_content(location)
+        document = self._get_xml_document(location)
 
         root_definitions = Definition(self, document, self.location)
         root_definitions.resolve_imports()
@@ -67,8 +88,6 @@ class Document(object):
         return '<WSDL(location=%r)>' % self.location
 
     def dump(self):
-        namespaces = {v: k for k, v in self.types.prefix_map.items()}
-
         print('')
         print("Prefixes:")
         for prefix, namespace in self.types.prefix_map.items():
@@ -76,18 +95,14 @@ class Document(object):
 
         print('')
         print("Global elements:")
-        for elm_obj in sorted(self.types.elements, key=lambda k: six.text_type(k)):
-            value = six.text_type(elm_obj)
-            if hasattr(elm_obj, 'qname') and elm_obj.qname.namespace:
-                value = '%s:%s' % (namespaces[elm_obj.qname.namespace], value)
+        for elm_obj in sorted(self.types.elements, key=lambda k: k.qname):
+            value = elm_obj.signature(schema=self.types)
             print(' ' * 4, value)
 
         print('')
         print("Global types:")
         for type_obj in sorted(self.types.types, key=lambda k: k.qname or ''):
-            value = six.text_type(type_obj)
-            if getattr(type_obj, 'qname', None) and type_obj.qname.namespace:
-                value = '%s:%s' % (namespaces[type_obj.qname.namespace], value)
+            value = type_obj.signature(schema=self.types)
             print(' ' * 4, value)
 
         print('')
@@ -110,7 +125,7 @@ class Document(object):
                     print('%s%s' % (' ' * 12, six.text_type(operation)))
                 print('')
 
-    def _load_content(self, location):
+    def _get_xml_document(self, location):
         """Load the XML content from the given location and return an
         lxml.Element object.
 
@@ -118,15 +133,27 @@ class Document(object):
         :type location: string
 
         """
-        if hasattr(location, 'read'):
-            return parse_xml(location.read())
-        return load_external(location, self.transport, self.location)
+        return load_external(
+            location, self.transport, self.location, strict=self.strict)
+
+    def _add_definition(self, definition):
+        key = (definition.target_namespace, definition.location)
+        self._definitions[key] = definition
 
 
 class Definition(object):
-    """The Definition represents one wsdl:definition within a Document."""
+    """The Definition represents one wsdl:definition within a Document.
+
+    :param wsdl: The wsdl
+
+    """
 
     def __init__(self, wsdl, doc, location):
+        """fo
+
+        :param wsdl: The wsdl
+
+        """
         logger.debug("Creating definition for %s", location)
         self.wsdl = wsdl
         self.location = location
@@ -141,7 +168,7 @@ class Definition(object):
         self._resolved_imports = False
 
         self.target_namespace = doc.get('targetNamespace')
-        self.wsdl._definitions[self.target_namespace] = self
+        self.wsdl._add_definition(self)
         self.nsmap = doc.nsmap
 
         # Process the definitions
@@ -171,7 +198,16 @@ class Definition(object):
                 try:
                     return definition.get(name, key, _processed)
                 except IndexError:
-                    pass
+                    # Try to see if there is an item which has no namespace
+                    # but where the localname matches. This is basically for
+                    # #356 but in the future we should also ignore mismatching
+                    # namespaces as last fallback
+                    fallback_key = etree.QName(key).localname
+                    try:
+                        return definition.get(name, fallback_key, _processed)
+                    except IndexError:
+                        pass
+
         raise IndexError("No definition %r in %r found" % (key, name))
 
     def resolve_imports(self):
@@ -214,18 +250,20 @@ class Definition(object):
 
         """
         for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
-            location = import_node.get('location')
             namespace = import_node.get('namespace')
-            if namespace in self.wsdl._definitions:
-                self.imports[namespace] = self.wsdl._definitions[namespace]
+            location = import_node.get('location')
+            location = absolute_location(location, self.location)
+
+            key = (namespace, location)
+            if key in self.wsdl._definitions:
+                self.imports[key] = self.wsdl._definitions[key]
             else:
-                document = self.wsdl._load_content(location)
-                location = absolute_location(location, self.location)
+                document = self.wsdl._get_xml_document(location)
                 if etree.QName(document.tag).localname == 'schema':
                     self.types.add_documents([document], location)
                 else:
                     wsdl = Definition(self.wsdl, document, location)
-                    self.imports[namespace] = wsdl
+                    self.imports[key] = wsdl
 
     def parse_types(self, doc):
         """Return an xsd.Schema() instance for the given wsdl:types element.
@@ -236,6 +274,8 @@ class Definition(object):
 
         If the wsdl:types doesn't container an xml schema then an empty schema
         is returned instead.
+
+        Definition::
 
             <definitions .... >
                 <types>
@@ -265,6 +305,9 @@ class Definition(object):
 
     def parse_messages(self, doc):
         """
+
+        Definition::
+
             <definitions .... >
                 <message name="nmtoken"> *
                     <part name="nmtoken" element="qname"? type="qname"?/> *
@@ -284,6 +327,8 @@ class Definition(object):
 
     def parse_ports(self, doc):
         """Return dict with `PortType` instances as values
+
+        Definition::
 
             <wsdl:definitions .... >
                 <wsdl:portType name="nmtoken">
@@ -309,7 +354,7 @@ class Definition(object):
         HTTP Post. The detection of the type of bindings is done by the
         bindings themselves using the introspection of the xml nodes.
 
-        XML Structure::
+        Definition::
 
             <wsdl:definitions .... >
                 <wsdl:binding name="nmtoken" type="qname"> *
@@ -331,6 +376,9 @@ class Definition(object):
 
         :param doc: The source document
         :type doc: lxml.etree._Element
+        :returns: Dictionary with binding name as key and Binding instance as
+          value
+        :rtype: dict
 
         """
         result = {}
@@ -368,6 +416,9 @@ class Definition(object):
 
     def parse_service(self, doc):
         """
+
+        Definition::
+
             <wsdl:definitions .... >
                 <wsdl:service .... > *
                     <wsdl:port name="nmtoken" binding="qname"> *

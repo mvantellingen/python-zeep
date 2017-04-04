@@ -1,7 +1,7 @@
 .PHONY: install clean test retest coverage docs
 
 install:
-	pip install -e .[docs,test]
+	pip install -e .[docs,test,async]
 	pip install bumpversion twine wheel
 
 lint:
@@ -10,6 +10,7 @@ lint:
 
 clean:
 	find . -name '*.pyc' -delete
+	find . -name '__pycache__' -delete
 
 test:
 	py.test -vvv

@@ -1,8 +1,8 @@
+import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
-from zeep import xsd
-from zeep.xsd import builtins
+from zeep import exceptions, xsd
 from zeep.xsd.schema import Schema
 
 
@@ -23,7 +23,7 @@ def test_schema_empty():
         </schema>
     """)
     schema = parse_schema_node(node)
-    root = next(schema.documents)
+    root = schema._get_schema_documents('http://tests.python-zeep.org/')[0]
     assert root._element_form == 'qualified'
     assert root._attribute_form == 'unqualified'
 
@@ -67,7 +67,7 @@ def test_element_default_type():
     """)
     schema = parse_schema_node(node)
     element = schema.get_element('{http://tests.python-zeep.org/}foo')
-    assert isinstance(element.type, builtins.AnyType)
+    assert isinstance(element.type, xsd.AnyType)
 
 
 def test_element_simple_type_unresolved():
@@ -182,10 +182,15 @@ def test_attribute_required():
     xsd_element = schema.get_element('{http://tests.python-zeep.org/}foo')
     value = xsd_element()
 
+    with pytest.raises(exceptions.ValidationError):
+        node = render_node(xsd_element, value)
+
+    value.base = 'foo'
     node = render_node(xsd_element, value)
+
     expected = """
       <document>
-        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/" base=""/>
+        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/" base="foo"/>
       </document>
     """
     assert_nodes_equal(expected, node)

@@ -2,16 +2,8 @@ import base64
 import hashlib
 import os
 
-from lxml.builder import ElementMaker
-
+from zeep import ns
 from zeep.wsse import utils
-
-NSMAP = {
-    'wsse': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd',
-    'wsu': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd',
-}
-WSSE = ElementMaker(namespace=NSMAP['wsse'])
-WSU = ElementMaker(namespace=NSMAP['wsu'])
 
 
 class UsernameToken(object):
@@ -54,19 +46,19 @@ class UsernameToken(object):
         self.created = created
         self.use_digest = use_digest
 
-    def sign(self, envelope, headers):
+    def apply(self, envelope, headers):
         security = utils.get_security_header(envelope)
 
         # The token placeholder might already exists since it is specified in
         # the WSDL.
-        token = security.find('{%s}UsernameToken' % NSMAP['wsse'])
+        token = security.find('{%s}UsernameToken' % ns.WSSE)
         if token is None:
-            token = WSSE.UsernameToken()
+            token = utils.WSSE.UsernameToken()
             security.append(token)
 
         # Create the sub elements of the UsernameToken element
         elements = [
-            WSSE.Username(self.username)
+            utils.WSSE.Username(self.username)
         ]
         if self.password is not None or self.password_digest is not None:
             if self.use_digest:
@@ -82,7 +74,7 @@ class UsernameToken(object):
 
     def _create_password_text(self):
         return [
-            WSSE.Password(
+            utils.WSSE.Password(
                 self.password,
                 Type='%s#PasswordText' % self.username_token_profile_ns)
         ]
@@ -106,13 +98,13 @@ class UsernameToken(object):
             digest = self.password_digest
 
         return [
-            WSSE.Password(
+            utils.WSSE.Password(
                 digest,
                 Type='%s#PasswordDigest' % self.username_token_profile_ns
             ),
-            WSSE.Nonce(
+            utils.WSSE.Nonce(
                 base64.b64encode(nonce).decode('utf-8'),
                 EncodingType='%s#Base64Binary' % self.soap_message_secutity_ns
             ),
-            WSU.Created(timestamp)
+            utils.WSU.Created(timestamp)
         ]

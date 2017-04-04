@@ -26,8 +26,8 @@ def test_anyattribute():
     """))
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    assert container_elm.signature() == (
-        'foo: xsd:string, _attr_1: {}')
+    assert container_elm.signature(schema) == (
+        'ns0:container(foo: xsd:string, _attr_1: {})')
     obj = container_elm(foo='bar', _attr_1=OrderedDict([
         ('hiep', 'hoi'), ('hoi', 'hiep')
     ]))
@@ -73,7 +73,8 @@ def test_attribute_list_type():
     """))
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    assert container_elm.signature() == ('foo: xsd:string, lijst: xsd:int[]')
+    assert container_elm.signature(schema) == (
+        'ns0:container(foo: xsd:string, lijst: xsd:int[])')
     obj = container_elm(foo='bar', lijst=[1, 2, 3])
     expected = """
       <document>
@@ -341,7 +342,8 @@ def test_nested_attribute():
     """))
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    assert container_elm.signature() == 'item: {x: xsd:string, y: xsd:string}'
+    assert container_elm.signature(schema) == (
+        'ns0:container(item: {x: xsd:string, y: xsd:string})')
     obj = container_elm(item={'x': 'foo', 'y': 'bar'})
 
     expected = """
@@ -371,7 +373,7 @@ def test_attribute_union_type():
             <restriction base="xsd:string"/>
           </simpleType>
           <simpleType name="parent">
-            <union memberTypes="one two"/>
+            <union memberTypes="tns:one tns:two"/>
           </simpleType>
           <simpleType name="two">
             <restriction base="xsd:string"/>
@@ -418,3 +420,48 @@ def test_attribute_union_type_inline():
 
     attr = schema.get_attribute('{http://tests.python-zeep.org/}something')
     assert attr('foo') == 'foo'
+
+
+def test_attribute_value_retrieval():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <complexType name="Address">
+            <sequence>
+              <element name="Street" type="tns:Street"/>
+            </sequence>
+          </complexType>
+          <complexType name="Street">
+            <sequence>
+                <element name="Name" type="string"/>
+                <element name="Something" type="string" minOccurs="0"/>
+            </sequence>
+            <attribute name="ID" type="int" use="required"/>
+            <attribute name="Postcode" type="string"/>
+          </complexType>
+        </schema>
+    """))
+
+    Addr = schema.get_type('{http://tests.python-zeep.org/}Address')
+
+    address = Addr()
+    address.Street = {
+        'ID': 100,
+        'Name': 'Foo',
+    }
+
+    expected = """
+      <document>
+        <ns0:Street xmlns:ns0="http://tests.python-zeep.org/" ID="100">
+            <ns0:Name>Foo</ns0:Name>
+        </ns0:Street>
+      </document>
+    """
+
+    node = etree.Element('document')
+    Addr.render(node, address)
+    assert_nodes_equal(expected, node)

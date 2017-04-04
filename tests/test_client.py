@@ -2,12 +2,10 @@ import os
 
 import pytest
 import requests_mock
-from lxml import etree
 
-from zeep import client
-from zeep import xsd
-from zeep.exceptions import Error
 from tests.utils import load_xml
+from zeep import client, xsd
+from zeep.exceptions import Error
 
 
 def test_bind():
@@ -43,6 +41,13 @@ def test_service_proxy_non_existing():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
     with pytest.raises(AttributeError):
         assert client_obj.service.NonExisting
+
+
+def test_open_from_file_object():
+    with open('tests/wsdl_files/soap_transport_err.wsdl', 'rb') as fh:
+        client_obj = client.Client(fh)
+        service = client_obj.bind()
+        assert service
 
 
 def test_client_no_wsdl():

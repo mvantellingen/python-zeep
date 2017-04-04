@@ -1,9 +1,95 @@
-0.25.0 (unreleased)
+1.4.1 (2017-04-01)
+------------------
+ - The previous release (1.4.0) contained an incorrect dependency due to 
+   bumpversion moving all 1.3.0 versions to 1.4.0. This fixes it.
+
+
+1.4.0 (2017-04-01)
+------------------
+ - Hardcode the xml prefix to the xml namespace as defined in the specs (#367)
+ - Fix parsing of unbound sequences within xsd choices (#380)
+ - Use logger.debug() for debug related logging (#369)
+ - Add the ``Client.raw_response`` option to let zeep return the raw 
+   transport response (requests.Response) instead of trying to parse it.
+ - Handle minOccurs/maxOccurs properlhy for xsd:Group elements. This also 
+   fixes a bug in the xsd:Choice handling for multiple elements (#374, #410)
+ - Fix raising XMLSyntaxError when loading invalid XML (Antanas Sinica, #396)
+
+
+1.3.0 (2017-03-14)
+------------------
+ - Add support for nested xsd:choice elements (#370)
+ - Fix unresolved elements for xsd:extension, this was a regression introduced
+   in 1.2.0 (#377)
+
+
+1.2.0 (2017-03-12)
+------------------
+ - Add flag to disable strict mode in the Client. This allows zeep to better
+   work with non standard compliant SOAP Servers. See the documentation for
+   usage and potential downsides.
+ - Minor refactor of resolving of elements for improved performance
+ - Support the SOAP 1.2 'http://www.w3.org/2003/05/soap/bindings/HTTP/' 
+   transport uri (#355)
+ - Fallback to matching wsdl lookups to matching when the target namespace is
+   empty (#356)
+ - Improve the handling of xsd:includes, the default namespace of the parent
+   schema is now also used during resolving of the included schema. (#360)
+ - Properly propagate the global flag for complex types when an xsd:restriction
+   is used (#360)
+ - Filter out duplicate types and elements when dump the wsdl schema (#360)
+ - Add ``zeep.CachingClient()`` which enables the SqliteCache by default
+
+
+1.1.0 (2017-02-18)
+------------------
+ - Fix an attribute error when an complexType used xsd:anyType as base 
+   restriction (#352)
+ - Update asyncio transport to return requests.Response objects (#335)
+
+ 
+1.0.0 (2017-01-31)
+------------------
+ - Use cgi.parse_header() to extract media_type for multipart/related checks 
+   (#327)
+ - Don't ignore nil elements, instead return None when parsing xml (#328)
+ - Fix regression when using WSA with an older lxml version (#197)
+
+
+0.27.0 (2017-01-28)
 -------------------
+ - Add support for SOAP attachments (multipart responses). (Dave Wapstra, #302)
+ - Update xsd:anyType to return the xml elements when no type is given via the
+   xsi:type attribute (#284)
+ - Fix parsing Any elements when a restriction is used (soap-enc:array) (#322)
+
+
+0.26.0 (2017-01-26)
+-------------------
+This release again introduces some backwords incompatibilties. The next release
+will hopefully be 1.0 which will introduce semver.
+
+ - **backwards-incompatible**: The Transport class now accepts a 
+   ``requests.Session()`` object instead of ``http_auth`` and ``verify``. This
+   allows for more flexibility.
+ - **backwards-incompatible**: Zeep no longer sets a default cache backend.
+   Please see http://docs.python-zeep.org/en/master/transport.html#caching for
+   information about how to configure a cache.
+ - Add ``zeep.xsd.SkipValue`` which instructs the serialize to ignore the 
+   element.
+ - Support duplicate target namespaces in the wsdl definition (#320)
+ - Fix resolving element/types for xsd schema's with duplicate tns (#319)
+
+
+0.25.0 (2017-01-23)
+-------------------
+ - **Important:** Add basic validation against the xsd. It currently will only
+   validate the minOccurs/maxOccurs but this will be extended in the future.
  - Add support for duplicate namespace definitions. Previously imports for
    namespaces which were already imported were ignored. It will now search
    through all matching schemas with the tns to find a specific object (#204)
  - Fix xsd:extension for sequence -> choice. (#257)
+ - Improve serializing attributes when the values were passed as a dict (#125)
 
 
 0.24.0 (2016-12-16)

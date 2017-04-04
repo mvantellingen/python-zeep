@@ -293,104 +293,6 @@ def test_complex_type_init_args():
     assert obj.Email == 'j.doe@example.com'
 
 
-def test_group():
-    node = etree.fromstring("""
-        <?xml version="1.0"?>
-        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                   xmlns:tns="http://tests.python-zeep.org/"
-                   targetNamespace="http://tests.python-zeep.org/"
-                   elementFormDefault="qualified">
-
-          <xs:element name="Address">
-            <xs:complexType>
-              <xs:group ref="tns:Name" />
-            </xs:complexType>
-          </xs:element>
-
-          <xs:group name="Name">
-            <xs:sequence>
-              <xs:element name="first_name" type="xs:string" />
-              <xs:element name="last_name" type="xs:string" />
-            </xs:sequence>
-          </xs:group>
-
-        </xs:schema>
-    """.strip())
-    schema = xsd.Schema(node)
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-
-    obj = address_type(first_name='foo', last_name='bar')
-
-    node = etree.Element('document')
-    address_type.render(node, obj)
-    expected = """
-        <document>
-            <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
-                <ns0:first_name>foo</ns0:first_name>
-                <ns0:last_name>bar</ns0:last_name>
-            </ns0:Address>
-        </document>
-    """
-    assert_nodes_equal(expected, node)
-
-
-def test_group_for_type():
-    node = etree.fromstring("""
-        <?xml version="1.0"?>
-        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                   xmlns:tns="http://tests.python-zeep.org/"
-                   targetNamespace="http://tests.python-zeep.org/"
-                   elementFormDefault="unqualified">
-
-          <xs:element name="Address" type="tns:AddressType" />
-
-          <xs:complexType name="AddressType">
-            <xs:sequence>
-              <xs:group ref="tns:NameGroup"/>
-              <xs:group ref="tns:AddressGroup"/>
-            </xs:sequence>
-          </xs:complexType>
-
-          <xs:group name="NameGroup">
-            <xs:sequence>
-              <xs:element name="first_name" type="xs:string" />
-              <xs:element name="last_name" type="xs:string" />
-            </xs:sequence>
-          </xs:group>
-
-          <xs:group name="AddressGroup">
-            <xs:annotation>
-              <xs:documentation>blub</xs:documentation>
-            </xs:annotation>
-            <xs:sequence>
-              <xs:element name="city" type="xs:string" />
-              <xs:element name="country" type="xs:string" />
-            </xs:sequence>
-          </xs:group>
-        </xs:schema>
-    """.strip())
-    schema = xsd.Schema(node)
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-
-    obj = address_type(
-        first_name='foo', last_name='bar',
-        city='Utrecht', country='The Netherlands')
-
-    node = etree.Element('document')
-    address_type.render(node, obj)
-    expected = """
-        <document>
-            <ns0:Address xmlns:ns0="http://tests.python-zeep.org/">
-                <first_name>foo</first_name>
-                <last_name>bar</last_name>
-                <city>Utrecht</city>
-                <country>The Netherlands</country>
-            </ns0:Address>
-        </document>
-    """
-    assert_nodes_equal(expected, node)
-
-
 def test_element_ref_missing_namespace():
     # For buggy soap servers (#170)
     node = etree.fromstring("""
@@ -774,7 +676,7 @@ def test_complex_type_empty():
     schema = xsd.Schema(node)
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    obj = container_elm()
+    obj = container_elm(something={})
 
     node = etree.Element('document')
     container_elm.render(node, obj)

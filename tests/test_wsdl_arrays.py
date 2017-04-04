@@ -168,6 +168,15 @@ def test_complex_type_without_name():
         </document>
     """
     assert_nodes_equal(expected, node)
+    data = ArrayOfObject.parse_xmlelement(node, schema)
+
+    assert len(data._value_1) == 3
+    assert data._value_1[0]['attr_1'] == 'attr-1'
+    assert data._value_1[0]['attr_2'] == 'attr-2'
+    assert data._value_1[1]['attr_1'] == 'attr-3'
+    assert data._value_1[1]['attr_2'] == 'attr-4'
+    assert data._value_1[2]['attr_1'] == 'attr-5'
+    assert data._value_1[2]['attr_2'] == 'attr-6'
 
 
 def test_soap_array_parse_remote_ns():
@@ -275,9 +284,12 @@ def test_wsdl_array_type():
 
     array = array_elm([item_1, item_2])
     node = etree.Element('document')
-    assert array_elm.signature() == (
-        '_value_1: base[], arrayType: xsd:string, offset: arrayCoordinate, ' +
-        'id: xsd:ID, href: xsd:anyURI, _attr_1: {}')
+    assert array_elm.signature(schema=schema) == 'ns0:array(ns0:array)'
+
+    array_type = schema.get_type('ns0:array')
+    assert array_type.signature(schema=schema) == (
+        'ns0:array(_value_1: base[], arrayType: xsd:string, ' +
+        'offset: ns1:arrayCoordinate, id: xsd:ID, href: xsd:anyURI, _attr_1: {})')
     array_elm.render(node, array)
     expected = """
         <document>

@@ -1,3 +1,8 @@
+"""
+    zeep.wsdl.messages.base
+    ~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 from collections import namedtuple
 
 from zeep import xsd
@@ -31,15 +36,17 @@ class ConcreteMessage(object):
             if isinstance(self.body.type, xsd.ComplexType):
                 try:
                     if len(self.body.type.elements) == 1:
-                        return self.body.type.elements[0][1].type.signature()
+                        return self.body.type.elements[0][1].type.signature(
+                            schema=self.wsdl.types, standalone=False)
                 except AttributeError:
                     return None
 
-            return self.body.type.signature()
+            return self.body.type.signature(schema=self.wsdl.types, standalone=False)
 
-        parts = [self.body.type.signature()]
+        parts = [self.body.type.signature(schema=self.wsdl.types, standalone=False)]
         if getattr(self, 'header', None):
-            parts.append('_soapheaders={%s}' % self.header.signature())
+            parts.append('_soapheaders={%s}' % self.header.signature(
+                schema=self.wsdl.types), standalone=False)
         return ', '.join(part for part in parts if part)
 
     @classmethod

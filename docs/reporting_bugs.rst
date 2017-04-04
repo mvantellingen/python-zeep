@@ -37,7 +37,7 @@ Errors when creating the request
 --------------------------------
 
 Create a new python script using the code below. The first argument to the
-create_message method is the name of the operation/method and after that the
+:meth:`create_message` method is the name of the operation/method and after that the
 args / kwargs you normally pass.
 
 .. code-block:: python
@@ -79,7 +79,7 @@ example is the following.
     client = Client('YOUR-WSDL')
     response = pretend.stub(
         status_code=200,
-        headers=[],
+        headers={},
         content="""
             <!-- The response from the server -->
         """)

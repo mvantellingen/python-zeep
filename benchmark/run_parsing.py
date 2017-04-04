@@ -36,7 +36,7 @@ def main(enable_profile=False, items=100):
 
     response = pretend.stub(
         status_code=200,
-        headers=[],
+        headers={},
         content=data)
 
     operation = client.service._binding._operations['GetItemList']

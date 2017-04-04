@@ -4,7 +4,7 @@ from pretend import stub
 from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
-from zeep import wsa, wsdl, Client
+from zeep import Client, wsa, wsdl
 
 
 def test_require_wsa(recwarn, monkeypatch):
