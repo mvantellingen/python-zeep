@@ -10,6 +10,9 @@ based on http://stackoverflow.com/questions/35558812/how-to-send-multipart-relat
 
 This works for me.
 """
+from os.path import basename
+import random
+import string
 from email.mime.application import MIMEApplication
 from email.encoders import encode_7or8bit
 from email.mime.multipart import MIMEMultipart
@@ -20,12 +23,17 @@ from zeep.transports import Transport
 from zeep.wsdl.utils import etree_to_string
 from zeep.xsd import builtins
 from zeep.wsdl.bindings import http
+from zeep.wsdl import wsdl
 import zeep.ns
+from zeep import client
 BOUND = "MTOM".center(40, "=")
-XOP_LINK = "http://www.w3.org/2004/08/xop/include"
+# XOP_LINK = "http://www.w3.org/2004/08/xop/include"
 FILETAG = 'xop:Include:'
+ID_LEN = 16
+func_getid = lambda N: ''.join(
+    random.SystemRandom().choice(string.ascii_uppercase + string.digits)
+    for _ in range(N))
 
-# Let's patch the Base64Binary data type.
 # I need it my WSDL uses it for the data part.
 def xmlvalue(self, value):
     """Patch for xmlvalue"""
@@ -39,29 +47,26 @@ def pythonvalue(self, value):
         return value
     return b64decode(value)
 
-builtins.Base64Binary.accepted_types += (etree.Element, )
-builtins.Base64Binary.xmlvalue = xmlvalue
-builtins.Base64Binary.pythonvalue = pythonvalue
-# Base64Binary patched.
-# Update NSMAP
-zeep.ns.xop = "http://www.w3.org/2004/08/xop/include"
-zeep.ns.xmime5 = "http://www.w3.org/2005/05/xmlmime"
-http.NSMAP.update({
-    "xop": zeep.ns.xop,
-    "xmime5": zeep.ns.xmime5
-})
-
-def attach(filename):
-    """Returns the placeholder for the file."""
-    return FILETAG + filename
+def patch_things():
+    """Patches something"""
+    # Let's patch the Base64Binary data type.
+    builtins.Base64Binary.accepted_types += (etree.Element, )
+    builtins.Base64Binary.xmlvalue = xmlvalue
+    builtins.Base64Binary.pythonvalue = pythonvalue
+    # Base64Binary patched.
+    # Update NSMAP
+    zeep.ns.XOP = "http://www.w3.org/2004/08/xop/include"
+    zeep.ns.XMIME5 = "http://www.w3.org/2005/05/xmlmime"
+    # attach method for the client.
+    zeep.Client.attach = _client_attach
 
 def set_attachnode(node):
     """Set the attachment node"""
-    filename = node.text[len(FILETAG):]
+    cid = node.text[len(FILETAG):]
     node.text = None
     etree.SubElement(
-        node, '{{{}}}Include'.format(XOP_LINK), href="cid:{}".format(filename))
-    return filename
+        node, '{{{}}}Include'.format(zeep.ns.XOP), href="cid:{}".format(cid))
+    return cid
 
 def get_multipart():
     """Get the main multipart object"""
@@ -80,45 +85,32 @@ def get_envelopepart(envelope):
     part.add_header('Content-Transfer-Encoding', 'binary')
     return part
 
-def get_attachpart(filename):
-    """The file part"""
-    part = MIMEBase("*", "*")
-    part['Content-Transfer-Encoding'] = "binary"
-    part['Content-ID'] = "<{}>".format(filename)
-    part.set_payload(open(filename, 'rb').read())
-    del part['mime-version']
-    return part
+def _client_attach(self, filename):
+    """add attachment"""
+    attach = Attachment(filename)
+    self.transport.attachments[attach.cid] = attach
+    return attach.tag
 
-def set_attachs(filetags, envelope, headers):
-    """Set mtom attachs and return the right envelope"""
-    # let's get the mtom multi part.
-    mtom_part = get_multipart()
-    # let's set xop:Include for al the files.
-    # we need to do this before get the envelope part.
-    files = [set_attachnode(f) for f in filetags]
-    # get the envelope part.
-    env_part = get_envelopepart(envelope)
-    # attach the env_part to the multipart.
-    mtom_part.attach(env_part)
-    # for each filename in files.
-    for filename in files:
-        # attach the filepart to the multipart.
-        mtom_part.attach(get_attachpart(filename))
-    # some other stuff.
-    bound = '--{}'.format(mtom_part.get_boundary())
-    marray = mtom_part.as_string().split(bound)
-    mtombody = bound
-    mtombody += bound.join(marray[1:])
-    mtom_part.add_header("Content-Length", str(len(mtombody)))
-    headers.update(dict(mtom_part.items()))
-    message = mtom_part.as_string().split('\n\n', 1)[1]
-    message = message.replace('\n', '\r\n', 5)
-    # return the messag for the post.
-    return message
+
+class Attachment(object):
+    """Attachment class"""
+    def __init__(self, filename):
+        self.filename = filename
+        self.basename = basename(self.filename)
+        self.cid = func_getid(ID_LEN) + ":" + self.basename
+        self.tag = FILETAG + self.cid
 
 
 class TransportWithAttach(Transport):
     """Transport with attachment"""
+
+    def __init__(self, cache=None, timeout=300, operation_timeout=None,
+                 session=None):
+        self.attachments = {}
+        patch_things()
+        super(TransportWithAttach, self).__init__(
+            cache=cache, timeout=timeout, operation_timeout=operation_timeout,
+            session=session)
 
     def post_xml(self, address, envelope, headers):
         # Search for values that startswith FILETAG
@@ -126,9 +118,46 @@ class TransportWithAttach(Transport):
             "//*[starts-with(text(), '{}')]".format(FILETAG))
         # if there is some attached file we set the attachments
         if filetags:
-            message = set_attachs(filetags, envelope, headers)
+            message = self.set_attachs(filetags, envelope, headers)
         # else just the envelope
         else:
             message = etree_to_string(envelope)
         # post the data.
         return self.post(address, message, headers)
+
+    def set_attachs(self, filetags, envelope, headers):
+        """Set mtom attachs and return the right envelope"""
+        # let's get the mtom multi part.
+        mtom_part = get_multipart()
+        # let's set xop:Include for al the files.
+        # we need to do this before get the envelope part.
+        files = [set_attachnode(f) for f in filetags]
+        # get the envelope part.
+        env_part = get_envelopepart(envelope)
+        # attach the env_part to the multipart.
+        mtom_part.attach(env_part)
+        # for each filename in files.
+        for cid in files:
+            # attach the filepart to the multipart.
+            mtom_part.attach(self.get_attachpart(cid))
+        # some other stuff.
+        bound = '--{}'.format(mtom_part.get_boundary())
+        marray = mtom_part.as_string().split(bound)
+        mtombody = bound
+        mtombody += bound.join(marray[1:])
+        mtom_part.add_header("Content-Length", str(len(mtombody)))
+        headers.update(dict(mtom_part.items()))
+        message = mtom_part.as_string().split('\n\n', 1)[1]
+        message = message.replace('\n', '\r\n', 5)
+        # return the messag for the post.
+        return message
+
+    def get_attachpart(self, cid):
+        """The file part"""
+        attach = self.attachments[cid]
+        part = MIMEBase("*", "*")
+        part['Content-Transfer-Encoding'] = "binary"
+        part['Content-ID'] = "<{}>".format(attach.cid)
+        part.set_payload(open(attach.filename, 'rb').read())
+        del part['mime-version']
+        return part
