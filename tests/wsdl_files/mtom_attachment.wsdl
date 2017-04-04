@@ -8,6 +8,7 @@
     xmlns:wsp1_2="http://schemas.xmlsoap.org/ws/2004/09/policy"
     xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xop="http://www.w3.org/2004/08/xop/include"
     targetNamespace="http://test.ellethee.org/" name="MtomAttachment">
     <documentation>
         Service: MtomAttachment

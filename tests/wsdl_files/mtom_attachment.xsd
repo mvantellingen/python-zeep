@@ -2,6 +2,7 @@
 <xsd:schema
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:ns0="http://test.ellethee.org/"
+    xmlns:xop="http://www.w3.org/2004/08/xop/include"
     targetNamespace="http://test.ellethee.org/">
     <xsd:complexType name="upload">
         <xsd:sequence>
