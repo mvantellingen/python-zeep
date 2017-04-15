@@ -33,11 +33,29 @@ class AnyObject(object):
         return self.xsd_obj
 
 
+def _unpickle_compound_value(name, values):
+    """Helper function to recreate pickled CompoundValue.
+
+    See CompoundValue.__reduce__
+
+    """
+    cls = type(name, (CompoundValue,), {
+        '_xsd_type': None, '__module__': 'zeep.objects'
+    })
+    obj = cls()
+    obj.__values__ = values
+    return obj
+
+
 class CompoundValue(object):
     """Represents a data object for a specific xsd:complexType."""
 
     def __init__(self, *args, **kwargs):
         values = OrderedDict()
+
+        # Can be done after unpickle
+        if self._xsd_type is None:
+            return
 
         # Set default values
         for container_name, container in self._xsd_type.elements_nested:
@@ -56,6 +74,9 @@ class CompoundValue(object):
         for key, value in items.items():
             values[key] = value
         self.__values__ = values
+
+    def __reduce__(self):
+        return (_unpickle_compound_value, (self.__class__.__name__, self.__values__,))
 
     def __contains__(self, key):
         return self.__values__.__contains__(key)
