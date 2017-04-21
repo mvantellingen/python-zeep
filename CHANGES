@@ -1,3 +1,11 @@
+1.5.0 (unreleased)
+------------------
+ - Fix issue where values of indicators (sequence/choice/all) would
+   write to the same internal dict. (#425)
+ - Set default XML parse mode to strict as was intended (#332)
+ - Add support for pickling value objects (#417)
+
+
 1.4.1 (2017-04-01)
 ------------------
  - The previous release (1.4.0) contained an incorrect dependency due to 
