@@ -17,6 +17,12 @@
           <element minOccurs="0" maxOccurs="1" name="Email" type="string"/>
         </sequence>
       </complexType>
+      <complexType name="ArrayOfAddress">
+          <sequence>
+              <element name="Address" type="tns:Address" minOccurs="0" maxOccurs="unbounded"/>
+          </sequence>
+      </complexType>
+
       <element name="Fault1">
         <complexType>
           <sequence>

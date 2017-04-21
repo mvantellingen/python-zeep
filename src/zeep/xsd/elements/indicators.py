@@ -21,7 +21,7 @@ class Indicator(Base):
         return '<%s(%s)>' % (
             self.__class__.__name__, super(Indicator, self).__repr__())
 
-    @threaded_cached_property
+    @property
     def default_value(self):
         values = OrderedDict([
             (name, element.default_value) for name, element in self.elements
