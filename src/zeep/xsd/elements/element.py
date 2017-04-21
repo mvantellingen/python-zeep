@@ -6,7 +6,7 @@ from lxml import etree
 from zeep import exceptions
 from zeep.exceptions import UnexpectedElementError
 from zeep.utils import qname_attr
-from zeep.xsd.const import NotSet, xsi_ns
+from zeep.xsd.const import Nil, NotSet, xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import max_occurs_iter, create_prefixed_name
@@ -176,6 +176,12 @@ class Element(Base):
 
     def _render_value_item(self, parent, value, render_path):
         """Render the value on the parent lxml.Element"""
+
+        if value is Nil:
+            elm = etree.SubElement(parent, self.qname)
+            elm.set(xsi_ns('nil'), 'true')
+            return
+
         if value is None or value is NotSet:
             if self.is_optional:
                 return

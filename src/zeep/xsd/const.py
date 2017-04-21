@@ -22,3 +22,4 @@ class _StaticIdentity(object):
 
 NotSet = _StaticIdentity('NotSet')
 SkipValue = _StaticIdentity('SkipValue')
+Nil = _StaticIdentity('Nil')

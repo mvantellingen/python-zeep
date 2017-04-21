@@ -3,7 +3,7 @@
     --------
 
 """
-from zeep.xsd.const import SkipValue  # noqa
+from zeep.xsd.const import Nil, SkipValue  # noqa
 from zeep.xsd.elements import *  # noqa
 from zeep.xsd.schema import Schema  # noqa
 from zeep.xsd.types import *  # noqa
