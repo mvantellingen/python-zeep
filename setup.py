@@ -1,4 +1,5 @@
 import re
+import sys
 
 from setuptools import find_packages, setup
 
@@ -18,10 +19,7 @@ docs_require = [
     'sphinx>=1.4.0',
 ]
 
-async_require = [
-    'aiohttp>=1.0',
-    'aioresponses>=0.1.3',
-]
+async_require = []  # see below
 
 xmlsec_require = [
     'xmlsec>=0.6.1',
@@ -41,6 +39,12 @@ tests_require = [
     'flake8-blind-except==0.1.1',
     'flake8-debugger==1.4.0',
 ]
+
+
+if sys.version_info > (3, 4, 2):
+    async_require.append('aiohttp>=1.0')
+    tests_require.append('aioresponses>=0.1.3')
+
 
 with open('README.rst') as fh:
     long_description = re.sub(
