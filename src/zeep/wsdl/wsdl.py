@@ -8,11 +8,13 @@ from __future__ import print_function
 import logging
 import operator
 import os
+import warnings
 from collections import OrderedDict
 
 import six
 from lxml import etree
 
+from zeep.exceptions import IncompleteMessage
 from zeep.loader import absolute_location, is_relative_path, load_external
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
@@ -23,6 +25,7 @@ NSMAP = {
 }
 
 logger = logging.getLogger(__name__)
+
 
 class Document(object):
     """A WSDL Document exists out of one or more definitions.
@@ -320,9 +323,13 @@ class Definition(object):
         """
         result = {}
         for msg_node in doc.findall("wsdl:message", namespaces=NSMAP):
-            msg = parse.parse_abstract_message(self, msg_node)
-            result[msg.name.text] = msg
-            logger.debug("Adding message: %s", msg.name.text)
+            try:
+                msg = parse.parse_abstract_message(self, msg_node)
+            except IncompleteMessage as exc:
+                warnings.warn(str(exc))
+            else:
+                result[msg.name.text] = msg
+                logger.debug("Adding message: %s", msg.name.text)
         return result
 
     def parse_ports(self, doc):
