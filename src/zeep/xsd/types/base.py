@@ -15,6 +15,10 @@ class Type(object):
     def accept(self, value):
         raise NotImplementedError
 
+    @property
+    def accepted_types(self):
+        return tuple()
+
     def validate(self, value, required=False):
         return
 

@@ -7,6 +7,7 @@
  - Add explicit Nil value via ``zeep.xsd.Nil`` (#424)
  - Add xml_huge_tree kwarg to the Client() to enable lxml's huge_tree mode,
    this is disabled by default (#332)
+ - Add support to pass base-types to type extensions (#416)
  
 
 1.4.1 (2017-04-01)

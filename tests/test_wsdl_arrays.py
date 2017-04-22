@@ -1,12 +1,14 @@
 import io
 
+import pytest
 from lxml import etree
 
-from tests.utils import DummyTransport, assert_nodes_equal, load_xml
+from tests.utils import DummyTransport, assert_nodes_equal, load_xml, render_node
 from zeep import xsd
 
 
-def get_transport():
+@pytest.fixture(scope='function')
+def transport():
     transport = DummyTransport()
     transport.bind(
         'http://schemas.xmlsoap.org/soap/encoding/',
@@ -14,7 +16,7 @@ def get_transport():
     return transport
 
 
-def test_simple_type():
+def test_simple_type(transport):
     schema = xsd.Schema(load_xml("""
     <xsd:schema
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -30,7 +32,7 @@ def test_simple_type():
         </xsd:complexContent>
       </xsd:complexType>
     </xsd:schema>
-    """), transport=get_transport())
+    """), transport=transport)
 
     ArrayOfString = schema.get_type('ns0:ArrayOfString')
     print(ArrayOfString.__dict__)
@@ -53,7 +55,7 @@ def test_simple_type():
     assert_nodes_equal(expected, node)
 
 
-def test_complex_type():
+def test_complex_type(transport):
     schema = xsd.Schema(load_xml("""
     <xsd:schema
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -80,7 +82,7 @@ def test_complex_type():
         </xsd:complexContent>
       </xsd:complexType>
     </xsd:schema>
-    """), transport=get_transport())
+    """), transport=transport)
 
     ArrayOfObject = schema.get_type('ns0:ArrayOfObject')
     ArrayObject = schema.get_type('ns0:ArrayObject')
@@ -113,7 +115,7 @@ def test_complex_type():
     assert_nodes_equal(expected, node)
 
 
-def test_complex_type_without_name():
+def test_complex_type_without_name(transport):
     schema = xsd.Schema(load_xml("""
     <xsd:schema
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -137,7 +139,7 @@ def test_complex_type_without_name():
         </xsd:complexContent>
       </xsd:complexType>
     </xsd:schema>
-    """), transport=get_transport())
+    """), transport=transport)
 
     ArrayOfObject = schema.get_type('ns0:ArrayOfObject')
     ArrayObject = schema.get_type('ns0:ArrayObject')
@@ -370,3 +372,76 @@ def test_soap_array_parse():
     assert data.FlagDetailsStruct[0].Value == 'value1'
     assert data.FlagDetailsStruct[1].Name == 'flag2'
     assert data.FlagDetailsStruct[1].Value == 'value2'
+
+
+def test_xml_soap_enc_string(transport):
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+          <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+
+          <xsd:element name="value" type="tns:ArrayOfString"/>
+
+          <xsd:complexType name="ArrayOfString">
+            <xsd:complexContent>
+              <xsd:restriction base="soapenc:Array">
+                <xsd:attribute ref="soapenc:arrayType" wsdl:arrayType="soapenc:string[]"/>
+              </xsd:restriction>
+            </xsd:complexContent>
+          </xsd:complexType>
+
+        </xsd:schema>
+    """), transport)
+    shoe_type = schema.get_element('{http://tests.python-zeep.org/}value')
+
+    obj = shoe_type(["foo"])
+    node = render_node(shoe_type, obj)
+    expected = """
+        <document>
+            <ns0:value xmlns:ns0="http://tests.python-zeep.org/">
+              <string>foo</string>
+            </ns0:value>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    obj = shoe_type.parse(node[0], schema)
+    assert obj._value_1[0]['_value_1'] == "foo"
+
+    # Via string-types
+    string_type = schema.get_type('{http://schemas.xmlsoap.org/soap/encoding/}string')
+    obj = shoe_type([string_type('foo')])
+    node = render_node(shoe_type, obj)
+    expected = """
+        <document>
+            <ns0:value xmlns:ns0="http://tests.python-zeep.org/">
+              <string>foo</string>
+            </ns0:value>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    obj = shoe_type.parse(node[0], schema)
+    assert obj._value_1[0]['_value_1'] == "foo"
+
+    # Via dicts
+    string_type = schema.get_type('{http://schemas.xmlsoap.org/soap/encoding/}string')
+    obj = shoe_type([{'_value_1': 'foo'}])
+    node = render_node(shoe_type, obj)
+    expected = """
+        <document>
+            <ns0:value xmlns:ns0="http://tests.python-zeep.org/">
+              <string>foo</string>
+            </ns0:value>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+
+    obj = shoe_type.parse(node[0], schema)
+    assert obj._value_1[0]['_value_1'] == "foo"

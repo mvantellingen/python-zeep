@@ -700,4 +700,3 @@ def test_restrict_on_ref():
 
     type_cls = schema.get_type('ns0:type')
     assert type_cls.signature()
-

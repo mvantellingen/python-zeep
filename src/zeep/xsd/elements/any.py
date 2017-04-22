@@ -181,9 +181,10 @@ class Any(Base):
         # Check if we received a proper value object. If we receive the wrong
         # type then return a nice error message
         if self.restrict:
-            expected_types = (etree._Element,) + self.restrict.accepted_types
+            expected_types = (etree._Element, dict,) + self.restrict.accepted_types
         else:
-            expected_types = (etree._Element, AnyObject)
+            expected_types = (etree._Element,  dict,AnyObject)
+
         if not isinstance(value, expected_types):
             type_names = [
                 '%s.%s' % (t.__module__, t.__name__) for t in expected_types
@@ -225,7 +226,7 @@ class AnyAttribute(Base):
         return self
 
     def render(self, parent, value, render_path=None):
-        if value is None:
+        if value in (None, NotSet):
             return
 
         for name, val in value.items():

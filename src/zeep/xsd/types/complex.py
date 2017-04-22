@@ -33,6 +33,7 @@ class ComplexType(AnyType):
         self._attributes = attributes or []
         self._restriction = restriction
         self._extension = extension
+        self._extension_types = tuple()
         super(ComplexType, self).__init__(qname=qname, is_global=is_global)
 
     def __call__(self, *args, **kwargs):
@@ -40,7 +41,7 @@ class ComplexType(AnyType):
 
     @property
     def accepted_types(self):
-        return (self._value_class,)
+        return (self._value_class,) + self._extension_types
 
     @threaded_cached_property
     def _value_class(self):
@@ -190,6 +191,15 @@ class ComplexType(AnyType):
             child_path = render_path + [name]
             attribute.render(parent, attr_value, child_path)
 
+        if (
+            len(self.elements_nested) == 1
+            and isinstance(value, self.accepted_types)
+            and not isinstance(value, (list, dict, CompoundValue))
+        ):
+            element = self.elements_nested[0][1]
+            element.type.render(parent, value, None, child_path)
+            return
+
         # Render sub elements
         for name, element in self.elements_nested:
             if isinstance(element, Element) or element.accepts_multiple:
@@ -199,6 +209,7 @@ class ComplexType(AnyType):
                 element_value = value
                 child_path = list(render_path)
 
+            # We want to explicitly skip this sub-element
             if element_value is SkipValue:
                 continue
 
@@ -239,15 +250,9 @@ class ComplexType(AnyType):
         if isinstance(value, dict):
             return self(**value)
 
-        # Check if the valueclass only expects one value, in that case
-        # we can try to automatically create an object for it.
-        if len(self.attributes) + len(self.elements) == 1:
-            return self(value)
-
-        raise ValueError((
-            "Error while create XML for complexType '%s': "
-            "Expected instance of type %s, received %r instead."
-        ) % (self.qname or name, self._value_class, type(value)))
+        # Try to automatically create an object. This might fail if there
+        # are multiple required arguments.
+        return self(value)
 
     def resolve(self):
         """Resolve all sub elements and types"""
@@ -278,7 +283,7 @@ class ComplexType(AnyType):
         return self._resolved
 
     def extend(self, base):
-        """Create a new complextype instance which is the current type
+        """Create a new ComplexType instance which is the current type
         extending the given base type.
 
         Used for handling xsd:extension tags
@@ -337,6 +342,8 @@ class ComplexType(AnyType):
             attributes=attributes,
             qname=self.qname,
             is_global=self.is_global)
+
+        new._extension_types = base.accepted_types
         return new
 
     def restrict(self, base):
