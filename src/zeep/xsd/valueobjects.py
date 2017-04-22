@@ -129,6 +129,9 @@ class CompoundValue(object):
                 setattr(new, attr, value)
         return new
 
+    def __json__(self):
+        return self.__values__
+
 
 def _process_signature(xsd_type, args, kwargs):
     """Return a dict with the args/kwargs mapped to the field name.

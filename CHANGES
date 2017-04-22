@@ -1,4 +1,9 @@
-1.5.0 (unreleased)
+1.6.0 (unreleased)
+------------------
+ - Implement ValueObject.__json__ for json serialization (#258)
+
+
+1.5.0 (2017-04-22)
 ------------------
  - Fix issue where values of indicators (sequence/choice/all) would
    write to the same internal dict. (#425)

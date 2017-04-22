@@ -423,3 +423,17 @@ def test_pickle():
     assert obj.item_2 == 'y'
     assert obj_rt.item_1 == 'x'
     assert obj_rt.item_2 == 'y'
+
+
+def test_json():
+    xsd_type = xsd.ComplexType(
+        xsd.Sequence([
+            xsd.Element('item_1', xsd.String()),
+            xsd.Element('item_2', xsd.String())
+        ]))
+
+    obj = xsd_type(item_1='x', item_2='y')
+    assert obj.__json__() == {
+        'item_1': 'x',
+        'item_2': 'y',
+    }
