@@ -12,6 +12,20 @@ Otherwise the first service and first port within that service are used as the
 default.
 
 
+.. _client_cache:
+
+Caching of WSDL and XSD files
+------------------------------
+When the client is initialised it will automaticaly retrieve the wsdl file
+passed as argument. This wsdl file generally references various other wsdl and
+xsd files. By default Zeep doesn't cache these files but it is however 
+advised to enable this for performance reasons.
+
+Please see :ref:`transport_caching` how to enable this. To make it easy to
+use the ``zeep.CachingClient()`` automatically creates a Transport object 
+with SqliteCache enabled.
+
+
 Strict mode
 -----------
 By default zeep will operate in 'strict' mode. This can be disabled if you are
@@ -47,8 +61,6 @@ it you can do the following:
         # response is now a regular requests.Response object
         assert response.status_code == 200
         assert response.content
-
-
 
 
 The ServiceProxy object

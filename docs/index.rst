@@ -102,7 +102,7 @@ See ``python -mzeep --help`` for more information about this command.
 
 .. note:: Zeep follows `semver`_ for versioning, however bugs can always occur.  
           So as always pin the version of zeep you tested with 
-          (e.g. ``zeep==1.4.0``').
+          (e.g. ``zeep==1.4.1``').
 
 
 .. _semver: http://semver.org/
@@ -131,6 +131,13 @@ endpoint you can run the following command in your terminal.
     python -mzeep http://www.soapclient.com/xml/soapresponder.wsdl
 
 
+.. note::
+
+    Note that unlike suds, zeep doesn't enable caching of the wsdl documents
+    by default. This means that everytime you initialize the client requests
+    are done to retrieve the wsdl contents. 
+
+
 User guide
 ==========
 
@@ -139,8 +146,8 @@ User guide
 
    in_depth
    client
-   headers
    transport
+   headers
    datastructures
    attachments
    wsa

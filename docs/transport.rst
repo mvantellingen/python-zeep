@@ -35,8 +35,11 @@ seconds:
         transport=transport)
 
 
+.. _transport_caching:
+
 Caching
 -------
+
 By default zeep doesn't use a caching backend.  For performance benefits it is
 advised to use the SqliteCache backend.  It caches the WSDL and XSD files for
 1 hour by default. To use the cache backend init the client with:
