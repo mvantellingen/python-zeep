@@ -235,6 +235,11 @@ class All(OrderIndicator):
 
     """
 
+    def __init__(self, elements=None, min_occurs=1, max_occurs=1,
+                 consume_other=False):
+        super(All, self).__init__(elements, min_occurs, max_occurs)
+        self._consume_other = consume_other
+
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Consume matching xmlelements
 
@@ -269,6 +274,9 @@ class All(OrderIndicator):
                 result[name] = element.parse_xmlelements(
                     sub_elements, schema, context=context)
 
+        if self._consume_other and xmlelements:
+            result['_raw_elements'] = list(xmlelements)
+            xmlelements.clear()
         return result
 
 

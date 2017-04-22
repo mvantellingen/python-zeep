@@ -1,6 +1,8 @@
 1.6.0 (unreleased)
 ------------------
  - Implement ValueObject.__json__ for json serialization (#258)
+ - Improve handling of unexpected elements for soap:header (#378)
+ - Accept unexpected elements in complexTypes when strict is False 
 
 
 1.5.0 (2017-04-22)

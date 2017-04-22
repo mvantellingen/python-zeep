@@ -194,6 +194,12 @@ def _process_signature(xsd_type, args, kwargs):
                 available_kwargs.remove(attribute_name)
                 result[attribute_name] = kwargs[attribute_name]
 
+    # _raw_elements is a special kwarg used for unexpected unparseable xml
+    # elements (e.g. for soap:header or when strict is disabled)
+    if '_raw_elements' in available_kwargs and kwargs['_raw_elements']:
+        result['_raw_elements'] = kwargs['_raw_elements']
+        available_kwargs.remove('_raw_elements')
+
     if available_kwargs:
         raise TypeError((
             "%s() got an unexpected keyword argument %r. " +

@@ -256,3 +256,38 @@ def test_mime_multipart_no_encoding():
 
     assert result.attachments[0].content == b'...Base64 encoded TIFF image...'
     assert result.attachments[1].content == b'...Raw JPEG image..'
+
+
+def test_unexpected_headers():
+    data = """
+        <?xml version="1.0"?>
+        <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:stoc="http://example.com/stockquote.xsd">
+           <soapenv:Header>
+             <stoc:IamUnexpected>uhoh</stoc:IamUnexpected>
+           </soapenv:Header>
+           <soapenv:Body>
+              <stoc:TradePrice>
+                 <price>120.123</price>
+              </stoc:TradePrice>
+           </soapenv:Body>
+        </soapenv:Envelope>
+    """.strip()
+
+    client = Client('tests/wsdl_files/soap_header.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=200,
+        content=data,
+        encoding='utf-8',
+        headers={}
+    )
+
+    result = binding.process_reply(
+        client, binding.get('GetLastTradePrice'), response)
+
+    assert result.body.price == 120.123
+    assert result.header.body is None
+    assert len(result.header._raw_elements) == 1
