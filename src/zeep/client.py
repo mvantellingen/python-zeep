@@ -108,12 +108,15 @@ class Client(object):
                       first port defined in the service element in the WSDL
                       document.
     :param plugins: a list of Plugin instances
+    :param xml_huge_tree: disable lxml/libxml2 security restrictions and
+                          support very deep trees and very long text content
 
 
     """
 
     def __init__(self, wsdl, wsse=None, transport=None,
-                 service_name=None, port_name=None, plugins=None, strict=True):
+                 service_name=None, port_name=None, plugins=None,
+                 strict=True, xml_huge_tree=False):
         if not wsdl:
             raise ValueError("No URL given for the wsdl")
 
@@ -121,6 +124,7 @@ class Client(object):
         self.wsdl = Document(wsdl, self.transport, strict=strict)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
+        self.xml_huge_tree = xml_huge_tree
 
         # options
         self.raw_response = False
