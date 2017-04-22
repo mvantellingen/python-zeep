@@ -190,12 +190,15 @@ def verify_envelope(envelope, certfile):
     Expects a document like that found in the sample XML in the ``sign()``
     docstring.
 
-    Raise SignatureValidationFailed on failure, silent on success.
+    Raise SignatureVerificationFailed on failure, silent on success.
 
     """
     soap_env = detect_soap_env(envelope)
 
     header = envelope.find(QName(soap_env, 'Header'))
+    if not header:
+        raise SignatureVerificationFailed()
+
     security = header.find(QName(ns.WSSE, 'Security'))
     signature = security.find(QName(ns.DS, 'Signature'))
 
