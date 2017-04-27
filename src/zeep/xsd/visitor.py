@@ -252,11 +252,24 @@ class SchemaVisitor(object):
             new = etree.Element(schema_node.tag, nsmap=nsmap)
             for child in schema_node:
                 new.append(child)
+            for key, value in schema_node.attrib.items():
+                new.set(key, value)
             schema_node = new
 
-        # Iterate directly over the children
+        # Use the element/attribute form defaults from the schema while
+        # processing the nodes.
+        element_form_default = self.document._element_form
+        attribute_form_default = self.document._attribute_form
+
+        self.document._element_form = schema_node.get('elementFormDefault', 'unqualified')
+        self.document._attribute_form = schema_node.get('attributeFormDefault', 'unqualified')
+
+        # Iterate directly over the children.
         for child in schema_node:
             self.process(child, parent=schema_node)
+
+        self.document._element_form = element_form_default
+        self.document._attribute_form = attribute_form_default
 
     def visit_element(self, node, parent):
         """
