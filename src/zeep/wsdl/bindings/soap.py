@@ -150,7 +150,10 @@ class SoapBinding(Binding):
             content = response.content
 
         try:
-            doc = parse_xml(content, self.transport, xml_huge_tree=client.xml_huge_tree)
+            doc = parse_xml(
+                content, self.transport,
+                strict=client.wsdl.strict,
+                xml_huge_tree=client.xml_huge_tree)
         except XMLSyntaxError:
             raise TransportError(
                 u'Server returned HTTP status %d (%s)'
