@@ -65,8 +65,11 @@ class Element(Base):
 
     @property
     def default_value(self):
-        value = [] if self.accepts_multiple else self.default
-        return value
+        if self.accepts_multiple:
+            return []
+        if self.is_optional:
+            return None
+        return self.default
 
     def clone(self, name=None, min_occurs=1, max_occurs=1):
         new = copy.copy(self)

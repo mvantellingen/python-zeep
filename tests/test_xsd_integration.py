@@ -449,25 +449,26 @@ def test_defaults():
           <xsd:element name="container">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="foo" type="xsd:string" default="hoi"/>
+                <xsd:element name="item_1" type="xsd:string" default="hoi"/>
+                <xsd:element name="item_2" type="xsd:string" default="hoi" minOccurs="0"/>
               </xsd:sequence>
-              <xsd:attribute name="bar" type="xsd:string" default="hoi"/>
+              <xsd:attribute name="attr_1" type="xsd:string" default="hoi"/>
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """.strip())
+    """))
 
-    schema = xsd.Schema(node)
     container_type = schema.get_element(
         '{http://tests.python-zeep.org/}container')
     obj = container_type()
-    assert obj.foo == "hoi"
-    assert obj.bar == "hoi"
+    assert obj.item_1 == "hoi"
+    assert obj.item_2 is None
+    assert obj.attr_1 == "hoi"
 
     expected = """
       <document>
-        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" bar="hoi">
-          <ns0:foo>hoi</ns0:foo>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" attr_1="hoi">
+          <ns0:item_1>hoi</ns0:item_1>
         </ns0:container>
       </document>
     """
@@ -475,9 +476,22 @@ def test_defaults():
     container_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
+    obj.item_2 = 'ok'
 
-def test_defaults_parse():
-    node = etree.fromstring("""
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" attr_1="hoi">
+          <ns0:item_1>hoi</ns0:item_1>
+          <ns0:item_2>ok</ns0:item_2>
+        </ns0:container>
+      </document>
+    """
+    node = etree.Element('document')
+    container_type.render(node, obj)
+    assert_nodes_equal(expected, node)
+
+def test_xml_defaults_parse():
+    schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -487,28 +501,27 @@ def test_defaults_parse():
           <xsd:element name="container">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="foo" type="xsd:string" default="hoi" minOccurs="0"/>
+                <xsd:element name="item_1" type="xsd:string" default="hoi" minOccurs="0"/>
               </xsd:sequence>
-              <xsd:attribute name="bar" type="xsd:string" default="hoi"/>
+              <xsd:attribute name="attr_1" type="xsd:string" default="hoi"/>
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """.strip())
+    """))
 
-    schema = xsd.Schema(node)
     container_elm = schema.get_element(
         '{http://tests.python-zeep.org/}container')
 
     node = load_xml("""
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
-          <ns0:foo>hoi</ns0:foo>
+          <ns0:item_1>hoi</ns0:item_1>
         </ns0:container>
     """)
     item = container_elm.parse(node, schema)
-    assert item.bar == 'hoi'
+    assert item.attr_1 == 'hoi'
 
 
-def test_init_with_dicts():
+def test_xml_init_with_dicts():
     node = etree.fromstring("""
         <?xml version="1.0"?>
         <xsd:schema

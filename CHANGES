@@ -1,3 +1,8 @@
+2.0.0 (unreleased)
+------------------
+ - Default values of optional elements are not set by default anymore (#423)
+
+
 1.6.0 (2017-04-27)
 ------------------
  - Implement ValueObject.__json__ for json serialization (#258)
