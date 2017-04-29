@@ -5,7 +5,7 @@ from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
 
 
-def test_single_node():
+def test_xml_xml_single_node():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
@@ -40,7 +40,7 @@ def test_single_node():
     assert obj.item == 'bar'
 
 
-def test_nested_sequence():
+def test_xml_nested_sequence():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
@@ -86,7 +86,7 @@ def test_nested_sequence():
     assert obj.item.y == 2
 
 
-def test_restriction_self():
+def test_xml_restriction_self():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
@@ -116,7 +116,7 @@ def test_restriction_self():
     container_elm.signature(schema)
 
 
-def test_single_node_array():
+def test_xml_single_node_array():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
@@ -154,7 +154,7 @@ def test_single_node_array():
     assert obj.item == ['item-1', 'item-2', 'item-3']
 
 
-def test_single_node_no_iterable():
+def test_xml_single_node_no_iterable():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
@@ -181,7 +181,7 @@ def test_single_node_no_iterable():
         render_node(container_elm, obj)
 
 
-def test_complex_any_types():
+def test_xml_complex_any_types():
     # see https://github.com/mvantellingen/python-zeep/issues/252
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
@@ -263,7 +263,7 @@ def test_complex_any_types():
     assert_nodes_equal(result, expected)
 
 
-def test_unparsed_elements():
+def test_xml_unparsed_elements():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
