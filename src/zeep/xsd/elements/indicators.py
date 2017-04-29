@@ -460,7 +460,6 @@ class Choice(OrderIndicator):
         if not found and not self.is_optional:
             raise ValidationError("Missing choice values", path=render_path)
 
-
     def accept(self, values):
         """Return the number of values which are accepted by this choice.
 
@@ -703,4 +702,4 @@ class Group(Indicator):
             return '%s(%s)' % (
                 name, self.child.signature(schema, standalone=False))
         else:
-            return  self.child.signature(schema, standalone=False)
+            return self.child.signature(schema, standalone=False)
