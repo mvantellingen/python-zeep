@@ -603,6 +603,12 @@ class Sequence(OrderIndicator):
                         raise
                     item_subresult = None
 
+                # If the element was substituted using a substitution group
+                # There is a possibility that its element friendly name is
+                # different too, so replace it if applicable
+                if isinstance(item_subresult, tuple):
+                    item_subresult, elm_name = item_subresult
+
                 # Unwrap if allowed
                 if isinstance(element, OrderIndicator):
                     item_result.update(item_subresult)
