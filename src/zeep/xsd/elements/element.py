@@ -214,10 +214,13 @@ class Element(Base):
             else:
                 # If the element passed doesn't match and the current one
                 # Try late substitution
-                substitution_group = schema.get_substitution_group(self.qname)
+                substitution_group = schema.get_substitution_group(self.qname) \
+                                     if schema else None
+
                 if substitution_group:
                     s_result, elm_name = self.parse_xmlelement_substituted(
-                        xmlelements, schema, element_tag, substitution_group, context=context)
+                        xmlelements, schema, element_tag, substitution_group,
+                        context=context)
                     if s_result:
                         num_matches += 1
                         result.append(s_result)
