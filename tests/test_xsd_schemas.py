@@ -645,6 +645,44 @@ def test_include_recursion():
     schema.get_element('{http://tests.python-zeep.org/b}bar')
 
 
+def test_include_relative():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns="http://tests.python-zeep.org/tns"
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/a"
+            elementFormDefault="qualified">
+
+            <xs:include schemaLocation="http://tests.python-zeep.org/subdir/b.xsd"/>
+
+        </xs:schema>
+    """.strip())
+
+    node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+            <xs:include schemaLocation="c.xsd"/>
+            <xs:element name="bar" type="xs:string"/>
+        </xs:schema>
+    """.strip())
+
+    node_c = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+            <xs:element name="foo" type="xs:string"/>
+        </xs:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/subdir/b.xsd', node_b)
+    transport.bind('http://tests.python-zeep.org/subdir/c.xsd', node_c)
+
+    schema = xsd.Schema(node_a, transport=transport)
+    schema.get_element('{http://tests.python-zeep.org/a}foo')
+    schema.get_element('{http://tests.python-zeep.org/a}bar')
+
+
 def test_include_no_default_namespace():
     node_a = etree.fromstring("""
         <?xml version="1.0"?>
