@@ -260,9 +260,11 @@ class SchemaVisitor(object):
         # processing the nodes.
         element_form_default = self.document._element_form
         attribute_form_default = self.document._attribute_form
+        base_url = self.document._base_url
 
         self.document._element_form = schema_node.get('elementFormDefault', 'unqualified')
         self.document._attribute_form = schema_node.get('attributeFormDefault', 'unqualified')
+        self.document._base_url = absolute_location(location, self.document._base_url)
 
         # Iterate directly over the children.
         for child in schema_node:
@@ -270,6 +272,7 @@ class SchemaVisitor(object):
 
         self.document._element_form = element_form_default
         self.document._attribute_form = attribute_form_default
+        self.document._base_url = base_url
 
     def visit_element(self, node, parent):
         """
