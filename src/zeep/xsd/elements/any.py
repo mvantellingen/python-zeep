@@ -4,7 +4,7 @@ from lxml import etree
 
 from zeep import exceptions
 from zeep.utils import qname_attr
-from zeep.xsd.const import xsi_ns, NotSet
+from zeep.xsd.const import NotSet, xsi_ns
 from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import max_occurs_iter
 from zeep.xsd.valueobjects import AnyObject

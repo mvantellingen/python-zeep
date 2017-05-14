@@ -41,4 +41,3 @@ class RefGroup(RefElement):
         elm = elm.clone(
             elm.qname, min_occurs=self.min_occurs, max_occurs=self.max_occurs)
         return elm
-

@@ -2,8 +2,9 @@ import cgi
 import inspect
 
 from lxml import etree
-from zeep.ns import XSD
+
 from zeep.exceptions import XMLParseError
+from zeep.ns import XSD
 
 
 def qname_attr(node, attr_name, target_namespace=None):

@@ -7,6 +7,7 @@ import time
 
 import requests
 from six.moves.urllib.parse import urlparse
+
 from zeep.cache import SqliteCache
 from zeep.client import Client
 from zeep.transports import Transport

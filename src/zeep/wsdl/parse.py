@@ -5,8 +5,8 @@
 """
 from lxml import etree
 
+from zeep.exceptions import IncompleteMessage, LookupError, NamespaceError
 from zeep.utils import qname_attr
-from zeep.exceptions import NamespaceError, LookupError, IncompleteMessage
 from zeep.wsdl import definitions
 
 NSMAP = {

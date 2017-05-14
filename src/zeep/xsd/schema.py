@@ -3,8 +3,7 @@ from collections import OrderedDict
 
 from lxml import etree
 
-from zeep import exceptions
-from zeep import ns
+from zeep import exceptions, ns
 from zeep.xsd.elements import builtins as xsd_builtins_elements
 from zeep.xsd.types import builtins as xsd_builtins_types
 from zeep.xsd.visitor import SchemaVisitor

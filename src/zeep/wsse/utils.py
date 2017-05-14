@@ -1,8 +1,8 @@
-from uuid import uuid4
-from lxml import etree
 import datetime
+from uuid import uuid4
 
 import pytz
+from lxml import etree
 from lxml.builder import ElementMaker
 
 from zeep import ns
