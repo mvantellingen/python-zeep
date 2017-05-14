@@ -19,7 +19,7 @@ There are basically three majors parts where bugs can happen, these are:
 3. Parsing the XML from the response
 
 
-The first one is usually pretty easy to debug if the WSDL is publicly 
+The first one is usually pretty easy to debug if the WSDL is publicly
 accessible. If that isn't the case then you might be able to make it anonymous.
 
 
@@ -47,9 +47,9 @@ args / kwargs you normally pass.
 
     client = Client('YOUR-WSDL')
 
-    # client.service.OPERATION_NAME(args, kwargs) becomes
-    node = client.service._binding.create_message(
-        'OPERATION_NAME', args, kwargs)
+    # client.service.OPERATION_NAME(*args, **kwargs) becomes
+    node = client.create_message(
+        client.service, 'OPERATION_NAME', *args, **kwargs)
 
     print(etree.tostring(node, pretty_print=True))
 
@@ -62,7 +62,7 @@ The first step is to retrieve the XML which is returned from the server, You
 need to enable debugging for this. Please see :ref:`debugging` for a detailed
 description.
 
-The next step is to create a python script which exposes the problem, an 
+The next step is to create a python script which exposes the problem, an
 example is the following.
 
 .. code-block:: python
@@ -72,7 +72,7 @@ example is the following.
     from zeep import Client
     from zeep.transports import Transport
 
-    # Replace YOUR-WSDL and OPERATION_NAME with the wsdl url 
+    # Replace YOUR-WSDL and OPERATION_NAME with the wsdl url
     # and the method name you are calling. The response
     # needs to be set in the content=""" """ var.
 

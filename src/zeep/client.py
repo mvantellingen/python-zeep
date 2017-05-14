@@ -2,10 +2,9 @@ import copy
 import logging
 from contextlib import contextmanager
 
-from zeep.xsd.const import NotSet
 from zeep.transports import Transport
 from zeep.wsdl import Document
-
+from zeep.xsd.const import NotSet
 
 logger = logging.getLogger(__name__)
 
@@ -215,19 +214,14 @@ class Client(object):
                 "are: %s" % (', '.join(self.wsdl.bindings.keys())))
         return ServiceProxy(self, binding, address=address)
 
-    def create_message(self, operation, service_name=None, port_name=None,
-                       args=None, kwargs=None):
+    def create_message(self, service, operation_name, *args, **kwargs):
         """Create the payload for the given operation.
 
         :rtype: lxml.etree._Element
 
         """
-        service = self._get_service(service_name)
-        port = self._get_port(service, port_name)
-
-        args = args or tuple()
-        kwargs = kwargs or {}
-        envelope, http_headers = port.binding._create(operation, args, kwargs)
+        envelope, http_headers = service._binding._create(
+            operation_name, args, kwargs)
         return envelope
 
     def type_factory(self, namespace):

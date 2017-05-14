@@ -1,7 +1,9 @@
 2.0.0 (unreleased)
 ------------------
  - Default values of optional elements are not set by default anymore (#423)
-
+ - The call signature for Client.create_message() was changed. It now requires
+   the service argument:
+     ``Client.create_message(service, operation_name, *args, **kwargs)``
 
 1.6.0 (2017-04-27)
 ------------------
