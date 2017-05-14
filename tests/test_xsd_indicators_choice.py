@@ -95,6 +95,84 @@ def test_choice_element_second_elm():
     assert value.item_2 == 'foo'
     assert value.item_3 is None
 
+def test_choice_element_second_elm_positional():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:complexType name="type_1">
+            <xsd:sequence>
+              <xsd:element name="child_1" type="xsd:string"/>
+              <xsd:element name="child_2" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="type_2">
+            <xsd:sequence>
+              <xsd:element name="child_1" type="xsd:string"/>
+              <xsd:element name="child_2" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:choice>
+                <xsd:element name="item_1" type="tns:type_1" />
+                <xsd:element name="item_2" type="tns:type_2" />
+              </xsd:choice>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="containerArray">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:choice>
+                    <xsd:element name="item_1" type="tns:type_1" />
+                    <xsd:element name="item_2" type="tns:type_2" />
+                </xsd:choice>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """.strip())
+    schema = xsd.Schema(node)
+
+    child = schema.get_type('ns0:type_2')(child_1='ha', child_2='ho')
+
+    element = schema.get_element('ns0:container')
+    with pytest.raises(TypeError):
+        value = element(child)
+    value = element(item_2=child)
+
+    element = schema.get_element('ns0:containerArray')
+    with pytest.raises(TypeError):
+        value = element(child)
+    value = element(item_2=child)
+
+    element = schema.get_element('ns0:container')
+    value = element(item_2=child)
+    assert value.item_1 is None
+    assert value.item_2 == child
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_2>
+            <ns0:child_1>ha</ns0:child_1>
+            <ns0:child_2>ho</ns0:child_2>
+          </ns0:item_2>
+        </ns0:container>
+      </document>
+    """
+    node = etree.Element('document')
+    element.render(node, value)
+    assert_nodes_equal(expected, node)
+
+    value = element.parse(node[0], schema)
+    assert value.item_1 is None
+    assert value.item_2.child_1 == 'ha'
+    assert value.item_2.child_2 == 'ho'
+
 
 def test_choice_element_multiple():
     node = etree.fromstring("""

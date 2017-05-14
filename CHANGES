@@ -3,7 +3,12 @@
  - Default values of optional elements are not set by default anymore (#423)
  - The call signature for Client.create_message() was changed. It now requires
    the service argument:
+
      ``Client.create_message(service, operation_name, *args, **kwargs)``
+
+ - Choice elements now only work with keyword arguments and raise an exception
+   if positional arguments are passed (#439)
+
 
 1.6.0 (2017-04-27)
 ------------------

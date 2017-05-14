@@ -106,6 +106,14 @@ class OrderIndicator(Indicator, list):
         return max(results)
 
     def parse_args(self, args, index=0):
+
+        # If the sequence contains an choice element then we can't convert
+        # the args to kwargs since Choice elements don't work with position
+        # arguments
+        for name, elm in self.elements_nested:
+            if isinstance(elm, Choice):
+                raise TypeError("Choice elements only work with keyword arguments")
+
         result = {}
         for name, element in self.elements:
             if index >= len(args):
@@ -282,6 +290,10 @@ class All(OrderIndicator):
 
 class Choice(OrderIndicator):
     """Permits one and only one of the elements contained in the group."""
+
+    def parse_args(self, args, index=0):
+        if args:
+            raise TypeError("Choice elements only work with keyword arguments")
 
     @property
     def is_optional(self):
