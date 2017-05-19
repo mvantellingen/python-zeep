@@ -13,7 +13,7 @@ from zeep.transports import Transport
 
 @pytest.mark.requests
 def test_parse_soap_wsdl():
-    wsdl_file = io.StringIO("""
+    wsdl_file = io.StringIO(u"""
         <?xml version="1.0"?>
         <wsdl:definitions
           xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
