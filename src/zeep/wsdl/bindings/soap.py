@@ -349,7 +349,8 @@ class SoapOperation(Operation):
                 "{%s}Envelope root element. The root element found is %s "
             ) % (envelope_qname.namespace, envelope.tag))
 
-        return self.output.deserialize(envelope)
+        if self.output:
+            return self.output.deserialize(envelope)
 
     @classmethod
     def parse(cls, definitions, xmlelement, binding, nsmap):

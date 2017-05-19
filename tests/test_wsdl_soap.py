@@ -7,6 +7,25 @@ from zeep.exceptions import Fault
 from zeep.wsdl import bindings
 
 
+def test_soap11_no_output():
+    client = Client('tests/wsdl_files/soap.wsdl')
+    content = """
+        <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:stoc="http://example.com/stockquote.xsd">
+          <soapenv:Body></soapenv:Body>
+        </soapenv:Envelope>
+    """.strip()
+    response = stub(
+        status_code=200,
+        headers={},
+        content=content)
+
+    operation = client.service._binding._operations['GetLastTradePriceNoOutput']
+    res = client.service._binding.process_reply(client, operation, response)
+    assert res is None
+
+
 def test_soap11_process_error():
     response = load_xml("""
         <soapenv:Envelope
@@ -26,10 +45,10 @@ def test_soap11_process_error():
           </soapenv:Body>
         </soapenv:Envelope>
     """)
+
     binding = bindings.Soap11Binding(
         wsdl=None, name=None, port_name=None, transport=None,
         default_style=None)
-
     try:
         binding.process_error(response, None)
         assert False

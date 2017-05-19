@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
-<definitions 
-    xmlns:tns="http://example.com/stockquote.wsdl" 
-    xmlns:xsd1="http://example.com/stockquote.xsd" 
-    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+<definitions
+    xmlns:tns="http://example.com/stockquote.wsdl"
+    xmlns:xsd1="http://example.com/stockquote.xsd"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
     xmlns="http://schemas.xmlsoap.org/wsdl/"
-    name="StockQuote" 
+    name="StockQuote"
     targetNamespace="http://example.com/stockquote.wsdl">
   <types>
-    <schema xmlns="http://www.w3.org/2001/XMLSchema" 
+    <schema xmlns="http://www.w3.org/2001/XMLSchema"
             targetNamespace="http://example.com/stockquote.xsd"
             xmlns:tns="http://example.com/stockquote.xsd" >
       <complexType name="Address">
@@ -93,6 +93,9 @@
       <fault message="tns:FaultMessageMsg1" name="fault1"/>
       <fault message="tns:FaultMessageMsg2" name="fault2"/>
     </operation>
+    <operation name="GetLastTradePriceNoOutput">
+      <input message="tns:GetLastTradePriceInput"/>
+    </operation>
   </portType>
   <binding name="StockQuoteBinding" type="tns:StockQuotePortType">
     <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
@@ -110,6 +113,12 @@
       <fault name="fault2">
         <soap:fault name="fault2" use="literal"/>
       </fault>
+    </operation>
+    <operation name="GetLastTradePriceNoOutput">
+      <soap:operation soapAction="http://example.com/GetLastTradePrice"/>
+      <input>
+        <soap:body use="literal"/>
+      </input>
     </operation>
   </binding>
   <service name="StockQuoteService">

@@ -10,6 +10,7 @@
    if positional arguments are passed (#439)
  - Implement initial multiref support for SOAP RPC (#326). This was done using
    really good real-world tests from vstoykov (thanks!)
+ - Fix exception on empty SOAP response (#442)
 
 
 1.6.0 (2017-04-27)
