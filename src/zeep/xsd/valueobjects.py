@@ -47,6 +47,22 @@ def _unpickle_compound_value(name, values):
     return obj
 
 
+class ArrayValue(list):
+    def __init__(self, items):
+        super(ArrayValue, self).__init__(items)
+
+    def as_value_object(self):
+        anon_type = type(
+            self.__class__.__name__, (CompoundValue,),
+            {'_xsd_type': self._xsd_type, '__module__': 'zeep.objects'})
+        return anon_type(list(self))
+
+    @classmethod
+    def from_value_object(cls, obj):
+        items = next(iter(obj.__values__.values()))
+        return cls(items or [])
+
+
 class CompoundValue(object):
     """Represents a data object for a specific xsd:complexType."""
 

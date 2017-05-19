@@ -2,7 +2,7 @@ import logging
 
 from lxml import etree
 
-from zeep import exceptions
+from zeep import exceptions, ns
 from zeep.utils import qname_attr
 from zeep.xsd.const import NotSet, xsi_ns
 from zeep.xsd.elements.base import Base
@@ -214,13 +214,20 @@ class Any(Base):
 
 class AnyAttribute(Base):
     name = None
+    _ignore_attributes = [
+        etree.QName(ns.XSI, 'type')
+    ]
 
     def __init__(self, process_contents='strict'):
         self.qname = None
         self.process_contents = process_contents
 
     def parse(self, attributes, context=None):
-        return attributes
+        result = {}
+        for key, value in attributes.items():
+            if key not in self._ignore_attributes:
+                result[key] = value
+        return result
 
     def resolve(self):
         return self

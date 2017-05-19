@@ -33,7 +33,7 @@ class Type(object):
         return {}
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
-                         context=None):
+                         context=None, schema_type=None):
         raise NotImplementedError(
             '%s.parse_xmlelement() is not implemented' % self.__class__.__name__)
 

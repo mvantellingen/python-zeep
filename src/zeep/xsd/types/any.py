@@ -32,7 +32,7 @@ class AnyType(Type):
             parent.text = self.xmlvalue(value)
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
-                         context=None):
+                         context=None, schema_type=None):
         xsi_type = qname_attr(xmlelement, xsi_ns('type'))
         xsi_nil = xmlelement.get(xsi_ns('nil'))
         children = list(xmlelement.getchildren())

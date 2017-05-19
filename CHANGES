@@ -1,6 +1,12 @@
 2.0.0 (unreleased)
 ------------------
+
+This is a major release, and contains a number of backwards incompatible
+changes to the API.
+
  - Default values of optional elements are not set by default anymore (#423)
+ - Refactor the implementation of wsdl:arrayType too make the API more
+   pythonic (backwards incompatible).
  - The call signature for Client.create_message() was changed. It now requires
    the service argument:
 

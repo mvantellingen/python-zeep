@@ -54,7 +54,7 @@ class AnySimpleType(AnyType):
         return '%s(value)' % (self.__class__.__name__)
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
-                         context=None):
+                         context=None, schema_type=None):
         if xmlelement.text is None:
             return
         try:

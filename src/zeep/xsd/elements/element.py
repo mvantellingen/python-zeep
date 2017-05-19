@@ -98,7 +98,8 @@ class Element(Base):
             xsd_type = schema.get_type(instance_type, fail_silently=True)
         xsd_type = xsd_type or self.type
         return xsd_type.parse_xmlelement(
-            xmlelement, schema, allow_none=allow_none, context=context)
+            xmlelement, schema, allow_none=allow_none, context=context,
+            schema_type=self.type)
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
         return self.type.parse_kwargs(
