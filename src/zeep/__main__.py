@@ -8,6 +8,7 @@ import time
 import requests
 from six.moves.urllib.parse import urlparse
 
+from zeep import docs
 from zeep.cache import SqliteCache
 from zeep.client import Client
 from zeep.transports import Transport
@@ -31,6 +32,9 @@ def parse_arguments(args=None):
     parser.add_argument(
         '--no-strict', action='store_true', default=False,
         help="Disable strict mode")
+    parser.add_argument(
+        '--generate-docs', action='store_true', default=False,
+        help="Generate rst docs")
     return parser.parse_args(args)
 
 
@@ -84,7 +88,11 @@ def main(args):
     if args.profile:
         profile.disable()
         profile.dump_stats(args.profile)
-    client.wsdl.dump()
+
+    if args.generate_docs:
+        docs.generate(client)
+    else:
+        client.wsdl.dump()
 
 
 if __name__ == '__main__':
