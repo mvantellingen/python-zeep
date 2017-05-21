@@ -3,9 +3,9 @@ import os
 from contextlib import contextmanager
 
 import requests
-
 from six.moves.urllib.parse import urlparse
-from zeep.utils import get_version, get_media_type
+
+from zeep.utils import get_media_type, get_version
 from zeep.wsdl.utils import etree_to_string
 
 

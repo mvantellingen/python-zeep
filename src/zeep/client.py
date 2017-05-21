@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from zeep.transports import Transport
 from zeep.wsdl import Document
-
+from zeep.xsd.const import NotSet
 
 logger = logging.getLogger(__name__)
 
@@ -107,19 +107,26 @@ class Client(object):
                       first port defined in the service element in the WSDL
                       document.
     :param plugins: a list of Plugin instances
+    :param xml_huge_tree: disable lxml/libxml2 security restrictions and
+                          support very deep trees and very long text content
 
 
     """
 
     def __init__(self, wsdl, wsse=None, transport=None,
-                 service_name=None, port_name=None, plugins=None, strict=True):
+                 service_name=None, port_name=None, plugins=None,
+                 strict=True, xml_huge_tree=False):
         if not wsdl:
             raise ValueError("No URL given for the wsdl")
 
-        self.transport = transport or Transport()
+        self.transport = transport if transport is not None else Transport()
         self.wsdl = Document(wsdl, self.transport, strict=strict)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
+        self.xml_huge_tree = xml_huge_tree
+
+        # options
+        self.raw_response = False
 
         self._default_service = None
         self._default_service_name = service_name
@@ -146,7 +153,7 @@ class Client(object):
         return self._default_service
 
     @contextmanager
-    def options(self, timeout):
+    def options(self, timeout=NotSet, raw_response=NotSet):
         """Context manager to temporarily overrule various options.
 
         :param timeout: Set the timeout for POST/GET operations (not used for
@@ -160,8 +167,22 @@ class Client(object):
 
 
         """
-        with self.transport._options(timeout=timeout):
-            yield
+        # Store current options
+        old_raw_raw_response = self.raw_response
+
+        # Set new options
+        self.raw_response = raw_response
+
+        if timeout is not NotSet:
+            timeout_ctx = self.transport._options(timeout=timeout)
+            timeout_ctx.__enter__()
+
+        yield
+
+        self.raw_response = old_raw_raw_response
+
+        if timeout is not NotSet:
+            timeout_ctx.__exit__(None, None, None)
 
     def bind(self, service_name=None, port_name=None):
         """Create a new ServiceProxy for the given service_name and port_name.
@@ -193,15 +214,14 @@ class Client(object):
                 "are: %s" % (', '.join(self.wsdl.bindings.keys())))
         return ServiceProxy(self, binding, address=address)
 
-    def create_message(self, operation, service_name=None, port_name=None,
-                       args=None, kwargs=None):
-        """Create the payload for the given operation."""
-        service = self._get_service(service_name)
-        port = self._get_port(service, port_name)
+    def create_message(self, service, operation_name, *args, **kwargs):
+        """Create the payload for the given operation.
 
-        args = args or tuple()
-        kwargs = kwargs or {}
-        envelope, http_headers = port.binding._create(operation, args, kwargs)
+        :rtype: lxml.etree._Element
+
+        """
+        envelope, http_headers = service._binding._create(
+            operation_name, args, kwargs)
         return envelope
 
     def type_factory(self, namespace):

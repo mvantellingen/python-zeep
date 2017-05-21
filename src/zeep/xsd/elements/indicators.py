@@ -21,11 +21,15 @@ class Indicator(Base):
         return '<%s(%s)>' % (
             self.__class__.__name__, super(Indicator, self).__repr__())
 
-    @threaded_cached_property
+    @property
     def default_value(self):
-        return OrderedDict([
+        values = OrderedDict([
             (name, element.default_value) for name, element in self.elements
         ])
+
+        if self.accepts_multiple:
+            return {'_value_1': values}
+        return values
 
     def clone(self, name, min_occurs=1, max_occurs=1):
         raise NotImplementedError()
@@ -86,16 +90,30 @@ class OrderIndicator(Indicator, list):
         If not all required elements are available then 0 is returned.
 
         """
-        num = 0
-        for name, element in self.elements_nested:
-            if isinstance(element, Element):
-                if element.name in values and values[element.name] is not None:
-                    num += 1
-            else:
-                num += element.accept(values)
-        return num
+        if not self.accepts_multiple:
+            values = [values]
+
+        results = set()
+        for value in values:
+            num = 0
+            for name, element in self.elements_nested:
+                if isinstance(element, Element):
+                    if element.name in value and value[element.name] is not None:
+                        num += 1
+                else:
+                    num += element.accept(value)
+            results.add(num)
+        return max(results)
 
     def parse_args(self, args, index=0):
+
+        # If the sequence contains an choice element then we can't convert
+        # the args to kwargs since Choice elements don't work with position
+        # arguments
+        for name, elm in self.elements_nested:
+            if isinstance(elm, Choice):
+                raise TypeError("Choice elements only work with keyword arguments")
+
         result = {}
         for name, element in self.elements:
             if index >= len(args):
@@ -225,6 +243,11 @@ class All(OrderIndicator):
 
     """
 
+    def __init__(self, elements=None, min_occurs=1, max_occurs=1,
+                 consume_other=False):
+        super(All, self).__init__(elements, min_occurs, max_occurs)
+        self._consume_other = consume_other
+
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Consume matching xmlelements
 
@@ -259,11 +282,18 @@ class All(OrderIndicator):
                 result[name] = element.parse_xmlelements(
                     sub_elements, schema, context=context)
 
+        if self._consume_other and xmlelements:
+            result['_raw_elements'] = list(xmlelements)
+            xmlelements.clear()
         return result
 
 
 class Choice(OrderIndicator):
     """Permits one and only one of the elements contained in the group."""
+
+    def parse_args(self, args, index=0):
+        if args:
+            raise TypeError("Choice elements only work with keyword arguments")
 
     @property
     def is_optional(self):
@@ -293,42 +323,40 @@ class Choice(OrderIndicator):
             if not xmlelements:
                 break
 
-            for node in list(xmlelements):
+            # Choose out of multiple
+            options = []
+            for element_name, element in self.elements_nested:
 
-                # Choose out of multiple
-                options = []
-                for element_name, element in self.elements_nested:
+                local_xmlelements = copy.copy(xmlelements)
 
-                    local_xmlelements = copy.copy(xmlelements)
+                try:
+                    sub_result = element.parse_xmlelements(
+                        xmlelements=local_xmlelements,
+                        schema=schema,
+                        name=element_name,
+                        context=context)
+                except UnexpectedElementError:
+                    continue
 
-                    try:
-                        sub_result = element.parse_xmlelements(
-                            local_xmlelements, schema, context=context)
-                    except UnexpectedElementError:
-                        continue
+                if isinstance(element, Element):
+                    sub_result = {element_name: sub_result}
 
-                    if isinstance(element, OrderIndicator):
-                        if element.accepts_multiple:
-                            sub_result = {element_name: sub_result}
-                    else:
-                        sub_result = {element_name: sub_result}
+                num_consumed = len(xmlelements) - len(local_xmlelements)
+                if num_consumed:
+                    options.append((num_consumed, sub_result))
 
-                    num_consumed = len(xmlelements) - len(local_xmlelements)
-                    if num_consumed:
-                        options.append((num_consumed, sub_result))
+            if not options:
+                xmlelements = []
+                break
 
-                if not options:
-                    xmlelements = []
-                    break
-
-                # Sort on least left
-                options = sorted(options, key=operator.itemgetter(0), reverse=True)
-                if options:
-                    result.append(options[0][1])
-                    for i in range(options[0][0]):
-                        xmlelements.popleft()
-                else:
-                    break
+            # Sort on least left
+            options = sorted(options, key=operator.itemgetter(0), reverse=True)
+            if options:
+                result.append(options[0][1])
+                for i in range(options[0][0]):
+                    xmlelements.popleft()
+            else:
+                break
 
         if self.accepts_multiple:
             result = {name: result}
@@ -426,11 +454,23 @@ class Choice(OrderIndicator):
         if not self.accepts_multiple:
             value = [value]
 
+        self.validate(value, render_path)
+
         for item in value:
             result = self._find_element_to_render(item)
             if result:
                 element, choice_value = result
                 element.render(parent, choice_value, render_path)
+
+    def validate(self, value, render_path):
+        found = 0
+        for item in value:
+            result = self._find_element_to_render(item)
+            if result:
+                found += 1
+
+        if not found and not self.is_optional:
+            raise ValidationError("Missing choice values", path=render_path)
 
     def accept(self, values):
         """Return the number of values which are accepted by this choice.
@@ -453,7 +493,12 @@ class Choice(OrderIndicator):
         return max(nums) if nums else 0
 
     def _find_element_to_render(self, value):
-        """Return a tuple (element, value) for the best matching choice"""
+        """Return a tuple (element, value) for the best matching choice.
+
+        This is used to decide which choice child is best suitable for
+        rendering the available data.
+
+        """
         matches = []
 
         for name, element in self.elements_nested:
@@ -517,6 +562,9 @@ class Sequence(OrderIndicator):
         """
         result = []
 
+        if self.accepts_multiple:
+            assert name
+
         for _unused in max_occurs_iter(self.max_occurs):
             if not xmlelements:
                 break
@@ -544,7 +592,6 @@ class Sequence(OrderIndicator):
 
         if not self.accepts_multiple:
             return result[0] if result else None
-
         return {name: result}
 
 
@@ -575,6 +622,13 @@ class Group(Indicator):
             return [('_value_1', self.child)]
         return self.child.elements
 
+    def clone(self, name, min_occurs=1, max_occurs=1):
+        return self.__class__(
+            name=name,
+            child=self.child,
+            min_occurs=min_occurs,
+            max_occurs=max_occurs)
+
     def accept(self, values):
         """Return the number of values which are accepted by this choice.
 
@@ -589,7 +643,7 @@ class Group(Indicator):
     def parse_kwargs(self, kwargs, name, available_kwargs):
         if self.accepts_multiple:
             if name not in kwargs:
-                return {}, kwargs
+                return {}
 
             available_kwargs.remove(name)
             item_kwargs = kwargs[name]
@@ -635,6 +689,8 @@ class Group(Indicator):
                 self.child.parse_xmlelements(
                     xmlelements, schema, name, context=context)
             )
+            if not xmlelements:
+                break
         if not self.accepts_multiple and result:
             return result[0]
         return {name: result}
@@ -658,4 +714,4 @@ class Group(Indicator):
             return '%s(%s)' % (
                 name, self.child.signature(schema, standalone=False))
         else:
-            return  self.child.signature(schema, standalone=False)
+            return self.child.signature(schema, standalone=False)

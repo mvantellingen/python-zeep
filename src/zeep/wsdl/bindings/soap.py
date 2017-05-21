@@ -112,6 +112,11 @@ class SoapBinding(Binding):
             options['address'], envelope, http_headers)
 
         operation_obj = self.get(operation)
+
+        # If the client wants to return the raw data then let's do that.
+        if client.raw_response:
+            return response
+
         return self.process_reply(client, operation_obj, response)
 
     def process_reply(self, client, operation, response):
@@ -145,7 +150,10 @@ class SoapBinding(Binding):
             content = response.content
 
         try:
-            doc = parse_xml(content, self.transport)
+            doc = parse_xml(
+                content, self.transport,
+                strict=client.wsdl.strict,
+                xml_huge_tree=client.xml_huge_tree)
         except XMLSyntaxError:
             raise TransportError(
                 u'Server returned HTTP status %d (%s)'
@@ -341,7 +349,8 @@ class SoapOperation(Operation):
                 "{%s}Envelope root element. The root element found is %s "
             ) % (envelope_qname.namespace, envelope.tag))
 
-        return self.output.deserialize(envelope)
+        if self.output:
+            return self.output.deserialize(envelope)
 
     @classmethod
     def parse(cls, definitions, xmlelement, binding, nsmap):

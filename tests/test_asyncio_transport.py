@@ -1,6 +1,7 @@
 import pytest
 from pretend import stub
 from lxml import etree
+import aiohttp
 from aioresponses import aioresponses
 
 from zeep import cache, asyncio
@@ -39,3 +40,21 @@ async def test_post(event_loop):
             headers={})
 
         assert result.content == b'x'
+
+
+@pytest.mark.requests
+@pytest.mark.asyncio
+async def test_session_close(event_loop):
+    transport = asyncio.AsyncTransport(loop=event_loop)
+    session = transport.session  # copy session object from transport
+    del transport
+    assert session.closed
+
+
+@pytest.mark.requests
+@pytest.mark.asyncio
+async def test_session_no_close(event_loop):
+    session = aiohttp.ClientSession(loop=event_loop)
+    transport = asyncio.AsyncTransport(loop=event_loop, session=session)
+    del transport
+    assert not session.closed

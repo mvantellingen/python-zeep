@@ -1,7 +1,16 @@
 <?xml version="1.0"?>
-<definitions xmlns:tns="http://example.com/stockquote.wsdl" xmlns:xsd1="http://example.com/stockquote.xsd" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns="http://schemas.xmlsoap.org/wsdl/" name="StockQuote" targetNamespace="http://example.com/stockquote.wsdl">
+<definitions 
+  xmlns:tns="http://example.com/stockquote.wsdl" 
+  xmlns:xsd1="http://example.com/stockquote.xsd" 
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+  xmlns="http://schemas.xmlsoap.org/wsdl/" 
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+  name="StockQuote" 
+  targetNamespace="http://example.com/stockquote.wsdl">
   <types>
-    <schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/stockquote.xsd">
+    <schema 
+      xmlns="http://www.w3.org/2001/XMLSchema" 
+      targetNamespace="http://example.com/stockquote.xsd">
       <complexType name="Address">
         <sequence>
           <element minOccurs="0" maxOccurs="1" name="NameFirst" type="string"/>
@@ -48,6 +57,10 @@
   <message name="GetLastTradePriceOutput">
     <part name="body" element="xsd1:TradePrice"/>
   </message>
+  <message name="OptionalResponseHeader">
+    <part name="body" type="xsd:string"/>
+  </message>
+
   <portType name="StockQuotePortType">
     <operation name="GetLastTradePrice">
       <input message="tns:GetLastTradePriceInput"/>
@@ -65,6 +78,7 @@
       </input>
       <output>
         <soap:body use="literal"/>
+        <soap:header message="tns:OptionalResponseHeader" part="body" use="literal"/>
       </output>
     </operation>
   </binding>

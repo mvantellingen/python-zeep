@@ -33,11 +33,45 @@ class AnyObject(object):
         return self.xsd_obj
 
 
+def _unpickle_compound_value(name, values):
+    """Helper function to recreate pickled CompoundValue.
+
+    See CompoundValue.__reduce__
+
+    """
+    cls = type(name, (CompoundValue,), {
+        '_xsd_type': None, '__module__': 'zeep.objects'
+    })
+    obj = cls()
+    obj.__values__ = values
+    return obj
+
+
+class ArrayValue(list):
+    def __init__(self, items):
+        super(ArrayValue, self).__init__(items)
+
+    def as_value_object(self):
+        anon_type = type(
+            self.__class__.__name__, (CompoundValue,),
+            {'_xsd_type': self._xsd_type, '__module__': 'zeep.objects'})
+        return anon_type(list(self))
+
+    @classmethod
+    def from_value_object(cls, obj):
+        items = next(iter(obj.__values__.values()))
+        return cls(items or [])
+
+
 class CompoundValue(object):
     """Represents a data object for a specific xsd:complexType."""
 
     def __init__(self, *args, **kwargs):
         values = OrderedDict()
+
+        # Can be done after unpickle
+        if self._xsd_type is None:
+            return
 
         # Set default values
         for container_name, container in self._xsd_type.elements_nested:
@@ -56,6 +90,9 @@ class CompoundValue(object):
         for key, value in items.items():
             values[key] = value
         self.__values__ = values
+
+    def __reduce__(self):
+        return (_unpickle_compound_value, (self.__class__.__name__, self.__values__,))
 
     def __contains__(self, key):
         return self.__values__.__contains__(key)
@@ -107,6 +144,9 @@ class CompoundValue(object):
             if attr != '__values__':
                 setattr(new, attr, value)
         return new
+
+    def __json__(self):
+        return self.__values__
 
 
 def _process_signature(xsd_type, args, kwargs):
@@ -169,6 +209,12 @@ def _process_signature(xsd_type, args, kwargs):
             if attribute_name in available_kwargs:
                 available_kwargs.remove(attribute_name)
                 result[attribute_name] = kwargs[attribute_name]
+
+    # _raw_elements is a special kwarg used for unexpected unparseable xml
+    # elements (e.g. for soap:header or when strict is disabled)
+    if '_raw_elements' in available_kwargs and kwargs['_raw_elements']:
+        result['_raw_elements'] = kwargs['_raw_elements']
+        available_kwargs.remove('_raw_elements')
 
     if available_kwargs:
         raise TypeError((

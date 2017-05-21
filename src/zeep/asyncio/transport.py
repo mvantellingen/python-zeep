@@ -29,8 +29,13 @@ class AsyncTransport(Transport):
         self.logger = logging.getLogger(__name__)
 
         self.session = session or aiohttp.ClientSession(loop=self.loop)
+        self._close_session = session is None
         self.session._default_headers['User-Agent'] = (
             'Zeep/%s (www.python-zeep.org)' % (get_version()))
+
+    def __del__(self):
+        if self._close_session:
+            self.session.close()
 
     def _load_remote_data(self, url):
         result = None

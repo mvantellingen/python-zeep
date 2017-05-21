@@ -8,6 +8,8 @@ Public API
 Client
 ------
 
+.. _api_client:
+
 .. autoclass:: zeep.Client
    :members:
    :inherited-members:

@@ -4,6 +4,7 @@ from lxml import etree
 from tests.utils import DummyTransport, load_xml
 from zeep import exceptions, xsd
 from zeep.xsd import Schema
+from tests.utils import assert_nodes_equal, load_xml, render_node
 
 
 def test_default_types():
@@ -644,6 +645,44 @@ def test_include_recursion():
     schema.get_element('{http://tests.python-zeep.org/b}bar')
 
 
+def test_include_relative():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns="http://tests.python-zeep.org/tns"
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/a"
+            elementFormDefault="qualified">
+
+            <xs:include schemaLocation="http://tests.python-zeep.org/subdir/b.xsd"/>
+
+        </xs:schema>
+    """.strip())
+
+    node_b = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+            <xs:include schemaLocation="c.xsd"/>
+            <xs:element name="bar" type="xs:string"/>
+        </xs:schema>
+    """.strip())
+
+    node_c = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+            <xs:element name="foo" type="xs:string"/>
+        </xs:schema>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/subdir/b.xsd', node_b)
+    transport.bind('http://tests.python-zeep.org/subdir/c.xsd', node_c)
+
+    schema = xsd.Schema(node_a, transport=transport)
+    schema.get_element('{http://tests.python-zeep.org/a}foo')
+    schema.get_element('{http://tests.python-zeep.org/a}bar')
+
+
 def test_include_no_default_namespace():
     node_a = etree.fromstring("""
         <?xml version="1.0"?>
@@ -675,18 +714,66 @@ def test_include_no_default_namespace():
               <xsd:sequence>
                 <xsd:element name="item" type="my-string"/>
               </xsd:sequence>
-
             </xsd:complexType>
         </xsd:schema>
     """.strip())
 
     transport = DummyTransport()
     transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
-
     schema = xsd.Schema(node_a, transport=transport)
     item = schema.get_element('{http://tests.python-zeep.org/tns}container')
     assert item
 
+
+def test_include_different_form_defaults():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns="http://tests.python-zeep.org/"
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/">
+
+            <xs:include
+                schemaLocation="http://tests.python-zeep.org/b.xsd"/>
+        </xs:schema>
+    """.strip())
+
+    # include without default namespace, other xsd prefix
+    node_b = load_xml("""
+        <?xml version="1.0"?>
+        <xsd:schema
+            elementFormDefault="qualified"
+            attributeFormDefault="qualified"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b">
+
+            <xsd:element name="container" type="foo"/>
+
+            <xsd:complexType name="foo">
+              <xsd:sequence>
+                <xsd:element name="item" type="xsd:string"/>
+              </xsd:sequence>
+              <xsd:attribute name="attr" type="xsd:string"/>
+            </xsd:complexType>
+        </xsd:schema>
+    """)
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/b.xsd', node_b)
+
+    schema = xsd.Schema(node_a, transport=transport)
+    item = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = item(item='foo', attr='bar')
+    node = render_node(item, obj)
+
+    expected = load_xml("""
+        <document>
+          <ns0:container xmlns:ns0="http://tests.python-zeep.org/" ns0:attr="bar">
+            <ns0:item>foo</ns0:item>
+          </ns0:container>
+        </document>
+    """)
+    assert_nodes_equal(expected, node)
 
 def test_merge():
     node_a = etree.fromstring("""
@@ -718,3 +805,37 @@ def test_merge():
 
     schema_a.get_element('{http://tests.python-zeep.org/a}foo')
     schema_a.get_element('{http://tests.python-zeep.org/b}foo')
+
+
+def test_xml_namespace():
+    xmlns = load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xml="http://www.w3.org/XML/1998/namespace"
+            targetNamespace="http://www.w3.org/XML/1998/namespace"
+            elementFormDefault="qualified">
+          <xs:attribute name="lang" type="xs:string"/>
+        </xs:schema>
+    """)
+
+    transport = DummyTransport()
+    transport.bind('http://www.w3.org/2001/xml.xsd', xmlns)
+
+    xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+          <xs:import namespace="http://www.w3.org/XML/1998/namespace"
+                     schemaLocation="http://www.w3.org/2001/xml.xsd"/>
+          <xs:element name="container">
+            <xs:complexType>
+              <xs:sequence/>
+              <xs:attribute ref="xml:lang"/>
+            </xs:complexType>
+          </xs:element>
+        </xs:schema>
+    """), transport=transport)

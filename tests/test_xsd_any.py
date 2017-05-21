@@ -26,6 +26,24 @@ def get_any_schema():
     """))
 
 
+
+def test_default_xsd_type():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="container"/>
+        </schema>
+    """))
+    assert schema
+
+    container_cls = schema.get_element('ns0:container')
+    data = container_cls()
+    assert data == ''
+
+
 def test_any_simple():
     schema = get_any_schema()
 

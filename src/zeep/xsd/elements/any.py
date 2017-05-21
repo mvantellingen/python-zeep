@@ -2,9 +2,9 @@ import logging
 
 from lxml import etree
 
-from zeep import exceptions
+from zeep import exceptions, ns
 from zeep.utils import qname_attr
-from zeep.xsd.const import xsi_ns, NotSet
+from zeep.xsd.const import NotSet, xsi_ns
 from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import max_occurs_iter
 from zeep.xsd.valueobjects import AnyObject
@@ -181,9 +181,10 @@ class Any(Base):
         # Check if we received a proper value object. If we receive the wrong
         # type then return a nice error message
         if self.restrict:
-            expected_types = (etree._Element,) + self.restrict.accepted_types
+            expected_types = (etree._Element, dict,) + self.restrict.accepted_types
         else:
-            expected_types = (etree._Element, AnyObject)
+            expected_types = (etree._Element,  dict,AnyObject)
+
         if not isinstance(value, expected_types):
             type_names = [
                 '%s.%s' % (t.__module__, t.__name__) for t in expected_types
@@ -213,19 +214,26 @@ class Any(Base):
 
 class AnyAttribute(Base):
     name = None
+    _ignore_attributes = [
+        etree.QName(ns.XSI, 'type')
+    ]
 
     def __init__(self, process_contents='strict'):
         self.qname = None
         self.process_contents = process_contents
 
     def parse(self, attributes, context=None):
-        return attributes
+        result = {}
+        for key, value in attributes.items():
+            if key not in self._ignore_attributes:
+                result[key] = value
+        return result
 
     def resolve(self):
         return self
 
     def render(self, parent, value, render_path=None):
-        if value is None:
+        if value in (None, NotSet):
             return
 
         for name, val in value.items():

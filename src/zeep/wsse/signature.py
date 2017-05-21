@@ -11,15 +11,16 @@ module.
 from lxml import etree
 from lxml.etree import QName
 
+from zeep import ns
+from zeep.exceptions import SignatureVerificationFailed
+from zeep.utils import detect_soap_env
+from zeep.wsse.utils import ensure_id, get_security_header
+
 try:
     import xmlsec
 except ImportError:
     xmlsec = None
 
-from zeep import ns
-from zeep.utils import detect_soap_env
-from zeep.exceptions import SignatureVerificationFailed
-from zeep.wsse.utils import ensure_id, get_security_header
 
 # SOAP envelope
 SOAP_NS = 'http://schemas.xmlsoap.org/soap/envelope/'
@@ -190,12 +191,15 @@ def verify_envelope(envelope, certfile):
     Expects a document like that found in the sample XML in the ``sign()``
     docstring.
 
-    Raise SignatureValidationFailed on failure, silent on success.
+    Raise SignatureVerificationFailed on failure, silent on success.
 
     """
     soap_env = detect_soap_env(envelope)
 
     header = envelope.find(QName(soap_env, 'Header'))
+    if not header:
+        raise SignatureVerificationFailed()
+
     security = header.find(QName(ns.WSSE, 'Security'))
     signature = security.find(QName(ns.DS, 'Signature'))
 

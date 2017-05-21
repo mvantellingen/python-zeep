@@ -1,3 +1,64 @@
+2.0.0 (unreleased)
+------------------
+
+This is a major release, and contains a number of backwards incompatible
+changes to the API.
+
+ - Default values of optional elements are not set by default anymore (#423)
+ - Refactor the implementation of wsdl:arrayType too make the API more
+   pythonic (backwards incompatible).
+ - The call signature for Client.create_message() was changed. It now requires
+   the service argument:
+
+     ``Client.create_message(service, operation_name, *args, **kwargs)``
+
+ - Choice elements now only work with keyword arguments and raise an exception
+   if positional arguments are passed (#439)
+ - Implement initial multiref support for SOAP RPC (#326). This was done using
+   really good real-world tests from vstoykov (thanks!)
+ - Fix exception on empty SOAP response (#442)
+
+
+1.6.0 (2017-04-27)
+------------------
+ - Implement ValueObject.__json__ for json serialization (#258)
+ - Improve handling of unexpected elements for soap:header (#378)
+ - Accept unexpected elements in complexTypes when strict is False
+ - Fix elementFormDefault/attributeFormDefault for xsd:includes (#426)
+
+
+1.5.0 (2017-04-22)
+------------------
+ - Fix issue where values of indicators (sequence/choice/all) would
+   write to the same internal dict. (#425)
+ - Set default XML parse mode to strict as was intended (#332)
+ - Add support for pickling value objects (#417)
+ - Add explicit Nil value via ``zeep.xsd.Nil`` (#424)
+ - Add xml_huge_tree kwarg to the Client() to enable lxml's huge_tree mode,
+   this is disabled by default (#332)
+ - Add support to pass base-types to type extensions (#416)
+ - Handle wsdl errors more gracefully by disabling the invalid operations
+   instead of raising an exception (#407, #387)
+
+
+1.4.1 (2017-04-01)
+------------------
+ - The previous release (1.4.0) contained an incorrect dependency due to
+   bumpversion moving all 1.3.0 versions to 1.4.0. This fixes it.
+
+
+1.4.0 (2017-04-01)
+------------------
+ - Hardcode the xml prefix to the xml namespace as defined in the specs (#367)
+ - Fix parsing of unbound sequences within xsd choices (#380)
+ - Use logger.debug() for debug related logging (#369)
+ - Add the ``Client.raw_response`` option to let zeep return the raw
+   transport response (requests.Response) instead of trying to parse it.
+ - Handle minOccurs/maxOccurs properlhy for xsd:Group elements. This also
+   fixes a bug in the xsd:Choice handling for multiple elements (#374, #410)
+ - Fix raising XMLSyntaxError when loading invalid XML (Antanas Sinica, #396)
+
+
 1.3.0 (2017-03-14)
 ------------------
  - Add support for nested xsd:choice elements (#370)
@@ -11,7 +72,7 @@
    work with non standard compliant SOAP Servers. See the documentation for
    usage and potential downsides.
  - Minor refactor of resolving of elements for improved performance
- - Support the SOAP 1.2 'http://www.w3.org/2003/05/soap/bindings/HTTP/' 
+ - Support the SOAP 1.2 'http://www.w3.org/2003/05/soap/bindings/HTTP/'
    transport uri (#355)
  - Fallback to matching wsdl lookups to matching when the target namespace is
    empty (#356)
@@ -25,14 +86,14 @@
 
 1.1.0 (2017-02-18)
 ------------------
- - Fix an attribute error when an complexType used xsd:anyType as base 
+ - Fix an attribute error when an complexType used xsd:anyType as base
    restriction (#352)
  - Update asyncio transport to return requests.Response objects (#335)
 
- 
+
 1.0.0 (2017-01-31)
 ------------------
- - Use cgi.parse_header() to extract media_type for multipart/related checks 
+ - Use cgi.parse_header() to extract media_type for multipart/related checks
    (#327)
  - Don't ignore nil elements, instead return None when parsing xml (#328)
  - Fix regression when using WSA with an older lxml version (#197)
@@ -51,13 +112,13 @@
 This release again introduces some backwords incompatibilties. The next release
 will hopefully be 1.0 which will introduce semver.
 
- - **backwards-incompatible**: The Transport class now accepts a 
+ - **backwards-incompatible**: The Transport class now accepts a
    ``requests.Session()`` object instead of ``http_auth`` and ``verify``. This
    allows for more flexibility.
  - **backwards-incompatible**: Zeep no longer sets a default cache backend.
    Please see http://docs.python-zeep.org/en/master/transport.html#caching for
    information about how to configure a cache.
- - Add ``zeep.xsd.SkipValue`` which instructs the serialize to ignore the 
+ - Add ``zeep.xsd.SkipValue`` which instructs the serialize to ignore the
    element.
  - Support duplicate target namespaces in the wsdl definition (#320)
  - Fix resolving element/types for xsd schema's with duplicate tns (#319)
@@ -80,12 +141,12 @@ will hopefully be 1.0 which will introduce semver.
    type. Instead log a message (#273)
  - Fix serializing etree.Element instances in the helpers.serialize function
    (#255)
- - Fix infinite loop during parsing of xsd.Sequence where max_occurs is 
+ - Fix infinite loop during parsing of xsd.Sequence where max_occurs is
    unbounded (#256)
  - Make the xsd.Element name kwarg required
- - Improve handling of the xsd:anyType element when passed instances of 
+ - Improve handling of the xsd:anyType element when passed instances of
    complexType's (#252)
- - Silently ignore unsupported binding transports instead of an hard error 
+ - Silently ignore unsupported binding transports instead of an hard error
    (#277)
  - Support microseconds for xsd.dateTime and xsd.Time (#280)
  - Don't mutate passed values to the zeep operations (#280)
@@ -96,7 +157,7 @@ will hopefully be 1.0 which will introduce semver.
  - Add Client.set_default_soapheaders() to set soapheaders which are to be used
    on all operations done via the client object.
  - Add basic support for asyncio using aiohttp. Many thanks to chrisimcevoy
-   for the initial implementation! Please see 
+   for the initial implementation! Please see
    https://github.com/mvantellingen/python-zeep/pull/207 and
    https://github.com/mvantellingen/python-zeep/pull/251 for more information
  - Fix recursion error when generating the call signature (jaceksnet, #264)
@@ -105,7 +166,7 @@ will hopefully be 1.0 which will introduce semver.
 0.22.1 (2016-11-22)
 -------------------
  - Fix reversed() error (jaceksnet) (#260)
- - Better error message when unexpected xml elements are encountered in 
+ - Better error message when unexpected xml elements are encountered in
    sequences.
 
 
@@ -114,13 +175,13 @@ will hopefully be 1.0 which will introduce semver.
  - Force the soap:address / http:address to HTTPS when the wsdl is loaded from
    a https url (#228)
  - Improvements to the xsd:union handling. The matching base class is now used
-   for serializing/deserializing the values. If there is no matching base class 
+   for serializing/deserializing the values. If there is no matching base class
    then the raw value is returned. (#195)
  - Fix handling of xsd:any with maxOccurs > 1 in xsd:choice elements (#253)
- - Add workaround for schema's importing the xsd from 
+ - Add workaround for schema's importing the xsd from
    http://www.w3.org/XML/1998/namespace (#220)
  - Add new Client.type_factory(namespace) method which returns a factory to
-   simplify creation of types. 
+   simplify creation of types.
 
 
 
@@ -128,15 +189,15 @@ will hopefully be 1.0 which will introduce semver.
 -------------------
  - Don't error on empty xml namespaces declarations in inline schema's (#186)
  - Wrap importing of sqlite3 in try..except for Google App Engine (#243)
- - Don't use pkg_resources to determine the zeep version, use __version__ 
+ - Don't use pkg_resources to determine the zeep version, use __version__
    instead (#243).
- - Fix SOAP arrays by wrapping children in the appropriate element 
+ - Fix SOAP arrays by wrapping children in the appropriate element
    (joeribekker, #236)
  - Add ``operation_timeout`` kwarg to the Transport class to set timeouts for
    operations. The default is still no timeout (#140)
  - Introduce client.options context manager to temporarily override various
    options (only timeout for now) (#140)
- - Wrap the parsing of xml values in a try..except block and log an error 
+ - Wrap the parsing of xml values in a try..except block and log an error
    instead of throwing an exception (#137)
  - Fix xsd:choice xml rendering with nested choice/sequence structure (#221)
  - Correctly resolve header elements of which the message part defines the
@@ -146,7 +207,7 @@ will hopefully be 1.0 which will introduce semver.
 0.20.0 (2016-10-24)
 -------------------
  - Major performance improvements / lower memory usage. Zeep now no longer
-   copies data and alters it in place but instead uses a set to keep track of 
+   copies data and alters it in place but instead uses a set to keep track of
    modified data.
  - Fix parsing empty soap response (#223)
  - Major refactor of the xsd:extension / xsd:restriction implementation.
@@ -158,12 +219,12 @@ will hopefully be 1.0 which will introduce semver.
 -------------------
  - **backwards-incompatible**: If the WSDL defines that the endpoint returns
    soap:header elements and/or multple soap:body messages then the return
-   signature of the operation is changed. You can now explcitly access the 
+   signature of the operation is changed. You can now explcitly access the
    body and header elements.
  - Fix parsing HTTP bindings when there are no message elements (#185)
  - Fix deserializing RPC responses (#219
  - Add support for SOAP 1.2 Fault subcodes (#210, vashek)
- - Don't alter the _soapheaders elements during rendering, instead create a 
+ - Don't alter the _soapheaders elements during rendering, instead create a
    deepcopy first. (#188)
  - Add the SOAPAction to the Content-Type header in SOAP 1.2 bindings (#211)
  - Fix issue when mixing elements and any elements in a choice type (#192)
@@ -179,7 +240,7 @@ will hopefully be 1.0 which will introduce semver.
 
 0.18.0 (2016-09-23)
 -------------------
- - Fix parsing Any elements by using the namespace map of the response node 
+ - Fix parsing Any elements by using the namespace map of the response node
    instead of the namespace map of the wsdl. (#184, #164)
  - Improve handling of nested choice elements (choice>sequence>choice)
 
@@ -189,14 +250,14 @@ will hopefully be 1.0 which will introduce semver.
  - Add support for xsd:notation (#183)
  - Add improvements to resolving phase so that all objects are resolved.
  - Improve implementation of xsd.attributeGroup and xsd.UniqueType
- - Create a deepcopy of the args and kwargs passed to objects so that the 
+ - Create a deepcopy of the args and kwargs passed to objects so that the
    original are unmodified.
  - Improve handling of wsdl:arrayType
 
 
 0.16.0 (2016-09-06)
 -------------------
- - Fix error when rendering choice elements with have sequences as children, 
+ - Fix error when rendering choice elements with have sequences as children,
    see #150
  - Re-use credentials passed to python -mzeep <wsdl> (#130)
  - Workaround invalid usage of qualified vs non-qualified element tags in the
@@ -223,7 +284,7 @@ will hopefully be 1.0 which will introduce semver.
 0.14.0 (2016-08-03)
 -------------------
  - Global attributes are now always correctly handled as qualified. (#129)
- - Fix parsing xml data containing simpleContent types (#136). 
+ - Fix parsing xml data containing simpleContent types (#136).
  - Set xsi:nil attribute when serializing objects to xml (#141)
  - Fix rendering choice elements when the element is mixed with other elements
    in a sequence (#150)
@@ -239,8 +300,8 @@ will hopefully be 1.0 which will introduce semver.
    exception. This better matches with what lxml does.
  - **backwards-incompatible**: The ``persistent`` kwarg is removed from the
    SqliteCache.__init__() call. Use the new InMemoryCache() instead when you
-   don't want to persist data. This was required to make the SqliteCache 
-   backend thread-safe since we now open/close the db when writing/reading 
+   don't want to persist data. This was required to make the SqliteCache
+   backend thread-safe since we now open/close the db when writing/reading
    from it (with an additional lock).
  - Fix zeep.helpers.serialize_object() for nested objects (#123)
  - Remove fallback between soap 1.1 and soap 1.2 namespaces during the parsing
@@ -249,30 +310,30 @@ will hopefully be 1.0 which will introduce semver.
 
 0.12.0 (2016-07-09)
 -------------------
- - **backwards-incompatible**: Choice elements are now unwrapped if 
+ - **backwards-incompatible**: Choice elements are now unwrapped if
    maxOccurs=1. This results in easier operation definitions when choices are
-   used. 
+   used.
  - **backwards-incompatible**: The _soapheader kwarg is renamed to _soapheaders
    and now requires a nested dictionary with the header name as key or a list
-   of values (value object or lxml.etree.Element object). Please see the 
+   of values (value object or lxml.etree.Element object). Please see the
    call signature of the function using ``python -mzeep <wsdl>``.
  - Support the element ref's to xsd:schema elements.
  - Improve the signature() output of element and type definitions
  - Accept lxml.etree.Element objects as value for Any elements.
  - And various other fixes
- 
+
 
 0.11.0 (2016-07-03)
 -------------------
  - **backwards-incompatible**: The kwarg name for Any and Choice elements are
    renamed to generic ``_value_N`` names.
- - **backwards-incompatible**: Client.set_address() is replaced with the 
+ - **backwards-incompatible**: Client.set_address() is replaced with the
    Client.create_service() call
  - Auto-load the http://schemas.xmlsoap.org/soap/encoding/ schema if it is
    referenced but not imported. Too many XSD's assume that the schema is always
    available.
- - Major refactoring of the XSD handling to correctly support nested 
-   xsd:sequence elements. 
+ - Major refactoring of the XSD handling to correctly support nested
+   xsd:sequence elements.
  - Add ``logger.debug()`` calls around Transport.post() to allow capturing the
    content send/received from the server
  - Add proper support for default values on attributes and elements.
@@ -280,12 +341,12 @@ will hopefully be 1.0 which will introduce semver.
 
 0.10.0 (2016-06-22)
 -------------------
- - Make global elements / types truly global by refactoring the Schema 
+ - Make global elements / types truly global by refactoring the Schema
    parsing. Previously the lookups where non-transitive, but this should only
    be the case during parsing of the xml schema.
  - Properly unwrap XML responses in soap.DocumentMessage when a choice is the
    root element. (#80)
- - Update exceptions structure, all zeep exceptions are now using 
+ - Update exceptions structure, all zeep exceptions are now using
    zeep.exceptions.Error() as base class.
 
 
@@ -293,12 +354,12 @@ will hopefully be 1.0 which will introduce semver.
 ------------------
  - Quote the SOAPAction header value (Derek Harland)
  - Undo fallback for SOAPAction if it is empty (#83)
- 
+
 
 0.9.0 (2016-06-14)
 ------------------
  - Use the appdirs module to retrieve the OS cache path. Note that this results
-   in an other default cache path then previous releases! See 
+   in an other default cache path then previous releases! See
    https://github.com/ActiveState/appdirs for more information.
  - Fix regression when initializing soap objects with invalid kwargs.
  - Update wsse.UsernameToken to set encoding type on nonce (Antonio Cuni)
@@ -313,7 +374,7 @@ will hopefully be 1.0 which will introduce semver.
 
 0.8.1 (2016-06-08)
 ------------------
- - Use the operation name for the xml element which wraps the parameters in 
+ - Use the operation name for the xml element which wraps the parameters in
    for soap RPC messages (#60)
 
 
@@ -321,7 +382,7 @@ will hopefully be 1.0 which will introduce semver.
 ------------------
  - Add ability to override the soap endpoint via `Client.set_address()`
  - Fix parsing ComplexTypes which have no child elements (#50)
- - Handle xsi:type attributes on anyType's correctly when deserializing 
+ - Handle xsi:type attributes on anyType's correctly when deserializing
    responses (#17)
  - Fix xsd:restriction on xsd:simpleType's when the base type wasn't defined
    yet. (#59)
@@ -338,9 +399,9 @@ will hopefully be 1.0 which will introduce semver.
 ------------------
  - Add support HTTP authentication (mcordes). This adds a new attribute to the
    Transport client() which passes the http_auth value to requests. (#31)
- - Fix issue where setting cache=None to Transport class didn't disable 
+ - Fix issue where setting cache=None to Transport class didn't disable
    caching.
- - Refactor handling of wsdl:imports, don't merge definitions but instead 
+ - Refactor handling of wsdl:imports, don't merge definitions but instead
    lookup values in child definitions. (#40)
  - Remove unused namespace declarations from the generated SOAP messages.
  - Update requirement of six>=1.0.0 to six>=1.9.0 (#39)
@@ -363,14 +424,14 @@ will hopefully be 1.0 which will introduce semver.
 ------------------
  - Handle attributes during parsing of the response values>
  - Don't create empty soap objects when the root element is empty.
- - Implement support for WSSE usernameToken profile including 
+ - Implement support for WSSE usernameToken profile including
    passwordText/passwordDigest.
  - Improve XSD date/time related builtins.
- - Various minor XSD handling fixes 
+ - Various minor XSD handling fixes
  - Use the correct soap-envelope XML namespace for the Soap 1.2 binding
  - Use `application/soap+xml` as content-type in the Soap 1.2 binding
- - **backwards incompatible**: Make cache part of the transport object 
-   instead of the client.  This changes the call signature of the Client() 
+ - **backwards incompatible**: Make cache part of the transport object
+   instead of the client.  This changes the call signature of the Client()
    class.  (Marek Wywiał)
  - Add the `verify` kwarg to the Transport object to disable ssl certificate
    verification. (Marek Wywiał)
@@ -401,7 +462,7 @@ will hopefully be 1.0 which will introduce semver.
 ------------------
  - Improve xsd.DateTime, xsd.Date and xsd.Time implementations by using the
    isodate module.
- - Implement xsd.Duration 
+ - Implement xsd.Duration
 
 
 0.2.3 (2016-04-03)

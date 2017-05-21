@@ -11,6 +11,18 @@ def test_factory_namespace():
     assert obj.NameLast == 'van Tellingen'
 
 
+def test_factory_no_reference():
+    client = Client('tests/wsdl_files/soap.wsdl')
+    factory = client.type_factory('http://example.com/stockquote.xsd')
+    obj_1 = client.get_type('ns0:ArrayOfAddress')()
+    obj_1.Address.append({
+        'NameFirst': 'J',
+        'NameLast': 'Doe',
+    })
+    obj_2 = client.get_type('ns0:ArrayOfAddress')()
+    assert len(obj_2.Address) == 0
+
+
 def test_factory_ns_auto_prefix():
     client = Client('tests/wsdl_files/soap.wsdl')
     factory = client.type_factory('ns0')

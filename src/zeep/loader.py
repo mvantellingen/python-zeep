@@ -18,7 +18,8 @@ class ImportResolver(etree.Resolver):
             return self.resolve_string(content, context)
 
 
-def parse_xml(content, transport, base_url=None, strict=False):
+def parse_xml(content, transport, base_url=None, strict=True,
+              xml_huge_tree=False):
     """Parse an XML string and return the root Element.
 
     :param content: The XML string
@@ -31,19 +32,21 @@ def parse_xml(content, transport, base_url=None, strict=False):
     :param strict: boolean to indicate if the lxml should be parsed a 'strict'.
       If false then the recover mode is enabled which tries to parse invalid
       XML as best as it can.
+    :param xml_huge_tree: boolean to indicate if lxml should process very
+      large XML content.
     :type strict: boolean
     :returns: The document root
     :rtype: lxml.etree._Element
 
     """
     recover = not strict
-    parser = etree.XMLParser(
-        remove_comments=True, resolve_entities=False, recover=recover)
+    parser = etree.XMLParser(remove_comments=True, resolve_entities=False,
+                             recover=recover, huge_tree=xml_huge_tree)
     parser.resolvers.add(ImportResolver(transport))
     try:
         return fromstring(content, parser=parser, base_url=base_url)
     except etree.XMLSyntaxError as exc:
-        raise XMLSyntaxError("Invalid XML content received (%s)" % exc.message)
+        raise XMLSyntaxError("Invalid XML content received (%s)" % exc.msg)
 
 
 def load_external(url, transport, base_url=None, strict=True):

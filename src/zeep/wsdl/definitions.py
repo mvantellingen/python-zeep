@@ -15,9 +15,12 @@
     This module defines the definitions which occur within a WSDL document,
 
 """
+import warnings
 from collections import OrderedDict, namedtuple
 
 from six import python_2_unicode_compatible
+
+from zeep.exceptions import IncompleteOperation
 
 MessagePart = namedtuple('MessagePart', ['element', 'type'])
 
@@ -119,8 +122,13 @@ class Binding(object):
 
     def resolve(self, definitions):
         self.port_type = definitions.get('port_types', self.port_name.text)
-        for operation in self._operations.values():
-            operation.resolve(definitions)
+
+        for name, operation in list(self._operations.items()):
+            try:
+                operation.resolve(definitions)
+            except IncompleteOperation as exc:
+                warnings.warn(str(exc))
+                del self._operations[name]
 
     def _operation_add(self, operation):
         # XXX: operation name is not unique
@@ -165,7 +173,12 @@ class Operation(object):
         self.faults = {}
 
     def resolve(self, definitions):
-        self.abstract = self.binding.port_type.operations[self.name]
+        try:
+            self.abstract = self.binding.port_type.operations[self.name]
+        except KeyError:
+            raise IncompleteOperation(
+                "The wsdl:operation %r was not found in the wsdl:portType %r" % (
+                    self.name, self.binding.port_type.name.text))
 
     def __repr__(self):
         return '<%s(name=%r, style=%r)>' % (

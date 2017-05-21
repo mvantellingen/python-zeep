@@ -71,10 +71,10 @@ If you have installed pip then run::
 
 This assumes that there are wheel files available for the latest lxml release.
 If that is not the case (https://pypi.python.org/pypi/lxml/) then first 
-install lxml 3.7.1 since that release should have the wheel files for all
+install lxml 3.7.3 since that release should have the wheel files for all
 platforms::
 
-    pip install lxml==3.7.1 zeep
+    pip install lxml==3.7.3 zeep
 
 
 When you want to use wsse.Signature() you will need to install the python
@@ -100,11 +100,12 @@ implement. This can be done with::
 See ``python -mzeep --help`` for more information about this command.
 
 
-.. note:: Since this module hasn't reached 1.0.0 yet their might be minor
-          releases which introduce backwards compatible changes. While I try 
-          to keep this to a minimum it can still happen. So as always pin the 
-          version of zeep you used (e.g. ``zeep==0.24.0``').
+.. note:: Zeep follows `semver`_ for versioning, however bugs can always occur.  
+          So as always pin the version of zeep you tested with 
+          (e.g. ``zeep==1.6.0``').
 
+
+.. _semver: http://semver.org/
 
 
 A simple use-case
@@ -130,6 +131,13 @@ endpoint you can run the following command in your terminal.
     python -mzeep http://www.soapclient.com/xml/soapresponder.wsdl
 
 
+.. note::
+
+    Note that unlike suds, zeep doesn't enable caching of the wsdl documents
+    by default. This means that everytime you initialize the client requests
+    are done to retrieve the wsdl contents. 
+
+
 User guide
 ==========
 
@@ -138,8 +146,8 @@ User guide
 
    in_depth
    client
-   headers
    transport
+   headers
    datastructures
    attachments
    wsa

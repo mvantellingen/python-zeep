@@ -1,15 +1,13 @@
 from lxml import etree
 
-NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
-NS_XSD = 'http://www.w3.org/2001/XMLSchema'
-
+from zeep import ns
 
 def xsi_ns(localname):
-    return etree.QName(NS_XSI, localname)
+    return etree.QName(ns.XSI, localname)
 
 
 def xsd_ns(localname):
-    return etree.QName(NS_XSD, localname)
+    return etree.QName(ns.XSD, localname)
 
 
 class _StaticIdentity(object):
@@ -22,3 +20,4 @@ class _StaticIdentity(object):
 
 NotSet = _StaticIdentity('NotSet')
 SkipValue = _StaticIdentity('SkipValue')
+Nil = _StaticIdentity('Nil')

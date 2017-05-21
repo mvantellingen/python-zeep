@@ -1,4 +1,5 @@
 import re
+import sys
 
 from setuptools import find_packages, setup
 
@@ -18,10 +19,7 @@ docs_require = [
     'sphinx>=1.4.0',
 ]
 
-async_require = [
-    'aiohttp>=1.0',
-    'aioresponses>=0.1.3',
-]
+async_require = []  # see below
 
 xmlsec_require = [
     'xmlsec>=0.6.1',
@@ -42,13 +40,19 @@ tests_require = [
     'flake8-debugger==1.4.0',
 ]
 
+
+if sys.version_info > (3, 4, 2):
+    async_require.append('aiohttp>=1.0')
+    tests_require.append('aioresponses>=0.1.3')
+
+
 with open('README.rst') as fh:
     long_description = re.sub(
         '^.. start-no-pypi.*^.. end-no-pypi', '', fh.read(), flags=re.M | re.S)
 
 setup(
     name='zeep',
-    version='1.3.0',
+    version='1.6.0',
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=long_description,
     author="Michael van Tellingen",

@@ -13,7 +13,7 @@ from zeep.xsd.elements.indicators import OrderIndicator
 from zeep.xsd.types.any import AnyType
 from zeep.xsd.types.simple import AnySimpleType
 from zeep.xsd.utils import NamePrefixGenerator
-from zeep.xsd.valueobjects import CompoundValue
+from zeep.xsd.valueobjects import CompoundValue, ArrayValue
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +33,24 @@ class ComplexType(AnyType):
         self._attributes = attributes or []
         self._restriction = restriction
         self._extension = extension
+        self._extension_types = tuple()
         super(ComplexType, self).__init__(qname=qname, is_global=is_global)
 
     def __call__(self, *args, **kwargs):
+        if self._array_type:
+            return self._array_class(*args, **kwargs)
         return self._value_class(*args, **kwargs)
 
     @property
     def accepted_types(self):
-        return (self._value_class,)
+        return (self._value_class,) + self._extension_types
+
+    @threaded_cached_property
+    def _array_class(self):
+        assert self._array_type
+        return type(
+            self.__class__.__name__, (ArrayValue,),
+            {'_xsd_type': self, '__module__': 'zeep.objects'})
 
     @threaded_cached_property
     def _value_class(self):
@@ -94,24 +104,28 @@ class ComplexType(AnyType):
         generator = NamePrefixGenerator()
 
         # Handle wsdl:arrayType objects
-        attrs = {attr.qname.text: attr for attr in self._attributes if attr.qname}
-        array_type = attrs.get('{http://schemas.xmlsoap.org/soap/encoding/}arrayType')
-        if array_type:
+        if self._array_type:
             name = generator.get_name()
             if isinstance(self._element, Group):
-                return [(name, Sequence([
-                    Any(max_occurs='unbounded', restrict=array_type.array_type)
+                result = [(name, Sequence([
+                    Any(max_occurs='unbounded', restrict=self._array_type.array_type)
                 ]))]
             else:
-                return [(name, self._element)]
-
-        # _element is one of All, Choice, Group, Sequence
-        if self._element:
-            result.append((generator.get_name(), self._element))
+                result = [(name, self._element)]
+        else:
+            # _element is one of All, Choice, Group, Sequence
+            if self._element:
+                result.append((generator.get_name(), self._element))
         return result
 
+    @property
+    def _array_type(self):
+        attrs = {attr.qname.text: attr for attr in self._attributes if attr.qname}
+        array_type = attrs.get('{http://schemas.xmlsoap.org/soap/encoding/}arrayType')
+        return array_type
+
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
-                         context=None):
+                         context=None, schema_type=None):
         """Consume matching xmlelements and call parse() on each
 
         :param xmlelement: XML element objects
@@ -158,7 +172,10 @@ class ComplexType(AnyType):
 
             # Check if all children are consumed (parsed)
             if elements:
-                raise XMLParseError("Unexpected element %r" % elements[0].tag)
+                if schema.strict:
+                    raise XMLParseError("Unexpected element %r" % elements[0].tag)
+                else:
+                    init_kwargs['_raw_elements'] = elements
 
         # Parse attributes
         if attributes:
@@ -171,7 +188,11 @@ class ComplexType(AnyType):
                 else:
                     init_kwargs[name] = attribute.parse(attributes)
 
-        return self(**init_kwargs)
+        value = self._value_class(**init_kwargs)
+        schema_type = schema_type or self
+        if schema_type and getattr(schema_type, '_array_type', None):
+            value = schema_type._array_class.from_value_object(value)
+        return value
 
     def render(self, parent, value, xsd_type=None, render_path=None):
         """Serialize the given value lxml.Element subelements on the parent
@@ -184,11 +205,23 @@ class ComplexType(AnyType):
         if not self.elements_nested and not self.attributes:
             return
 
+        if isinstance(value, ArrayValue):
+            value = value.as_value_object()
+
         # Render attributes
         for name, attribute in self.attributes:
             attr_value = value[name] if name in value else NotSet
             child_path = render_path + [name]
             attribute.render(parent, attr_value, child_path)
+
+        if (
+            len(self.elements_nested) == 1
+            and isinstance(value, self.accepted_types)
+            and not isinstance(value, (list, dict, CompoundValue))
+        ):
+            element = self.elements_nested[0][1]
+            element.type.render(parent, value, None, child_path)
+            return
 
         # Render sub elements
         for name, element in self.elements_nested:
@@ -199,6 +232,7 @@ class ComplexType(AnyType):
                 element_value = value
                 child_path = list(render_path)
 
+            # We want to explicitly skip this sub-element
             if element_value is SkipValue:
                 continue
 
@@ -230,7 +264,7 @@ class ComplexType(AnyType):
         if value is None:
             return None
 
-        if isinstance(value, list):
+        if isinstance(value, list) and not self._array_type:
             return [self._create_object(val, name) for val in value]
 
         if isinstance(value, CompoundValue) or value is SkipValue:
@@ -239,15 +273,9 @@ class ComplexType(AnyType):
         if isinstance(value, dict):
             return self(**value)
 
-        # Check if the valueclass only expects one value, in that case
-        # we can try to automatically create an object for it.
-        if len(self.attributes) + len(self.elements) == 1:
-            return self(value)
-
-        raise ValueError((
-            "Error while create XML for complexType '%s': "
-            "Expected instance of type %s, received %r instead."
-        ) % (self.qname or name, self._value_class, type(value)))
+        # Try to automatically create an object. This might fail if there
+        # are multiple required arguments.
+        return self(value)
 
     def resolve(self):
         """Resolve all sub elements and types"""
@@ -278,7 +306,7 @@ class ComplexType(AnyType):
         return self._resolved
 
     def extend(self, base):
-        """Create a new complextype instance which is the current type
+        """Create a new ComplexType instance which is the current type
         extending the given base type.
 
         Used for handling xsd:extension tags
@@ -337,6 +365,8 @@ class ComplexType(AnyType):
             attributes=attributes,
             qname=self.qname,
             is_global=self.is_global)
+
+        new._extension_types = base.accepted_types
         return new
 
     def restrict(self, base):
@@ -357,7 +387,7 @@ class ComplexType(AnyType):
                     new_attributes['##any'] = attr
                 else:
                     new_attributes[attr.qname.text] = attr
-            attributes = new_attributes.values()
+            attributes = list(new_attributes.values())
 
         if base._element:
             base._element.resolve()

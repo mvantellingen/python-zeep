@@ -9,9 +9,11 @@ from collections import OrderedDict
 from lxml import etree
 from lxml.builder import ElementMaker
 
+from zeep import ns
 from zeep import exceptions, xsd
 from zeep.utils import as_qname
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
+from zeep.wsdl.messages.multiref import process_multiref
 
 __all__ = [
     'DocumentMessage',
@@ -86,6 +88,7 @@ class SoapMessage(ConcreteMessage):
         """
         if not self.envelope:
             return None
+
 
         body = envelope.find('soap-env:Body', namespaces=self.nsmap)
         body_result = self._deserialize_body(body)
@@ -348,7 +351,7 @@ class SoapMessage(ConcreteMessage):
     def _resolve_header(self, info, definitions, parts):
         name = etree.QName(self.nsmap['soap-env'], 'Header')
 
-        container = xsd.All()
+        container = xsd.All(consume_other=True)
         if not info:
             return xsd.Element(name, xsd.ComplexType(container))
 
@@ -493,6 +496,8 @@ class RpcMessage(SoapMessage):
         element.
 
         """
+        process_multiref(body_element)
+
         response_element = body_element.getchildren()[0]
         if self.body:
             result = self.body.parse(response_element, self.wsdl.types)

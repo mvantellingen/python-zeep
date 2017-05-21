@@ -6,10 +6,10 @@ from lxml import etree
 from zeep import exceptions
 from zeep.exceptions import UnexpectedElementError
 from zeep.utils import qname_attr
-from zeep.xsd.const import NotSet, xsi_ns
+from zeep.xsd.const import Nil, NotSet, xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.elements.base import Base
-from zeep.xsd.utils import max_occurs_iter, create_prefixed_name
+from zeep.xsd.utils import create_prefixed_name, max_occurs_iter
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +65,11 @@ class Element(Base):
 
     @property
     def default_value(self):
-        value = [] if self.accepts_multiple else self.default
-        return value
+        if self.accepts_multiple:
+            return []
+        if self.is_optional:
+            return None
+        return self.default
 
     def clone(self, name=None, min_occurs=1, max_occurs=1):
         new = copy.copy(self)
@@ -95,7 +98,8 @@ class Element(Base):
             xsd_type = schema.get_type(instance_type, fail_silently=True)
         xsd_type = xsd_type or self.type
         return xsd_type.parse_xmlelement(
-            xmlelement, schema, allow_none=allow_none, context=context)
+            xmlelement, schema, allow_none=allow_none, context=context,
+            schema_type=self.type)
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
         return self.type.parse_kwargs(
@@ -131,7 +135,8 @@ class Element(Base):
             element_tag = etree.QName(xmlelements[0].tag)
             if (
                 element_tag.namespace and self.qname.namespace and
-                element_tag.namespace != self.qname.namespace
+                element_tag.namespace != self.qname.namespace and
+                schema.strict
             ):
                 break
 
@@ -175,6 +180,12 @@ class Element(Base):
 
     def _render_value_item(self, parent, value, render_path):
         """Render the value on the parent lxml.Element"""
+
+        if value is Nil:
+            elm = etree.SubElement(parent, self.qname)
+            elm.set(xsi_ns('nil'), 'true')
+            return
+
         if value is None or value is NotSet:
             if self.is_optional:
                 return

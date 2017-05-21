@@ -7,6 +7,25 @@ from zeep.exceptions import Fault
 from zeep.wsdl import bindings
 
 
+def test_soap11_no_output():
+    client = Client('tests/wsdl_files/soap.wsdl')
+    content = """
+        <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:stoc="http://example.com/stockquote.xsd">
+          <soapenv:Body></soapenv:Body>
+        </soapenv:Envelope>
+    """.strip()
+    response = stub(
+        status_code=200,
+        headers={},
+        content=content)
+
+    operation = client.service._binding._operations['GetLastTradePriceNoOutput']
+    res = client.service._binding.process_reply(client, operation, response)
+    assert res is None
+
+
 def test_soap11_process_error():
     response = load_xml("""
         <soapenv:Envelope
@@ -26,10 +45,10 @@ def test_soap11_process_error():
           </soapenv:Body>
         </soapenv:Envelope>
     """)
+
     binding = bindings.Soap11Binding(
         wsdl=None, name=None, port_name=None, transport=None,
         default_style=None)
-
     try:
         binding.process_error(response, None)
         assert False
@@ -256,3 +275,38 @@ def test_mime_multipart_no_encoding():
 
     assert result.attachments[0].content == b'...Base64 encoded TIFF image...'
     assert result.attachments[1].content == b'...Raw JPEG image..'
+
+
+def test_unexpected_headers():
+    data = """
+        <?xml version="1.0"?>
+        <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:stoc="http://example.com/stockquote.xsd">
+           <soapenv:Header>
+             <stoc:IamUnexpected>uhoh</stoc:IamUnexpected>
+           </soapenv:Header>
+           <soapenv:Body>
+              <stoc:TradePrice>
+                 <price>120.123</price>
+              </stoc:TradePrice>
+           </soapenv:Body>
+        </soapenv:Envelope>
+    """.strip()
+
+    client = Client('tests/wsdl_files/soap_header.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=200,
+        content=data,
+        encoding='utf-8',
+        headers={}
+    )
+
+    result = binding.process_reply(
+        client, binding.get('GetLastTradePrice'), response)
+
+    assert result.body.price == 120.123
+    assert result.header.body is None
+    assert len(result.header._raw_elements) == 1

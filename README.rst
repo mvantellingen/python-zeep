@@ -72,12 +72,10 @@ information.
 Support
 =======
 
-If you encounter bugs then please `let me know`_ .  A copy of the WSDL file if
-possible would be most helpful. 
+If you want to report a bug then please first read 
+http://docs.python-zeep.org/en/master/reporting_bugs.html
 
 I'm also able to offer commercial support.  As in contracting work. Please
-contact me at info@mvantellingen.nl for more information. If you just have a
-random question and don't intent to actually pay me for my support then please
-DO NOT email me at that e-mail address but just use stackoverflow or something..
-
-.. _let me know: https://github.com/mvantellingen/python-zeep/issues
+contact me at info@mvantellingen.nl for more information.  Note that asking 
+questions or reporting bugs via this e-mail address will be ignored. Pleae use
+the appropriate channels for that (e.g. stackoverflow)

@@ -78,3 +78,11 @@ class ValidationError(Error):
 
 class SignatureVerificationFailed(Error):
     pass
+
+
+class IncompleteMessage(Error):
+    pass
+
+
+class IncompleteOperation(Error):
+    pass

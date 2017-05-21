@@ -100,7 +100,8 @@ def test_parse_soap_header_wsdl():
                 }
             })
 
-        assert result == 120.123
+        assert result.body.price == 120.123
+        assert result.header.body is None
 
         request = m.request_history[0]
 

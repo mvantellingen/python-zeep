@@ -5,6 +5,7 @@
 """
 from lxml import etree
 
+from zeep.exceptions import IncompleteMessage, LookupError, NamespaceError
 from zeep.utils import qname_attr
 from zeep.wsdl import definitions
 
@@ -40,10 +41,17 @@ def parse_abstract_message(wsdl, xmlelement):
         part_element = qname_attr(part, 'element', tns)
         part_type = qname_attr(part, 'type', tns)
 
-        if part_element is not None:
-            part_element = wsdl.types.get_element(part_element)
-        if part_type is not None:
-            part_type = wsdl.types.get_type(part_type)
+        try:
+            if part_element is not None:
+                part_element = wsdl.types.get_element(part_element)
+            if part_type is not None:
+                part_type = wsdl.types.get_type(part_type)
+
+        except (NamespaceError, LookupError):
+            raise IncompleteMessage((
+                "The wsdl:message for %r contains "
+                "invalid xsd types or elements"
+            ) % part_name)
 
         part = definitions.MessagePart(part_element, part_type)
         parts.append((part_name, part))
@@ -97,7 +105,11 @@ def parse_abstract_operation(wsdl, xmlelement):
         param_msg = qname_attr(
             msg_node, 'message', wsdl.target_namespace)
         param_name = msg_node.get('name')
-        param_value = wsdl.get('messages', param_msg.text)
+
+        try:
+            param_value = wsdl.get('messages', param_msg.text)
+        except IndexError:
+            return
 
         if tag_name == 'input':
             kwargs['input_message'] = param_value
@@ -136,7 +148,8 @@ def parse_port_type(wsdl, xmlelement):
     operations = {}
     for elm in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
         operation = parse_abstract_operation(wsdl, elm)
-        operations[operation.name] = operation
+        if operation:
+            operations[operation.name] = operation
     return definitions.PortType(name, operations)
 
 

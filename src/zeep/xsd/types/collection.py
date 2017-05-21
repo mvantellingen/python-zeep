@@ -56,7 +56,7 @@ class UnionType(AnySimpleType):
         return ''
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
-                         context=None):
+                         context=None, schema_type=None):
         if self.item_class:
             return self.item_class().parse_xmlelement(
                 xmlelement, schema, allow_none, context)

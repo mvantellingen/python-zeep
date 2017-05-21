@@ -15,6 +15,10 @@ class Type(object):
     def accept(self, value):
         raise NotImplementedError
 
+    @property
+    def accepted_types(self):
+        return tuple()
+
     def validate(self, value, required=False):
         return
 
@@ -29,7 +33,7 @@ class Type(object):
         return {}
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
-                         context=None):
+                         context=None, schema_type=None):
         raise NotImplementedError(
             '%s.parse_xmlelement() is not implemented' % self.__class__.__name__)
 

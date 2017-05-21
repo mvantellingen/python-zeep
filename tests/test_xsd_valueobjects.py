@@ -1,3 +1,6 @@
+import json
+import pickle
+
 import pytest
 import six
 from lxml.etree import QName
@@ -402,4 +405,36 @@ def test_choice_sequences_init_dict():
         '_value_1': [
             {'item_1': 'value-1', 'item_2': 'value-2'}
         ]
+    }
+
+
+def test_pickle():
+    xsd_type = xsd.ComplexType(
+        xsd.Sequence([
+            xsd.Element('item_1', xsd.String()),
+            xsd.Element('item_2', xsd.String())
+        ]))
+
+    obj = xsd_type(item_1='x', item_2='y')
+
+    data = pickle.dumps(obj)
+    obj_rt = pickle.loads(data)
+
+    assert obj.item_1 == 'x'
+    assert obj.item_2 == 'y'
+    assert obj_rt.item_1 == 'x'
+    assert obj_rt.item_2 == 'y'
+
+
+def test_json():
+    xsd_type = xsd.ComplexType(
+        xsd.Sequence([
+            xsd.Element('item_1', xsd.String()),
+            xsd.Element('item_2', xsd.String())
+        ]))
+
+    obj = xsd_type(item_1='x', item_2='y')
+    assert obj.__json__() == {
+        'item_1': 'x',
+        'item_2': 'y',
     }
