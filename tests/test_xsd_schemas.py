@@ -4,6 +4,7 @@ from lxml import etree
 from tests.utils import DummyTransport, load_xml
 from zeep import exceptions, xsd
 from zeep.xsd import Schema
+from zeep.xsd.types.unresolved import UnresolvedType
 from tests.utils import assert_nodes_equal, load_xml, render_node
 
 
@@ -434,8 +435,8 @@ def test_duplicate_target_namespace():
 
     elm_b = schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-b')
     elm_c = schema.get_element('{http://tests.python-zeep.org/duplicate}elm-in-c')
-    assert not isinstance(elm_b.type, xsd.UnresolvedType)
-    assert not isinstance(elm_c.type, xsd.UnresolvedType)
+    assert not isinstance(elm_b.type, UnresolvedType)
+    assert not isinstance(elm_c.type, UnresolvedType)
 
 
 def test_multiple_no_namespace():

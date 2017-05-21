@@ -10,6 +10,7 @@ from zeep.utils import as_qname, qname_attr
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import types as xsd_types
 from zeep.xsd.const import xsd_ns
+from zeep.xsd.types.unresolved import UnresolvedCustomType, UnresolvedType
 
 logger = logging.getLogger(__name__)
 
@@ -400,7 +401,7 @@ class SchemaVisitor(object):
             if match:
                 array_type = match.groups()[0]
                 qname = as_qname(array_type, node.nsmap)
-                array_type = xsd_types.UnresolvedType(qname, self.schema)
+                array_type = UnresolvedType(qname, self.schema)
 
         # If the elment has a ref attribute then all other attributes cannot
         # be present. Short circuit that here.
@@ -470,8 +471,7 @@ class SchemaVisitor(object):
         child = items[0]
         if child.tag == tags.restriction:
             base_type = self.visit_restriction_simple_type(child, node)
-            xsd_type = xsd_types.UnresolvedCustomType(
-                qname, base_type, self.schema)
+            xsd_type = UnresolvedCustomType(qname, base_type, self.schema)
 
         elif child.tag == tags.list:
             xsd_type = self.visit_list(child, node)
@@ -1122,7 +1122,7 @@ class SchemaVisitor(object):
     def _get_type(self, name):
         assert name is not None
         name = self._create_qname(name)
-        return xsd_types.UnresolvedType(name, self.schema)
+        return UnresolvedType(name, self.schema)
 
     def _create_qname(self, name):
         if not isinstance(name, etree.QName):
