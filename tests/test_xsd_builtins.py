@@ -30,6 +30,8 @@ class TestBoolean:
         assert instance.xmlvalue(False) == 'false'
         assert instance.xmlvalue(1) == 'true'
         assert instance.xmlvalue(0) == 'false'
+        assert instance.xmlvalue('false') == 'false'
+        assert instance.xmlvalue('0') == 'false'
 
     def test_pythonvalue(self):
         instance = builtins.Boolean()

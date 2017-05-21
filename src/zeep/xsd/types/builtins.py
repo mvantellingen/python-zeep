@@ -55,7 +55,7 @@ class Boolean(BuiltinType, AnySimpleType):
 
     @check_no_collection
     def xmlvalue(self, value):
-        return 'true' if value else 'false'
+        return 'true' if value and value not in ('false', '0') else 'false'
 
     def pythonvalue(self, value):
         """Return True if the 'true' or '1'. 'false' and '0' are legal false
