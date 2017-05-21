@@ -136,7 +136,9 @@ class ComplexType(AnyType):
         :type allow_none: bool
         :param context: Optional parsing context (for inline schemas)
         :type context: zeep.xsd.context.XmlParserContext
-        :return: dict or None
+        :param schema_type: The original type (not overriden via xsi:type)
+        :type schema_type: zeep.xsd.types.base.Type
+        :rtype: dict or None
 
         """
         # If this is an empty complexType (<xsd:complexType name="x"/>)
@@ -198,6 +200,11 @@ class ComplexType(AnyType):
         """Serialize the given value lxml.Element subelements on the parent
         element.
 
+        :type parent: lxml.etree._Element
+        :type value: Union[list, dict, zeep.xsd.valueobjects.CompoundValue]
+        :type xsd_type: zeep.xsd.types.base.Type
+        :param render_path: list
+
         """
         if not render_path:
             render_path = [self.name]
@@ -248,6 +255,19 @@ class ComplexType(AnyType):
                 parent.set(xsi_ns('type'), xsd_type.qname)
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
+        """Parse the kwargs for this type and return the accepted data as
+        a dict.
+
+        :param kwargs: The kwargs
+        :type kwargs: dict
+        :param name: The name as which this type is registered in the parent
+        :type name: str
+        :param available_kwargs: The kwargs keys which are still available,
+         modified in place
+        :type available_kwargs: set
+        :rtype: dict
+
+        """
         value = None
         name = name or self.name
 
@@ -260,7 +280,12 @@ class ComplexType(AnyType):
         return {}
 
     def _create_object(self, value, name):
-        """Return the value as a CompoundValue object"""
+        """Return the value as a CompoundValue object
+
+        :type value: str
+        :type value: list, dict, CompoundValue
+
+        """
         if value is None:
             return None
 
@@ -313,6 +338,9 @@ class ComplexType(AnyType):
 
         TODO: Needs a rewrite where the child containers are responsible for
         the extend functionality.
+
+        :type base: zeep.xsd.types.base.Type
+        :rtype base: zeep.xsd.types.base.Type
 
         """
         if isinstance(base, ComplexType):
@@ -374,6 +402,10 @@ class ComplexType(AnyType):
         restricted by the base type.
 
         Used for handling xsd:restriction
+
+        :type base: zeep.xsd.types.base.Type
+        :rtype base: zeep.xsd.types.base.Type
+
 
         """
         attributes = list(

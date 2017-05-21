@@ -1,8 +1,15 @@
+"""
+zeep.xsd.elements.references
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Ref* objecs are only used temporarily between parsing the schema and resolving
+all the elements.
+
+"""
 __all__ = ['RefElement', 'RefAttribute', 'RefAttributeGroup', 'RefGroup']
 
 
 class RefElement(object):
-
     def __init__(self, tag, ref, schema, is_qualified=False,
                  min_occurs=1, max_occurs=1):
         self._ref = ref

@@ -90,6 +90,18 @@ class Element(Base):
         use that for further processing. This should only be done for subtypes
         of the defined type but for now we just accept everything.
 
+        This is the entrypoint for parsing an xml document.
+
+        :param xmlelement: The XML element to parse
+        :type xmlelements: lxml.etree._Element
+        :param schema: The parent XML schema
+        :type schema: zeep.xsd.Schema
+        :param allow_none: Allow none
+        :type allow_none: bool
+        :param context: Optional parsing context (for inline schemas)
+        :type context: zeep.xsd.context.XmlParserContext
+        :return: dict or None
+
         """
         context = context or XmlParserContext()
         instance_type = qname_attr(xmlelement, xsi_ns('type'))

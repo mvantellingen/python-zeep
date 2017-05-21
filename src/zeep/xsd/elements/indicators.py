@@ -1,3 +1,16 @@
+"""
+zeep.xsd.elements.indicators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Indicators are a collection of elements. There are four available, these are
+All, Choice, Group and Sequence.
+
+    Indicator -> OrderIndicator -> All
+                                -> Choice
+                                -> Sequence
+              -> Group
+
+"""
 import copy
 import operator
 from collections import OrderedDict, defaultdict, deque
@@ -16,6 +29,7 @@ __all__ = ['All', 'Choice', 'Group', 'Sequence']
 
 
 class Indicator(Base):
+    """Base class for the other indicators"""
 
     def __repr__(self):
         return '<%s(%s)>' % (
@@ -36,6 +50,7 @@ class Indicator(Base):
 
 
 class OrderIndicator(Indicator, list):
+    """Base class for All, Choice and Sequence classes."""
     name = None
 
     def __init__(self, elements=None, min_occurs=1, max_occurs=1):
@@ -128,6 +143,15 @@ class OrderIndicator(Indicator, list):
 
         The available_kwargs is modified in-place. Returns a dict with the
         result.
+
+        :param kwargs: The kwargs
+        :type kwargs: dict
+        :param name: The name as which this type is registered in the parent
+        :type name: str
+        :param available_kwargs: The kwargs keys which are still available,
+         modified in place
+        :type available_kwargs: set
+        :rtype: dict
 
         """
         if self.accepts_multiple:
