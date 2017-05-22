@@ -17,6 +17,7 @@ changes to the API.
  - Implement initial multiref support for SOAP RPC (#326). This was done using
    really good real-world tests from vstoykov (thanks!)
  - Fix exception on empty SOAP response (#442)
+ - Fix XSD default values for boolean types (Bartek Wójcicki, #386)
 
 
 1.6.0 (2017-04-27)
