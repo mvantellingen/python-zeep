@@ -40,6 +40,13 @@ def max_occurs_iter(max_occurs, items=None):
 
 
 def create_prefixed_name(qname, schema):
+    """Convert a QName to a xsd:name ('ns1:myType').
+
+    :type qname: lxml.etree.QName
+    :type schema: zeep.xsd.schema.Schema
+    :rtype: str
+
+    """
     if not qname:
         return
 
