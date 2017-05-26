@@ -81,16 +81,16 @@ class UsernameToken(object):
 
     def _create_password_digest(self):
         if self.nonce:
-            nonce = self.nonce.encode('utf-8')
+            nonce = self.nonce
         else:
-            nonce = os.urandom(16)
+            nonce = base64.b64encode(os.urandom(16)).decode('ascii')
         timestamp = utils.get_timestamp(self.created)
 
         # digest = Base64 ( SHA-1 ( nonce + created + password ) )
         if not self.password_digest:
             digest = base64.b64encode(
                 hashlib.sha1(
-                    nonce + timestamp.encode('utf-8') +
+                    nonce.encode('utf-8') + timestamp.encode('utf-8') +
                     self.password.encode('utf-8')
                 ).digest()
             ).decode('ascii')
@@ -103,7 +103,7 @@ class UsernameToken(object):
                 Type='%s#PasswordDigest' % self.username_token_profile_ns
             ),
             utils.WSSE.Nonce(
-                base64.b64encode(nonce).decode('utf-8'),
+                nonce,
                 EncodingType='%s#Base64Binary' % self.soap_message_secutity_ns
             ),
             utils.WSU.Created(timestamp)
