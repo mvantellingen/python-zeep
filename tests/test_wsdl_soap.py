@@ -1,9 +1,14 @@
+# -*- coding: utf-8 -*-
+
+import pytest
+
 from lxml import etree
 from pretend import stub
 
 from tests.utils import load_xml
 from zeep import Client
 from zeep.exceptions import Fault
+from zeep.exceptions import TransportError
 from zeep.wsdl import bindings
 
 
@@ -160,6 +165,48 @@ def test_no_content_type():
         client, binding.get('GetLastTradePrice'), response)
 
     assert result == 120.123
+
+
+def test_wrong_content():
+    data = """
+        The request is answered something unexpected,
+        like an html page or a raw internal stack trace
+    """.strip()
+
+    client = Client('tests/wsdl_files/soap.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=200,
+        content=data,
+        encoding='utf-8',
+        headers={}
+    )
+
+    with pytest.raises(TransportError):
+        binding.process_reply(
+            client, binding.get('GetLastTradePrice'), response)
+
+
+def test_wrong_no_unicode_content():
+    data = """
+        The request is answered something unexpected,
+        and the content charset is beyond unicode òñÇÿ
+    """.strip()
+
+    client = Client('tests/wsdl_files/soap.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=200,
+        content=data,
+        encoding='utf-8',
+        headers={}
+    )
+
+    with pytest.raises(TransportError):
+        binding.process_reply(
+            client, binding.get('GetLastTradePrice'), response)
 
 
 def test_mime_multipart():
