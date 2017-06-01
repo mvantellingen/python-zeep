@@ -156,7 +156,7 @@ class SoapBinding(Binding):
                 xml_huge_tree=client.xml_huge_tree)
         except XMLSyntaxError:
             raise TransportError(
-                u'Server returned HTTP status %d (%s)'
+                'Server returned HTTP status %d (%s)'
                 % (response.status_code, response.content))
 
         if client.wsse:
