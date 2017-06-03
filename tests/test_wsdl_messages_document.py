@@ -1194,7 +1194,7 @@ def test_deserialize_with_headers():
     serialized = operation.process_reply(response_body)
 
     assert operation.output.signature(as_output=True) == (
-        'header: {header_1: {username: xsd:string}, header_2: xsd:string}, body: {request_1: {arg1: xsd:string}, request_2: {arg2: xsd:string}}')  # noqa
+        'header: {header_1: ns0:Header1, header_2: xsd:string}, body: {request_1: ns0:Request1, request_2: ns0:Request2}')
     assert serialized.body.request_1.arg1 == 'ah1'
     assert serialized.body.request_2.arg2 == 'ah2'
     assert serialized.header.header_1.username == 'mvantellingen'
