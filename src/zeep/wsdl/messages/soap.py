@@ -115,7 +115,8 @@ class SoapMessage(ConcreteMessage):
         result = next(iter(result.__values__.values()))
         if isinstance(result, xsd.CompoundValue):
             children = result._xsd_type.elements
-            if len(children) == 1:
+            attributes = result._xsd_type.attributes
+            if len(children) == 1 and len(attributes) == 0:
                 item_name, item_element = children[0]
                 retval = getattr(result, item_name)
                 return retval
