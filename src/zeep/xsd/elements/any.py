@@ -201,7 +201,7 @@ class Any(Base):
     def resolve(self):
         return self
 
-    def signature(self, schema=None, standalone=True):
+    def signature(self, schema=None, standalone=True, path=None):
         if self.restrict:
             base = self.restrict.name
         else:
@@ -239,5 +239,5 @@ class AnyAttribute(Base):
         for name, val in value.items():
             parent.set(name, val)
 
-    def signature(self, schema=None, standalone=True):
+    def signature(self, schema=None, standalone=True, path=None):
         return '{}'

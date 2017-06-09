@@ -17,6 +17,7 @@ from collections import OrderedDict, defaultdict, deque
 
 from cached_property import threaded_cached_property
 
+from zeep import utils
 from zeep.exceptions import UnexpectedElementError, ValidationError
 from zeep.xsd.const import NotSet, SkipValue
 from zeep.xsd.elements import Any, Element
@@ -245,13 +246,14 @@ class OrderIndicator(Indicator, list):
             if item is NotSet:
                 raise ValidationError("No value set", path=render_path)
 
-    def signature(self, schema=None, standalone=True):
+    def signature(self, schema=None, standalone=True, path=None):
         parts = []
+        path = utils.extend_path(path, self)
         for name, element in self.elements_nested:
             if isinstance(element,  Indicator):
-                parts.append(element.signature(schema, standalone=False))
+                parts.append(element.signature(schema, standalone=False, path=path))
             else:
-                value = element.signature(schema, standalone=False)
+                value = element.signature(schema, standalone=False, path=path)
                 parts.append('%s: %s' % (name, value))
 
         part = ', '.join(parts)
@@ -552,13 +554,14 @@ class Choice(OrderIndicator):
             matches = sorted(matches, key=operator.itemgetter(0), reverse=True)
             return matches[0][1:]
 
-    def signature(self, schema=None, standalone=True):
+    def signature(self, schema=None, standalone=True, path=None):
         parts = []
+        path = utils.extend_path(path, self)
         for name, element in self.elements_nested:
             if isinstance(element, OrderIndicator):
-                parts.append('{%s}' % (element.signature(schema, standalone=False)))
+                parts.append('{%s}' % (element.signature(schema, standalone=False, path=path)))
             else:
-                parts.append('{%s: %s}' % (name, element.signature(schema, standalone=False)))
+                parts.append('{%s: %s}' % (name, element.signature(schema, standalone=False, path=path)))
         part = '(%s)' % ' | '.join(parts)
         if self.accepts_multiple:
             return '%s[]' % (part,)
@@ -732,10 +735,11 @@ class Group(Indicator):
         self.child = self.child.resolve()
         return self
 
-    def signature(self, schema=None, standalone=True):
+    def signature(self, schema=None, standalone=True, path=None):
         name = create_prefixed_name(self.qname, schema)
+        path = utils.extend_path(path, self)
         if standalone:
             return '%s(%s)' % (
-                name, self.child.signature(schema, standalone=False))
+                name, self.child.signature(schema, standalone=False, path=path))
         else:
-            return self.child.signature(schema, standalone=False)
+            return self.child.signature(schema, standalone=False, path=path)

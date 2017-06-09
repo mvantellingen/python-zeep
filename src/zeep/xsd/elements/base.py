@@ -40,5 +40,6 @@ class Base(object):
         """
         raise NotImplementedError()
 
-    def signature(self, schema=None, standalone=False):
+    def signature(self, schema=None, standalone=False, path=None):
         return ''
+

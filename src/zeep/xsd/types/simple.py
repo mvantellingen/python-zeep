@@ -70,7 +70,7 @@ class AnySimpleType(AnyType):
     def render(self, parent, value, xsd_type=None, render_path=None):
         parent.text = self.xmlvalue(value)
 
-    def signature(self, schema=None, standalone=True):
+    def signature(self, schema=None, standalone=True, path=None):
         return self.get_prefixed_name(schema)
 
     def validate(self, value, required=False):

@@ -5,6 +5,7 @@ from itertools import chain
 
 from cached_property import threaded_cached_property
 
+from zeep import utils
 from zeep.exceptions import UnexpectedElementError, XMLParseError
 from zeep.xsd.const import NotSet, SkipValue, xsi_ns
 from zeep.xsd.elements import (
@@ -431,14 +432,20 @@ class ComplexType(AnyType):
             is_global=self.is_global)
         return new.resolve()
 
-    def signature(self, schema=None, standalone=True):
+    def signature(self, schema=None, standalone=True, path=None):
         parts = []
+
+        path = utils.extend_path(path, self)
+
         for name, element in self.elements_nested:
-            part = element.signature(schema, standalone=False)
+            if element in path:
+                part = '%s(...)' % name
+            else:
+                part = element.signature(schema, standalone=False, path=path)
             parts.append(part)
 
         for name, attribute in self.attributes:
-            part = '%s: %s' % (name, attribute.signature(schema, standalone=False))
+            part = '%s: %s' % (name, attribute.signature(schema, standalone=False, path=path))
             parts.append(part)
 
         value = ', '.join(parts)

@@ -1,8 +1,10 @@
 import logging
 
+
 from lxml import etree
 
 from zeep import exceptions
+from zeep import utils
 from zeep.xsd.const import NotSet
 from zeep.xsd.elements.element import Element
 
@@ -88,5 +90,6 @@ class AttributeGroup(object):
         self._attributes = resolved
         return self
 
-    def signature(self, schema=None, standalone=True):
-        return ', '.join(attr.signature(schema) for attr in self._attributes)
+    def signature(self, schema=None, standalone=True, path=None):
+        path = utils.extend_path(path, self)
+        return ', '.join(attr.signature(schema, path=path) for attr in self._attributes)
