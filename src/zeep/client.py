@@ -221,7 +221,7 @@ class Client(object):
 
         """
         envelope, http_headers = service._binding._create(
-            operation_name, args, kwargs)
+            operation_name, args, kwargs, client=self)
         return envelope
 
     def type_factory(self, namespace):
