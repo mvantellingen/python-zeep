@@ -1,4 +1,4 @@
-2.1.0 (unreleased)
+2.1.0 (2017-06-11)
 ------------------
  - Fix recursion error while creating the signature for a global element when
    it references itself (via ref attribute).
