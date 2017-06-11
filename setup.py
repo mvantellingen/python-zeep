@@ -27,7 +27,7 @@ xmlsec_require = [
 
 tests_require = [
     'freezegun==0.3.8',
-    'mock==2.1.0',
+    'mock==2.0.0',
     'pretend==1.0.8',
     'pytest-cov==2.4.0',
     'pytest==3.0.6',

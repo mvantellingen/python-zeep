@@ -1,3 +1,9 @@
+2.1.1 (2017-06-11)
+------------------
+ - Fix previous release, it contained an incorrect dependency (Mock 2.1.) due
+   to bumpversion :-(
+
+
 2.1.0 (2017-06-11)
 ------------------
  - Fix recursion error while creating the signature for a global element when
