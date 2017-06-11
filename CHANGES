@@ -3,6 +3,7 @@
  - Fix recursion error while creating the signature for a global element when
    it references itself (via ref attribute).
  - Update Client.create_message() to apply plugins and wsse (#465)
+ - Fix handling unknown xsi types when parsing elements using xsd:anyType (#455)
 
 
 2.0.0 (2017-05-22)

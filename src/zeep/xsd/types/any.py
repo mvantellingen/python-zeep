@@ -62,8 +62,14 @@ class AnyType(Type):
             xsd_type = schema.get_type(xsi_type, fail_silently=True)
 
             # If we were unable to resolve a type for the xsi:type (due to
-            # buggy soap servers) then we just return the lxml element.
+            # buggy soap servers) then we just return the text or lxml element.
             if not xsd_type:
+                logger.debug(
+                    "Unable to resolve type for %r, returning raw data",
+                    xsi_type.text)
+
+                if xmlelement.text:
+                    return xmlelement.text
                 return children
 
             # If the xsd_type is xsd:anyType then we will recurs so ignore
@@ -92,3 +98,6 @@ class AnyType(Type):
 
     def pythonvalue(self, value, schema=None):
         return value
+
+    def signature(self, schema=None, standalone=True):
+        return 'xsd:anyType'
