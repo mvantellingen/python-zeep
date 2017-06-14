@@ -272,6 +272,36 @@ def test_element_any_type():
     item = container_elm.parse(node.getchildren()[0], schema)
     assert item.something == 'bar'
 
+def test_element_any_type_unknown_type():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="something" />
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """.strip())
+    schema = xsd.Schema(node)
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+
+    node = load_xml("""
+        <document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:something xmlns:q1="http://microsoft.com/wsdl/types/" xsi:type="q1:guid">bar</ns0:something>
+            </ns0:container>
+        </document>
+    """)
+    item = container_elm.parse(node.getchildren()[0], schema)
+    assert item.something == 'bar'
+
 
 def test_element_any_type_elements():
     node = etree.fromstring("""

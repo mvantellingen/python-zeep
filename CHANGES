@@ -1,7 +1,15 @@
-2.1.0 (unreleased)
+2.1.1 (2017-06-11)
+------------------
+ - Fix previous release, it contained an incorrect dependency (Mock 2.1.) due
+   to bumpversion :-(
+
+
+2.1.0 (2017-06-11)
 ------------------
  - Fix recursion error while creating the signature for a global element when
    it references itself (via ref attribute).
+ - Update Client.create_message() to apply plugins and wsse (#465)
+ - Fix handling unknown xsi types when parsing elements using xsd:anyType (#455)
 
 
 2.0.0 (2017-05-22)
