@@ -1148,7 +1148,7 @@ class SchemaVisitor(object):
 
         return name
 
- def _pop_annotation(self, items):
+    def _pop_annotation(self, items):
         if not len(items):
             return [], []
         annotations = []
