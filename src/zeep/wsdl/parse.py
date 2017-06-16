@@ -34,6 +34,7 @@ def parse_abstract_message(wsdl, xmlelement):
 
     """
     tns = wsdl.target_namespace
+    message_name = qname_attr(xmlelement, 'name', tns)
     parts = []
 
     for part in xmlelement.findall('wsdl:part', namespaces=NSMAP):
@@ -49,15 +50,14 @@ def parse_abstract_message(wsdl, xmlelement):
 
         except (NamespaceError, LookupError):
             raise IncompleteMessage((
-                "The wsdl:message for %r contains "
-                "invalid xsd types or elements"
-            ) % part_name)
+                "The wsdl:message for %r contains an invalid part (%r): "
+                "invalid xsd type or elements"
+            ) % (message_name.text, part_name))
 
         part = definitions.MessagePart(part_element, part_type)
         parts.append((part_name, part))
 
     # Create the object, add the parts and return it
-    message_name = qname_attr(xmlelement, 'name', tns)
     msg = definitions.AbstractMessage(message_name)
     for part_name, part in parts:
         msg.add_part(part_name, part)

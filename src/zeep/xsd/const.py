@@ -21,3 +21,8 @@ class _StaticIdentity(object):
 NotSet = _StaticIdentity('NotSet')
 SkipValue = _StaticIdentity('SkipValue')
 Nil = _StaticIdentity('Nil')
+
+
+AUTO_IMPORT_NAMESPACES = [
+    'http://schemas.xmlsoap.org/soap/encoding/'
+]

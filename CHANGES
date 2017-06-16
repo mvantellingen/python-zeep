@@ -1,3 +1,8 @@
+2.2.0 (unreleased)
+------------------
+ - Automatically import the soap-encoding schema if it is required (#473)
+
+
 2.1.1 (2017-06-11)
 ------------------
  - Fix previous release, it contained an incorrect dependency (Mock 2.1.) due

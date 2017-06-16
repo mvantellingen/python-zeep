@@ -9,7 +9,7 @@ from zeep.loader import absolute_location, load_external
 from zeep.utils import as_qname, qname_attr
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import types as xsd_types
-from zeep.xsd.const import xsd_ns
+from zeep.xsd.const import xsd_ns, AUTO_IMPORT_NAMESPACES
 from zeep.xsd.types.unresolved import UnresolvedCustomType, UnresolvedType
 
 logger = logging.getLogger(__name__)
@@ -1138,9 +1138,11 @@ class SchemaVisitor(object):
         # that fact and handle it by auto-importing the schema if it is
         # referenced.
         if (
-            name.namespace == 'http://schemas.xmlsoap.org/soap/encoding/' and
-            not self.document.is_imported(name.namespace)
+            name.namespace in AUTO_IMPORT_NAMESPACES
+            and not self.document.is_imported(name.namespace)
         ):
+            logger.debug(
+                "Auto importing missing known schema: %s", name.namespace)
             import_node = etree.Element(
                 tags.import_,
                 namespace=name.namespace, schemaLocation=name.namespace)

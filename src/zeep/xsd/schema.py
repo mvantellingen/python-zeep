@@ -4,6 +4,8 @@ from collections import OrderedDict
 from lxml import etree
 
 from zeep import exceptions, ns
+from zeep.loader import load_external
+from zeep.xsd import const
 from zeep.xsd.elements import builtins as xsd_builtins_elements
 from zeep.xsd.types import builtins as xsd_builtins_types
 from zeep.xsd.visitor import SchemaVisitor
@@ -114,6 +116,15 @@ class Schema(object):
             document.resolve()
 
         self._prefix_map_auto = self._create_prefix_map()
+
+    def add_document_by_url(self, url):
+        schema_node = load_external(
+            url,
+            self._transport,
+            strict=self.strict)
+
+        document = self.create_new_document(schema_node, url=url)
+        document.resolve()
 
     def get_element(self, qname):
         """Return a global xsd.Element object with the given qname
@@ -304,6 +315,13 @@ class Schema(object):
         :rtype: list of SchemaDocument
 
         """
+        if (
+            namespace not in self._documents
+            and namespace in const.AUTO_IMPORT_NAMESPACES
+        ):
+            logger.debug("Auto importing missing known schema: %s", namespace)
+            self.add_document_by_url(namespace)
+
         if namespace not in self._documents:
             if fail_silently:
                 return []
