@@ -1,4 +1,4 @@
-from zeep.utils import get_base_class
+from zeep.utils import get_base_class, extend_path
 from zeep.xsd.types.simple import AnySimpleType
 
 __all__ = ['ListType', 'UnionType']
@@ -32,8 +32,9 @@ class ListType(AnySimpleType):
         item_type = self.item_type
         return [item_type.pythonvalue(v) for v in value.split()]
 
-    def signature(self, schema=None, standalone=True):
-        return self.item_type.signature(schema) + '[]'
+    def signature(self, schema=None, standalone=True, path=None):
+        path = extend_path(path, self)
+        return self.item_type.signature(schema, path=path) + '[]'
 
 
 class UnionType(AnySimpleType):
@@ -52,7 +53,7 @@ class UnionType(AnySimpleType):
             self.item_class = base_class
         return self
 
-    def signature(self, schema=None, standalone=True):
+    def signature(self, schema=None, standalone=True, path=None):
         return ''
 
     def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,

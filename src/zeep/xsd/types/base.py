@@ -63,5 +63,5 @@ class Type(object):
         return []
 
     @classmethod
-    def signature(cls, schema=None, standalone=True):
+    def signature(cls, schema=None, standalone=True, path=None):
         return ''

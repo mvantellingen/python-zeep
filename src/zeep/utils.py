@@ -85,3 +85,9 @@ def get_media_type(value):
     """Parse a HTTP content-type header and return the media-type"""
     main_value, parameters = cgi.parse_header(value)
     return main_value
+
+def extend_path(path, item):
+    if path is None:
+        return [item]
+    else:
+        return path + [item]

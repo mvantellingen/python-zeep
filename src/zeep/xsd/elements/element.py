@@ -4,6 +4,7 @@ import logging
 from lxml import etree
 
 from zeep import exceptions
+from zeep import utils
 from zeep.exceptions import UnexpectedElementError
 from zeep.utils import qname_attr
 from zeep.xsd.const import Nil, NotSet, xsi_ns
@@ -255,12 +256,13 @@ class Element(Base):
         self.resolve_type()
         return self
 
-    def signature(self, schema=None, standalone=True):
+    def signature(self, schema=None, standalone=True, path=None):
         from zeep.xsd import ComplexType
         if self.type.is_global or (not standalone and self.is_global):
             value = self.type.get_prefixed_name(schema)
         else:
-            value = self.type.signature(schema, standalone=False)
+            path = utils.extend_path(path, self)
+            value = self.type.signature(schema, standalone=False, path=path)
 
             if not standalone and isinstance(self.type, ComplexType):
                 value = '{%s}' % value
@@ -271,3 +273,4 @@ class Element(Base):
         if self.accepts_multiple:
             return '%s[]' % value
         return value
+
