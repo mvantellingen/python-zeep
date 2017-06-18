@@ -7,6 +7,7 @@ from zeep import ns, plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.loader import parse_xml
 from zeep.utils import as_qname, get_media_type, qname_attr
+from zeep.wsdl.messages.xop import process_xop
 from zeep.wsdl.attachments import MessagePack
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
@@ -142,7 +143,6 @@ class SoapBinding(Binding):
         if media_type == 'multipart/related':
             decoder = MultipartDecoder(
                 response.content, content_type, response.encoding or 'utf-8')
-
             content = decoder.parts[0].content
             if len(decoder.parts) > 1:
                 message_pack = MessagePack(parts=decoder.parts[1:])
@@ -158,6 +158,11 @@ class SoapBinding(Binding):
             raise TransportError(
                 'Server returned HTTP status %d (%s)'
                 % (response.status_code, response.content))
+
+        # Check if this is an XOP message which we need to decode first
+        if message_pack:
+            if process_xop(doc, message_pack):
+                message_pack = None
 
         if client.wsse:
             client.wsse.verify(doc)
