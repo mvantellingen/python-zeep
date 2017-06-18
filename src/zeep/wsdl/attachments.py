@@ -75,6 +75,6 @@ class Attachment(object):
         if encoding == 'base64':
             return base64.b64decode(content)
         elif encoding == 'binary':
-            return content
+            return content.strip(b'\r\n')
         else:
             return content
