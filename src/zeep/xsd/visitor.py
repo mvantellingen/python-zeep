@@ -1152,12 +1152,16 @@ class SchemaVisitor(object):
 
     def _pop_annotation(self, items):
         if not len(items):
-            return None, []
+            return [], []
+        annotations = []
+        for item in items:
+            if item.tag == tags.annotation:
+                annotation = self.visit_annotation(item, None)
+                annotations.append(annotation)
+                items.remove(item)
 
-        if items[0].tag == tags.annotation:
-            annotation = self.visit_annotation(items[0], None)
-            return annotation, items[1:]
-        return None, items
+        return annotations, items
+
 
     def _process_attributes(self, node, items):
         attributes = []
