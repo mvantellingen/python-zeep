@@ -1,4 +1,8 @@
-2.2.0 (2016-06-19)
+2.3.0 (unreleased)
+------------------
+
+
+2.2.0 (2017-06-19)
 ------------------
  - Automatically import the soap-encoding schema if it is required (#473)
  - Add support for XOP messages (this is a rewrite of #325 by vashek)
