@@ -188,8 +188,8 @@ class Element(Base):
                     break  # Can't check for substitutions
 
                 substitution_group = schema.get_substitution_group(self.qname)
-                if not substitution_group:
-                    break  # No chance of match, bail out early.
+                assert substitution_group is not None, "Element is defined as a substitution group, but cannot load " \
+                                                       "its substitution group from the schema."
                 # Try early substitution.
                 s_result, elm_name = self.parse_xmlelement_substituted(
                     xmlelements, schema, element_tag, substitution_group,
