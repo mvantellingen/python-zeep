@@ -60,9 +60,9 @@ class SoapMessage(ConcreteMessage):
         header = self._serialize_header(headers_value, nsmap)
 
         # Create the soap:body element
-        if self.body:
+        body = soap.Body()
+        if self.body.qname != "{http://schemas.xmlsoap.org/soap/envelope/}Body":
             body_value = self.body(*args, **kwargs)
-            body = soap.Body()
             self.body.render(body, body_value)
 
         # Create the soap:envelope
@@ -300,9 +300,8 @@ class SoapMessage(ConcreteMessage):
             all_elements.append(
                 xsd.Element('{%s}header' % self.nsmap['soap-env'], self.header.type))
 
-        if self.body:
-            all_elements.append(
-                xsd.Element('{%s}body' % self.nsmap['soap-env'], self.body.type))
+        all_elements.append(
+            xsd.Element('{%s}body' % self.nsmap['soap-env'], self.body.type))
 
         return xsd.Element('{%s}envelope' % self.nsmap['soap-env'], xsd.ComplexType(all_elements))
 
@@ -415,7 +414,7 @@ class DocumentMessage(SoapMessage):
         name = etree.QName(self.nsmap['soap-env'], 'Body')
 
         if not info or not parts:
-            return None
+            return xsd.Element(name, xsd.ComplexType([]))
 
         # If the part name is omitted then all parts are available under
         # the soap:body tag. Otherwise only the part with the given name.
