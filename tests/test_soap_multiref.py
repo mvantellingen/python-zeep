@@ -43,12 +43,17 @@ def test_parse_soap_wsdl():
                 <xsd:sequence>
                   <xsd:element name="subitem_1" type="xsd:string"/>
                   <xsd:element name="subitem_2" type="xsd:string"/>
+                  <xsd:element name="subitem_3" type="tns:type_3"/>
                 </xsd:sequence>
               </xsd:complexType>
               <xsd:complexType name="type_2">
                 <xsd:sequence>
                   <xsd:element name="subitem_1" type="tns:type_1"/>
                   <xsd:element name="subitem_2" type="xsd:string"/>
+                </xsd:sequence>
+              </xsd:complexType>
+              <xsd:complexType name="type_3" nillable="true">
+                <xsd:sequence>
                 </xsd:sequence>
               </xsd:complexType>
             </xsd:schema>
@@ -94,7 +99,8 @@ def test_parse_soap_wsdl():
         <?xml version="1.0"?>
         <soapenv:Envelope
             xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-            xmlns:tns="http://tests.python-zeep.org/">
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
            <soapenv:Body>
               <tns:TestOperationResponse>
                 <tns:output>
@@ -112,6 +118,7 @@ def test_parse_soap_wsdl():
               <multiRef id="id0">
                 <tns:subitem_1>foo</tns:subitem_1>
                 <tns:subitem_2>bar</tns:subitem_2>
+                <tns:subitem_3 xmlns:tns2="http://tests.python-zeep.org/" xsi:type="tns2:type_3"></tns:subitem_3>
               </multiRef>
            </soapenv:Body>
         </soapenv:Envelope>
