@@ -11,71 +11,61 @@ def process_multiref(node):
 
     """
     multiref_objects = {
-        elm.attrib['id']: elm for elm in node.xpath('*[@id]')
+        elm.attrib['id']: elm for elm in node.xpath('//multiRef[@id]')
     }
     if not multiref_objects:
         return
 
-    used_nodes = []
+    def fix_node_values(node, namespaces={}):
+        # fix own attributes if prefix was lost
+        for attr, val in node.items():
+            if val.count(":") == 1:
+                ns_components = val.split(":")
+                if ns_components[0] not in namespaces:
+                    # print "%s is no namespace prefix" % (ns_components[0])
+                    continue
+                if ns_components[0] not in node.nsmap.keys():
+                    # print "lost namespace for %s, was: %s" % (ns_components[0], ns_uri)
+                    ns_uri = namespaces.get(ns_components[0])
+                    for prefix, namespace in node.nsmap.items():
+                        if ns_uri == namespace:
+                            # print "replaced with prefix %s for %s" % (prefix, namespace)
+                            val = "%s:%s" % (prefix, "".join(ns_components[1:]))
+                            node.set(attr, val)
+        for child in node.iterchildren():
+            fix_node_values(child, namespaces=namespaces)
 
-    def process(node):
+    for id in multiref_objects:
         # TODO (In Soap 1.2 this is 'ref')
-        href = node.attrib.get('href')
+        reference = node.xpath('//*[@href=\'#%s\']' % id)[0]
 
-        if href and href.startswith('#'):
-            obj = multiref_objects.get(href[1:])
-            if obj is not None:
-                used_nodes.append(obj)
-                parent = node.getparent()
+        # get all namespaces used below this node for later fix
+        all_namespaces = dict(multiref_objects[id].xpath("//namespace::*"))
 
-                new = _dereference_element(obj, node)
+        # Prepare replacement
+        # nsmap is read-only on existing Elements, combine
+        nsmap = dict(reference.nsmap)
+        nsmap.update(multiref_objects[id].nsmap)
+        attrib = dict(reference.attrib)
+        attrib.update(multiref_objects[id].attrib)
+        del attrib['href']
 
-                # Replace the node with the new dereferenced node
-                parent.insert(parent.index(node), new)
-                parent.remove(node)
-                node = new
+        # Create a copy with extended nsmap and move all children
+        replacing_node = etree.Element(reference.tag, attrib=attrib, nsmap=nsmap)
+        replacing_node.attrib.pop('id')
+        replacing_node.text = multiref_objects[id].text
+        replacing_node.extend(multiref_objects[id].getchildren())
 
-        for child in node:
-            process(child)
+        # Add replacing element and remove referring node and multiRef stub
+        reference.addprevious(replacing_node)
+        reference.getparent().remove(reference)
+        multiref_objects[id].getparent().remove(multiref_objects[id])
 
-    process(node)
+        # The ElementTree modifications changed the nsmap for elements if the namespace was known in the parent.
+        # But it does miss to also fit the attributes containing a prefix
+        # Iterate the complete tree below the node and replace missing prefixes
+        # Careful: That could lead to bugs if a prefix was used for different namespaces in separate multiRefs
 
-    # Remove the old dereferenced nodes from the tree
-    for node in used_nodes:
-        parent = node.getparent()
-        if parent is not None:
-            parent.remove(node)
+        fix_node_values(replacing_node, all_namespaces)
 
-
-def _dereference_element(source, target):
-    reverse_nsmap = {v: k for k, v in target.nsmap.items()}
-    specific_nsmap = {k: v for k, v in source.nsmap.items() if k not in target.nsmap}
-
-    new = etree.Element(target.tag, nsmap=specific_nsmap)
-
-    # Copy the attributes. This is actually the difficult part since the
-    # namespace prefixes can change in the attribute values. So for example
-    # the xsi:type="ns11:my-type" need's to be parsed to use a new global
-    # prefix.
-    for key, value in source.attrib.items():
-        if key == 'id':
-            continue
-
-        setted = False
-        if value.count(':') == 1:
-            prefix, localname = value.split(':')
-            if prefix in specific_nsmap:
-                namespace = specific_nsmap[prefix]
-                if namespace in reverse_nsmap:
-                    new.set(key, '%s:%s' % (reverse_nsmap[namespace], localname))
-                    setted = True
-
-        if not setted:
-            new.set(key, value)
-
-    # Copy the children and the text content
-    for child in source:
-        new.append(copy.deepcopy(child))
-    new.text = source.text
-
-    return new
+    return
