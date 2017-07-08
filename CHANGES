@@ -1,5 +1,6 @@
 2.3.0 (unreleased)
 ------------------
+ - The XML send to the server is no longer using ``pretty_print=True`` (#484)
  - Refactor of the multiref support to fix issues with child elements (#489)
  - Add workaround to support negative durations (#486)
 
