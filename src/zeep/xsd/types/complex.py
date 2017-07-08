@@ -13,7 +13,7 @@ from zeep.xsd.elements.indicators import OrderIndicator
 from zeep.xsd.types.any import AnyType
 from zeep.xsd.types.simple import AnySimpleType
 from zeep.xsd.utils import NamePrefixGenerator
-from zeep.xsd.valueobjects import CompoundValue, ArrayValue
+from zeep.xsd.valueobjects import ArrayValue, CompoundValue
 
 logger = logging.getLogger(__name__)
 

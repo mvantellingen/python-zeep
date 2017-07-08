@@ -9,7 +9,7 @@ from zeep.loader import absolute_location, load_external
 from zeep.utils import as_qname, qname_attr
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import types as xsd_types
-from zeep.xsd.const import xsd_ns, AUTO_IMPORT_NAMESPACES
+from zeep.xsd.const import AUTO_IMPORT_NAMESPACES, xsd_ns
 from zeep.xsd.types.unresolved import UnresolvedCustomType, UnresolvedType
 
 logger = logging.getLogger(__name__)

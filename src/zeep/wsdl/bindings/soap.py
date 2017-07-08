@@ -7,10 +7,10 @@ from zeep import ns, plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.loader import parse_xml
 from zeep.utils import as_qname, get_media_type, qname_attr
-from zeep.wsdl.messages.xop import process_xop
 from zeep.wsdl.attachments import MessagePack
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
+from zeep.wsdl.messages.xop import process_xop
 from zeep.wsdl.utils import etree_to_string, url_http_to_https
 
 logger = logging.getLogger(__name__)

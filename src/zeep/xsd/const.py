@@ -2,6 +2,7 @@ from lxml import etree
 
 from zeep import ns
 
+
 def xsi_ns(localname):
     return etree.QName(ns.XSI, localname)
 

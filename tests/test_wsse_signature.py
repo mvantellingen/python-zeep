@@ -2,10 +2,11 @@ import os
 import sys
 
 import pytest
+from lxml import etree
 
 from tests.utils import load_xml
-from zeep.exceptions import SignatureVerificationFailed
 from zeep import wsse
+from zeep.exceptions import SignatureVerificationFailed
 from zeep.wsse import signature
 
 DS_NS = 'http://www.w3.org/2000/09/xmldsig#'
