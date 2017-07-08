@@ -38,6 +38,7 @@ tests_require = [
     'flake8==3.3.0',
     'flake8-blind-except==0.1.1',
     'flake8-debugger==1.4.0',
+    'flake8-imports==0.1.1',
 ]
 
 
