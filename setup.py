@@ -29,13 +29,13 @@ tests_require = [
     'freezegun==0.3.8',
     'mock==2.0.0',
     'pretend==1.0.8',
-    'pytest-cov==2.4.0',
-    'pytest==3.0.6',
+    'pytest-cov==2.5.1',
+    'pytest==3.1.3',
     'requests_mock>=0.7.0',
 
     # Linting
     'isort==4.2.5',
-    'flake8==3.2.1',
+    'flake8==3.3.0',
     'flake8-blind-except==0.1.1',
     'flake8-debugger==1.4.0',
 ]

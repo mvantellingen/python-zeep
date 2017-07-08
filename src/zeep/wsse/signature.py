@@ -171,6 +171,7 @@ def sign_envelope(envelope, keyfile, certfile, password=None):
     return _sign_envelope_with_key(envelope, key)
 
 def _sign_envelope_with_key(envelope, key):
+    soap_env = detect_soap_env(envelope)
 
     # Create the Signature node.
     signature = xmlsec.template.create(
@@ -189,17 +190,13 @@ def _sign_envelope_with_key(envelope, key):
     # Insert the Signature node in the wsse:Security header.
     security = get_security_header(envelope)
     security.insert(0, signature)
+    security.append(etree.Element(QName(ns.WSU, 'Timestamp')))
 
     # Perform the actual signing.
     ctx = xmlsec.SignatureContext()
     ctx.key = key
-
-    security.append(etree.Element(QName(ns.WSU, 'Timestamp')))
-
-    soap_env = detect_soap_env(envelope)
     _sign_node(ctx, signature, envelope.find(QName(soap_env, 'Body')))
     _sign_node(ctx, signature, security.find(QName(ns.WSU, 'Timestamp')))
-
     ctx.sign(signature)
 
     # Place the X509 data inside a WSSE SecurityTokenReference within
@@ -227,7 +224,7 @@ def _verify_envelope_with_key(envelope, key):
     soap_env = detect_soap_env(envelope)
 
     header = envelope.find(QName(soap_env, 'Header'))
-    if not header:
+    if header is None:
         raise SignatureVerificationFailed()
 
     security = header.find(QName(ns.WSSE, 'Security'))
