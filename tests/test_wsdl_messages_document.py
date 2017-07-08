@@ -111,10 +111,16 @@ def test_empty_input_parse():
     binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
     operation = binding.get('TestOperation')
 
-    assert operation.input.body.signature(schema=root.types) == 'soap-env:Body()'
     assert operation.input.header.signature(schema=root.types) == 'soap-env:Header()'
     assert operation.input.envelope.signature(schema=root.types) == 'soap-env:envelope(body: {})'
     assert operation.input.signature(as_output=False) == ''
+
+    env = operation.input.serialize().content
+    assert env.tag == "{http://schemas.xmlsoap.org/soap/envelope/}Envelope"
+    assert len(env.getchildren()) == 1
+    body = env.getchildren()[0]
+    assert body.tag == "{http://schemas.xmlsoap.org/soap/envelope/}Body"
+    assert len(body.getchildren()) == 0
 
 
 def test_parse_with_header():

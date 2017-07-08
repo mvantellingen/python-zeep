@@ -59,9 +59,9 @@ class SoapMessage(ConcreteMessage):
         header = self._serialize_header(headers_value, nsmap)
 
         # Create the soap:body element
-        if self.body:
+        body = soap.Body()
+        if self.body.qname != "{http://schemas.xmlsoap.org/soap/envelope/}Body":
             body_value = self.body(*args, **kwargs)
-            body = soap.Body()
             self.body.render(body, body_value)
 
         # Create the soap:envelope
