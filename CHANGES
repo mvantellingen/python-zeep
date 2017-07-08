@@ -1,6 +1,7 @@
 2.3.0 (unreleased)
 ------------------
  - Refactor of the multiref support to fix issues with child elements (#489)
+ - Add workaround to support negative durations (#486)
 
 
 2.2.0 (2017-06-19)
