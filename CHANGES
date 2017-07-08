@@ -1,5 +1,6 @@
 2.3.0 (unreleased)
 ------------------
+ - Refactor of the multiref support to fix issues with child elements (#489)
 
 
 2.2.0 (2017-06-19)

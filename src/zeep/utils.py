@@ -26,7 +26,8 @@ def as_qname(value, nsmap, target_namespace=None):
             namespace = nsmap.get(prefix)
 
         if not namespace:
-            raise XMLParseError("No namespace defined for %r" % prefix)
+            raise XMLParseError(
+                "No namespace defined for %r (%r)" % (prefix, value))
 
         # Workaround for https://github.com/mvantellingen/python-zeep/issues/349
         if not local:

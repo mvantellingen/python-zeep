@@ -1,4 +1,5 @@
 import copy
+import re
 
 from lxml import etree
 
@@ -19,6 +20,7 @@ def process_multiref(node):
     used_nodes = []
 
     def process(node):
+        """Recursive"""
         # TODO (In Soap 1.2 this is 'ref')
         href = node.attrib.get('href')
 
@@ -26,14 +28,7 @@ def process_multiref(node):
             obj = multiref_objects.get(href[1:])
             if obj is not None:
                 used_nodes.append(obj)
-                parent = node.getparent()
-
-                new = _dereference_element(obj, node)
-
-                # Replace the node with the new dereferenced node
-                parent.insert(parent.index(node), new)
-                parent.remove(node)
-                node = new
+                node = _dereference_element(obj, node)
 
         for child in node:
             process(child)
@@ -48,34 +43,118 @@ def process_multiref(node):
 
 
 def _dereference_element(source, target):
+    """Move the referenced node (source) in the main response tree (target)
+
+    :type source: lxml.etree._Element
+    :type target: lxml.etree._Element
+    :rtype target: lxml.etree._Element
+
+    """
     reverse_nsmap = {v: k for k, v in target.nsmap.items()}
     specific_nsmap = {k: v for k, v in source.nsmap.items() if k not in target.nsmap}
 
-    new = etree.Element(target.tag, nsmap=specific_nsmap)
+    new = _clone_element(source, target.tag, specific_nsmap)
 
-    # Copy the attributes. This is actually the difficult part since the
-    # namespace prefixes can change in the attribute values. So for example
-    # the xsi:type="ns11:my-type" need's to be parsed to use a new global
-    # prefix.
-    for key, value in source.attrib.items():
-        if key == 'id':
-            continue
+    # Replace the node with the new dereferenced node
+    parent = target.getparent()
+    parent.insert(parent.index(target), new)
+    parent.remove(target)
 
-        setted = False
-        if value.count(':') == 1:
-            prefix, localname = value.split(':')
-            if prefix in specific_nsmap:
-                namespace = specific_nsmap[prefix]
-                if namespace in reverse_nsmap:
-                    new.set(key, '%s:%s' % (reverse_nsmap[namespace], localname))
-                    setted = True
-
-        if not setted:
-            new.set(key, value)
-
-    # Copy the children and the text content
-    for child in source:
-        new.append(copy.deepcopy(child))
-    new.text = source.text
+    # Update all descendants
+    for obj in new.iter():
+        _prefix_node(obj)
 
     return new
+
+
+def _clone_element(node, tag_name=None, nsmap=None):
+    """Clone the given node and return it.
+
+    This is a recursive call since we want to clone the children the same
+    way.
+
+    :type source: lxml.etree._Element
+    :type tag_name: str
+    :type nsmap: dict
+    :rtype source: lxml.etree._Element
+
+    """
+    tag_name = tag_name or node.tag
+    nsmap = node.nsmap if nsmap is None else nsmap
+    new = etree.Element(tag_name, nsmap=nsmap)
+
+    for child in node:
+        new_child = _clone_element(child)
+        new.append(new_child)
+    new.text = node.text
+
+    for key, value in _get_attributes(node):
+        new.set(key, value)
+
+    return new
+
+
+def _prefix_node(node):
+    """Translate the internal attribute values back to prefixed tokens.
+
+    This reverses the translation done in _get_attributes
+
+    For example::
+
+        {
+            'foo:type': '{http://example.com}string'
+        }
+
+    will be converted to:
+
+        {
+            'foo:type': 'example:string'
+        }
+
+    :type node: lxml.etree._Element
+
+    """
+    reverse_nsmap = {v: k for k, v in node.nsmap.items()}
+
+    prefix_re = re.compile('^{([^}]+)}(.*)')
+
+    for key, value in node.attrib.items():
+        if value.startswith('{'):
+            match = prefix_re.match(value)
+            namespace, localname = match.groups()
+
+            if namespace in reverse_nsmap:
+                value = '%s:%s' % (reverse_nsmap.get(namespace), localname)
+                node.set(key, value)
+
+
+def _get_attributes(node):
+    """Return the node attributes where prefixed values are dereferenced.
+
+    For example the following xml::
+
+        <foobar xmlns:xsi="foo" xmlns:ns0="bar" xsi:type="ns0:string">
+
+    will return the dict::
+
+        {
+            'foo:type': '{http://example.com}string'
+        }
+
+    :type node: lxml.etree._Element
+
+    """
+    nsmap = node.nsmap
+    reverse_nsmap = {v: k for k, v in nsmap.items()}
+
+    result = {}
+
+    for key, value in node.attrib.items():
+        if value.count(':') == 1:
+            prefix, localname = value.split(':')
+
+            if prefix in nsmap:
+                namespace = nsmap[prefix]
+                value = '{%s}%s' % (namespace, localname)
+        result[key] = value
+    return list(result.items())
