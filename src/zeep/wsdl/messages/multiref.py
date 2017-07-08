@@ -1,4 +1,3 @@
-import copy
 import re
 
 from lxml import etree
@@ -50,8 +49,9 @@ def _dereference_element(source, target):
     :rtype target: lxml.etree._Element
 
     """
-    reverse_nsmap = {v: k for k, v in target.nsmap.items()}
-    specific_nsmap = {k: v for k, v in source.nsmap.items() if k not in target.nsmap}
+    specific_nsmap = {
+        k: v for k, v in source.nsmap.items() if k not in target.nsmap
+    }
 
     new = _clone_element(source, target.tag, specific_nsmap)
 
@@ -145,8 +145,6 @@ def _get_attributes(node):
 
     """
     nsmap = node.nsmap
-    reverse_nsmap = {v: k for k, v in nsmap.items()}
-
     result = {}
 
     for key, value in node.attrib.items():

@@ -9,7 +9,7 @@ from collections import OrderedDict
 from lxml import etree
 from lxml.builder import ElementMaker
 
-from zeep import exceptions, ns, xsd
+from zeep import exceptions, xsd
 from zeep.utils import as_qname
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
 from zeep.wsdl.messages.multiref import process_multiref
@@ -87,7 +87,6 @@ class SoapMessage(ConcreteMessage):
         """
         if not self.envelope:
             return None
-
 
         body = envelope.find('soap-env:Body', namespaces=self.nsmap)
         body_result = self._deserialize_body(body)

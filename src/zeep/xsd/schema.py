@@ -403,7 +403,6 @@ class SchemaDocument(object):
                         "%(file)s. (via %(parent)s)"
                     ) % {
                         'item_name': exc.item_name,
-                        'item_name': exc.item_name,
                         'qname': exc.qname,
                         'file': exc.location,
                         'parent': obj.qname,

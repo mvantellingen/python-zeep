@@ -1,7 +1,4 @@
 import base64
-import copy
-
-from lxml import etree
 
 
 def process_xop(document, message_pack):

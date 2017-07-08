@@ -25,21 +25,22 @@ except ImportError:
 # SOAP envelope
 SOAP_NS = 'http://schemas.xmlsoap.org/soap/envelope/'
 
+
 def _read_file(f_name):
     with open(f_name, "rb") as f:
         return f.read()
 
+
 def _make_sign_key(key_data, cert_data, password):
-    key = xmlsec.Key.from_memory(key_data,
-                                 xmlsec.KeyFormat.PEM, password)
-    key.load_cert_from_memory(cert_data,
-                              xmlsec.KeyFormat.PEM)
+    key = xmlsec.Key.from_memory(key_data, xmlsec.KeyFormat.PEM, password)
+    key.load_cert_from_memory(cert_data, xmlsec.KeyFormat.PEM)
     return key
 
+
 def _make_verify_key(cert_data):
-    key = xmlsec.Key.from_memory(cert_data,
-                                 xmlsec.KeyFormat.CERT_PEM, None)
+    key = xmlsec.Key.from_memory(cert_data, xmlsec.KeyFormat.CERT_PEM, None)
     return key
+
 
 class MemorySignature(object):
     """Sign given SOAP envelope with WSSE sig using given key and cert."""
@@ -61,13 +62,14 @@ class MemorySignature(object):
         _verify_envelope_with_key(envelope, key)
         return envelope
 
+
 class Signature(MemorySignature):
     """Sign given SOAP envelope with WSSE sig using given key file and cert file."""
 
     def __init__(self, key_file, certfile, password=None):
-        super(Signature, self).__init__(_read_file(key_file),
-                                        _read_file(certfile),
-                                        password)
+        super(Signature, self).__init__(
+            _read_file(key_file), _read_file(certfile), password)
+
 
 def check_xmlsec_import():
     if xmlsec is None:
@@ -170,6 +172,7 @@ def sign_envelope(envelope, keyfile, certfile, password=None):
     key = _make_sign_key(_read_file(keyfile), _read_file(certfile), password)
     return _sign_envelope_with_key(envelope, key)
 
+
 def _sign_envelope_with_key(envelope, key):
     soap_env = detect_soap_env(envelope)
 
@@ -219,6 +222,7 @@ def verify_envelope(envelope, certfile):
     """
     key = _make_verify_key(_read_file(certfile))
     return _verify_envelope_with_key(envelope, key)
+
 
 def _verify_envelope_with_key(envelope, key):
     soap_env = detect_soap_env(envelope)
