@@ -1267,3 +1267,67 @@ def test_serialize_any_type():
     deserialized = operation.input.deserialize(serialized.content)
 
     assert deserialized == 'ah1'
+
+
+def test_empty_input_parse():
+    wsdl_content = StringIO("""
+    <wsdl:definitions
+        xmlns:tns="http://tests.python-zeep.org/"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://tests.python-zeep.org/">
+      <wsdl:types>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/">
+        <element name="Result">
+            <complexType>
+            <sequence>
+                <element name="item" type="xsd:string"/>
+            </sequence>
+            </complexType>
+        </element>
+        </schema>
+      </wsdl:types>
+      <wsdl:message name="Request"></wsdl:message>
+      <wsdl:message name="Response">
+        <wsdl:part element="tns:Result" name="Result"/>
+      </wsdl:message>
+      <wsdl:portType name="PortType">
+        <wsdl:operation name="getResult">
+          <wsdl:input message="tns:Request" name="getResultRequest"/>
+          <wsdl:output message="tns:Response" name="getResultResponse"/>
+        </wsdl:operation>
+      </wsdl:portType>
+      <wsdl:binding name="Binding" type="tns:PortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="getResult">
+          <soap:operation soapAction=""/>
+          <wsdl:input name="Result">
+            <soap:body use="literal"/>
+          </wsdl:input>
+          </wsdl:operation>
+      </wsdl:binding>
+      <wsdl:service name="Service">
+        <wsdl:port binding="tns:Binding" name="ActiveStations">
+        <soap:address location="https://opendap.co-ops.nos.noaa.gov/axis/services/ActiveStations"/>
+        </wsdl:port>
+      </wsdl:service>
+    </wsdl:definitions>
+    """.strip())
+
+    root = wsdl.Document(wsdl_content, None)
+
+    binding = root.bindings['{http://tests.python-zeep.org/}Binding']
+    operation = binding.get('getResult')
+    serialized = operation.input.serialize()
+
+    expected = """
+        <?xml version="1.0"?>
+        <soap-env:Envelope
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap-env:Body/>
+        </soap-env:Envelope>
+    """
+    assert_nodes_equal(expected, serialized.content)

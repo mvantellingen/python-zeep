@@ -52,24 +52,22 @@ class SoapMessage(ConcreteMessage):
         nsmap.update(self.wsdl.types._prefix_map_custom)
 
         soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=nsmap)
-        body = header = None
 
         # Create the soap:header element
         headers_value = kwargs.pop('_soapheaders', None)
         header = self._serialize_header(headers_value, nsmap)
 
         # Create the soap:body element
+        body = soap.Body()
         if self.body:
             body_value = self.body(*args, **kwargs)
-            body = soap.Body()
             self.body.render(body, body_value)
 
         # Create the soap:envelope
         envelope = soap.Envelope()
         if header is not None:
             envelope.append(header)
-        if body is not None:
-            envelope.append(body)
+        envelope.append(body)
 
         # XXX: This is only used in Soap 1.1 so should be moved to the the
         # Soap11Binding._set_http_headers(). But let's keep it like this for
@@ -299,7 +297,9 @@ class SoapMessage(ConcreteMessage):
                 xsd.Element('{%s}header' % self.nsmap['soap-env'], self.header.type))
 
         all_elements.append(
-            xsd.Element('{%s}body' % self.nsmap['soap-env'], self.body.type))
+            xsd.Element(
+                '{%s}body' % self.nsmap['soap-env'],
+                self.body.type if self.body else None))
 
         return xsd.Element('{%s}envelope' % self.nsmap['soap-env'], xsd.ComplexType(all_elements))
 
@@ -412,7 +412,7 @@ class DocumentMessage(SoapMessage):
         name = etree.QName(self.nsmap['soap-env'], 'Body')
 
         if not info or not parts:
-            return xsd.Element(name, xsd.ComplexType([]))
+            return None
 
         # If the part name is omitted then all parts are available under
         # the soap:body tag. Otherwise only the part with the given name.
@@ -468,9 +468,8 @@ class RpcMessage(SoapMessage):
         name and its namespace is the value of the namespace attribute.
 
         """
-        name = etree.QName(self.nsmap['soap-env'], 'Body')
         if not info:
-            return xsd.Element(name, xsd.ComplexType([]))
+            return None
 
         namespace = info['namespace']
         if self.type == 'input':
