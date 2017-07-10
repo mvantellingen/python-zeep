@@ -209,13 +209,12 @@ class ComplexType(AnyType):
         if not render_path:
             render_path = [self.name]
 
-        if xsd_type:
-            if xsd_type._xsd_name:
-                parent.set(xsi_ns('type'), xsd_type._xsd_name)
-            if xsd_type.qname:
-                parent.set(xsi_ns('type'), xsd_type.qname)
-
         if not self.elements_nested and not self.attributes:
+            if xsd_type:
+                if xsd_type._xsd_name:
+                    parent.set(xsi_ns('type'), xsd_type._xsd_name)
+                if xsd_type.qname:
+                    parent.set(xsi_ns('type'), xsd_type.qname)
             return
 
         if isinstance(value, ArrayValue):
@@ -253,6 +252,12 @@ class ComplexType(AnyType):
                 element.type.render(parent, element_value, None, child_path)
             else:
                 element.render(parent, element_value, child_path)
+
+        if xsd_type:
+            if xsd_type._xsd_name:
+                parent.set(xsi_ns('type'), xsd_type._xsd_name)
+            if xsd_type.qname:
+                parent.set(xsi_ns('type'), xsd_type.qname)
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
         """Parse the kwargs for this type and return the accepted data as
