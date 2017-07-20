@@ -886,6 +886,9 @@ class SchemaVisitor(object):
 
         for child in node.iterchildren():
             assert child.tag in sub_types, child
+            # TODO: We should actually process the Annotation, rather than skipping it.
+            if child.tag == tags.annotation:
+                continue
             item = self.process(child, node)
             result.append(item)
 
