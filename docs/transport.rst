@@ -1,11 +1,11 @@
 Transports
 ==========
-If you need to change options like cache, timeout or ssl verification you will
+If you need to change options like cache, timeout or SSL verification you will
 need to create an instance of the Transport class yourself.
 
-For instance to disable SSL verification you will need to create a new
-:class:`requests.Session` instance and set the ``verify`` attribute to
-``False``.
+SSL verification
+----------------
+If you need to verficate the SSL connection (in case you have a self signed certificate for your host), the best way is to crea te a :class:`requests.Session` instance and add the information to that Session, so it keeps persistent:
 
 .. code-block:: python
 
@@ -14,12 +14,27 @@ For instance to disable SSL verification you will need to create a new
     from zeep.transports import Transport
 
     session = Session()
-    session.verify = False
+    session.verify = 'path/to/my/certificate.pem'
     transport = Transport(session=session)
     client = Client(
-        'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
+        'http://my.own.sslhost.local/service?WSDL',
         transport=transport)
 
+.. HINT::
+Make sure that the certificate you refer to is a CA_BUNDLE, meaning it contains a root CA and an intermediate CA.
+Accepted are only X.509 ASCII files (file extension ``.pem``, sometimes ``crt``). If you have two different files, you must combine them manually into one. 
+
+
+For instance to **disable SSL verification** (not recommended!) you will need to set the ``verify`` attribute of the :class:`requests.Session` to ``False``. Remember: this should be only done for testing purposes. Python's ``urllib3`` will warn you with a InsecureRequestWarning.
+
+.. code-block:: python
+
+    session = Session()
+    session.verify = False
+
+
+Session timeout
+---------------
 
 To set a transport timeout use the `timeout` option. The default timeout is 300
 seconds:
