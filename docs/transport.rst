@@ -1,6 +1,6 @@
 Transports
 ==========
-If you need to change options like cache, timeout or ssl verification you will
+If you need to change options like cache, timeout or SSL verification you will
 need to create an instance of the Transport class yourself.
 
 For instance to disable SSL verification you will need to create a new
