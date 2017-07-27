@@ -134,7 +134,9 @@ class SoapBinding(Binding):
         if response.status_code != 200 and not response.content:
             raise TransportError(
                 u'Server returned HTTP status %d (no content available)'
-                % response.status_code)
+                % response.status_code,
+                status_code=response.status_code,
+                content=response.content)
 
         content_type = response.headers.get('Content-Type', 'text/xml')
         media_type = get_media_type(content_type)
@@ -159,7 +161,9 @@ class SoapBinding(Binding):
         except XMLSyntaxError:
             raise TransportError(
                 'Server returned HTTP status %d (%s)'
-                % (response.status_code, response.content))
+                % (response.status_code, response.content),
+                status_code=response.status_code,
+                content=response.content)
 
         # Check if this is an XOP message which we need to decode first
         if message_pack:
