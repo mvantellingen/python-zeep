@@ -135,8 +135,7 @@ class SoapBinding(Binding):
             raise TransportError(
                 u'Server returned HTTP status %d (no content available)'
                 % response.status_code,
-                status_code=response.status_code,
-                content=response.content)
+                status_code=response.status_code)
 
         content_type = response.headers.get('Content-Type', 'text/xml')
         media_type = get_media_type(content_type)
