@@ -183,9 +183,11 @@ def test_wrong_content():
         headers={}
     )
 
-    with pytest.raises(TransportError):
+    with pytest.raises(TransportError) as exc:
         binding.process_reply(
             client, binding.get('GetLastTradePrice'), response)
+    assert 200 == exc.value.status_code
+    assert data == exc.value.content
 
 
 def test_wrong_no_unicode_content():
@@ -204,9 +206,34 @@ def test_wrong_no_unicode_content():
         headers={}
     )
 
-    with pytest.raises(TransportError):
+    with pytest.raises(TransportError) as exc:
         binding.process_reply(
             client, binding.get('GetLastTradePrice'), response)
+
+    assert 200 == exc.value.status_code
+    assert data == exc.value.content
+
+
+def test_http_error():
+    data = """
+        Unauthorized!
+    """.strip()
+
+    client = Client('tests/wsdl_files/soap.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=401,
+        content=data,
+        encoding='utf-8',
+        headers={}
+    )
+
+    with pytest.raises(TransportError) as exc:
+        binding.process_reply(
+            client, binding.get('GetLastTradePrice'), response)
+    assert 401 == exc.value.status_code
+    assert data == exc.value.content
 
 
 def test_mime_multipart():
