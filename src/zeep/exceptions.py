@@ -8,7 +8,9 @@ class Error(Exception):
 
 
 class XMLSyntaxError(Error):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.content = kwargs.pop('content', None)
+        super(XMLSyntaxError, self).__init__(*args, **kwargs)
 
 
 class XMLParseError(Error):
