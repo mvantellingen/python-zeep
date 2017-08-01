@@ -8,6 +8,7 @@ import logging
 import aiohttp
 from requests import Response
 
+from zeep.exceptions import TransportError
 from zeep.transports import Transport
 from zeep.utils import get_version
 from zeep.wsdl.utils import etree_to_string
@@ -45,6 +46,14 @@ class AsyncTransport(Transport):
             with aiohttp.Timeout(self.load_timeout):
                 response = await self.session.get(url)
                 result = await response.read()
+                try:
+                    response.raise_for_status()
+                except aiohttp.ClientError as exc:
+                    raise TransportError(
+                        message=str(exc),
+                        status_code=response.status,
+                        content=result
+                    ).with_traceback(exc.__traceback__) from exc
 
         # Block until we have the data
         self.loop.run_until_complete(_load_remote_data_async())
