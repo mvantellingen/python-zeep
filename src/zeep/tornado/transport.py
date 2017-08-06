@@ -32,16 +32,22 @@ class TornadoAsyncTransport(Transport):
             'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
     def _load_remote_data(self, url):
+        client = httpclient.HTTPClient()
+        kwargs = {'method': 'GET'}
+        http_req = httpclient.HTTPRequest(url, **kwargs)
+        response = client.fetch(http_req)
+        return response
 
-        @gen.coroutine
-        def _load_remote_data_async():
-            async_client = httpclient.AsyncHTTPClient()
-            kwargs = {'method': 'GET'}
-            http_req = httpclient.HTTPRequest(url, **kwargs)
-            response = yield async_client.fetch(http_req)
-            raise gen.Return(self.new_response(response))
 
-        return tornado.ioloop.IOLoop.run_sync(_load_remote_data_async)
+        # @gen.coroutine
+        # def _load_remote_data_async():
+        #     async_client = httpclient.AsyncHTTPClient()
+        #     kwargs = {'method': 'GET'}
+        #     http_req = httpclient.HTTPRequest(url, **kwargs)
+        #     response = yield async_client.fetch(http_req)
+        #     raise gen.Return(self.new_response(response))
+        #
+        # return tornado.ioloop.IOLoop.run_sync(_load_remote_data_async)
 
     @gen.coroutine
     def post(self, address, message, headers):
