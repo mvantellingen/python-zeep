@@ -7,6 +7,7 @@ import urllib
 import tornado.ioloop
 from tornado import gen, httpclient
 from requests import Response, Session
+from requests.structures import CaseInsensitiveDict
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from zeep.transports import Transport
@@ -88,7 +89,7 @@ class TornadoAsyncTransport(Transport):
         kwargs = {
             'method': 'POST',
             'request_timeout': self.load_timeout,
-            'headers': headers + self.session.headers,
+            'headers': headers + CaseInsensitiveDict(self.session.headers),
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
@@ -152,7 +153,7 @@ class TornadoAsyncTransport(Transport):
         kwargs = {
             'method': 'POST',
             'request_timeout': self.load_timeout,
-            'headers': headers + self.session.headers,
+            'headers': headers + CaseInsensitiveDict(self.session.headers),
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
