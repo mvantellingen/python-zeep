@@ -33,20 +33,16 @@ class TornadoAsyncTransport(Transport):
         self.session.headers['User-Agent'] = (
             'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
-    @gen.coroutine
     def _load_remote_data(self, url):
-        result = None
+        @gen.coroutine
+        def _load_remote_data_async():
+            async_client = httpclient.AsyncHTTPClient()
+            kwargs = {'method': 'GET'}
+            http_req = httpclient.HTTPRequest(url, **kwargs)
+            response = yield async_client.fetch(http_req)
+            raise gen.Return(self.new_response(response))
 
-        async_client = httpclient.AsyncHTTPClient()
-
-        kwargs = {
-            'method': 'GET'
-        }
-
-        http_req = httpclient.HTTPRequest(url, **kwargs)
-        response = yield async_client.fetch(http_req)
-
-        raise gen.Return(self.new_response(response))
+        return self.loop.run_sync(_load_remote_data_async())
 
     @gen.coroutine
     def post(self, address, message, headers):
