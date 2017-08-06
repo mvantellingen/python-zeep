@@ -5,7 +5,7 @@ Adds async tornado.gen support to Zeep.
 import logging
 import urllib
 import tornado.ioloop
-from tornado import gen, httpclient
+from tornado import gen, httpclient, IOLoop
 from requests import Response, Session
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
@@ -20,10 +20,8 @@ class TornadoAsyncTransport(Transport):
     """Asynchronous Transport class using tornado gen."""
     supports_async = True
 
-    def __init__(self, loop, cache=None, timeout=300, operation_timeout=None,
+    def __init__(self, cache=None, timeout=300, operation_timeout=None,
                  session=None):
-
-        self.loop = loop if loop else tornado.ioloop.IOLoop.instance()
         self.cache = cache
         self.load_timeout = timeout
         self.operation_timeout = operation_timeout
@@ -34,6 +32,7 @@ class TornadoAsyncTransport(Transport):
             'Zeep/%s (www.python-zeep.org)' % (get_version()))
 
     def _load_remote_data(self, url):
+
         @gen.coroutine
         def _load_remote_data_async():
             async_client = httpclient.AsyncHTTPClient()
@@ -42,7 +41,7 @@ class TornadoAsyncTransport(Transport):
             response = yield async_client.fetch(http_req)
             raise gen.Return(self.new_response(response))
 
-        return self.loop.run_sync(_load_remote_data_async())
+        return tornado.ioloop.IOLoop.run_sync(_load_remote_data_async)
 
     @gen.coroutine
     def post(self, address, message, headers):
