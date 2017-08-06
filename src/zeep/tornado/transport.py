@@ -89,7 +89,7 @@ class TornadoAsyncTransport(Transport):
         kwargs = {
             'method': 'POST',
             'request_timeout': self.load_timeout,
-            'headers': headers + CaseInsensitiveDict(self.session.headers),
+            'headers': CaseInsensitiveDict(headers) + self.session.headers,
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
@@ -153,7 +153,7 @@ class TornadoAsyncTransport(Transport):
         kwargs = {
             'method': 'POST',
             'request_timeout': self.load_timeout,
-            'headers': headers + CaseInsensitiveDict(self.session.headers),
+            'headers': CaseInsensitiveDict(headers) + self.session.headers,
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
