@@ -1,4 +1,4 @@
-2.3.0 (unreleased)
+2.3.0 (2017-08-06)
 ------------------
  - The XML send to the server is no longer using ``pretty_print=True`` (#484)
  - Refactor of the multiref support to fix issues with child elements (#489)
