@@ -377,6 +377,9 @@ class ComplexType(AnyType):
                 elif isinstance(element, OrderIndicator):
                     for item in reversed(base_element):
                         element.insert(0, item)
+                elif isinstance(element, Group):
+                    for item in reversed(base_element):
+                        element.child.insert(0, item)
 
             elif isinstance(self._element, Group):
                 raise NotImplementedError('TODO')

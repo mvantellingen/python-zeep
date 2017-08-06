@@ -629,7 +629,7 @@ class Group(Indicator):
         super(Group, self).__init__()
         self.child = child
         self.qname = name
-        self.name = name.localname
+        self.name = name.localname if name else None
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
 
@@ -648,7 +648,7 @@ class Group(Indicator):
 
     def clone(self, name, min_occurs=1, max_occurs=1):
         return self.__class__(
-            name=name,
+            name=None,
             child=self.child,
             min_occurs=min_occurs,
             max_occurs=max_occurs)

@@ -415,3 +415,39 @@ def test_xml_group_methods():
         '{http://tests.python-zeep.org/}Group(city: xsd:string, country: xsd:string)')
 
     assert len(list(Group)) == 2
+
+
+def test_xml_group_extension():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://tests.python-zeep.org/"
+                   targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="unqualified">
+
+          <xs:group name="Group">
+            <xs:sequence>
+              <xs:element name="item_2" type="xs:string" />
+              <xs:element name="item_3" type="xs:string" />
+            </xs:sequence>
+          </xs:group>
+
+          <xs:complexType name="base">
+            <xs:sequence>
+              <xs:element name="item_1" type="xs:string" minOccurs="0"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <xs:complexType name="SubGroup">
+            <xs:complexContent>
+              <xs:extension base="tns:base">
+                <xs:group ref="tns:Group"/>
+              </xs:extension>
+            </xs:complexContent>
+          </xs:complexType>
+        </xs:schema>
+    """))
+    SubGroup = schema.get_type('{http://tests.python-zeep.org/}SubGroup')
+    assert SubGroup.signature(schema) == (
+        'ns0:SubGroup(item_1: xsd:string, item_2: xsd:string, item_3: xsd:string)')
+    SubGroup(item_1='een', item_2='twee', item_3='drie')
