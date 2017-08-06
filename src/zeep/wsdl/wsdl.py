@@ -398,7 +398,7 @@ class Definition(object):
                 bindings.HttpPostBinding,
             ]
         else:
-            from zeep.asyncio import bindings  # Python 3.5+ syntax
+            from zeep.tornado import bindings  # TODO: Fix-me !!!!
             binding_classes = [
                 bindings.AsyncSoap11Binding,
                 bindings.AsyncSoap12Binding,
