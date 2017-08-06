@@ -13,10 +13,10 @@ from zeep.transports import Transport
 from zeep.utils import get_version
 from zeep.wsdl.utils import etree_to_string
 
-__all__ = ['AsyncTransport']
+__all__ = ['TornadoAsyncTransport']
 
 
-class AsyncTransport(Transport):
+class TornadoAsyncTransport(Transport):
     """Asynchronous Transport class using tornado gen."""
     supports_async = True
 
