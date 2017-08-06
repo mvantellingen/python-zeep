@@ -87,12 +87,12 @@ class TornadoAsyncTransport(Transport):
 
         kwargs = {
             'method': 'POST',
-            'request_timeout': self.timeout,
+            'request_timeout': self.load_timeout,
             'headers': headers + self.session.headers,
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
-            'validate_cert': self.sessionverify,
+            'validate_cert': self.session.sessionverify if self.session else None,
             'client_key': client_key,
             'client_cert': client_cert,
             'body': message
@@ -150,17 +150,15 @@ class TornadoAsyncTransport(Transport):
                 client_key = self.session.cert[1]
 
         kwargs = {
-            'method': 'GET',
-            'request_timeout': self.timeout,
+            'method': 'POST',
+            'request_timeout': self.load_timeout,
             'headers': headers + self.session.headers,
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
-            'validate_cert': self.sessionverify,
+            'validate_cert': self.session.sessionverify if self.session else None,
             'client_key': client_key,
             'client_cert': client_cert
-
-
         }
 
         http_req = httpclient.HTTPRequest(address, **kwargs)
