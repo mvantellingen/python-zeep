@@ -36,7 +36,7 @@ class TornadoAsyncTransport(Transport):
         kwargs = {'method': 'GET'}
         http_req = httpclient.HTTPRequest(url, **kwargs)
         response = client.fetch(http_req)
-        return response
+        return response.body
 
 
         # @gen.coroutine
