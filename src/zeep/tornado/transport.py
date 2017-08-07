@@ -4,10 +4,8 @@ Adds async tornado.gen support to Zeep.
 """
 import logging
 import urllib
-import tornado.ioloop
 from tornado import gen, httpclient
 from requests import Response, Session
-from requests.structures import CaseInsensitiveDict
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from zeep.transports import Transport
@@ -38,17 +36,6 @@ class TornadoAsyncTransport(Transport):
         http_req = httpclient.HTTPRequest(url, **kwargs)
         response = client.fetch(http_req)
         return response.body
-
-
-        # @gen.coroutine
-        # def _load_remote_data_async():
-        #     async_client = httpclient.AsyncHTTPClient()
-        #     kwargs = {'method': 'GET'}
-        #     http_req = httpclient.HTTPRequest(url, **kwargs)
-        #     response = yield async_client.fetch(http_req)
-        #     raise gen.Return(self.new_response(response))
-        #
-        # return tornado.ioloop.IOLoop.run_sync(_load_remote_data_async)
 
     @gen.coroutine
     def post(self, address, message, headers):
@@ -86,21 +73,23 @@ class TornadoAsyncTransport(Transport):
                 client_cert = self.session.cert[0]
                 client_key = self.session.cert[1]
 
+        parsed_headears = {v[0]: v[1] for k, v in self.session.headers._store.iteritems()}
+
         kwargs = {
             'method': 'POST',
             'request_timeout': self.load_timeout,
-            'headers': CaseInsensitiveDict(headers) + self.session.headers,
+            'headers': dict(headers, **parsed_headears),
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
-            'validate_cert': self.session.sessionverify if self.session else None,
+            'validate_cert': self.session.verify,
             'client_key': client_key,
             'client_cert': client_cert,
             'body': message
         }
 
         http_req = httpclient.HTTPRequest(address, **kwargs)
-        response = yield async_client.po(http_req)
+        response = yield async_client.fetch(http_req)
 
         raise gen.Return(self.new_response(response))
 
@@ -110,7 +99,7 @@ class TornadoAsyncTransport(Transport):
 
         response = yield self.post(address, message, headers)
 
-        raise gen.Return(self.new_response(response))
+        raise gen.Return(response)
 
     @gen.coroutine
     def get(self, address, params, headers):
@@ -150,14 +139,16 @@ class TornadoAsyncTransport(Transport):
                 client_cert = self.session.cert[0]
                 client_key = self.session.cert[1]
 
+        parsed_headears = {v[0]: v[1] for k, v in self.session.headers._store.iteritems()}
+
         kwargs = {
             'method': 'POST',
             'request_timeout': self.load_timeout,
-            'headers': CaseInsensitiveDict(headers) + self.session.headers,
+            'headers': dict(headers, **parsed_headears),
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
-            'validate_cert': self.session.sessionverify if self.session else None,
+            'validate_cert': self.session.verify,
             'client_key': client_key,
             'client_cert': client_cert
         }
