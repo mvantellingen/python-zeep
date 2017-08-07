@@ -13,11 +13,11 @@ class AsyncSoapBinding(object):
             client=client,
             options=options)
 
-        response = client.transport.post_xml(
+        response = yield client.transport.post_xml(
             options['address'], envelope, http_headers)
 
         operation_obj = self.get(operation)
-        return self.process_reply(client, operation_obj, response)
+        raise gen.Return(self.process_reply(client, operation_obj, response))
 
 
 class AsyncSoap11Binding(AsyncSoapBinding, bindings.Soap11Binding):
