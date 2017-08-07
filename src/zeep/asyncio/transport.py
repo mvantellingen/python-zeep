@@ -4,6 +4,7 @@ Adds asyncio support to Zeep. Contains Python 3.5+ only syntax!
 """
 import asyncio
 import logging
+import bindings
 
 import aiohttp
 from requests import Response
@@ -17,7 +18,10 @@ __all__ = ['AsyncTransport']
 
 class AsyncTransport(Transport):
     """Asynchronous Transport class using aiohttp."""
-    supports_async = True
+    binding_classes = [
+                bindings.AsyncSoap11Binding,
+                bindings.AsyncSoap12Binding,
+            ]
 
     def __init__(self, loop, cache=None, timeout=300, operation_timeout=None,
                  session=None):

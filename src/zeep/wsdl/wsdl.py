@@ -389,25 +389,11 @@ class Definition(object):
 
         """
         result = {}
-        if not getattr(self.wsdl.transport, 'supports_async', False):
-            from zeep.wsdl import bindings
-            binding_classes = [
-                bindings.Soap11Binding,
-                bindings.Soap12Binding,
-                bindings.HttpGetBinding,
-                bindings.HttpPostBinding,
-            ]
-        else:
-            from zeep.tornado import bindings  # TODO: Fix-me !!!!
-            binding_classes = [
-                bindings.AsyncSoap11Binding,
-                bindings.AsyncSoap12Binding,
-            ]
 
         for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
             # Detect the binding type
             binding = None
-            for binding_class in binding_classes:
+            for binding_class in self.wsdl.transport.binding_classes:
                 if binding_class.match(binding_node):
 
                     try:

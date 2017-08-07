@@ -7,6 +7,7 @@ from six.moves.urllib.parse import urlparse
 
 from zeep.utils import get_media_type, get_version
 from zeep.wsdl.utils import etree_to_string
+from zeep.wsdl import bindings
 
 
 class Transport(object):
@@ -19,7 +20,12 @@ class Transport(object):
     :param session: A :py:class:`request.Session()` object (optional)
 
     """
-    supports_async = False
+    binding_classes = [
+                bindings.Soap11Binding,
+                bindings.Soap12Binding,
+                bindings.HttpGetBinding,
+                bindings.HttpPostBinding,
+            ]
 
     def __init__(self, cache=None, timeout=300, operation_timeout=None,
                  session=None):
