@@ -4,6 +4,8 @@ Adds async tornado.gen support to Zeep.
 """
 import logging
 import urllib
+import bindings
+
 from tornado import gen, httpclient
 from requests import Response, Session
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
@@ -17,7 +19,9 @@ __all__ = ['TornadoAsyncTransport']
 
 class TornadoAsyncTransport(Transport):
     """Asynchronous Transport class using tornado gen."""
-    supports_async = True
+    binding_classes = [
+        bindings.AsyncSoap11Binding,
+        bindings.AsyncSoap12Binding]
 
     def __init__(self, cache=None, timeout=300, operation_timeout=None,
                  session=None):
