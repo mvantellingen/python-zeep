@@ -43,59 +43,9 @@ class TornadoAsyncTransport(Transport):
 
     @gen.coroutine
     def post(self, address, message, headers):
-        async_client = httpclient.AsyncHTTPClient()
+        response = yield self.fetch(address, 'POST', headers, message)
 
-        # extracting auth
-        auth_username = None
-        auth_password = None
-        auth_mode = None
-
-        if self.session.auth is not None:
-            if type(self.session.auth) is tuple:
-                auth_username = self.session.auth[0]
-                auth_password = self.session.auth[1]
-                auth_mode = 'basic'
-            elif type(self.session.auth) is HTTPBasicAuth:
-                auth_username = self.session.username
-                auth_password = self.session.password
-                auth_mode = 'basic'
-            elif type(self.session.auth) is HTTPDigestAuth:
-                auth_username = self.session.username
-                auth_password = self.session.password
-                auth_mode = 'digest'
-            else:
-                raise StandardError('Not supported authentication.')
-
-        # extracting client cert
-        client_cert = None
-        client_key = None
-
-        if self.session.cert is not None:
-            if type(self.session.cert) is str:
-                client_cert = self.session.cert
-            elif type(self.session.cert) is tuple:
-                client_cert = self.session.cert[0]
-                client_key = self.session.cert[1]
-
-        parsed_headears = {v[0]: v[1] for k, v in self.session.headers._store.iteritems()}
-
-        kwargs = {
-            'method': 'POST',
-            'request_timeout': self.load_timeout,
-            'headers': dict(headers, **parsed_headears),
-            'auth_username': auth_username,
-            'auth_password': auth_password,
-            'auth_mode': auth_mode,
-            'validate_cert': self.session.verify,
-            'client_key': client_key,
-            'client_cert': client_cert,
-            'body': message
-        }
-
-        http_req = httpclient.HTTPRequest(address, **kwargs)
-        response = yield async_client.fetch(http_req)
-
-        raise gen.Return(self.new_response(response))
+        raise gen.Return(response)
 
     @gen.coroutine
     def post_xml(self, address, envelope, headers):
@@ -107,16 +57,22 @@ class TornadoAsyncTransport(Transport):
 
     @gen.coroutine
     def get(self, address, params, headers):
-        async_client = httpclient.AsyncHTTPClient()
         if params:
             address += '?' + urllib.urlencode(params)
+        response = yield self.fetch(address, 'GET', headers)
+
+        raise gen.Return(response)
+
+    @gen.coroutine
+    def fetch(self, address, method, headers, message=None):
+        async_client = httpclient.AsyncHTTPClient()
 
         # extracting auth
         auth_username = None
         auth_password = None
         auth_mode = None
 
-        if self.session.auth is not None:
+        if self.session.auth:
             if type(self.session.auth) is tuple:
                 auth_username = self.session.auth[0]
                 auth_password = self.session.auth[1]
@@ -136,7 +92,7 @@ class TornadoAsyncTransport(Transport):
         client_cert = None
         client_key = None
 
-        if self.session.cert is not None:
+        if self.session.cert:
             if type(self.session.cert) is str:
                 client_cert = self.session.cert
             elif type(self.session.cert) is tuple:
@@ -146,7 +102,7 @@ class TornadoAsyncTransport(Transport):
         parsed_headears = {v[0]: v[1] for k, v in self.session.headers._store.iteritems()}
 
         kwargs = {
-            'method': 'POST',
+            'method': method,
             'request_timeout': self.load_timeout,
             'headers': dict(headers, **parsed_headears),
             'auth_username': auth_username,
@@ -156,6 +112,9 @@ class TornadoAsyncTransport(Transport):
             'client_key': client_key,
             'client_cert': client_cert
         }
+
+        if message:
+            kwargs['body'] = message
 
         http_req = httpclient.HTTPRequest(address, **kwargs)
         response = yield async_client.fetch(http_req)
@@ -168,6 +127,4 @@ class TornadoAsyncTransport(Transport):
         new._content = response.body
         new.status_code = response.code
         new.headers = response.headers # seems that headers may be in a wrong format here
-        # new.cookies = response.cookies
-        # new.encoding = response.charset
         return new
