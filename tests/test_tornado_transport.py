@@ -1,3 +1,4 @@
+import pytest
 from pretend import stub
 from lxml import etree
 from tornado.httpclient import HTTPResponse, HTTPRequest
@@ -9,11 +10,12 @@ from zeep import tornado
 
 
 class TornadoAsyncTransportTest(AsyncTestCase):
+    @pytest.mark.requests
     def test_no_cache(self):
         transport = tornado.TornadoAsyncTransport()
         assert transport.cache is None
 
-
+    @pytest.mark.requests
     @patch('tornado.httpclient.HTTPClient.fetch')
     @gen_test
     def test_load(self, mock_httpclient_fetch):
@@ -27,9 +29,9 @@ class TornadoAsyncTransportTest(AsyncTestCase):
 
         result = transport.load('http://tests.python-zeep.org/test.xml')
 
-        assert result == b'x'
+        assert result == 'x'
 
-
+    @pytest.mark.requests
     @patch('tornado.httpclient.AsyncHTTPClient.fetch')
     @gen_test
     def test_post(self, mock_httpclient_fetch):
@@ -51,6 +53,6 @@ class TornadoAsyncTransportTest(AsyncTestCase):
             envelope=envelope,
             headers={})
 
-        assert result.content == b'x'
+        assert result.content == 'x'
         assert result.status_code == 200
 

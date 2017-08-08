@@ -99,12 +99,10 @@ class TornadoAsyncTransport(Transport):
                 client_cert = self.session.cert[0]
                 client_key = self.session.cert[1]
 
-        parsed_headears = {v[0]: v[1] for k, v in self.session.headers._store.iteritems()}
-
         kwargs = {
             'method': method,
             'request_timeout': self.load_timeout,
-            'headers': dict(headers, **parsed_headears),
+            'headers': dict(headers, **self.session.headers.items()),
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
