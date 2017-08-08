@@ -4,7 +4,7 @@ Adds async tornado.gen support to Zeep.
 """
 import logging
 import urllib
-import bindings
+from . import bindings
 
 from tornado import gen, httpclient
 from requests import Response, Session
