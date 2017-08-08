@@ -10,6 +10,7 @@ Highlights:
  * Support for Soap 1.1, Soap 1.2 and HTTP bindings
  * Support for WS-Addressing headers
  * Support for WSSE (UserNameToken / x.509 signing)
+ * Support for tornado async transport via gen.coroutine (Python 2.7+)
  * Support for asyncio via aiohttp (Python 3.5+)
  * Experimental support for XOP messages
 
@@ -83,10 +84,16 @@ xmlsec module. This can be done by install the ``xlmsec`` extras::
 
     pip install zeep[xmlsec]
 
-For the asyncio support in Python 3.5+ the aiohttp module is required, this 
+For the asyncio support in Python 3.5+ the aiohttp module is required, this
 can be installed with the ``async`` extras::
 
     pip install zeep[async]
+
+
+For the tornado support in Python 2.7+ the tornado module is required, this
+can be installed with the ``tornado`` extras::
+
+    pip install zeep[tornado]
 
 
 Getting started

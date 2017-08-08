@@ -10,6 +10,7 @@ Highlights:
  * Support for Soap 1.1, Soap 1.2 and HTTP bindings
  * Support for WS-Addressing headers
  * Support for WSSE (UserNameToken / x.509 signing)
+ * Support for tornado async transport via gen.coroutine (Python 2.7+)
  * Support for asyncio via aiohttp (Python 3.5+)
  * Experimental support for XOP messages
 
