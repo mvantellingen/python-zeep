@@ -390,10 +390,21 @@ class Definition(object):
         """
         result = {}
 
+        if not getattr(self.wsdl.transport, 'binding_classes', None):
+            from zeep.wsdl import bindings
+            binding_classes = [
+                bindings.Soap11Binding,
+                bindings.Soap12Binding,
+                bindings.HttpGetBinding,
+                bindings.HttpPostBinding,
+            ]
+        else:
+            binding_classes = self.wsdl.transport.binding_classes
+
         for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
             # Detect the binding type
             binding = None
-            for binding_class in self.wsdl.transport.binding_classes:
+            for binding_class in binding_classes:
                 if binding_class.match(binding_node):
 
                     try:
