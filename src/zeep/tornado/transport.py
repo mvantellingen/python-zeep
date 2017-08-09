@@ -36,7 +36,10 @@ class TornadoAsyncTransport(Transport):
 
     def _load_remote_data(self, url):
         client = httpclient.HTTPClient()
-        kwargs = {'method': 'GET'}
+        kwargs = {
+            'method': 'GET',
+            'request_timeout': self.load_timeout
+        }
         http_req = httpclient.HTTPRequest(url, **kwargs)
         response = client.fetch(http_req)
         return response.body
@@ -99,10 +102,12 @@ class TornadoAsyncTransport(Transport):
                 client_cert = self.session.cert[0]
                 client_key = self.session.cert[1]
 
+        session_headers = dict(self.session.headers.items())
+
         kwargs = {
             'method': method,
-            'request_timeout': self.load_timeout,
-            'headers': dict(headers, **self.session.headers.items()),
+            'request_timeout': self.operation_timeout,
+            'headers': dict(headers, **session_headers),
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
@@ -124,5 +129,5 @@ class TornadoAsyncTransport(Transport):
         new = Response()
         new._content = response.body
         new.status_code = response.code
-        new.headers = response.headers # seems that headers may be in a wrong format here
+        new.headers = dict(response.headers.get_all())
         return new
