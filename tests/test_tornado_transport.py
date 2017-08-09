@@ -4,8 +4,12 @@ from lxml import etree
 from tornado.httpclient import HTTPResponse, HTTPRequest
 from tornado.testing import gen_test, AsyncTestCase
 from tornado.concurrent import Future
+from requests import Session
+from requests.structures import CaseInsensitiveDict
 
-from mock import patch
+from tornado.httputil import HTTPHeaders
+
+from mock import patch, ANY
 from zeep import tornado
 
 
@@ -55,4 +59,3 @@ class TornadoAsyncTransportTest(AsyncTestCase):
 
         assert result.content == 'x'
         assert result.status_code == 200
-
