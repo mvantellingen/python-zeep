@@ -4,7 +4,7 @@ Adds asyncio support to Zeep. Contains Python 3.5+ only syntax!
 """
 import asyncio
 import logging
-import bindings
+from . import bindings
 
 import aiohttp
 from requests import Response
