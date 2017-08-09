@@ -4,19 +4,15 @@ from lxml import etree
 from tornado.httpclient import HTTPResponse, HTTPRequest
 from tornado.testing import gen_test, AsyncTestCase
 from tornado.concurrent import Future
-from requests import Session
-from requests.structures import CaseInsensitiveDict
 
-from tornado.httputil import HTTPHeaders
-
-from mock import patch, ANY
-from zeep import tornado
+from mock import patch
+from zeep.tornado import TornadoAsyncTransport
 
 
 class TornadoAsyncTransportTest(AsyncTestCase):
     @pytest.mark.requests
     def test_no_cache(self):
-        transport = tornado.TornadoAsyncTransport()
+        transport = TornadoAsyncTransport()
         assert transport.cache is None
 
     @pytest.mark.requests
@@ -29,7 +25,7 @@ class TornadoAsyncTransportTest(AsyncTestCase):
         response._body = 'x'
         mock_httpclient_fetch.return_value = response
 
-        transport = tornado.TornadoAsyncTransport(cache=cache)
+        transport = TornadoAsyncTransport(cache=cache)
 
         result = transport.load('http://tests.python-zeep.org/test.xml')
 
@@ -48,7 +44,7 @@ class TornadoAsyncTransportTest(AsyncTestCase):
         http_fetch_future.set_result(response)
         mock_httpclient_fetch.return_value = http_fetch_future
 
-        transport = tornado.TornadoAsyncTransport(cache=cache)
+        transport = TornadoAsyncTransport(cache=cache)
 
         envelope = etree.Element('Envelope')
 
