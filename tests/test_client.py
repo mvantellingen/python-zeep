@@ -183,6 +183,20 @@ def test_set_context_options_timeout():
     assert obj.transport.operation_timeout is None
 
 
+def test_set_context_options_raw_response():
+    obj = client.Client('tests/wsdl_files/soap.wsdl')
+
+    assert obj.raw_response is False
+    with obj.options(raw_response=True):
+        assert obj.raw_response is True
+
+        with obj.options():
+            # Check that raw_response is not changed by default value
+            assert obj.raw_response is True
+    # Check that the original value returned
+    assert obj.raw_response is False
+
+
 @pytest.mark.requests
 def test_default_soap_headers():
     header = xsd.ComplexType(
