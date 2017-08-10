@@ -167,11 +167,12 @@ class Client(object):
 
 
         """
-        # Store current options
-        old_raw_raw_response = self.raw_response
+        if raw_response is not NotSet:
+            # Store current options
+            old_raw_response = self.raw_response
 
-        # Set new options
-        self.raw_response = raw_response
+            # Set new options
+            self.raw_response = raw_response
 
         if timeout is not NotSet:
             timeout_ctx = self.transport._options(timeout=timeout)
@@ -179,7 +180,8 @@ class Client(object):
 
         yield
 
-        self.raw_response = old_raw_raw_response
+        if raw_response is not NotSet:
+            self.raw_response = old_raw_response
 
         if timeout is not NotSet:
             timeout_ctx.__exit__(None, None, None)
