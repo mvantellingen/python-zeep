@@ -4,42 +4,51 @@ Authors
 
 Contributors
 ============
-* vashek
+
+* Kateryna Burda
+* Alexey Stepanov
 * Marco Vellinga
 * jaceksnet
 * Andrew Serong
-* Joeri Bekker
-* Eric Wong
-* Jacek Stępniewski
-* Alexey Stepanov
+* vashek
+* Seppo Yli-Olli
+* Sam Denton
+* Dani Möller
 * Julien Delasoie
+* Christian González
 * bjarnagin
 * mcordes
-* Sam Denton
-* David Baumgold
+* Joeri Bekker
+* Bartek Wójcicki
+* jhorman
 * fiebiga
+* David Baumgold
 * Antonio Cuni
 * Alexandre de Mari
-* Jason Vertrees
 * Nicolas Evrard
+* Eric Wong
+* Jason Vertrees
+* Falldog
 * Matt Grimm (mgrimm)
 * Marek Wywiał
-* Falldog
 * btmanm
 * Caleb Salt
-* Julien Marechal
-* Mike Fiedler
-* Dave Wapstra
-* OrangGeeGee
-* Stefano Parmesan
+* Ondřej Lanč
 * Jan Murre
-* Ben Tucker
+* Stefano Parmesan
+* Julien Marechal
+* Dave Wapstra
+* Mike Fiedler
+* Derek Harland
 * Bruno Duyé
 * Christoph Heuel
-* Derek Harland
+* Ben Tucker
 * Eric Waller
 * Falk Schuetzenmeister
 * Jon Jenkins
+* OrangGeeGee
 * Raymond Piller
 * Zoltan Benedek
 * Øyvind Heddeland Instefjord
+
+
