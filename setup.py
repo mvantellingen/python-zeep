@@ -76,7 +76,7 @@ setup(
     },
     entry_points={},
     package_dir={'': 'src'},
-    packages=find_packages('src'),
+    packages=['zeep'],
     include_package_data=True,
 
     license='MIT',

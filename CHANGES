@@ -3,6 +3,7 @@
  - Add support for tornado async transport via gen.coroutine (#530, Kateryna Burda)
  - Check if soap:address is defined in the service port instead of raising an
    exception (#527)
+ - Update packaging (stop using find_packages()) (#529)
 
 
 2.3.0 (2017-08-06)
