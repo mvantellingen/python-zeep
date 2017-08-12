@@ -1,5 +1,7 @@
 2.4.0 (unreleased)
 ------------------
+ - Check if soap:address is defined in the service port instead of raising an
+   exception (#527)
 
 
 2.3.0 (2017-08-06)

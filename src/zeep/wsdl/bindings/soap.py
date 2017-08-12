@@ -194,6 +194,9 @@ class SoapBinding(Binding):
 
     def process_service_port(self, xmlelement, force_https=False):
         address_node = xmlelement.find('soap:address', namespaces=self.nsmap)
+        if address_node is None:
+            logger.debug("No valid soap:address found for service")
+            return
 
         # Force the usage of HTTPS when the force_https boolean is true
         location = address_node.get('location')
