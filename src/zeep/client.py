@@ -13,6 +13,7 @@ class OperationProxy(object):
     def __init__(self, service_proxy, operation_name):
         self._proxy = service_proxy
         self._op_name = operation_name
+        self.__doc__ = 'OperationProxy for %s' % operation_name
 
     def __call__(self, *args, **kwargs):
         """Call the operation with the given args and kwargs.
@@ -66,6 +67,13 @@ class ServiceProxy(object):
         except ValueError:
             raise AttributeError('Service has no operation %r' % key)
         return OperationProxy(self, key)
+        
+    def __dir__(self):
+        """ Return the names of the operations. """
+        return list(super(ServiceProxy, self).__dir__()
+                    + list(self.__dict__)
+                    + list(self._binding.port_type.operations))
+                    # using list() on the dicts for Python 3 compatibility
 
 
 class Factory(object):
