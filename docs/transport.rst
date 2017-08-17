@@ -5,7 +5,7 @@ need to create an instance of the Transport class yourself.
 
 SSL verification
 ----------------
-If you need to verficate the SSL connection (in case you have a self signed certificate for your host), the best way is to crea te a :class:`requests.Session` instance and add the information to that Session, so it keeps persistent:
+If you need to verficate the SSL connection (in case you have a self signed certificate for your host), the best way is to create a :class:`requests.Session` instance and add the information to that Session, so it keeps persistent:
 
 .. code-block:: python
 
