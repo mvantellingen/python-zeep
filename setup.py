@@ -20,7 +20,7 @@ docs_require = [
 ]
 
 tornado_require = [
-    'tornado==4.0.2'
+    'tornado>=4.0.2'
 ]
 
 async_require = []  # see below
