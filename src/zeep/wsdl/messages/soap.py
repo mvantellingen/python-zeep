@@ -132,7 +132,10 @@ class SoapMessage(ConcreteMessage):
                     return None
             return self.envelope.type.signature(schema=self.wsdl.types, standalone=False)
 
-        parts = [self.body.type.signature(schema=self.wsdl.types, standalone=False)]
+        if self.body:
+            parts = [self.body.type.signature(schema=self.wsdl.types, standalone=False)]
+        else:
+            parts = []
         if self.header.type._element:
             parts.append('_soapheaders={%s}' % self.header.type.signature(
                 schema=self.wsdl.types, standalone=False))

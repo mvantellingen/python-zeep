@@ -1321,8 +1321,9 @@ def test_empty_input_parse():
 
     binding = root.bindings['{http://tests.python-zeep.org/}Binding']
     operation = binding.get('getResult')
-    serialized = operation.input.serialize()
+    assert operation.input.signature() == ''
 
+    serialized = operation.input.serialize()
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
