@@ -6,6 +6,7 @@
  - Update packaging (stop using find_packages()) (#529)
  - Properly handle None values when rendering complex types (#526)
  - Fix generating signature for empty wsdl messages (#542)
+ - Support passing strings to xsd:Time objects (#540)
 
 
 2.3.0 (2017-08-06)

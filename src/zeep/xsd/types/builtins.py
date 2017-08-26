@@ -147,6 +147,9 @@ class Time(BuiltinType, AnySimpleType):
 
     @check_no_collection
     def xmlvalue(self, value):
+        if isinstance(value, six.string_types):
+            return value
+
         if value.microsecond:
             return isodate.isostrf.strftime(value, '%H:%M:%S.%f%Z')
         return isodate.isostrf.strftime(value, '%H:%M:%S%Z')

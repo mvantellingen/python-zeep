@@ -151,6 +151,7 @@ class TestTime:
         instance = builtins.Time()
         value = datetime.time(21, 14, 42)
         assert instance.xmlvalue(value) == '21:14:42'
+        assert instance.xmlvalue("21:14:42") == '21:14:42'
 
     def test_pythonvalue(self):
         instance = builtins.Time()
