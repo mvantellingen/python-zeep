@@ -1,4 +1,4 @@
-2.4.0 (unreleased)
+2.4.0 (2017-08-26)
 ------------------
  - Add support for tornado async transport via gen.coroutine (#530, Kateryna Burda)
  - Check if soap:address is defined in the service port instead of raising an
