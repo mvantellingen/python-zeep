@@ -70,7 +70,7 @@ class ServiceProxy(object):
         
     def __dir__(self):
         """ Return the names of the operations. """
-        return list(super(ServiceProxy, self).__dir__()
+        return list(dir(super(ServiceProxy, self))
                     + list(self.__dict__)
                     + list(self._binding.port_type.operations))
                     # using list() on the dicts for Python 3 compatibility
