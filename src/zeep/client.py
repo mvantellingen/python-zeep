@@ -13,7 +13,11 @@ class OperationProxy(object):
     def __init__(self, service_proxy, operation_name):
         self._proxy = service_proxy
         self._op_name = operation_name
-        self.__doc__ = 'OperationProxy for %s' % operation_name
+        try:
+            signature = str(self._proxy._binding._operations[operation_name])
+            self.__doc__ = signature
+        except:
+            self.__doc__ = 'OperationProxy for %s' % operation_name
 
     def __call__(self, *args, **kwargs):
         """Call the operation with the given args and kwargs.

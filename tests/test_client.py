@@ -49,6 +49,14 @@ def test_service_proxy_dir_operations():
     assert set(operations) == set(['GetLastTradePrice', 'GetLastTradePriceNoOutput']) 
 
 
+def test_operation_proxy_doc():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    assert (client_obj.service.GetLastTradePrice.__doc__ 
+            == 'GetLastTradePrice(tickerSymbol: xsd:string, '
+                                 'account: ns0:account, '
+                                 'country: ns0:country) -> price: xsd:float')
+
+
 def test_open_from_file_object():
     with open('tests/wsdl_files/soap_transport_err.wsdl', 'rb') as fh:
         client_obj = client.Client(fh)
