@@ -2,6 +2,7 @@ import re
 import sys
 
 from setuptools import find_packages, setup
+from zeep import __version__
 
 install_requires = [
     'appdirs>=1.4.0',
@@ -58,7 +59,7 @@ with open('README.rst') as fh:
 
 setup(
     name='zeep',
-    version='2.4.0',
+    version=__version__,
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=long_description,
     author="Michael van Tellingen",
