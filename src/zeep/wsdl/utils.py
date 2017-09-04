@@ -23,7 +23,7 @@ def get_or_create_header(envelope):
 
 def etree_to_string(node):
     return etree.tostring(
-        node, pretty_print=False, xml_declaration=True, encoding='utf-8')
+        node, xml_declaration=True, encoding='utf-8')
 
 
 def url_http_to_https(value):
