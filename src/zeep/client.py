@@ -115,12 +115,14 @@ class Client(object):
 
     def __init__(self, wsdl, wsse=None, transport=None,
                  service_name=None, port_name=None, plugins=None,
-                 strict=True, xml_huge_tree=False):
+                 strict=True, xml_huge_tree=False, forbid_dtd=False,
+                 forbid_entities=True):
         if not wsdl:
             raise ValueError("No URL given for the wsdl")
 
         self.transport = transport if transport is not None else Transport()
-        self.wsdl = Document(wsdl, self.transport, strict=strict)
+        self.wsdl = Document(wsdl, self.transport, strict=strict,
+                             forbid_dtd=forbid_dtd, forbid_entities=forbid_entities)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
         self.xml_huge_tree = xml_huge_tree
