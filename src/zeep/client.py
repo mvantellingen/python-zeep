@@ -109,7 +109,10 @@ class Client(object):
     :param plugins: a list of Plugin instances
     :param xml_huge_tree: disable lxml/libxml2 security restrictions and
                           support very deep trees and very long text content
-
+    :param forbid_dtd: disallow XML with a <!DOCTYPE> processing instruction
+    :type forbid_dtd: bool
+    :param forbid_entities: disallow XML with <!ENTITY> declarations inside the DTD
+    :type forbid_entities: bool
 
     """
 
