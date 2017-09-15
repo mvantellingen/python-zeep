@@ -19,7 +19,7 @@ class ImportResolver(etree.Resolver):
 
 
 def parse_xml(content, transport, base_url=None, strict=True,
-              xml_huge_tree=False):
+              xml_huge_tree=False, forbid_dtd=False, forbid_entities=True):
     """Parse an XML string and return the root Element.
 
     :param content: The XML string
@@ -35,6 +35,10 @@ def parse_xml(content, transport, base_url=None, strict=True,
     :param xml_huge_tree: boolean to indicate if lxml should process very
       large XML content.
     :type strict: boolean
+    :param forbid_dtd: disallow XML with a <!DOCTYPE> processing instruction
+    :type forbid_dtd: bool
+    :param forbid_entities: disallow XML with <!ENTITY> declarations inside the DTD
+    :type forbid_entities: bool
     :returns: The document root
     :rtype: lxml.etree._Element
 
@@ -44,7 +48,8 @@ def parse_xml(content, transport, base_url=None, strict=True,
                              recover=recover, huge_tree=xml_huge_tree)
     parser.resolvers.add(ImportResolver(transport))
     try:
-        return fromstring(content, parser=parser, base_url=base_url)
+        return fromstring(content, parser=parser, base_url=base_url,
+                          forbid_dtd=forbid_dtd, forbid_entities=forbid_entities)
     except etree.XMLSyntaxError as exc:
         raise XMLSyntaxError(
             "Invalid XML content received (%s)" % exc.msg,
@@ -52,7 +57,7 @@ def parse_xml(content, transport, base_url=None, strict=True,
         )
 
 
-def load_external(url, transport, base_url=None, strict=True):
+def load_external(url, transport, base_url=None, strict=True, forbid_dtd=False, forbid_entities=True):
     """Load an external XML document.
 
     :param url:
@@ -62,7 +67,10 @@ def load_external(url, transport, base_url=None, strict=True):
       If false then the recover mode is enabled which tries to parse invalid
       XML as best as it can.
     :type strict: boolean
-
+    :param forbid_dtd: disallow XML with a <!DOCTYPE> processing instruction
+    :type forbid_dtd: bool
+    :param forbid_entities: disallow XML with <!ENTITY> declarations inside the DTD
+    :type forbid_entities: bool
     """
     if hasattr(url, 'read'):
         content = url.read()
@@ -70,7 +78,8 @@ def load_external(url, transport, base_url=None, strict=True):
         if base_url:
             url = absolute_location(url, base_url)
         content = transport.load(url)
-    return parse_xml(content, transport, base_url, strict=strict)
+    return parse_xml(content, transport, base_url, strict=strict,
+                     forbid_dtd=forbid_dtd, forbid_entities=forbid_entities)
 
 
 def absolute_location(location, base):

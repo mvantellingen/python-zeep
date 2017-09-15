@@ -109,18 +109,23 @@ class Client(object):
     :param plugins: a list of Plugin instances
     :param xml_huge_tree: disable lxml/libxml2 security restrictions and
                           support very deep trees and very long text content
-
+    :param forbid_dtd: disallow XML with a <!DOCTYPE> processing instruction
+    :type forbid_dtd: bool
+    :param forbid_entities: disallow XML with <!ENTITY> declarations inside the DTD
+    :type forbid_entities: bool
 
     """
 
     def __init__(self, wsdl, wsse=None, transport=None,
                  service_name=None, port_name=None, plugins=None,
-                 strict=True, xml_huge_tree=False):
+                 strict=True, xml_huge_tree=False, forbid_dtd=False,
+                 forbid_entities=True):
         if not wsdl:
             raise ValueError("No URL given for the wsdl")
 
         self.transport = transport if transport is not None else Transport()
-        self.wsdl = Document(wsdl, self.transport, strict=strict)
+        self.wsdl = Document(wsdl, self.transport, strict=strict,
+                             forbid_dtd=forbid_dtd, forbid_entities=forbid_entities)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
         self.xml_huge_tree = xml_huge_tree

@@ -49,10 +49,14 @@ class Document(object):
     :type base: str
     :param strict: Indicates if strict mode is enabled
     :type strict: bool
+    :param forbid_dtd: disallow XML with a <!DOCTYPE> processing instruction
+    :type forbid_dtd: bool
+    :param forbid_entities: disallow XML with <!ENTITY> declarations inside the DTD
+    :type forbid_entities: bool
 
     """
 
-    def __init__(self, location, transport, base=None, strict=True):
+    def __init__(self, location, transport, base=None, strict=True, forbid_dtd=False, forbid_entities=True):
         """Initialize a WSDL document.
 
         The root definition properties are exposed as entry points.
@@ -67,6 +71,8 @@ class Document(object):
 
         self.transport = transport
         self.strict = strict
+        self.forbid_dtd = forbid_dtd
+        self.forbid_entities = forbid_entities
 
         # Dict with all definition objects within this WSDL
         self._definitions = {}
@@ -137,7 +143,8 @@ class Document(object):
 
         """
         return load_external(
-            location, self.transport, self.location, strict=self.strict)
+            location, self.transport, self.location, strict=self.strict,
+            forbid_dtd=self.forbid_dtd, forbid_entities=self.forbid_entities)
 
     def _add_definition(self, definition):
         key = (definition.target_namespace, definition.location)
