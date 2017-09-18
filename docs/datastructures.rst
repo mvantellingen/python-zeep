@@ -105,12 +105,11 @@ Nested using _value_1
             targetNamespace="http://tests.python-zeep.org/">
       <element name='ElementName'>
         <complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-          <choice maxOccurs="unbounded">
+          <choice maxOccurs="1">
             <sequence>
                 <element name="item_1_a" type="string"/>
                 <element name="item_1_b" type="string"/>
             </sequence>
-            <element name="item_2" type="string"/>
           </choice>
         </complexType>
       </element>
@@ -144,7 +143,7 @@ Nested list using _value_1
 .. code-block:: python
 
     element = client.get_element('ns0:ElementName')
-    obj = element(_value_1=[{'item_1': 'foo'}, {'item_2': 'bar'})
+    obj = element(_value_1=[{'item_1': 'foo'}, {'item_2': 'bar'}])
 
 
 Any objects
