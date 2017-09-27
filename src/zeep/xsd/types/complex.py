@@ -6,7 +6,7 @@ from itertools import chain
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
-from zeep.xsd.const import NotSet, SkipValue, xsi_ns
+from zeep.xsd.const import Nil, NotSet, SkipValue, xsi_ns
 from zeep.xsd.elements import (
     Any, AnyAttribute, AttributeGroup, Choice, Element, Group, Sequence)
 from zeep.xsd.elements.indicators import OrderIndicator
@@ -292,6 +292,9 @@ class ComplexType(AnyType):
         """
         if value is None:
             return None
+
+        if value is Nil:
+            return Nil
 
         if isinstance(value, list) and not self._array_type:
             return [self._create_object(val, name) for val in value]
