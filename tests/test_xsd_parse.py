@@ -198,7 +198,6 @@ def test_sequence_parse_anytype_regression_17():
     assert result.getCustomFieldReturn.value.content == 'Test Solution'
 
 
-
 def test_nested_complex_type():
     custom_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'authentication'),
@@ -324,13 +323,13 @@ def test_nested_choice_optional():
                     etree.QName('http://tests.python-zeep.org/', 'item_1'),
                     xsd.String()),
                 xsd.Choice([
-                        xsd.Element(
-                            '{http://tests.python-zeep.org/}item_2',
-                            xsd.String()),
-                        xsd.Element(
-                            '{http://tests.python-zeep.org/}item_3',
-                            xsd.String()),
-                    ],
+                    xsd.Element(
+                        '{http://tests.python-zeep.org/}item_2',
+                        xsd.String()),
+                    xsd.Element(
+                        '{http://tests.python-zeep.org/}item_3',
+                        xsd.String()),
+                ],
                     min_occurs=0, max_occurs=1
                 ),
             ])

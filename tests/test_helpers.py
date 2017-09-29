@@ -196,6 +196,6 @@ def test_create_xml_soap_map():
           <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:date">2016-01-14</value>
         </item>
      </document>
-     """ # noqa
+     """  # noqa
     node = render_node(value._xsd_type, value)
     assert_nodes_equal(expected, node)

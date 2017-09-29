@@ -57,7 +57,6 @@ def test_rebuild_xml():
         wsdl=stub(strict=True),
         xml_huge_tree=False)
 
-
     decoder = MultipartDecoder(
         response.content, response.headers['Content-Type'], 'utf-8')
 
@@ -77,11 +76,6 @@ def test_rebuild_xml():
         </soap:Envelope>
     """
     assert_nodes_equal(etree.tostring(document), expected)
-
-
-
-
-
 
 
 def test_xop():
@@ -238,8 +232,8 @@ def test_xop():
     print(response1)
     with requests_mock.mock() as m:
         m.post('http://tests.python-zeep.org/test',
-            content=response2.encode("utf-8"),
-            headers={"Content-Type": content_type})
+               content=response2.encode("utf-8"),
+               headers={"Content-Type": content_type})
         result = service.TestOperation2("")
         assert result["_value_1"] == "BINARYDATA".encode()
 

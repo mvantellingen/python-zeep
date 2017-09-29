@@ -135,7 +135,6 @@ def test_parse_multiref_soap_response():
     assert result.item_2.subitem_2 == 'bar'
 
 
-
 @pytest.mark.requests
 def test_parse_multiref_soap_response_child():
     wsdl_file = io.StringIO(u"""

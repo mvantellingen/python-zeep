@@ -776,6 +776,7 @@ def test_include_different_form_defaults():
     """)
     assert_nodes_equal(expected, node)
 
+
 def test_merge():
     node_a = etree.fromstring("""
         <?xml version="1.0"?>

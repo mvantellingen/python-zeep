@@ -125,6 +125,7 @@ def test_restriction_anon():
     """
     assert_nodes_equal(expected, node)
 
+
 def test_simple_type_list():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>

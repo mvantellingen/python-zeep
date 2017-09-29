@@ -96,6 +96,7 @@ def test_choice_element_second_elm():
     assert value.item_2 == 'foo'
     assert value.item_3 is None
 
+
 def test_choice_element_second_elm_positional():
     node = etree.fromstring("""
         <?xml version="1.0"?>

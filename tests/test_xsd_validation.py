@@ -75,7 +75,6 @@ def test_validate_required_attribute():
         result = render_node(container_elm, obj)
     assert 'The attribute item is not valid: Value is required (container.item)' in str(exc)
 
-
     obj.item = 'bar'
     result = render_node(container_elm, obj)
 
