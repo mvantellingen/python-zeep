@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-
 from lxml import etree
 from pretend import stub
 
 from tests.utils import load_xml
 from zeep import Client
-from zeep.exceptions import Fault
-from zeep.exceptions import TransportError
+from zeep.exceptions import Fault, TransportError
 from zeep.wsdl import bindings
 
 

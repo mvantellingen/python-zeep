@@ -4,12 +4,12 @@ Adds async tornado.gen support to Zeep.
 """
 import logging
 import urllib
-from . import bindings
 
-from tornado import gen, httpclient
 from requests import Response, Session
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+from tornado import gen, httpclient
 
+from zeep.tornado import bindings
 from zeep.transports import Transport
 from zeep.utils import get_version
 from zeep.wsdl.utils import etree_to_string
@@ -89,7 +89,7 @@ class TornadoAsyncTransport(Transport):
                 auth_password = self.session.password
                 auth_mode = 'digest'
             else:
-                raise StandardError('Not supported authentication.')
+                raise Exception('Not supported authentication.')
 
         # extracting client cert
         client_cert = None

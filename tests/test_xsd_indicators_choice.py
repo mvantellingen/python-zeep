@@ -1,10 +1,11 @@
 from collections import deque
+
 import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
-from zeep.exceptions import XMLParseError, ValidationError
+from zeep.exceptions import ValidationError, XMLParseError
 from zeep.helpers import serialize_object
 
 

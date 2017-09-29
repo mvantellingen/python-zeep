@@ -264,4 +264,3 @@ def test_parse_multiref_soap_response_child():
     assert result.item_2.subitem_1.subitem_1 == 'foo'
     assert result.item_2.subitem_1.subitem_2 == 'bar'
     assert result.item_2.subitem_2 == 'bar'
-

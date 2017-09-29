@@ -1,5 +1,6 @@
-from zeep.wsdl import bindings
 from tornado import gen
+
+from zeep.wsdl import bindings
 
 __all__ = ['AsyncSoap11Binding', 'AsyncSoap12Binding']
 

@@ -1,7 +1,7 @@
 from lxml import etree
 
-from zeep import xsd
 from tests.utils import load_xml
+from zeep import xsd
 
 
 def test_signature_complex_type_choice():
@@ -211,4 +211,3 @@ def test_schema_recursive_ref():
 
     elm = schema.get_element('ns0:Container')
     elm.signature(schema)
-

@@ -1,11 +1,16 @@
 import io
-from requests_toolbelt.multipart.decoder import MultipartDecoder
-from pretend import stub
+
+import pytest
+import requests_mock
 from lxml import etree
-from tests.utils import load_xml, assert_nodes_equal
+from pretend import stub
+from requests_toolbelt.multipart.decoder import MultipartDecoder
+from six import StringIO
+
+from tests.utils import assert_nodes_equal, load_xml
+from zeep import Client
+from zeep.transports import Transport
 from zeep.wsdl.attachments import MessagePack
-
-
 from zeep.wsdl.messages import xop
 
 
@@ -75,13 +80,8 @@ def test_rebuild_xml():
 
 
 
-import pytest
-import requests_mock
 
-from six import StringIO
 
-from zeep import Client
-from zeep.transports import Transport
 
 
 def test_xop():
@@ -249,5 +249,3 @@ def test_xop():
             headers={"Content-Type": content_type})
         result = service.TestOperation1("")
         assert result == "BINARYDATA".encode()
-
-

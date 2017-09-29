@@ -1,5 +1,5 @@
-from lxml import etree
 import pytest
+from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd

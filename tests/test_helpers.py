@@ -2,11 +2,10 @@ import datetime
 from collections import OrderedDict
 
 from lxml import etree
+from six import binary_type
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
-from zeep import xsd
-from six import binary_type
-from zeep import helpers
+from zeep import helpers, xsd
 from zeep.helpers import serialize_object
 
 
