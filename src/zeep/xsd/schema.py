@@ -331,6 +331,10 @@ class Schema(object):
 
 
 class SchemaDocument(object):
+    """A Schema Document consists of a set of schema components for a specific
+    target namespace.
+
+    """
     def __init__(self, namespace, location, base_url):
         logger.debug("Init schema document for %r", location)
 
@@ -340,6 +344,7 @@ class SchemaDocument(object):
         self._target_namespace = namespace
         self._is_internal = False
 
+        # Containers for specific types
         self._attribute_groups = {}
         self._attributes = {}
         self._elements = {}
@@ -365,6 +370,12 @@ class SchemaDocument(object):
         return not bool(self._imports or self._types or self._elements)
 
     def load(self, schema, node):
+        """Load the XML Schema passed in via the node attribute.
+
+        :type schema: zeep.xsd.schema.Schema
+        :type node: etree._Element
+
+        """
         if node is None:
             return
 
@@ -415,44 +426,62 @@ class SchemaDocument(object):
         _resolve_dict(self._types)
 
     def register_import(self, namespace, schema):
+        """Register an import for an other schema document.
+
+        :type namespace: str
+        :type schema: zeep.xsd.schema.SchemaDocument
+
+        """
         schemas = self._imports.setdefault(namespace, [])
         schemas.append(schema)
 
     def is_imported(self, namespace):
         return namespace in self._imports
 
-    def register_type(self, name, value):
-        assert not isinstance(value, type)
-        assert value is not None
+    def register_type(self, qname, value):
+        """Register a xsd.Type in this schema
 
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_type(%r, %r)", name, value)
-        self._types[name] = value
+        :type qname: str or etree.QName
+        :type value: zeep.xsd.Type
 
-    def register_element(self, name, value):
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_element(%r, %r)", name, value)
-        self._elements[name] = value
+        """
+        self._add_component(qname, value, self._types, 'type')
 
-    def register_group(self, name, value):
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_group(%r, %r)", name, value)
-        self._groups[name] = value
+    def register_element(self, qname, value):
+        """Register a xsd.Element in this schema
 
-    def register_attribute(self, name, value):
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_attribute(%r, %r)", name, value)
-        self._attributes[name] = value
+        :type qname: str or etree.QName
+        :type value: zeep.xsd.Element
 
-    def register_attribute_group(self, name, value):
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_attribute_group(%r, %r)", name, value)
-        self._attribute_groups[name] = value
+        """
+        self._add_component(qname, value, self._elements, 'element')
+
+    def register_group(self, qname, value):
+        """Register a xsd.Element in this schema
+
+        :type qname: str or etree.QName
+        :type value: zeep.xsd.Element
+
+        """
+        self._add_component(qname, value, self._groups, 'group')
+
+    def register_attribute(self, qname, value):
+        """Register a xsd.Element in this schema
+
+        :type qname: str or etree.QName
+        :type value: zeep.xsd.Attribute
+
+        """
+        self._add_component(qname, value, self._attributes, 'attribute')
+
+    def register_attribute_group(self, qname, value):
+        """Register a xsd.Element in this schema
+
+        :type qname: str or etree.QName
+        :type value: zeep.xsd.Group
+
+        """
+        self._add_component(qname, value, self._attribute_groups, 'attribute_group')
 
     def get_type(self, qname):
         """Return a xsd.Type object from this schema
@@ -460,7 +489,7 @@ class SchemaDocument(object):
         :rtype: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
 
         """
-        return self._get_instance(qname, self._types, 'type')
+        return self._get_component(qname, self._types, 'type')
 
     def get_element(self, qname):
         """Return a xsd.Element object from this schema
@@ -468,7 +497,7 @@ class SchemaDocument(object):
         :rtype: zeep.xsd.Element
 
         """
-        return self._get_instance(qname, self._elements, 'element')
+        return self._get_component(qname, self._elements, 'element')
 
     def get_group(self, qname):
         """Return a xsd.Group object from this schema.
@@ -476,7 +505,7 @@ class SchemaDocument(object):
         :rtype: zeep.xsd.Group
 
         """
-        return self._get_instance(qname, self._groups, 'group')
+        return self._get_component(qname, self._groups, 'group')
 
     def get_attribute(self, qname):
         """Return a xsd.Attribute object from this schema
@@ -484,7 +513,7 @@ class SchemaDocument(object):
         :rtype: zeep.xsd.Attribute
 
         """
-        return self._get_instance(qname, self._attributes, 'attribute')
+        return self._get_component(qname, self._attributes, 'attribute')
 
     def get_attribute_group(self, qname):
         """Return a xsd.AttributeGroup object from this schema
@@ -492,9 +521,15 @@ class SchemaDocument(object):
         :rtype: zeep.xsd.AttributeGroup
 
         """
-        return self._get_instance(qname, self._attribute_groups, 'attributeGroup')
+        return self._get_component(qname, self._attribute_groups, 'attributeGroup')
 
-    def _get_instance(self, qname, items, item_name):
+    def _add_component(self, name, value, items, item_name):
+        if isinstance(name, etree.QName):
+            name = name.text
+        logger.debug("register_%s(%r, %r)", item_name, name, value)
+        items[name] = value
+
+    def _get_component(self, qname, items, item_name):
         try:
             return items[qname]
         except KeyError:
