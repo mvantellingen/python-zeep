@@ -1,13 +1,10 @@
-import io
-
-import pytest
 import requests_mock
 from lxml import etree
 from pretend import stub
 from requests_toolbelt.multipart.decoder import MultipartDecoder
 from six import StringIO
 
-from tests.utils import assert_nodes_equal, load_xml
+from tests.utils import assert_nodes_equal
 from zeep import Client
 from zeep.transports import Transport
 from zeep.wsdl.attachments import MessagePack
@@ -52,10 +49,6 @@ def test_rebuild_xml():
             'Content-Type': 'multipart/related; boundary=MIME_boundary; type="application/soap+xml"; start="<claim@insurance.com>" 1'
         }
     )
-    client = stub(
-        transport=None,
-        wsdl=stub(strict=True),
-        xml_huge_tree=False)
 
     decoder = MultipartDecoder(
         response.content, response.headers['Content-Type'], 'utf-8')

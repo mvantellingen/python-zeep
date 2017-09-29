@@ -1,13 +1,9 @@
 import io
 
 import pytest
-import requests_mock
-from lxml import etree
 from pretend import stub
-from six import StringIO
 
-from tests.utils import DummyTransport, assert_nodes_equal
-from zeep import Client, wsdl
+from zeep import Client
 from zeep.transports import Transport
 
 
@@ -74,10 +70,12 @@ def test_parse_multiref_soap_response():
             <wsdl:operation name="TestOperation">
               <soap:operation soapAction=""/>
               <wsdl:input name="TestOperationRequest">
-                <soap:body use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+                <soap:body use="encoded"
+                           encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
               </wsdl:input>
               <wsdl:output name="TestOperationResponse">
-                <soap:body use="encoded" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+                <soap:body use="encoded"
+                           encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
               </wsdl:output>
             </wsdl:operation>
           </wsdl:binding>
@@ -88,7 +86,7 @@ def test_parse_multiref_soap_response():
             </wsdl:port>
           </wsdl:service>
         </wsdl:definitions>
-    """.strip())
+    """.strip())  # noqa
 
     content = """
         <?xml version="1.0"?>
@@ -217,7 +215,7 @@ def test_parse_multiref_soap_response_child():
             </wsdl:port>
           </wsdl:service>
         </wsdl:definitions>
-    """.strip())
+    """.strip())  # noqa
 
     content = """
         <?xml version="1.0"?>
@@ -246,7 +244,7 @@ def test_parse_multiref_soap_response_child():
               </multiRef>
            </soapenv:Body>
         </soapenv:Envelope>
-    """.strip()
+    """.strip()  # noqa
 
     client = Client(wsdl_file, transport=Transport(),)
     response = stub(

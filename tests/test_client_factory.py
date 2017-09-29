@@ -13,7 +13,7 @@ def test_factory_namespace():
 
 def test_factory_no_reference():
     client = Client('tests/wsdl_files/soap.wsdl')
-    factory = client.type_factory('http://example.com/stockquote.xsd')
+
     obj_1 = client.get_type('ns0:ArrayOfAddress')()
     obj_1.Address.append({
         'NameFirst': 'J',

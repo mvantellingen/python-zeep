@@ -770,6 +770,8 @@ def test_choice_with_sequence_change():
     element.render(node, elm)
     assert_nodes_equal(expected, node)
     value = element.parse(node[0], schema)
+    assert value.item_1 == 'bla-1'
+    assert value.item_2 == 'bla-2'
 
 
 def test_choice_with_sequence_change_named():
@@ -815,6 +817,8 @@ def test_choice_with_sequence_change_named():
     element.render(node, elm)
     assert_nodes_equal(expected, node)
     value = element.parse(node[0], schema)
+    assert value.item_1 == 'bla-1'
+    assert value.item_2 == 'bla-2'
 
 
 def test_choice_with_sequence_multiple():

@@ -4,7 +4,7 @@ from aioresponses import aioresponses
 from lxml import etree
 from pretend import stub
 
-from zeep import asyncio, cache, exceptions
+from zeep import asyncio, exceptions
 
 
 @pytest.mark.requests

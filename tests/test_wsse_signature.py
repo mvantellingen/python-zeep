@@ -2,7 +2,6 @@ import os
 import sys
 
 import pytest
-from lxml import etree
 
 from tests.utils import load_xml
 from zeep import wsse
