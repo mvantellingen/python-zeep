@@ -55,7 +55,7 @@ class Any(Base):
         qname = etree.QName(xmlelement.tag)
         if context and context.schemas:
             for context_schema in context.schemas:
-                if context_schema._has_schema_document(qname.namespace):
+                if context_schema.documents.has_schema_document_for_ns(qname.namespace):
                     schema = context_schema
                     break
 
