@@ -15,7 +15,7 @@ import six
 from lxml import etree
 
 from zeep.exceptions import IncompleteMessage
-from zeep.loader import absolute_location, is_relative_path, load_external
+from zeep.loader import absolute_location, is_relative_path, load_external, parse_xml
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
 from zeep.xsd import Schema
@@ -52,7 +52,7 @@ class Document(object):
 
     """
 
-    def __init__(self, location, transport, base=None, strict=True):
+    def __init__(self, location, transport, base=None, strict=True, wsdl_content=None):
         """Initialize a WSDL document.
 
         The root definition properties are exposed as entry points.
@@ -76,16 +76,23 @@ class Document(object):
             location=self.location,
             strict=self.strict)
 
-        document = self._get_xml_document(location)
-
-        root_definitions = Definition(self, document, self.location)
-        root_definitions.resolve_imports()
+        if wsdl_content is None:
+            document = self._get_xml_document(location)
+            root_definitions = Definition(self, document, self.location)
+            root_definitions.resolve_imports()
+        else:
+            root_definitions = self._get_definition(wsdl_content)
+            root_definitions.resolve_imports()  # not support async imports resolve
 
         # Make the wsdl definitions public
         self.messages = root_definitions.messages
         self.port_types = root_definitions.port_types
         self.bindings = root_definitions.bindings
         self.services = root_definitions.services
+
+    def _get_definition(self, xml_content):
+        document = parse_xml(xml_content, self.transport, self.location, strict=self.strict)
+        return Definition(self, document, self.location)
 
     def __repr__(self):
         return '<WSDL(location=%r)>' % self.location
