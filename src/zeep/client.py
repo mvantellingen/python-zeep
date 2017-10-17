@@ -120,7 +120,12 @@ class Client(object):
             raise ValueError("No URL given for the wsdl")
 
         self.transport = transport if transport is not None else Transport()
-        self.wsdl = Document(wsdl, self.transport, strict=strict)
+        if type(wsdl) == str:
+            self.wsdl = Document(wsdl, self.transport, strict=strict)
+        elif isinstance(wsdl, Document):
+            self.wsdl = wsdl
+        else:
+            raise ValueError("Invalid value for wsdl")
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
         self.xml_huge_tree = xml_huge_tree
