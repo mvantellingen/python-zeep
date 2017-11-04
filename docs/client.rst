@@ -26,8 +26,23 @@ use the ``zeep.CachingClient()`` automatically creates a Transport object
 with SqliteCache enabled.
 
 
+Configuring the client
+----------------------
+The Client class accepts a settings kwarg for configuring the client. You can
+initialise the object using the following code:
+
+
+.. code-block:: python
+
+    from zeep import Client, Settings
+
+    settings = Setting(strict=False, xml_huge_tree=True)
+    client = Client('http://my-wsdl/wsdl', settings=settings)
+
+
+
 Strict mode
------------
+~~~~~~~~~~~
 By default zeep will operate in 'strict' mode. This can be disabled if you are
 working with a SOAP server which is not standards compliant by passing the
 kwarg ``strict=False`` to the ``Client``.  Disabling strict mode will change

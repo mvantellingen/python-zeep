@@ -1,3 +1,12 @@
+3.0.0 (unreleased)
+------------------
+This is a major release, and contains a number of backwards incompatible
+changes to the API.
+
+ - Refactor the settings logic in Zeep. All settings are now configured using
+   the zeep.settings.Settings() class.
+
+
 2.5.0 (2018-01-06)
 ------------------
  - Fix AnyType value rendering by guessing the xsd type for the value (#552)

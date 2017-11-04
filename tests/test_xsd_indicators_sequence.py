@@ -3,6 +3,7 @@ from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
+from zeep.settings import Settings
 
 
 def test_build_occurs_1():
@@ -456,7 +457,7 @@ def test_xml_sequence_recover_from_missing_element():
             </sequence>
           </complexType>
         </schema>
-    """), strict=False)
+    """), settings=Settings(strict=False))
 
     xml = load_xml("""
         <tns:container

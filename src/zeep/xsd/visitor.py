@@ -193,7 +193,7 @@ class SchemaVisitor(object):
         schema_node = load_external(
             location,
             self.schema._transport,
-            strict=self.schema.strict)
+            settings=self.schema.settings)
 
         # Check if the xsd:import namespace matches the targetNamespace. If
         # the xsd:import statement didn't specify a namespace then make sure
@@ -239,7 +239,7 @@ class SchemaVisitor(object):
         schema_node = load_external(
             location, self.schema._transport,
             base_url=self.document._base_url,
-            strict=self.schema.strict)
+            settings=self.schema.settings)
         self._includes.add(location)
 
         # When the included document has no default namespace defined but the

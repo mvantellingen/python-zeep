@@ -27,3 +27,16 @@ def test_load():
         result = transport.load('http://tests.python-zeep.org/test.xml')
 
         assert result == b'x'
+
+
+def test_settings_set_context_timeout():
+    transport = transports.Transport(cache=cache)
+
+    assert transport.operation_timeout is None
+    with transport.settings(timeout=120):
+        assert transport.operation_timeout == 120
+
+        with transport.settings(timeout=90):
+            assert transport.operation_timeout == 90
+        assert transport.operation_timeout == 120
+    assert transport.operation_timeout is None

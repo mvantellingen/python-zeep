@@ -115,7 +115,7 @@ class SoapBinding(Binding):
         operation_obj = self.get(operation)
 
         # If the client wants to return the raw data then let's do that.
-        if client.raw_response:
+        if client.settings.raw_response:
             return response
 
         return self.process_reply(client, operation_obj, response)
@@ -158,8 +158,7 @@ class SoapBinding(Binding):
         try:
             doc = parse_xml(
                 content, self.transport,
-                strict=client.wsdl.strict,
-                xml_huge_tree=client.xml_huge_tree)
+                settings=client.settings)
         except XMLSyntaxError:
             raise TransportError(
                 'Server returned HTTP status %d (%s)'
