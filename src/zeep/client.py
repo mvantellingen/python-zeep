@@ -71,7 +71,7 @@ class ServiceProxy(object):
         except ValueError:
             raise AttributeError('Service has no operation %r' % key)
         return OperationProxy(self, key)
-        
+
     def __dir__(self):
         """ Return the names of the operations. """
         return list(dir(super(ServiceProxy, self))
@@ -144,6 +144,10 @@ class Client(object):
         self._default_service_name = service_name
         self._default_port_name = port_name
         self._default_soapheaders = None
+
+    @property
+    def namespaces(self):
+        return self.wsdl.types.prefix_map
 
     @property
     def service(self):
