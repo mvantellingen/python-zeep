@@ -111,7 +111,8 @@ class TornadoAsyncTransport(Transport):
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
-            'validate_cert': self.session.verify,
+            'validate_cert': self.session.verify is not None,
+            'ca_certs': self.session.verify,
             'client_key': client_key,
             'client_cert': client_cert
         }
