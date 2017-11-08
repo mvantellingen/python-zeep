@@ -1256,9 +1256,9 @@ def test_choice_extend_base():
     element = schema.get_element('ns0:container')
     node = load_xml("""
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/" version="10.0.1.2">
+          <ns0:choice-1>foo</ns0:choice-1>
           <ns0:container-1>foo</ns0:container-1>
           <ns0:container-2>bar</ns0:container-2>
-          <ns0:choice-1>foo</ns0:choice-1>
         </ns0:container>
     """)
     value = element.parse(node, schema)
