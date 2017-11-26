@@ -4,7 +4,7 @@ import six
 from lxml import etree
 
 from zeep.exceptions import ValidationError
-from zeep.xsd.const import xsd_ns
+from zeep.xsd.const import Nil, xsd_ns, xsi_ns
 from zeep.xsd.types.any import AnyType
 
 logger = logging.getLogger(__name__)
@@ -68,6 +68,9 @@ class AnySimpleType(AnyType):
             '%s.pytonvalue() not implemented' % self.__class__.__name__)
 
     def render(self, parent, value, xsd_type=None, render_path=None):
+        if value is Nil:
+            parent.set(xsi_ns('nil'), 'true')
+            return
         parent.text = self.xmlvalue(value)
 
     def signature(self, schema=None, standalone=True):
