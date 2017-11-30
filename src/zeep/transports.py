@@ -17,19 +17,27 @@ class Transport(object):
     :param operation_timeout: The timeout for operations (POST/GET). By
                               default this is None (no timeout).
     :param session: A :py:class:`request.Session()` object (optional)
+    :param proxy_prot: Proxy protocol to use, i.e. http, https, socks5
+    :param proxy_server: Proxy server address, including scheme and port,
+                         e.g. http://127.0.0.1:8080
+    :param user_agent: Specify custom User-Agent
+
 
     """
 
     def __init__(self, cache=None, timeout=300, operation_timeout=None,
-                 session=None):
+                 session=None, proxy_prot=None, proxy_server=None,
+                 user_agent=None):
         self.cache = cache
         self.load_timeout = timeout
         self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)
-
+        self.proxy_server = { proxy_prot : proxy_server }
         self.session = session or requests.Session()
         self.session.headers['User-Agent'] = (
-            'Zeep/%s (www.python-zeep.org)' % (get_version()))
+                            'Zeep/%s (www.python-zeep.org)'
+                            % (get_version())) if (user_agent is
+                                                   None) else user_agent
 
     def get(self, address, params, headers):
         """Proxy to requests.get()
@@ -43,6 +51,7 @@ class Transport(object):
             address,
             params=params,
             headers=headers,
+            proxies=self.proxy_server,
             timeout=self.operation_timeout)
         return response
 
@@ -64,6 +73,7 @@ class Transport(object):
             address,
             data=message,
             headers=headers,
+            proxies=self.proxy_server,
             timeout=self.operation_timeout)
 
         if self.logger.isEnabledFor(logging.DEBUG):
@@ -122,7 +132,8 @@ class Transport(object):
             return fh.read()
 
     def _load_remote_data(self, url):
-        response = self.session.get(url, timeout=self.load_timeout)
+        response = self.session.get(url, timeout=self.load_timeout,
+                                    proxies=self.proxy_server)
         response.raise_for_status()
         return response.content
 
