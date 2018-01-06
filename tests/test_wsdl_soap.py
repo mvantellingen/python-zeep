@@ -166,7 +166,7 @@ def test_no_content_type():
     assert result == 120.123
 
 
-@pytest.mark.skipif(platform.python_implementation == 'PyPy',
+@pytest.mark.skipif(platform.python_implementation() == 'PyPy',
                     reason="Fails on PyPy")
 def test_wrong_content():
     data = """
@@ -191,7 +191,7 @@ def test_wrong_content():
     assert data == exc.value.content
 
 
-@pytest.mark.skipif(platform.python_implementation == 'PyPy',
+@pytest.mark.skipif(platform.python_implementation() == 'PyPy',
                     reason="Fails on PyPy")
 def test_wrong_no_unicode_content():
     data = """
@@ -217,7 +217,7 @@ def test_wrong_no_unicode_content():
     assert data == exc.value.content
 
 
-@pytest.mark.skipif(platform.python_implementation == 'PyPy',
+@pytest.mark.skipif(platform.python_implementation() == 'PyPy',
                     reason="Fails on PyPy")
 def test_http_error():
     data = """
