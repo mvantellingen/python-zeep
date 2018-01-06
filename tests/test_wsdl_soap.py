@@ -382,3 +382,35 @@ def test_unexpected_headers():
     assert result.body.price == 120.123
     assert result.header.body is None
     assert len(result.header._raw_elements) == 1
+
+
+def test_response_201():
+    client = Client('tests/wsdl_files/soap_header.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=201,
+        content='',
+        encoding='utf-8',
+        headers={}
+    )
+
+    result = binding.process_reply(
+        client, binding.get('GetLastTradePrice'), response)
+    assert result is None
+
+
+def test_response_202():
+    client = Client('tests/wsdl_files/soap_header.wsdl')
+    binding = client.service._binding
+
+    response = stub(
+        status_code=202,
+        content='',
+        encoding='utf-8',
+        headers={}
+    )
+
+    result = binding.process_reply(
+        client, binding.get('GetLastTradePrice'), response)
+    assert result is None

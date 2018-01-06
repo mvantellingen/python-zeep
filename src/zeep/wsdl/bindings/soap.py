@@ -131,7 +131,10 @@ class SoapBinding(Binding):
         :type response: requests.Response
 
         """
-        if response.status_code != 200 and not response.content:
+        if response.status_code in (201, 202) and not response.content:
+            return None
+
+        elif response.status_code != 200 and not response.content:
             raise TransportError(
                 u'Server returned HTTP status %d (no content available)'
                 % response.status_code,
