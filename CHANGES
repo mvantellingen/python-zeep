@@ -1,3 +1,15 @@
+2.5.0 (2018-01-06)
+------------------
+ - Fix AnyType value rendering by guessing the xsd type for the value (#552)
+ - Fix AnySimpleType.xmlvalue() not implemented exception (#644)
+ - Add __dir__ method to value objects returned by Zeep
+ - Don't require content for 201 and 202 status codes (#613)
+ - Fix wheel package by cleaning the build directory correctly (#634)
+ - Handle Nil values on complexType with SimpleContent elements (#604)
+ - Add Client.namespaces method to list all namespaces available
+ - Improve support for auto-completion (#537)
+
+
 2.4.0 (2017-08-26)
 ------------------
  - Add support for tornado async transport via gen.coroutine (#530, Kateryna Burda)
