@@ -79,7 +79,3 @@ class AnySimpleType(AnyType):
     def validate(self, value, required=False):
         if required and value is None:
             raise ValidationError("Value is required")
-
-    def xmlvalue(self, value):
-        raise NotImplementedError(
-            '%s.xmlvalue() not implemented' % self.__class__.__name__)
