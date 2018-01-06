@@ -1,11 +1,13 @@
-import io
-from requests_toolbelt.multipart.decoder import MultipartDecoder
-from pretend import stub
+import requests_mock
 from lxml import etree
-from tests.utils import load_xml, assert_nodes_equal
+from pretend import stub
+from requests_toolbelt.multipart.decoder import MultipartDecoder
+from six import StringIO
+
+from tests.utils import assert_nodes_equal
+from zeep import Client
+from zeep.transports import Transport
 from zeep.wsdl.attachments import MessagePack
-
-
 from zeep.wsdl.messages import xop
 
 
@@ -47,11 +49,6 @@ def test_rebuild_xml():
             'Content-Type': 'multipart/related; boundary=MIME_boundary; type="application/soap+xml"; start="<claim@insurance.com>" 1'
         }
     )
-    client = stub(
-        transport=None,
-        wsdl=stub(strict=True),
-        xml_huge_tree=False)
-
 
     decoder = MultipartDecoder(
         response.content, response.headers['Content-Type'], 'utf-8')
@@ -72,16 +69,6 @@ def test_rebuild_xml():
         </soap:Envelope>
     """
     assert_nodes_equal(etree.tostring(document), expected)
-
-
-
-import pytest
-import requests_mock
-
-from six import StringIO
-
-from zeep import Client
-from zeep.transports import Transport
 
 
 def test_xop():
@@ -238,8 +225,8 @@ def test_xop():
     print(response1)
     with requests_mock.mock() as m:
         m.post('http://tests.python-zeep.org/test',
-            content=response2.encode("utf-8"),
-            headers={"Content-Type": content_type})
+               content=response2.encode("utf-8"),
+               headers={"Content-Type": content_type})
         result = service.TestOperation2("")
         assert result["_value_1"] == "BINARYDATA".encode()
 
@@ -249,5 +236,3 @@ def test_xop():
             headers={"Content-Type": content_type})
         result = service.TestOperation1("")
         assert result == "BINARYDATA".encode()
-
-

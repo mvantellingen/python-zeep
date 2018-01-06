@@ -26,7 +26,6 @@ def get_any_schema():
     """))
 
 
-
 def test_default_xsd_type():
     schema = xsd.Schema(load_xml("""
         <?xml version="1.0"?>
@@ -271,6 +270,7 @@ def test_element_any_type():
     assert_nodes_equal(expected, node)
     item = container_elm.parse(node.getchildren()[0], schema)
     assert item.something == 'bar'
+
 
 def test_element_any_type_unknown_type():
     node = etree.fromstring("""

@@ -39,7 +39,7 @@ tests_require = [
     'pytest-tornado==0.4.5',
 
     # Linting
-    'isort==4.2.5',
+    'isort==4.2.15',
     'flake8==3.3.0',
     'flake8-blind-except==0.1.1',
     'flake8-debugger==1.4.0',

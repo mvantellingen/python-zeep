@@ -1,7 +1,7 @@
 import pytest
 from lxml import etree
 
-from tests.utils import load_xml, render_node, assert_nodes_equal
+from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
 
 
@@ -80,7 +80,6 @@ def test_build_min_occurs_2_max_occurs_2():
         ))
 
     assert custom_type.signature()
-
 
     elm = custom_type(_value_1=[
         {'item_1': 'foo-1', 'item_2': 'bar-1'},

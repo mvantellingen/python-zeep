@@ -28,7 +28,7 @@ class Schema(object):
 
         self._transport = transport
 
-        self._documents = OrderedDict()
+        self.documents = _SchemaContainer()
         self._prefix_map_auto = {}
         self._prefix_map_custom = {}
 
@@ -40,11 +40,12 @@ class Schema(object):
             nodes = node
         self.add_documents(nodes, location)
 
-    @property
-    def documents(self):
-        for documents in self._documents.values():
-            for document in documents:
-                yield document
+    def __repr__(self):
+        main_doc = self.root_document
+        if main_doc:
+            return '<Schema(location=%r, tns=%r)>' % (
+                main_doc._location, main_doc._target_namespace)
+        return '<Schema()>'
 
     @property
     def prefix_map(self):
@@ -69,7 +70,7 @@ class Schema(object):
 
     @property
     def namespaces(self):
-        return set(self._documents.keys())
+        return self.documents.get_all_namespaces()
 
     @property
     def elements(self):
@@ -99,20 +100,13 @@ class Schema(object):
                     yield type_
                     seen.add(type_.qname)
 
-    def __repr__(self):
-        main_doc = self.root_document
-        if main_doc:
-            return '<Schema(location=%r, tns=%r)>' % (
-                main_doc._location, main_doc._target_namespace)
-        return '<Schema()>'
-
     def add_documents(self, schema_nodes, location):
-        documents = []
+        resolve_queue = []
         for node in schema_nodes:
             document = self.create_new_document(node, location)
-            documents.append(document)
+            resolve_queue.append(document)
 
-        for document in documents:
+        for document in resolve_queue:
             document.resolve()
 
         self._prefix_map_auto = self._create_prefix_map()
@@ -199,19 +193,24 @@ class Schema(object):
         return namespace
 
     def create_new_document(self, node, url, base_url=None):
+        """
+
+        :rtype: zeep.xsd.schema.SchemaDocument
+
+        """
         namespace = node.get('targetNamespace') if node is not None else None
         if base_url is None:
             base_url = url
 
         schema = SchemaDocument(namespace, url, base_url)
-        self._add_schema_document(schema)
+        self.documents.add(schema)
         schema.load(self, node)
         return schema
 
     def merge(self, schema):
         """Merge an other XSD schema in this one"""
         for document in schema.documents:
-            self._add_schema_document(document)
+            self.documents.add(document)
         self._prefix_map_auto = self._create_prefix_map()
 
     def _load_default_documents(self):
@@ -226,7 +225,7 @@ class Schema(object):
             schema.register_element(cls.qname, instance)
 
         schema._is_internal = True
-        self._add_schema_document(schema)
+        self.documents.add(schema)
         return schema
 
     def _get_instance(self, qname, method_name, name):
@@ -277,37 +276,13 @@ class Schema(object):
             'xsd': 'http://www.w3.org/2001/XMLSchema',
         }
         i = 0
-        for namespace in self._documents.keys():
+        for namespace in self.documents.get_all_namespaces():
             if namespace is None or namespace in prefix_map.values():
                 continue
 
             prefix_map['ns%d' % i] = namespace
             i += 1
         return prefix_map
-
-    def _has_schema_document(self, namespace):
-        """Return a boolean if there is a SchemaDocumnet for the namespace.
-
-        :rtype: boolean
-
-        """
-        return namespace in self._documents
-
-    def _add_schema_document(self, document):
-        logger.debug("Add document with tns %s to schema %s", document.namespace, id(self))
-        documents = self._documents.setdefault(document.namespace, [])
-        documents.append(document)
-
-    def _get_schema_document(self, namespace, location):
-        """Return a list of SchemaDocument's for the given namespace AND
-        location.
-
-        :rtype: SchemaDocument
-
-        """
-        for document in self._documents.get(namespace, []):
-            if document._location == location:
-                return document
 
     def _get_schema_documents(self, namespace, fail_silently=False):
         """Return a list of SchemaDocument's for the given namespace.
@@ -316,21 +291,81 @@ class Schema(object):
 
         """
         if (
-            namespace not in self._documents
+            not self.documents.has_schema_document_for_ns(namespace)
             and namespace in const.AUTO_IMPORT_NAMESPACES
         ):
             logger.debug("Auto importing missing known schema: %s", namespace)
             self.add_document_by_url(namespace)
 
-        if namespace not in self._documents:
+        return self.documents.get_by_namespace(namespace, fail_silently)
+
+
+class _SchemaContainer(object):
+    """Container instances to store multiple SchemaDocument objects per
+    namespace.
+
+    """
+
+    def __init__(self):
+        self._instances = OrderedDict()
+
+    def __iter__(self):
+        for document in self.values():
+            yield document
+
+    def add(self, document):
+        """Append a schema document
+
+        :param document: zeep.xsd.schema.SchemaDocument
+
+        """
+        logger.debug("Add document with tns %s to schema %s", document.namespace, id(self))
+        documents = self._instances.setdefault(document.namespace, [])
+        documents.append(document)
+
+    def get_all_namespaces(self):
+        return self._instances.keys()
+
+    def get_by_namespace(self, namespace, fail_silently):
+        if namespace not in self._instances:
             if fail_silently:
                 return []
             raise exceptions.NamespaceError(
                 "No schema available for the namespace %r" % namespace)
-        return self._documents[namespace]
+        return self._instances[namespace]
+
+    def get_by_namespace_and_location(self, namespace, location):
+        """Return list of SchemaDocument's for the given namespace AND
+        location.
+
+        :rtype: zeep.xsd.schema.SchemaDocument
+
+        """
+        documents = self.get_by_namespace(namespace, fail_silently=True)
+        for document in documents:
+            if document._location == location:
+                return document
+
+    def has_schema_document_for_ns(self, namespace):
+        """Return a boolean if there is a SchemaDocument for the namespace.
+
+        :rtype: boolean
+
+        """
+        return namespace in self._instances
+
+    def values(self):
+        for documents in self._instances.values():
+            for document in documents:
+                yield document
 
 
 class SchemaDocument(object):
+    """A Schema Document consists of a set of schema components for a
+    specific target namespace.
+
+    """
+
     def __init__(self, namespace, location, base_url):
         logger.debug("Init schema document for %r", location)
 
@@ -340,6 +375,7 @@ class SchemaDocument(object):
         self._target_namespace = namespace
         self._is_internal = False
 
+        # Containers for specific types
         self._attribute_groups = {}
         self._attributes = {}
         self._elements = {}
@@ -365,10 +401,16 @@ class SchemaDocument(object):
         return not bool(self._imports or self._types or self._elements)
 
     def load(self, schema, node):
+        """Load the XML Schema passed in via the node attribute.
+
+        :type schema: zeep.xsd.schema.Schema
+        :type node: etree._Element
+
+        """
         if node is None:
             return
 
-        if not schema._has_schema_document(self._target_namespace):
+        if not schema.documents.has_schema_document_for_ns(self._target_namespace):
             raise RuntimeError(
                 "The document needs to be registered in the schema before " +
                 "it can be loaded")
@@ -415,44 +457,62 @@ class SchemaDocument(object):
         _resolve_dict(self._types)
 
     def register_import(self, namespace, schema):
+        """Register an import for an other schema document.
+
+        :type namespace: str
+        :type schema: zeep.xsd.schema.SchemaDocument
+
+        """
         schemas = self._imports.setdefault(namespace, [])
         schemas.append(schema)
 
     def is_imported(self, namespace):
         return namespace in self._imports
 
-    def register_type(self, name, value):
-        assert not isinstance(value, type)
-        assert value is not None
+    def register_type(self, qname, value):
+        """Register a xsd.Type in this schema
 
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_type(%r, %r)", name, value)
-        self._types[name] = value
+        :type qname: str or etree.QName
+        :type value: zeep.xsd.Type
 
-    def register_element(self, name, value):
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_element(%r, %r)", name, value)
-        self._elements[name] = value
+        """
+        self._add_component(qname, value, self._types, 'type')
 
-    def register_group(self, name, value):
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_group(%r, %r)", name, value)
-        self._groups[name] = value
+    def register_element(self, qname, value):
+        """Register a xsd.Element in this schema
 
-    def register_attribute(self, name, value):
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_attribute(%r, %r)", name, value)
-        self._attributes[name] = value
+        :type qname: str or etree.QName
+        :type value: zeep.xsd.Element
 
-    def register_attribute_group(self, name, value):
-        if isinstance(name, etree.QName):
-            name = name.text
-        logger.debug("register_attribute_group(%r, %r)", name, value)
-        self._attribute_groups[name] = value
+        """
+        self._add_component(qname, value, self._elements, 'element')
+
+    def register_group(self, qname, value):
+        """Register a xsd.Element in this schema
+
+        :type qname: str or etree.QName
+        :type value: zeep.xsd.Element
+
+        """
+        self._add_component(qname, value, self._groups, 'group')
+
+    def register_attribute(self, qname, value):
+        """Register a xsd.Element in this schema
+
+        :type qname: str or etree.QName
+        :type value: zeep.xsd.Attribute
+
+        """
+        self._add_component(qname, value, self._attributes, 'attribute')
+
+    def register_attribute_group(self, qname, value):
+        """Register a xsd.Element in this schema
+
+        :type qname: str or etree.QName
+        :type value: zeep.xsd.Group
+
+        """
+        self._add_component(qname, value, self._attribute_groups, 'attribute_group')
 
     def get_type(self, qname):
         """Return a xsd.Type object from this schema
@@ -460,7 +520,7 @@ class SchemaDocument(object):
         :rtype: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
 
         """
-        return self._get_instance(qname, self._types, 'type')
+        return self._get_component(qname, self._types, 'type')
 
     def get_element(self, qname):
         """Return a xsd.Element object from this schema
@@ -468,7 +528,7 @@ class SchemaDocument(object):
         :rtype: zeep.xsd.Element
 
         """
-        return self._get_instance(qname, self._elements, 'element')
+        return self._get_component(qname, self._elements, 'element')
 
     def get_group(self, qname):
         """Return a xsd.Group object from this schema.
@@ -476,7 +536,7 @@ class SchemaDocument(object):
         :rtype: zeep.xsd.Group
 
         """
-        return self._get_instance(qname, self._groups, 'group')
+        return self._get_component(qname, self._groups, 'group')
 
     def get_attribute(self, qname):
         """Return a xsd.Attribute object from this schema
@@ -484,7 +544,7 @@ class SchemaDocument(object):
         :rtype: zeep.xsd.Attribute
 
         """
-        return self._get_instance(qname, self._attributes, 'attribute')
+        return self._get_component(qname, self._attributes, 'attribute')
 
     def get_attribute_group(self, qname):
         """Return a xsd.AttributeGroup object from this schema
@@ -492,9 +552,15 @@ class SchemaDocument(object):
         :rtype: zeep.xsd.AttributeGroup
 
         """
-        return self._get_instance(qname, self._attribute_groups, 'attributeGroup')
+        return self._get_component(qname, self._attribute_groups, 'attributeGroup')
 
-    def _get_instance(self, qname, items, item_name):
+    def _add_component(self, name, value, items, item_name):
+        if isinstance(name, etree.QName):
+            name = name.text
+        logger.debug("register_%s(%r, %r)", item_name, name, value)
+        items[name] = value
+
+    def _get_component(self, qname, items, item_name):
         try:
             return items[qname]
         except KeyError:

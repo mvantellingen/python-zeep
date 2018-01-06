@@ -13,6 +13,11 @@ class OperationProxy(object):
     def __init__(self, service_proxy, operation_name):
         self._proxy = service_proxy
         self._op_name = operation_name
+        try:
+            signature = str(self._proxy._binding._operations[operation_name])
+            self.__doc__ = signature
+        except:
+            self.__doc__ = 'OperationProxy for %s' % operation_name
 
     def __call__(self, *args, **kwargs):
         """Call the operation with the given args and kwargs.
@@ -66,6 +71,13 @@ class ServiceProxy(object):
         except ValueError:
             raise AttributeError('Service has no operation %r' % key)
         return OperationProxy(self, key)
+
+    def __dir__(self):
+        """ Return the names of the operations. """
+        return list(dir(super(ServiceProxy, self))
+                    + list(self.__dict__)
+                    + list(self._binding.port_type.operations))
+                    # using list() on the dicts for Python 3 compatibility
 
 
 class Factory(object):
@@ -132,6 +144,10 @@ class Client(object):
         self._default_service_name = service_name
         self._default_port_name = port_name
         self._default_soapheaders = None
+
+    @property
+    def namespaces(self):
+        return self.wsdl.types.prefix_map
 
     @property
     def service(self):

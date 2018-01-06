@@ -1,5 +1,6 @@
-from zeep.loader import parse_xml
 from tests.utils import DummyTransport
+from zeep.loader import parse_xml
+
 
 def test_huge_text():
     # libxml2>=2.7.3 has XML_MAX_TEXT_LENGTH 10000000 without XML_PARSE_HUGE

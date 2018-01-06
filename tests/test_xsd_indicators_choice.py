@@ -1,10 +1,11 @@
 from collections import deque
+
 import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
 from zeep import xsd
-from zeep.exceptions import XMLParseError, ValidationError
+from zeep.exceptions import ValidationError, XMLParseError
 from zeep.helpers import serialize_object
 
 
@@ -94,6 +95,7 @@ def test_choice_element_second_elm():
     assert value.item_1 is None
     assert value.item_2 == 'foo'
     assert value.item_3 is None
+
 
 def test_choice_element_second_elm_positional():
     node = etree.fromstring("""
@@ -768,6 +770,8 @@ def test_choice_with_sequence_change():
     element.render(node, elm)
     assert_nodes_equal(expected, node)
     value = element.parse(node[0], schema)
+    assert value.item_1 == 'bla-1'
+    assert value.item_2 == 'bla-2'
 
 
 def test_choice_with_sequence_change_named():
@@ -813,6 +817,8 @@ def test_choice_with_sequence_change_named():
     element.render(node, elm)
     assert_nodes_equal(expected, node)
     value = element.parse(node[0], schema)
+    assert value.item_1 == 'bla-1'
+    assert value.item_2 == 'bla-2'
 
 
 def test_choice_with_sequence_multiple():

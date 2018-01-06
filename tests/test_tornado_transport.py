@@ -1,11 +1,11 @@
 import pytest
-from pretend import stub
 from lxml import etree
-from tornado.httpclient import HTTPResponse, HTTPRequest
-from tornado.testing import gen_test, AsyncTestCase
-from tornado.concurrent import Future
-
 from mock import patch
+from pretend import stub
+from tornado.concurrent import Future
+from tornado.httpclient import HTTPRequest, HTTPResponse
+from tornado.testing import AsyncTestCase, gen_test
+
 from zeep.tornado import TornadoAsyncTransport
 
 

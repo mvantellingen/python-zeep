@@ -5,7 +5,6 @@ from pretend import stub
 from zeep import cache, transports
 
 
-
 @pytest.mark.requests
 def test_no_cache():
     transport = transports.Transport(cache=None)

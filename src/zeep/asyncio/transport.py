@@ -4,11 +4,11 @@ Adds asyncio support to Zeep. Contains Python 3.5+ only syntax!
 """
 import asyncio
 import logging
-from . import bindings
 
 import aiohttp
 from requests import Response
 
+from zeep.asyncio import bindings
 from zeep.exceptions import TransportError
 from zeep.transports import Transport
 from zeep.utils import get_version

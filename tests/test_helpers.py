@@ -4,9 +4,7 @@ from collections import OrderedDict
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
-from zeep import xsd
-from six import binary_type
-from zeep import helpers
+from zeep import helpers, xsd
 from zeep.helpers import serialize_object
 
 
@@ -197,6 +195,6 @@ def test_create_xml_soap_map():
           <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:date">2016-01-14</value>
         </item>
      </document>
-     """ # noqa
+     """  # noqa
     node = render_node(value._xsd_type, value)
     assert_nodes_equal(expected, node)

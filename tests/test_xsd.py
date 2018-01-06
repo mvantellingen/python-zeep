@@ -149,8 +149,6 @@ def test_invalid_kwarg_simple_type():
         elm(something='is-wrong')
 
 
-
-
 def test_any():
     some_type = xsd.Element(
         etree.QName('http://tests.python-zeep.org/', 'doei'),

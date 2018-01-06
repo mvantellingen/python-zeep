@@ -1,10 +1,10 @@
-import pytest
-from pretend import stub
-from lxml import etree
 import aiohttp
+import pytest
 from aioresponses import aioresponses
+from lxml import etree
+from pretend import stub
 
-from zeep import cache, asyncio, exceptions
+from zeep import asyncio, exceptions
 
 
 @pytest.mark.requests
