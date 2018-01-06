@@ -72,6 +72,24 @@ def test_element_simple_type():
     assert_nodes_equal(expected, node)
 
 
+def test_complex_type():
+    custom_type = xsd.ComplexType(
+        xsd.Sequence([
+            xsd.Element(
+                etree.QName('http://tests.python-zeep.org/', 'username'),
+                xsd.String()),
+            xsd.Element(
+                etree.QName('http://tests.python-zeep.org/', 'password'),
+                xsd.String()),
+        ])
+    )
+    obj = custom_type('user', 'pass')
+    assert {key: obj[key] for key in obj} == {
+        'username': 'user',
+        'password': 'pass'
+    }
+
+
 def test_nil_elements():
     custom_type = xsd.Element(
         '{http://tests.python-zeep.org/}container',
