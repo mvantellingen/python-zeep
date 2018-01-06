@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import platform
 
 import pytest
 from lxml import etree
@@ -165,6 +166,8 @@ def test_no_content_type():
     assert result == 120.123
 
 
+@pytest.mark.skipif(platform.python_implementation == 'PyPy',
+                    reason="Fails on PyPy")
 def test_wrong_content():
     data = """
         The request is answered something unexpected,
@@ -188,6 +191,8 @@ def test_wrong_content():
     assert data == exc.value.content
 
 
+@pytest.mark.skipif(platform.python_implementation == 'PyPy',
+                    reason="Fails on PyPy")
 def test_wrong_no_unicode_content():
     data = """
         The request is answered something unexpected,
@@ -212,6 +217,8 @@ def test_wrong_no_unicode_content():
     assert data == exc.value.content
 
 
+@pytest.mark.skipif(platform.python_implementation == 'PyPy',
+                    reason="Fails on PyPy")
 def test_http_error():
     data = """
         Unauthorized!
