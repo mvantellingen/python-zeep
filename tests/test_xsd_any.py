@@ -256,20 +256,20 @@ def test_element_any_type():
     schema = xsd.Schema(node)
 
     container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    obj = container_elm(something='bar')
+    obj = container_elm(something=datetime.time(18, 29, 59))
 
     node = etree.Element('document')
     container_elm.render(node, obj)
     expected = """
         <document>
             <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
-                <ns0:something>bar</ns0:something>
+                <ns0:something>18:29:59</ns0:something>
             </ns0:container>
         </document>
     """
     assert_nodes_equal(expected, node)
     item = container_elm.parse(node.getchildren()[0], schema)
-    assert item.something == 'bar'
+    assert item.something == '18:29:59'
 
 
 def test_element_any_type_unknown_type():

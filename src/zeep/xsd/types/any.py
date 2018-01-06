@@ -94,7 +94,22 @@ class AnyType(Type):
         return self
 
     def xmlvalue(self, value):
-        return value
+        """Guess the xsd:type for the value and use corresponding serializer"""
+        from zeep.xsd.types import builtins
+
+        available_types = [
+            builtins.String,
+            builtins.Boolean,
+            builtins.Decimal,
+            builtins.Float,
+            builtins.DateTime,
+            builtins.Date,
+            builtins.Time,
+        ]
+        for xsd_type in available_types:
+            if isinstance(value, xsd_type.accepted_types):
+                return xsd_type().xmlvalue(value)
+        return str(value)
 
     def pythonvalue(self, value, schema=None):
         return value
