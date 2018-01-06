@@ -13,6 +13,7 @@ class AnyObject(object):
     :param value: The value
 
     """
+
     def __init__(self, xsd_object, value):
         self.xsd_obj = xsd_object
         self.value = value
@@ -110,6 +111,9 @@ class CompoundValue(object):
     def __iter__(self):
         return self.__values__.__iter__()
 
+    def __dir__(self):
+        return list(self.__values__.keys())
+
     def __repr__(self):
         return PrettyPrinter().pformat(self.__values__)
 
@@ -194,7 +198,8 @@ def _process_signature(xsd_type, args, kwargs):
     available_kwargs = set(kwargs.keys())
     for element_name, element in xsd_type.elements_nested:
         if element.accepts_multiple:
-            values = element.parse_kwargs(kwargs, element_name, available_kwargs)
+            values = element.parse_kwargs(
+                kwargs, element_name, available_kwargs)
         else:
             values = element.parse_kwargs(kwargs, None, available_kwargs)
 
