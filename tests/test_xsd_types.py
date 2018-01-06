@@ -40,13 +40,6 @@ def test_simpletype_parse():
     assert item.parse_xmlelement(node) is None
 
 
-def test_simpletype_xmlvalue():
-    item = types.AnySimpleType()
-
-    with pytest.raises(NotImplementedError):
-        item.xmlvalue(None)
-
-
 def test_simpletype_pythonvalue():
     item = types.AnySimpleType()
 
