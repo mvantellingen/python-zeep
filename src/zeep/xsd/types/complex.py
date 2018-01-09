@@ -2,6 +2,7 @@ import copy
 import logging
 from collections import OrderedDict, deque
 from itertools import chain
+import six
 
 from cached_property import threaded_cached_property
 
@@ -221,7 +222,7 @@ class ComplexType(AnyType):
 
         # Render attributes
         for name, attribute in self.attributes:
-            attr_value = value[name] if name in value else NotSet
+            attr_value = value[name] if name in value and not isinstance(value, six.string_types) else NotSet
             child_path = render_path + [name]
             attribute.render(parent, attr_value, child_path)
 
