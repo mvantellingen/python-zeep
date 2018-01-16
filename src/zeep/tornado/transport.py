@@ -38,6 +38,7 @@ class TornadoAsyncTransport(Transport):
         client = httpclient.HTTPClient()
         kwargs = {
             'method': 'GET',
+            'connect_timeout': self.load_timeout,
             'request_timeout': self.load_timeout
         }
         http_req = httpclient.HTTPRequest(url, **kwargs)
@@ -106,6 +107,7 @@ class TornadoAsyncTransport(Transport):
 
         kwargs = {
             'method': method,
+            'connect_timeout': self.operation_timeout,
             'request_timeout': self.operation_timeout,
             'headers': dict(headers, **session_headers),
             'auth_username': auth_username,
