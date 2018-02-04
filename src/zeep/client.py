@@ -1,4 +1,5 @@
 import copy
+import itertools
 import logging
 from contextlib import contextmanager
 
@@ -50,6 +51,9 @@ class ServiceProxy(object):
         self._client = client
         self._binding_options = binding_options
         self._binding = binding
+        self._operations = {
+            name: OperationProxy(self, name) for name in self._binding.all()
+        }
 
     def __getattr__(self, key):
         """Return the OperationProxy for the given key.
@@ -66,17 +70,14 @@ class ServiceProxy(object):
 
         """
         try:
-            self._binding.get(key)
-        except ValueError:
+            return self._operations[key]
+        except KeyError:
             raise AttributeError('Service has no operation %r' % key)
-        return OperationProxy(self, key)
 
     def __dir__(self):
         """ Return the names of the operations. """
-        return list(dir(super(ServiceProxy, self))
-                    + list(self.__dict__)
-                    + list(self._binding.port_type.operations))
-                    # using list() on the dicts for Python 3 compatibility
+        return list(itertools.chain(
+            dir(super(ServiceProxy, self)), self._operations))
 
 
 class Factory(object):

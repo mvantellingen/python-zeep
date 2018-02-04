@@ -141,6 +141,9 @@ class Binding(object):
         return '<%s(name=%r, port_type=%r)>' % (
             self.__class__.__name__, self.name.text, self.port_type)
 
+    def all(self):
+        return self._operations
+
     def get(self, key):
         try:
             return self._operations[key]
