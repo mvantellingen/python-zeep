@@ -24,7 +24,9 @@ If you need to verficate the SSL connection (in case you have a self signed cert
 Make sure that the certificate you refer to is a CA_BUNDLE, meaning it contains a root CA and an intermediate CA.
 Accepted are only X.509 ASCII files (file extension ``.pem``, sometimes ``crt``). If you have two different files, you must combine them manually into one. 
 
-To **disable SSL verification** (not recommended!) you will need to set the ``verify`` attribute of the :class:`requests.Session` to ``False``.
+Alternatively, instead of using ``session.verify`` you can use ``session.cert`` if you just want to use an SSL client certificate.
+
+To **disable SSL verification** (not recommended!) you will need to set ``verify`` to ``False``.
 
 .. code-block:: python
 
@@ -32,6 +34,8 @@ To **disable SSL verification** (not recommended!) you will need to set the ``ve
     session.verify = False
 
 Remember: this should be only done for testing purposes. Python's ``urllib3`` will warn you with a InsecureRequestWarning.
+
+See :class:`requests.Session` for further details.
 
 Session timeout
 ---------------
