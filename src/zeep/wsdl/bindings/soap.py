@@ -282,7 +282,7 @@ class Soap11Binding(SoapBinding):
         def get_text(name):
             child = fault_node.find(name)
             if child is not None:
-                return child.text
+                return unicode(child.text).encode('utf-8')
 
         raise Fault(
             message=get_text('faultstring'),
