@@ -101,9 +101,13 @@ class SoapMessage(ConcreteMessage):
             return result
 
         result = result.body
-        if result is None or len(result) == 0:
-            return None
-        elif len(result) > 1:
+
+        if hasattr(result, '__len__'):
+            if len(result) == 0:
+                return None
+            elif len(result) > 1:
+                return result
+        else:
             return result
 
         # Check if we can remove the wrapping object to make the return value
