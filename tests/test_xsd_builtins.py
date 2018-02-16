@@ -131,6 +131,18 @@ class TestDateTime:
         value = value.astimezone(pytz.timezone('Europe/Amsterdam'))
         assert instance.xmlvalue(value) == '2016-03-04T22:14:42+01:00'
 
+        value = '2016-03-04T21:14:42'
+        assert instance.xmlvalue(value) == '2016-03-04T21:14:42'
+
+        value = '2016-03-04T21:14:42Z'
+        assert instance.xmlvalue(value) == '2016-03-04T21:14:42Z'
+
+        value = '2016-03-04T21:14:42.123456Z'
+        assert instance.xmlvalue(value) == '2016-03-04T21:14:42.123456Z'
+
+        value = '2016-03-04T22:14:42+01:00'
+        assert instance.xmlvalue(value) == '2016-03-04T22:14:42+01:00'
+
     def test_pythonvalue(self):
         instance = builtins.DateTime()
         value = datetime.datetime(2016, 3, 4, 21, 14, 42)
