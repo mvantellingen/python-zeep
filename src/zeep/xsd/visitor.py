@@ -850,7 +850,10 @@ class SchemaVisitor(object):
 
         annotation, items = self._pop_annotation(node.getchildren())
         for child in items:
-            assert child.tag in sub_types, child
+            if child.tag not in sub_types:
+                raise self._create_error(
+                    "Unexpected element %s in xsd:sequence" % child.tag, child)
+
             item = self.process(child, node)
             assert item is not None
             result.append(item)
@@ -1166,11 +1169,15 @@ class SchemaVisitor(object):
                 attribute = self.process(child, node)
                 attributes.append(attribute)
             else:
-                raise XMLParseError(
-                    "Unexpected tag `%s`" % (child.tag),
-                    filename=self.document._location,
-                    sourceline=node.sourceline)
+                raise self._create_error(
+                    "Unexpected tag `%s`" % (child.tag), node)
         return attributes
+
+    def _create_error(self, message, node):
+        return XMLParseError(
+            message,
+            filename=self.document._location,
+            sourceline=node.sourceline)
 
     visitors = {
         tags.any: visit_any,
