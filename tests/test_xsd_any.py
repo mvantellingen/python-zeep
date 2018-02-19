@@ -411,3 +411,54 @@ def test_any_in_nested_sequence():
     assert item.items._value_1 == datetime.date(2016, 7, 4)
     assert item.version == 'str1234'
     assert item._value_1 == [datetime.date(2016, 7, 4), True]
+
+
+def test_element_any_parse_inline_schema():
+    node = load_xml("""
+        <xsd:schema
+            elementFormDefault="qualified"
+            targetNamespace="https://tests.python-zeep.org"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element ref="xsd:schema"/>
+                <xsd:any/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """)
+
+    schema = xsd.Schema(node)
+
+    node = load_xml("""
+        <OstatDepoResult>
+            <xs:schema id="OD" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+                <xs:element name="OD" msdata:IsDataSet="true" msdata:UseCurrentLocale="true">
+                    <xs:complexType>
+                        <xs:choice minOccurs="0" maxOccurs="unbounded">
+                            <xs:element name="odr">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="item" msdata:Caption="item" type="xs:string" minOccurs="0" />
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:choice>
+                    </xs:complexType>
+                </xs:element>
+            </xs:schema>
+            <diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">
+                <OD xmlns="">
+                    <odr diffgr:id="odr1" msdata:rowOrder="0">
+                        <item>hetwerkt</item>
+                    </odr>
+                </OD>
+            </diffgr:diffgram>
+        </OstatDepoResult>
+    """)
+
+    elm = schema.get_element('ns0:container')
+    data = elm.parse(node, schema)
+    assert data._value_1._value_1[0]['odr']['item'] == 'hetwerkt'

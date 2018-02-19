@@ -58,6 +58,14 @@ class Any(Base):
                 if context_schema.documents.has_schema_document_for_ns(qname.namespace):
                     schema = context_schema
                     break
+            else:
+                # Try to parse the any result by iterating all the schemas
+                for context_schema in context.schemas:
+                    try:
+                        data = context_schema.deserialize(xmlelement.getchildren()[0])
+                        return data
+                    except LookupError:
+                        continue
 
         # Lookup type via xsi:type attribute
         xsd_type = qname_attr(xmlelement, xsi_ns('type'))

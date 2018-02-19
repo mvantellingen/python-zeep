@@ -213,6 +213,10 @@ class Schema(object):
             self.documents.add(document)
         self._prefix_map_auto = self._create_prefix_map()
 
+    def deserialize(self, node):
+        elm = self.get_element(node.tag)
+        return elm.parse(node, schema=self)
+
     def _load_default_documents(self):
         schema = SchemaDocument(ns.XSD, None, None)
 
