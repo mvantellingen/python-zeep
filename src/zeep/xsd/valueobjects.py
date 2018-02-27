@@ -131,9 +131,7 @@ class CompoundValue(object):
             return super(CompoundValue, self).__setattr__(key, value)
         self.__values__[key] = value
 
-    def __getattribute__(self, key):
-        if key.startswith('__') or key in ('_xsd_type', '_xsd_elm'):
-            return super(CompoundValue, self).__getattribute__(key)
+    def __getattr__(self, key):
         try:
             return self.__values__[key]
         except KeyError:
