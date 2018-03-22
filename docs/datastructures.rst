@@ -5,7 +5,7 @@ Datastructures
 Creating objects
 ----------------
 
-Most of the times you need to pass nested data to the soap client.  These 
+Most of the times you need to pass nested data to the soap client.  These
 Complex types can be retrieved using the :meth:`client.get_type` method.
 
 .. code-block:: python
@@ -20,7 +20,7 @@ Complex types can be retrieved using the :meth:`client.get_type` method.
 
 However instead of creating an object from a type defined in the XSD you can
 also pass in a dictionary. Zeep will automatically convert this dict to the
-required object (and nested child objects) during the call. 
+required object (and nested child objects) during the call.
 
 
 .. code-block:: python
@@ -37,7 +37,7 @@ required object (and nested child objects) during the call.
 Using factories
 ---------------
 
-When you need to create multiple types the :meth:`Client.get_type()` calls to 
+When you need to create multiple types the :meth:`Client.get_type()` calls to
 retrieve the type class and then instantiating them can be a bit verbose. To
 simplify this you can use a factory object.
 
@@ -61,10 +61,10 @@ xsd:choice
 Mapping the semantics of xsd:choice elements to code is unfortunately pretty
 difficult. Zeep tries to solve this using two methods:
 
-  1. Accepting the elements in the xsd:choice element as kwargs. This only 
+  1. Accepting the elements in the xsd:choice element as kwargs. This only
      works for simple xsd:choice definitions.
   2. Using the special kwarg ``_value_N`` where the N is the number of the
-     choice in the parent type. This method allows you to pass a list of 
+     choice in the parent type. This method allows you to pass a list of
      dicts (when maxOccurs != 1) or a dict directly.
 
 
@@ -149,7 +149,7 @@ Nested list using _value_1
 Any objects
 -----------
 
-Zeep offers full support for xsd:any elements. xsd:any elements are used as 
+Zeep offers full support for xsd:any elements. xsd:any elements are used as
 a kind of wildcard and basically allows any element to be used. Zeep needs to
 know the element name you want to serialize, so the value needs to be wrapped
 in a special object. This is the :class:`~zeep.xsd.AnyObject`. It takes two parameters, the
@@ -188,7 +188,7 @@ to the AnyObject an xsd type is passed.
 SkipValue
 ---------
 
-Zeep will automatically validate that all the required values are set when 
+Zeep will automatically validate that all the required values are set when
 calling an operation. If you want to force a value to be ignored and left out
 of the generated XML then you can assign the :const:`zeep.xsd.SkipValue` constant.
 
