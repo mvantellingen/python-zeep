@@ -6,7 +6,7 @@ Creating objects
 ----------------
 
 Most of the times you need to pass nested data to the soap client.  These 
-Complex types can be retrieve using the :meth:`client.get_type` method.
+Complex types can be retrieved using the :meth:`client.get_type` method.
 
 .. code-block:: python
 
