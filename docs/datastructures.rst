@@ -149,11 +149,11 @@ Nested list using _value_1
 Any objects
 -----------
 
-Zeep offers full support for xsd:any elements. xsd:any elements are used as
-a kind of wildcard and basically allows any element to be used. Zeep needs to
+Zeep offers full support for xsd:any elements. xsd:any elements are used as a
+kind of wildcard and basically allows any element to be used. Zeep needs to
 know the element name you want to serialize, so the value needs to be wrapped
-in a special object. This is the :class:`~zeep.xsd.AnyObject`. It takes two parameters, the
-xsd Element first and the value as the second arg.
+in a special object. This is the :class:`~zeep.xsd.AnyObject`. It takes two
+parameters, the xsd Element first and the value as the second arg.
 
 .. code-block:: python
 
@@ -190,7 +190,8 @@ SkipValue
 
 Zeep will automatically validate that all the required values are set when
 calling an operation. If you want to force a value to be ignored and left out
-of the generated XML then you can assign the :const:`zeep.xsd.SkipValue` constant.
+of the generated XML then you can assign the :const:`zeep.xsd.SkipValue`
+constant.
 
 
 .. code-block:: python
