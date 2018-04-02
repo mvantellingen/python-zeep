@@ -328,7 +328,7 @@ class SchemaVisitor(object):
         if element_form == 'qualified' or is_global:
             qname = qname_attr(node, 'name', self.document._target_namespace)
         else:
-            qname = etree.QName(node.get('name'))
+            qname = etree.QName(node.get('name').strip())
 
         children = node.getchildren()
         xsd_type = None
