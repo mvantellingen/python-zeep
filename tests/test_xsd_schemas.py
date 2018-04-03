@@ -726,6 +726,84 @@ def test_include_no_default_namespace():
     assert item
 
 
+def test_include_no_parent_default_namespace():
+    schema_root = """
+        <?xml version="1.0"?>
+        <xs:schema xmlns="http://tests.python-zeep.org/rootns" xmlns:tns="http://tests.python-zeep.org/tns" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://tests.python-zeep.org/rootns" elementFormDefault="qualified">
+            <xs:import namespace="http://tests.python-zeep.org/tns" schemaLocation="http://tests.python-zeep.org/tns.xsd"/>
+            <xs:element name="root">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="container" type="tns:containerType" />
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+    """.strip()
+
+    # no default namespace, but targetNamespace
+    schema_tns = """
+        <?xml version="1.0"?>
+        <xs:schema xmlns:tns="http://tests.python-zeep.org/tns" targetNamespace="http://tests.python-zeep.org/tns" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+            <xs:include schemaLocation="http://tests.python-zeep.org/include.xsd" />
+        </xs:schema>
+        """.strip()
+
+    # no default namespace and no targetNamespace
+    schema_include = """
+        <?xml version="1.0"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+            <xs:complexType name="containerType">
+                <xs:sequence>
+                    <xs:element name="item" type="itemType" />
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="itemType">
+              <xs:sequence>
+                <xs:element name="intVal" type="xs:int" />
+                <xs:element name="boolVal" type="xs:boolean" />
+              </xs:sequence>
+            </xs:complexType>
+        </xs:schema>
+        """.strip()
+
+    class IncludeSchemaResolver(etree.Resolver):
+        def resolve(self, url, id, context):
+            if url == "http://tests.python-zeep.org/tns.xsd":
+                return self.resolve_string(schema_tns, context)
+            elif url == "http://tests.python-zeep.org/include.xsd":
+                return self.resolve_string(schema_include, context)
+
+    parser = etree.XMLParser()
+    parser.resolvers.add(IncludeSchemaResolver())
+
+    schema = etree.XMLSchema(etree.fromstring(schema_root, parser=parser))
+
+    xml = """
+        <?xml version="1.0"?>
+        <root xmlns="http://tests.python-zeep.org/rootns">
+            <container xmlns:tns="http://tests.python-zeep.org/tns">
+                <tns:item>
+                    <tns:intVal>42</tns:intVal>
+                    <tns:boolVal>true</tns:boolVal>
+                </tns:item>
+            </container>
+        </root>
+    """.strip()
+
+    xml = etree.fromstring(xml)
+    schema.assertValid(xml)  # schema is ok for lxml
+
+    schema_root = etree.fromstring(schema_root)
+    schema_tns = etree.fromstring(schema_tns)
+    schema_include = etree.fromstring(schema_include)
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/tns.xsd', schema_tns)
+    transport.bind('http://tests.python-zeep.org/include.xsd', schema_include)
+    xsd.Schema(schema_root, transport=transport)
+
+
 def test_include_different_form_defaults():
     node_a = etree.fromstring("""
         <?xml version="1.0"?>
