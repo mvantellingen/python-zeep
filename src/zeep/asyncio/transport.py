@@ -40,15 +40,14 @@ class AsyncTransport(Transport):
 
     def __del__(self):
         if self._close_session:
-            self.session.close()
+            self.session.connector.close()
 
     def _load_remote_data(self, url):
         result = None
 
         async def _load_remote_data_async():
             nonlocal result
-            with aiohttp.Timeout(self.load_timeout):
-                response = await self.session.get(url)
+            async with self.session.get(url, timeout=self.load_timeout) as response:
                 result = await response.read()
                 try:
                     response.raise_for_status()
@@ -65,9 +64,8 @@ class AsyncTransport(Transport):
 
     async def post(self, address, message, headers):
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
-        with aiohttp.Timeout(self.operation_timeout):
-            response = await self.session.post(
-                address, data=message, headers=headers)
+        async with self.session.post(address, data=message, headers=headers,
+                                     timeout=self.operation_timeout) as response:
             self.logger.debug(
                 "HTTP Response from %s (status: %d):\n%s",
                 address, response.status, await response.read())
@@ -79,9 +77,8 @@ class AsyncTransport(Transport):
         return await self.new_response(response)
 
     async def get(self, address, params, headers):
-        with aiohttp.Timeout(self.operation_timeout):
-            response = await self.session.get(
-                address, params=params, headers=headers)
+        async with self.session.get(address, params=params, headers=headers,
+                                    timeout=self.operation_timeout) as response:
 
             return await self.new_response(response)
 
