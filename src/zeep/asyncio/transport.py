@@ -14,6 +14,12 @@ from zeep.transports import Transport
 from zeep.utils import get_version
 from zeep.wsdl.utils import etree_to_string
 
+try:
+    from async_timeout import timeout as aio_timeout  # Python 3.6+
+except ImportError:
+    from aiohttp import Timeout as aio_timeout  # Python 3.5, aiohttp < 3
+
+
 __all__ = ['AsyncTransport']
 
 
@@ -47,7 +53,7 @@ class AsyncTransport(Transport):
 
         async def _load_remote_data_async():
             nonlocal result
-            with aiohttp.Timeout(self.load_timeout):
+            with aio_timeout(self.load_timeout):
                 response = await self.session.get(url)
                 result = await response.read()
                 try:
@@ -65,7 +71,7 @@ class AsyncTransport(Transport):
 
     async def post(self, address, message, headers):
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
-        with aiohttp.Timeout(self.operation_timeout):
+        with aio_timeout(self.operation_timeout):
             response = await self.session.post(
                 address, data=message, headers=headers)
             self.logger.debug(
