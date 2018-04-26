@@ -52,6 +52,11 @@ class AsyncTransport(Transport):
 
     def _load_remote_data(self, url):
         result = None
+        if self.loop.is_running():
+            raise RuntimeError(
+                "WSDL loading is not asynchronous yet. "
+                "Instantiate the zeep client outside the asyncio event loop."
+            )
 
         async def _load_remote_data_async():
             nonlocal result
