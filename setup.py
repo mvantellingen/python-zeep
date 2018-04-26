@@ -20,7 +20,7 @@ docs_require = [
 ]
 
 tornado_require = [
-    'tornado>=4.0.2'
+    'tornado>=4.0.2,<5'
 ]
 
 async_require = []  # see below
@@ -49,7 +49,7 @@ tests_require = [
 
 if sys.version_info > (3, 4, 2):
     async_require.append('aiohttp>=1.0')
-    tests_require.append('aioresponses>=0.1.3')
+    tests_require.append('aioresponses>=0.4.1')
 
 
 with open('README.rst') as fh:
