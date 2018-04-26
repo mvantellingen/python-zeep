@@ -48,7 +48,8 @@ class AsyncTransport(Transport):
         if self._close_session:
             # aiohttp.ClientSession.close() is async,
             # call the underlying sync function instead.
-            self.session.connector.close()
+            if self.session.connector is not None:
+                self.session.connector.close()
 
     def _load_remote_data(self, url):
         result = None
