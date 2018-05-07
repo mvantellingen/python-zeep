@@ -92,12 +92,15 @@ def test_sign(
     """
     )
 
+    # Force body signature
+    signatures = {"everything": False, "body": True, "header": []}
     signature.sign_envelope(
         envelope,
         KEY_FILE,
         KEY_FILE,
         signature_method=getattr(xmlsec_installed.Transform, signature_method),
         digest_method=getattr(xmlsec_installed.Transform, digest_method),
+        signatures=signatures,
     )
     signature.verify_envelope(envelope, KEY_FILE)
 
@@ -130,7 +133,9 @@ def test_sign_pw():
     """
     )
 
-    signature.sign_envelope(envelope, KEY_FILE_PW, KEY_FILE_PW, "geheim")
+    # Force body signature
+    signatures = {"everything": False, "body": True, "header": []}
+    signature.sign_envelope(envelope, KEY_FILE_PW, KEY_FILE_PW, "geheim", signatures=signatures)
     signature.verify_envelope(envelope, KEY_FILE_PW)
 
 
@@ -153,7 +158,9 @@ def test_verify_error():
     """
     )
 
-    signature.sign_envelope(envelope, KEY_FILE, KEY_FILE)
+    # Force body signature
+    signatures = {"everything": False, "body": True, "header": []}
+    signature.sign_envelope(envelope, KEY_FILE, KEY_FILE, signatures=signatures)
     nsmap = {"tns": "http://tests.python-zeep.org/"}
 
     for elm in envelope.xpath("//tns:Argument", namespaces=nsmap):
@@ -182,8 +189,10 @@ def test_signature():
     """
     )
 
+    # Force body signature
+    signatures = {"everything": False, "body": True, "header": []}
     plugin = wsse.Signature(KEY_FILE_PW, KEY_FILE_PW, "geheim")
-    envelope, headers = plugin.apply(envelope, {})
+    envelope, headers = plugin.apply(envelope, {}, signatures=signatures)
     plugin.verify(envelope)
 
 
@@ -212,6 +221,8 @@ def test_signature_binary(
     """
     )
 
+    # Force body signature
+    signatures = {"everything": False, "body": True, "header": []}
     plugin = wsse.BinarySignature(
         KEY_FILE_PW,
         KEY_FILE_PW,
@@ -219,7 +230,7 @@ def test_signature_binary(
         signature_method=getattr(xmlsec_installed.Transform, signature_method),
         digest_method=getattr(xmlsec_installed.Transform, digest_method),
     )
-    envelope, headers = plugin.apply(envelope, {})
+    envelope, headers = plugin.apply(envelope, {}, signatures=signatures)
     plugin.verify(envelope)
     # Test the reference
     bintok = envelope.xpath(

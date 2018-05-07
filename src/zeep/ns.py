@@ -1,4 +1,3 @@
-
 SOAP_11 = "http://schemas.xmlsoap.org/wsdl/soap/"
 SOAP_12 = "http://schemas.xmlsoap.org/wsdl/soap12/"
 SOAP_ENV_11 = "http://schemas.xmlsoap.org/soap/envelope/"
