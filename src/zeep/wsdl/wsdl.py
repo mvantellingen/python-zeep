@@ -14,6 +14,7 @@ from collections import OrderedDict
 
 from lxml import etree
 
+from zeep import ns
 from zeep.exceptions import IncompleteMessage
 from zeep.loader import (
     absolute_location,
@@ -30,7 +31,12 @@ from zeep.xsd import Schema
 if typing.TYPE_CHECKING:
     from zeep.transports import Transport
 
-NSMAP = {"wsdl": "http://schemas.xmlsoap.org/wsdl/"}
+NSMAP = {
+    'wsdl': ns.WSDL,
+    'wsp':  ns.WSP,
+    'sp': ns.SP,
+    'wsu': ns.WSU,
+}
 
 logger = logging.getLogger(__name__)
 
@@ -440,6 +446,25 @@ class Definition:
                         logger.debug("Ignoring binding: %s", exc)
                         continue
 
+                    # Begin heuristics for signed parts...
+                    binding_policy = binding.name.localname + '_policy'
+                    signed_parts = doc.xpath('wsp:Policy[@wsu:Id="{}"]//sp:SignedParts'.format(binding_policy),
+                                             namespaces=NSMAP)
+                    for sign in signed_parts:
+                        if len(sign.getchildren()) == 0:
+                            # No children, we should sign everything
+                            binding.signatures['body'] = True
+                            binding.signatures['everything'] = True
+                            break
+
+                        for child in sign.iterchildren():
+                            if len(child.items()) > 0:
+                                # Header ...
+                                part = {attr: value for attr, value in child.items()}
+                                binding.signatures['header'].append(part)
+                            elif child.tag.split('}')[-1].lower() == 'body':
+                                # Body ...
+                                binding.signatures['body'] = True
                     logger.debug("Adding binding: %s", binding.name.text)
                     result[binding.name.text] = binding
                     break
