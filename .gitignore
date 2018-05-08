@@ -1,3 +1,6 @@
+# Vim #
+*.swp
+
 *.egg-info
 *.pyc
 __pycache__
