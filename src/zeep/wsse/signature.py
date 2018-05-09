@@ -14,7 +14,7 @@ from lxml.etree import QName
 from zeep import ns
 from zeep.exceptions import SignatureVerificationFailed
 from zeep.utils import detect_soap_env
-from zeep.wsse.utils import ensure_id, get_security_header
+from zeep.wsse.utils import ensure_id, get_security_header, get_timestamp
 
 try:
     import xmlsec
@@ -205,7 +205,13 @@ def _signature_prepare(envelope, key):
     # Insert the Signature node in the wsse:Security header.
     security = get_security_header(envelope)
     security.insert(0, signature)
-    security.append(etree.Element(QName(ns.WSU, 'Timestamp')))
+
+    # Prepare Timestamp
+    timestamp = etree.Element(QName(ns.WSU, 'Timestamp'))
+    created = etree.Element(QName(ns.WSU, 'Created'))
+    created.text = get_timestamp()
+    timestamp.append(created)
+    security.append(timestamp)
 
     # Perform the actual signing.
     ctx = xmlsec.SignatureContext()
