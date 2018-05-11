@@ -5,6 +5,7 @@ changes to the API.
 
  - Refactor the settings logic in Zeep. All settings are now configured using
    the zeep.settings.Settings() class.
+ - Allow control of defusedxml settings via zeep.Settings (see #567, #391)
 
 
 2.5.0 (2018-01-06)

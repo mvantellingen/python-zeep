@@ -1,5 +1,6 @@
 import io
 
+from defusedxml import EntitiesForbidden, DTDForbidden
 import pytest
 import requests_mock
 from lxml import etree
@@ -7,7 +8,7 @@ from pretend import stub
 from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
-from zeep import Client, wsdl
+from zeep import Client, wsdl, Settings
 from zeep.transports import Transport
 
 
@@ -900,4 +901,50 @@ def test_wsdl_duplicate_tns(recwarn):
     transport = DummyTransport()
     transport.bind('http://tests.python-zeep.org/schema-2.wsdl', wsdl_2)
     document = wsdl.Document(wsdl_main, transport)
+    document.dump()
+
+
+def test_wsdl_dtd_entities_rules():
+    wsdl_declaration = u"""<!DOCTYPE Author [
+        <!ENTITY writer "Donald Duck.">
+        ]>
+        <wsdl:definitions
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:tns="http://tests.python-zeep.org/xsd-main"
+        xmlns:mine="http://tests.python-zeep.org/xsd-secondary"
+        xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+        targetNamespace="http://tests.python-zeep.org/xsd-main">
+        <wsdl:types>
+          <xsd:schema
+              targetNamespace="http://tests.python-zeep.org/xsd-main"
+              xmlns:tns="http://tests.python-zeep.org/xsd-main">
+            <xsd:element name="input" type="xsd:string"/>
+          </xsd:schema>
+        </wsdl:types>
+        <wsdl:message name="message-1">
+          <wsdl:part name="response" element="tns:input"/>
+        </wsdl:message>
+        <wsdl:portType name="TestPortType">
+          <wsdl:operation name="TestOperation1">
+            <wsdl:input message="message-1"/>
+          </wsdl:operation>
+        </wsdl:portType>
+        </wsdl:definitions>
+    """.strip()
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/schema-2.wsdl', wsdl_declaration)
+
+    with pytest.raises(DTDForbidden):
+        wsdl.Document(
+            StringIO(wsdl_declaration), transport,
+            settings=Settings(forbid_dtd=True))
+
+    with pytest.raises(EntitiesForbidden):
+        wsdl.Document(StringIO(wsdl_declaration), transport)
+
+    document = wsdl.Document(
+        StringIO(wsdl_declaration), transport,
+        settings=Settings(forbid_entities=False))
     document.dump()

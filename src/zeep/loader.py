@@ -30,22 +30,25 @@ def parse_xml(content, transport, base_url=None, strict=True,
     :param base_url: The base url of the document, used to make relative
       lookups absolute.
     :type base_url: str
-    :param strict: boolean to indicate if the lxml should be parsed a 'strict'.
-      If false then the recover mode is enabled which tries to parse invalid
-      XML as best as it can.
     :param settings: A zeep.settings.Settings object containing parse settings.
-    :type strict: boolean
+    :type settings: zeep.settings.Settings
     :returns: The document root
     :rtype: lxml.etree._Element
 
     """
     settings = settings or Settings()
     recover = not strict
-    parser = etree.XMLParser(remove_comments=True, resolve_entities=False,
-                             recover=recover, huge_tree=settings.xml_huge_tree)
+    parser = etree.XMLParser(
+        remove_comments=True, resolve_entities=False,
+        recover=recover, huge_tree=settings.xml_huge_tree)
     parser.resolvers.add(ImportResolver(transport))
     try:
-        return fromstring(content, parser=parser, base_url=base_url)
+        return fromstring(
+            content,
+            parser=parser,
+            base_url=base_url,
+            forbid_dtd=settings.forbid_dtd,
+            forbid_entities=settings.forbid_entities)
     except etree.XMLSyntaxError as exc:
         raise XMLSyntaxError(
             "Invalid XML content received (%s)" % exc.msg,
@@ -59,10 +62,8 @@ def load_external(url, transport, base_url=None, strict=True, settings=None):
     :param url:
     :param transport:
     :param base_url:
-    :param strict: boolean to indicate if the lxml should be parsed a 'strict'.
-      If false then the recover mode is enabled which tries to parse invalid
-      XML as best as it can.
-    :type strict: boolean
+    :param settings: A zeep.settings.Settings object containing parse settings.
+    :type settings: zeep.settings.Settings
 
     """
     settings = settings or Settings()
