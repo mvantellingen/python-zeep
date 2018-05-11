@@ -39,6 +39,9 @@ class InMemoryCache(Base):
 
     def add(self, url, content):
         logger.debug("Caching contents of %s", url)
+        if not isinstance(content, (str, bytes)):
+            raise TypeError(
+                "a bytes-like object is required, not {}".format(type(content).__name__))
         self._cache[url] = (datetime.datetime.utcnow(), content)
 
     def get(self, url):
