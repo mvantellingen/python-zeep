@@ -7,6 +7,7 @@ changes to the API.
    the zeep.settings.Settings() class.
  - Allow control of defusedxml settings via zeep.Settings (see #567, #391)
  - Skip the xsd:annotation element in the all:element (#737)
+ - Add Settings.force_https as option so that it can be disabled (#605)
 
 
 2.5.0 (2018-01-06)

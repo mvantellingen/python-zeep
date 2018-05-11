@@ -21,6 +21,9 @@ class Settings(object):
       in external entities or DTD and raising an ExternalReferenceForbidden
       exception when a DTD or entity references an external resource.
     :type forbid_entities: bool
+    :param force_https: Force all connections to HTTPS if the WSDL is also
+      loaded from an HTTPS endpoint. (default: true)
+    :type force_https: bool
 
     """
     xml_huge_tree = attr.ib(default=False)
@@ -29,6 +32,7 @@ class Settings(object):
     forbid_dtd = attr.ib(default=False)
     forbid_entities = attr.ib(default=True)
     forbid_external = attr.ib(default=True)
+    force_https = attr.ib(default=True)
 
     @contextmanager
     def __call__(self, **options):
