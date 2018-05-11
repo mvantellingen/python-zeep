@@ -146,8 +146,8 @@ elements. This can be done by creating a new ServiceProxy using the
 Creating the raw XML documents
 ------------------------------
 When you want zeep to build and return the XML instead of sending it to the
-server you can use the ``Client.create_message()`` call. It requires then
-ServiceProxy as first argument and the operation name as second argument.
+server you can use the ``Client.create_message()`` call. It requires the
+ServiceProxy as the first argument and the operation name as the second argument.
 
 
 .. code-block:: python
