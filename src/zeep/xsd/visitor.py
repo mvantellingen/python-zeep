@@ -887,7 +887,8 @@ class SchemaVisitor(object):
         ]
         result = xsd_elements.All()
 
-        for child in node.iterchildren():
+        annotation, items = self._pop_annotation(node.getchildren())
+        for child in items:
             assert child.tag in sub_types, child
             item = self.process(child, node)
             result.append(item)
