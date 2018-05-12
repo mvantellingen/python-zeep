@@ -375,7 +375,9 @@ class ComplexType(AnyType):
 
             element = self._element.clone(self._element.name)
             if isinstance(base_element, OrderIndicator):
-                if isinstance(self._element, Choice):
+                if isinstance(base_element, Choice):
+                    element.insert(0, base_element)
+                elif isinstance(self._element, Choice):
                     element = base_element.clone(self._element.name)
                     element.append(self._element)
                 elif isinstance(element, OrderIndicator):
