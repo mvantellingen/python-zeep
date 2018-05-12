@@ -156,13 +156,11 @@ class SoapBinding(Binding):
             content = response.content
 
         try:
-            doc = parse_xml(
-                content, self.transport,
-                settings=client.settings)
-        except XMLSyntaxError:
+            doc = parse_xml(content, self.transport, settings=client.settings)
+        except XMLSyntaxError as exc:
             raise TransportError(
-                'Server returned HTTP status %d (%s)'
-                % (response.status_code, response.content),
+                'Server returned response (%s) with invalid XML: %s.\nContent: %r'
+                % (response.status_code, exc, response.content),
                 status_code=response.status_code,
                 content=response.content)
 
