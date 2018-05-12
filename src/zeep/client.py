@@ -121,15 +121,19 @@ class Client(object):
                 "are: %s" % (', '.join(self.wsdl.bindings.keys())))
         return ServiceProxy(self, binding, address=address)
 
-    def create_message(self, service, operation_name, *args, **kwargs):
+    def create_message(self, service, operation_name, *args, return_headers=False, **kwargs):
         """Create the payload for the given operation.
 
-        :rtype: lxml.etree._Element
+        :return: envelope or (envelope, headers) if return_headers kwarg is True.
+        :rtype: lxml.etree._Element or Tuple[lxml.etree._Element, Dict[str, str]]
 
         """
         envelope, http_headers = service._binding._create(
             operation_name, args, kwargs, client=self)
-        return envelope
+        if return_headers is True:
+            return envelope, http_headers
+        else:
+            return envelope
 
     def type_factory(self, namespace):
         """Return a type factory for the given namespace.
