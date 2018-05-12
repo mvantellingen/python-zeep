@@ -1,3 +1,4 @@
+import io
 import pytest
 from lxml import etree
 
@@ -841,3 +842,25 @@ def test_xml_namespace():
           </xs:element>
         </xs:schema>
     """), transport=transport)
+
+
+def test_auto_import_known_schema():
+    content = io.open('tests/wsdl_files/soap-enc.xsd', 'rb').read()
+
+    transport = DummyTransport()
+    transport.bind('http://schemas.xmlsoap.org/soap/encoding/', content)
+
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+          <xs:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+          <xs:group ref="soap-enc:Struct"/>
+        </xs:schema>
+    """), transport=transport)
+    schema.set_ns_prefix('soap-enc', 'http://schemas.xmlsoap.org/soap/encoding/')
+    schema.get_group('soap-enc:Struct')

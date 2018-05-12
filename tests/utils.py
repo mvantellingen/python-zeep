@@ -40,6 +40,6 @@ class DummyTransport(object):
 
     def load(self, url):
         data = self._items[url]
-        if isinstance(data, string_types):
+        if isinstance(data, (binary_type, string_types)):
             return data
         return etree.tostring(data)

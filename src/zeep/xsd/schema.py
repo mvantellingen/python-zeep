@@ -116,7 +116,7 @@ class Schema(object):
         schema_node = load_external(
             url,
             self._transport,
-            strict=self.strict)
+            strict=self.settings.strict)
 
         document = self.create_new_document(schema_node, url=url)
         document.resolve()
