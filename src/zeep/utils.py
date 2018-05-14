@@ -15,6 +15,7 @@ def qname_attr(node, attr_name, target_namespace=None):
 
 def as_qname(value, nsmap, target_namespace=None):
     """Convert the given value to a QName"""
+    value = value.strip()  # some xsd's contain leading/trailing spaces
     if ':' in value:
         prefix, local = value.split(':')
 

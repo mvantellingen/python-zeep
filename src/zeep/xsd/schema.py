@@ -5,6 +5,7 @@ from lxml import etree
 
 from zeep import exceptions, ns
 from zeep.loader import load_external
+from zeep.settings import Settings
 from zeep.xsd import const
 from zeep.xsd.elements import builtins as xsd_builtins_elements
 from zeep.xsd.types import builtins as xsd_builtins_types
@@ -16,15 +17,15 @@ logger = logging.getLogger(__name__)
 class Schema(object):
     """A schema is a collection of schema documents."""
 
-    def __init__(self, node=None, transport=None, location=None, strict=True):
+    def __init__(self, node=None, transport=None, location=None, settings=None):
         """
         :param node:
         :param transport:
         :param location:
-        :param strict: Boolean to indicate if the parsing is strict (default)
+        :param settings: The settings object
 
         """
-        self.strict = strict
+        self.settings = settings or Settings()
 
         self._transport = transport
 
@@ -115,7 +116,7 @@ class Schema(object):
         schema_node = load_external(
             url,
             self._transport,
-            strict=self.strict)
+            strict=self.settings.strict)
 
         document = self.create_new_document(schema_node, url=url)
         document.resolve()

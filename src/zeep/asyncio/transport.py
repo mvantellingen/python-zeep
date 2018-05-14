@@ -14,6 +14,12 @@ from zeep.transports import Transport
 from zeep.utils import get_version
 from zeep.wsdl.utils import etree_to_string
 
+try:
+    from async_timeout import timeout as aio_timeout  # Python 3.6+
+except ImportError:
+    from aiohttp import Timeout as aio_timeout  # Python 3.5, aiohttp < 3
+
+
 __all__ = ['AsyncTransport']
 
 
@@ -40,14 +46,22 @@ class AsyncTransport(Transport):
 
     def __del__(self):
         if self._close_session:
-            self.session.close()
+            # aiohttp.ClientSession.close() is async,
+            # call the underlying sync function instead.
+            if self.session.connector is not None:
+                self.session.connector.close()
 
     def _load_remote_data(self, url):
         result = None
+        if self.loop.is_running():
+            raise RuntimeError(
+                "WSDL loading is not asynchronous yet. "
+                "Instantiate the zeep client outside the asyncio event loop."
+            )
 
         async def _load_remote_data_async():
             nonlocal result
-            with aiohttp.Timeout(self.load_timeout):
+            with aio_timeout(self.load_timeout):
                 response = await self.session.get(url)
                 result = await response.read()
                 try:
@@ -65,7 +79,7 @@ class AsyncTransport(Transport):
 
     async def post(self, address, message, headers):
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
-        with aiohttp.Timeout(self.operation_timeout):
+        with aio_timeout(self.operation_timeout):
             response = await self.session.post(
                 address, data=message, headers=headers)
             self.logger.debug(

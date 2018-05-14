@@ -579,3 +579,29 @@ def test_simple_type_restriction():
     schema = parse_schema_node(node)
     xsd_element = schema.get_type('{http://tests.python-zeep.org/}type_3')
     assert xsd_element(100) == '100'
+
+
+def test_strip_spaces_from_qname():
+    node = load_xml("""
+        <xsd:schema
+            xmlns="http://tests.python-zeep.org/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="STRIP_IT " type="xsd:string"/>
+
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="THIS_TOO " type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """)
+    schema = parse_schema_node(node)
+    xsd_element = schema.get_element('{http://tests.python-zeep.org/}STRIP_IT')
+    assert xsd_element('okay') == 'okay'
+
+    xsd_element = schema.get_element('{http://tests.python-zeep.org/}container')
+    elm = xsd_element(THIS_TOO='okay')
+    assert elm.THIS_TOO == 'okay'

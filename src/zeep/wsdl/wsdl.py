@@ -16,9 +16,11 @@ from lxml import etree
 
 from zeep.exceptions import IncompleteMessage
 from zeep.loader import absolute_location, is_relative_path, load_external
+from zeep.settings import Settings
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
 from zeep.xsd import Schema
+
 
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
@@ -52,12 +54,14 @@ class Document(object):
 
     """
 
-    def __init__(self, location, transport, base=None, strict=True):
+    def __init__(self, location, transport, base=None, settings=None):
         """Initialize a WSDL document.
 
         The root definition properties are exposed as entry points.
 
         """
+        self.settings = settings or Settings()
+
         if isinstance(location, six.string_types):
             if is_relative_path(location):
                 location = os.path.abspath(location)
@@ -66,7 +70,6 @@ class Document(object):
             self.location = base
 
         self.transport = transport
-        self.strict = strict
 
         # Dict with all definition objects within this WSDL
         self._definitions = {}
@@ -74,7 +77,7 @@ class Document(object):
             node=None,
             transport=self.transport,
             location=self.location,
-            strict=self.strict)
+            settings=self.settings)
 
         document = self._get_xml_document(location)
 
@@ -137,7 +140,7 @@ class Document(object):
 
         """
         return load_external(
-            location, self.transport, self.location, strict=self.strict)
+            location, self.transport, self.location, settings=self.settings)
 
     def _add_definition(self, definition):
         key = (definition.target_namespace, definition.location)

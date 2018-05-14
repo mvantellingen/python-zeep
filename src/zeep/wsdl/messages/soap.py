@@ -11,6 +11,7 @@ from lxml.builder import ElementMaker
 
 from zeep import exceptions, xsd
 from zeep.utils import as_qname
+from zeep.xsd.context import XmlParserContext
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
 from zeep.wsdl.messages.multiref import process_multiref
 
@@ -345,7 +346,8 @@ class SoapMessage(ConcreteMessage):
         if not self.header or xmlelement is None:
             return {}
 
-        result = self.header.parse(xmlelement, self.wsdl.types)
+        context = XmlParserContext(settings=self.wsdl.settings)
+        result = self.header.parse(xmlelement, self.wsdl.types, context=context)
         if result is not None:
             return {'header': result}
         return {}
@@ -400,15 +402,15 @@ class DocumentMessage(SoapMessage):
         self._is_body_wrapped = False
 
     def _deserialize_body(self, xmlelement):
-        if self._is_body_wrapped:
-            result = self.body.parse(xmlelement, self.wsdl.types)
-        else:
-            # For now we assume that the body only has one child since only
-            # one part is specified in the wsdl. This should be handled way
-            # better
-            # XXX
+
+        if not self._is_body_wrapped:
+            # TODO: For now we assume that the body only has one child since
+            # only one part is specified in the wsdl. This should be handled
+            # way better
             xmlelement = xmlelement.getchildren()[0]
-            result = self.body.parse(xmlelement, self.wsdl.types)
+
+        context = XmlParserContext(settings=self.wsdl.settings)
+        result = self.body.parse(xmlelement, self.wsdl.types, context=context)
         return {'body': result}
 
     def _resolve_body(self, info, definitions, parts):
@@ -501,6 +503,8 @@ class RpcMessage(SoapMessage):
 
         response_element = body_element.getchildren()[0]
         if self.body:
-            result = self.body.parse(response_element, self.wsdl.types)
+            context = XmlParserContext(self.wsdl.settings)
+            result = self.body.parse(
+                response_element, self.wsdl.types, context=context)
             return {'body': result}
         return {'body': None}

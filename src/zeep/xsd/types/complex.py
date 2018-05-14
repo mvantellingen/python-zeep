@@ -174,7 +174,7 @@ class ComplexType(AnyType):
 
             # Check if all children are consumed (parsed)
             if elements:
-                if schema.strict:
+                if schema.settings.strict:
                     raise XMLParseError("Unexpected element %r" % elements[0].tag)
                 else:
                     init_kwargs['_raw_elements'] = elements
@@ -375,7 +375,9 @@ class ComplexType(AnyType):
 
             element = self._element.clone(self._element.name)
             if isinstance(base_element, OrderIndicator):
-                if isinstance(self._element, Choice):
+                if isinstance(base_element, Choice):
+                    element.insert(0, base_element)
+                elif isinstance(self._element, Choice):
                     element = base_element.clone(self._element.name)
                     element.append(self._element)
                 elif isinstance(element, OrderIndicator):

@@ -26,8 +26,23 @@ use the ``zeep.CachingClient()`` automatically creates a Transport object
 with SqliteCache enabled.
 
 
+Configuring the client
+----------------------
+The Client class accepts a settings kwarg for configuring the client. You can
+initialise the object using the following code:
+
+
+.. code-block:: python
+
+    from zeep import Client, Settings
+
+    settings = Setting(strict=False, xml_huge_tree=True)
+    client = Client('http://my-wsdl/wsdl', settings=settings)
+
+
+
 Strict mode
------------
+~~~~~~~~~~~
 By default zeep will operate in 'strict' mode. This can be disabled if you are
 working with a SOAP server which is not standards compliant by passing the
 kwarg ``strict=False`` to the ``Client``.  Disabling strict mode will change
@@ -131,8 +146,8 @@ elements. This can be done by creating a new ServiceProxy using the
 Creating the raw XML documents
 ------------------------------
 When you want zeep to build and return the XML instead of sending it to the
-server you can use the ``Client.create_message()`` call. It requires then
-ServiceProxy as first argument and the operation name as second argument.
+server you can use the ``Client.create_message()`` call. It requires the
+ServiceProxy as the first argument and the operation name as the second argument.
 
 
 .. code-block:: python

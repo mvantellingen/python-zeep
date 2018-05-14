@@ -279,7 +279,7 @@ def test_xml_unparsed_elements():
           </element>
         </schema>
     """))
-    schema.strict = False
+    schema.settings.strict = False
     schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
 
     expected = load_xml("""

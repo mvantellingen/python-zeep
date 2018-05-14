@@ -599,7 +599,7 @@ class Sequence(OrderIndicator):
                     item_subresult = element.parse_xmlelements(
                         xmlelements, schema, name, context=context)
                 except UnexpectedElementError:
-                    if schema.strict:
+                    if schema.settings.strict:
                         raise
                     item_subresult = None
 

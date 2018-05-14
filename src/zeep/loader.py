@@ -5,6 +5,7 @@ from lxml import etree
 from six.moves.urllib.parse import urljoin, urlparse
 
 from zeep.exceptions import XMLSyntaxError
+from zeep.settings import Settings
 
 
 class ImportResolver(etree.Resolver):
@@ -19,7 +20,7 @@ class ImportResolver(etree.Resolver):
 
 
 def parse_xml(content, transport, base_url=None, strict=True,
-              xml_huge_tree=False):
+              settings=None):
     """Parse an XML string and return the root Element.
 
     :param content: The XML string
@@ -29,22 +30,25 @@ def parse_xml(content, transport, base_url=None, strict=True,
     :param base_url: The base url of the document, used to make relative
       lookups absolute.
     :type base_url: str
-    :param strict: boolean to indicate if the lxml should be parsed a 'strict'.
-      If false then the recover mode is enabled which tries to parse invalid
-      XML as best as it can.
-    :param xml_huge_tree: boolean to indicate if lxml should process very
-      large XML content.
-    :type strict: boolean
+    :param settings: A zeep.settings.Settings object containing parse settings.
+    :type settings: zeep.settings.Settings
     :returns: The document root
     :rtype: lxml.etree._Element
 
     """
+    settings = settings or Settings()
     recover = not strict
-    parser = etree.XMLParser(remove_comments=True, resolve_entities=False,
-                             recover=recover, huge_tree=xml_huge_tree)
+    parser = etree.XMLParser(
+        remove_comments=True, resolve_entities=False,
+        recover=recover, huge_tree=settings.xml_huge_tree)
     parser.resolvers.add(ImportResolver(transport))
     try:
-        return fromstring(content, parser=parser, base_url=base_url)
+        return fromstring(
+            content,
+            parser=parser,
+            base_url=base_url,
+            forbid_dtd=settings.forbid_dtd,
+            forbid_entities=settings.forbid_entities)
     except etree.XMLSyntaxError as exc:
         raise XMLSyntaxError(
             "Invalid XML content received (%s)" % exc.msg,
@@ -52,25 +56,25 @@ def parse_xml(content, transport, base_url=None, strict=True,
         )
 
 
-def load_external(url, transport, base_url=None, strict=True):
+def load_external(url, transport, base_url=None, strict=True, settings=None):
     """Load an external XML document.
 
     :param url:
     :param transport:
     :param base_url:
-    :param strict: boolean to indicate if the lxml should be parsed a 'strict'.
-      If false then the recover mode is enabled which tries to parse invalid
-      XML as best as it can.
-    :type strict: boolean
+    :param settings: A zeep.settings.Settings object containing parse settings.
+    :type settings: zeep.settings.Settings
 
     """
+    settings = settings or Settings()
     if hasattr(url, 'read'):
         content = url.read()
     else:
         if base_url:
             url = absolute_location(url, base_url)
         content = transport.load(url)
-    return parse_xml(content, transport, base_url, strict=strict)
+    return parse_xml(
+        content, transport, base_url, strict=strict, settings=settings)
 
 
 def absolute_location(location, base):
