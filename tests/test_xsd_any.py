@@ -4,6 +4,7 @@ import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
+from zeep.exceptions import ValidationError
 from zeep import xsd
 
 
@@ -462,3 +463,74 @@ def test_element_any_parse_inline_schema():
     elm = schema.get_element('ns0:container')
     data = elm.parse(node, schema)
     assert data._value_1._value_1[0]['odr']['item'] == 'hetwerkt'
+
+
+def test_any_missing():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="item">
+                  <complexType>
+                    <sequence>
+                      <any minOccurs="1" maxOccurs="unbounded"/>
+                    </sequence>
+                  </complexType>
+                </element>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """))
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = container_elm({})
+
+    node = etree.Element('document')
+    with pytest.raises(ValidationError):
+        container_elm.render(node, obj)
+
+
+def test_any_optional():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="item">
+                  <complexType>
+                    <sequence>
+                      <any minOccurs="0" maxOccurs="unbounded"/>
+                    </sequence>
+                  </complexType>
+                </element>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """))
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = container_elm({})
+
+    node = etree.Element('document')
+    container_elm.render(node, obj)
+    expected = """
+        <document>
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:item/>
+            </ns0:container>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+    item = container_elm.parse(node.getchildren()[0], schema)
+    assert item.item is None
