@@ -121,7 +121,7 @@ class Client(object):
                 "are: %s" % (', '.join(self.wsdl.bindings.keys())))
         return ServiceProxy(self, binding, address=address)
 
-    def create_message(self, service, operation_name, *args, return_headers=False, **kwargs):
+    def create_message(self, service, operation_name, return_headers=False, *args, **kwargs):
         """Create the payload for the given operation.
 
         :return: envelope or (envelope, headers) if return_headers kwarg is True.
