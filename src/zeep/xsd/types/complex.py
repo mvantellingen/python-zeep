@@ -157,7 +157,7 @@ class ComplexType(AnyType):
                 xmlelement, schema, name, context=context)
         else:
             elements = deque(xmlelement.iterchildren())
-            if allow_none and len(elements) == 0 and len(attributes) == 0:
+            if allow_none and (xmlelement.get(xsi_ns('nil')) == 'true' or (len(elements) == 0 and len(attributes) == 0)):
                 return
 
             # Parse elements. These are always indicator elements (all, choice,
