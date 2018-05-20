@@ -18,7 +18,8 @@ __all__ = ['Element']
 
 class Element(Base):
     def __init__(self, name, type_=None, min_occurs=1, max_occurs=1,
-                 nillable=False, default=None, is_global=False, attr_name=None):
+                 nillable=False, default=None, is_substitution_group=False,
+                 is_global=False, attr_name=None):
 
         if name is None:
             raise ValueError("name cannot be None", self.__class__)
@@ -32,6 +33,8 @@ class Element(Base):
         self.max_occurs = max_occurs
         self.nillable = nillable
         self.is_global = is_global
+        self.is_substitution_group = is_substitution_group
+        self.known_substitution_elms = {}
         self.default = default
         self.attr_name = attr_name or self.name
         # assert type_
@@ -114,8 +117,38 @@ class Element(Base):
             schema_type=self.type)
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
-        return self.type.parse_kwargs(
+        result = self.type.parse_kwargs(
             kwargs, name or self.attr_name, available_kwargs)
+        if (len(result) < 1 and self.is_global and self.is_substitution_group
+            and len(self.known_substitution_elms) > 0):
+            for (elm_qname, elm) in self.known_substitution_elms.items():
+                result = elm.type.parse_kwargs(kwargs, elm.name, available_kwargs)
+                if len(result) > 0:
+                    if name not in result:
+                        result[name] = result[elm.name]
+                    break
+        return result
+
+    def parse_xmlelement_substituted(self, xmlelements, schema, element_tag,
+                                     substitution_group=None, context=None):
+        if substitution_group is None:  # We didn't get one passed in.
+            # Try to retrieve it from the schema.
+            substitution_group = schema.get_substitution_group(self.qname)
+        if not substitution_group:  # Still no substitution_group for this element.
+            return None, None
+        for sub_element_qname in substitution_group:
+            if (element_tag.namespace and sub_element_qname.namespace and
+               element_tag.namespace != sub_element_qname.namespace):
+                continue
+            if element_tag.localname == sub_element_qname.localname:
+                # Try to find the substitute element in our schema
+                substitute_element = schema.get_element(sub_element_qname)
+                self.known_substitution_elms[sub_element_qname] = substitute_element
+                xmlelement = xmlelements.popleft()
+                item = substitute_element.parse(
+                    xmlelement, schema, allow_none=True, context=context)
+                return item, substitute_element.name
+        return None, None
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Consume matching xmlelements and call parse() on each of them
@@ -133,6 +166,7 @@ class Element(Base):
         """
         result = []
         num_matches = 0
+        substitute_elm_name = None
         for _unused in max_occurs_iter(self.max_occurs):
             if not xmlelements:
                 break
@@ -143,25 +177,56 @@ class Element(Base):
             # namespace. If only one has a namespace then only compare the
             # localname.
 
-            # If both elements have a namespace and they don't match then skip
             element_tag = etree.QName(xmlelements[0].tag)
-            if (
-                element_tag.namespace and self.qname.namespace and
-                element_tag.namespace != self.qname.namespace and
-                schema.strict
-            ):
-                break
+            # If both elements have a namespace and they don't match then skip
+            differs_namespace = (element_tag.namespace and self.qname.namespace and
+                                 element_tag.namespace != self.qname.namespace)
+            if differs_namespace and schema.strict:
+                # namespaces are different and we are on strict mode.
+                # Bail out early, but check for a possible substitution group first.
+                if not self.is_substitution_group:
+                    break  # Can't check for substitutions
 
-            # Only compare the localname
-            if element_tag.localname == self.qname.localname:
+                substitution_group = schema.get_substitution_group(self.qname)
+                assert substitution_group is not None, "Element is defined as a substitution group, but cannot load " \
+                                                       "its substitution group from the schema."
+                # Try early substitution.
+                s_result, elm_name = self.parse_xmlelement_substituted(
+                    xmlelements, schema, element_tag, substitution_group,
+                    context=context)
+                if s_result:
+                    num_matches += 1
+                    result.append(s_result)
+                    substitute_elm_name = elm_name
+                    continue
+                else:
+                    break
+            # Compare just the localname in that case that:
+            # a) The elements are in the same namespace _or_
+            # b) Schema is configured in non-strict mode
+            if (not differs_namespace or not schema.strict) and \
+                (element_tag.localname == self.qname.localname):
                 xmlelement = xmlelements.popleft()
                 num_matches += 1
                 item = self.parse(
                     xmlelement, schema, allow_none=True, context=context)
                 result.append(item)
             else:
-                # If the element passed doesn't match and the current one is
-                # not optional then throw an error
+                # If the element passed doesn't match and the current one
+                # Try late substitution
+                substitution_group = schema.get_substitution_group(self.qname) \
+                                     if schema else None
+
+                if substitution_group:
+                    s_result, elm_name = self.parse_xmlelement_substituted(
+                        xmlelements, schema, element_tag, substitution_group,
+                        context=context)
+                    if s_result:
+                        num_matches += 1
+                        result.append(s_result)
+                        substitute_elm_name = elm_name
+                        continue
+                # If the Element is not optional then throw an error
                 if num_matches == 0 and not self.is_optional:
                     raise UnexpectedElementError(
                         "Unexpected element %r, expected %r" % (
@@ -170,6 +235,8 @@ class Element(Base):
 
         if not self.accepts_multiple:
             result = result[0] if result else None
+            if substitute_elm_name:
+                result = (result, substitute_elm_name)
         return result
 
     def render(self, parent, value, render_path=None):

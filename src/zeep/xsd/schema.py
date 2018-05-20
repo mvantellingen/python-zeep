@@ -32,6 +32,7 @@ class Schema(object):
         self.documents = _SchemaContainer()
         self._prefix_map_auto = {}
         self._prefix_map_custom = {}
+        self._substitution_groups = {}
 
         self._load_default_documents()
 
@@ -192,6 +193,26 @@ class Schema(object):
         if namespace == 'http://schemas.xmlsoap.org/soap/envelope/':
             return 'soap-env'
         return namespace
+
+    def add_substitution_group_member(self, substitution_group_qname, group_member):
+        substitution_group_qname = self._create_qname(substitution_group_qname)
+        group_member_qname = self._create_qname(group_member)
+        if substitution_group_qname not in self._substitution_groups:
+            # Create a new substitution group.
+            self._substitution_groups[substitution_group_qname] = set()
+            # Check if an element with that group name is already registered
+            # If it is, mark it as is_substitution_group
+            try:
+                elem = self.get_element(substitution_group_qname)
+                if elem:
+                    elem.is_substitution_group = True
+            except (exceptions.NamespaceError, exceptions.LookupError):
+                pass
+        self._substitution_groups[substitution_group_qname].add(group_member)
+
+    def get_substitution_group(self, substitution_group_qname):
+        substitution_group_qname = self._create_qname(substitution_group_qname)
+        return self._substitution_groups.get(substitution_group_qname, None)
 
     def create_new_document(self, node, url, base_url=None):
         """
