@@ -319,6 +319,10 @@ class SchemaVisitor(object):
         # be present. Short circuit that here.
         # Ref is prohibited on global elements (parent = schema)
         if not is_global:
+            # Naive workaround to mark fields which are part of a choice element
+            # as optional
+            if parent.tag == tags.choice:
+                min_occurs = 0
             result = self.process_reference(
                 node, min_occurs=min_occurs, max_occurs=max_occurs)
             if result:
@@ -350,11 +354,6 @@ class SchemaVisitor(object):
                 xsd_type = self._get_type(node_type.text)
             else:
                 xsd_type = xsd_types.AnyType()
-
-        # Naive workaround to mark fields which are part of a choice element
-        # as optional
-        if parent.tag == tags.choice:
-            min_occurs = 0
 
         nillable = node.get('nillable') == 'true'
         default = node.get('default')
