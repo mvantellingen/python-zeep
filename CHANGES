@@ -10,6 +10,7 @@ changes to the API.
  - Add Settings.force_https as option so that it can be disabled (#605)
  - Strip spaces from QName's when parsing xsd's (#719)
  - Fix DateTime parsing when only a date is returned (#672)
+ - Fix handling of nested optional any elements (#556)
 
 
 2.5.0 (2018-01-06)
