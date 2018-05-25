@@ -148,7 +148,7 @@ class Element(Base):
             if (
                 element_tag.namespace and self.qname.namespace and
                 element_tag.namespace != self.qname.namespace and
-                schema.strict
+                schema.settings.strict
             ):
                 break
 
