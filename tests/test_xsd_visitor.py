@@ -605,3 +605,34 @@ def test_strip_spaces_from_qname():
     xsd_element = schema.get_element('{http://tests.python-zeep.org/}container')
     elm = xsd_element(THIS_TOO='okay')
     assert elm.THIS_TOO == 'okay'
+
+def test_referenced_elements_in_choice():
+    node = load_xml("""
+        <xsd:schema
+            xmlns:zeep="http://tests.python-zeep.org/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://tests.python-zeep.org/">
+
+          <xsd:element name="el1" type="xsd:string"/>
+          <xsd:element name="el2" type="xsd:string"/>
+
+          <xsd:element name="container">
+    		<xsd:complexType>
+    			<xsd:sequence>
+    				<xsd:choice>
+    					<xsd:element ref="zeep:el1"/>
+    					<xsd:element ref="zeep:el2"/>
+    					<xsd:element name="el3" type="xsd:string"/>
+    				</xsd:choice>
+    			</xsd:sequence>
+    		</xsd:complexType>
+          </xsd:element>
+
+         </xsd:schema>
+    """)
+    schema = parse_schema_node(node)
+    container_element = schema.get_element('{http://tests.python-zeep.org/}container')
+    for el_name, sub_element in container_element.type.elements:
+        assert el_name in ('el1', 'el2', 'el3')
+        assert sub_element.min_occurs == 0
+        assert sub_element.is_optional == True
