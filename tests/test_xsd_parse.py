@@ -489,8 +489,6 @@ def test_xsd_choice_with_references():
              </xsd:schema>
         """))
     schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
-    container_elm = schema.get_element('tns:container')
-    obj = container_elm()
 
     xml = load_xml(b"""
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">

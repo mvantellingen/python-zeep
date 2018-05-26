@@ -633,5 +633,6 @@ def test_referenced_elements_in_choice():
     schema = parse_schema_node(node)
     container_element = schema.get_element('{http://tests.python-zeep.org/}container')
     for el_name, sub_element in container_element.type.elements:
+        assert el_name in ('el1', 'el2', 'el3')
         assert sub_element.min_occurs == 0
         assert sub_element.is_optional == True
