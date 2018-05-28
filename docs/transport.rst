@@ -5,7 +5,7 @@ need to create an instance of the Transport class yourself.
 
 SSL verification
 ----------------
-If you need to verficate the SSL connection (in case you have a self signed certificate for your host), the best way is to create a :class:`requests.Session` instance and add the information to that Session, so it keeps persistent:
+If you need to verify the SSL connection (in case you have a self-signed certificate for your host), the best way is to create a :class:`requests.Session` instance and add the information to that Session, so it keeps persistent:
 
 .. code-block:: python
 
@@ -21,9 +21,8 @@ If you need to verficate the SSL connection (in case you have a self signed cert
         transport=transport)
 
 .. HINT::
-
-    Make sure that the certificate you refer to is a CA_BUNDLE, meaning it contains a root CA and an intermediate CA.
-    Accepted are only X.509 ASCII files (file extension ``.pem``, sometimes ``crt``). If you have two different files, you must combine them manually into one.
+Make sure that the certificate you refer to is a CA_BUNDLE, meaning it contains a root CA and an intermediate CA.
+Accepted are only X.509 ASCII files (file extension ``.pem``, sometimes ``.crt``). If you have two different files, you must combine them manually into one. 
 
 Alternatively, instead of using ``session.verify`` you can use ``session.cert`` if you just want to use an SSL client certificate.
 

@@ -7,7 +7,7 @@ The Client object
 The :class:`Client` is the main interface for interacting with a SOAP server.
 It provides a ``service`` attribute which references the default binding of
 the client (via a :class:`ServiceProxy` object). The default binding can be specified
-when initating the client by passing the ``service_name`` and ``port_name``.
+when initiating the client by passing the ``service_name`` and ``port_name``.
 Otherwise the first service and first port within that service are used as the
 default.
 
@@ -16,9 +16,9 @@ default.
 
 Caching of WSDL and XSD files
 ------------------------------
-When the client is initialised it will automaticaly retrieve the wsdl file
-passed as argument. This wsdl file generally references various other wsdl and
-xsd files. By default Zeep doesn't cache these files but it is however
+When the client is initialized it will automatically retrieve the WSDL file
+passed as argument. This WSDL file generally references various other WSDL and
+XSD files. By default Zeep doesn't cache these files but it is however
 advised to enable this for performance reasons.
 
 Please see :ref:`transport_caching` how to enable this. To make it easy to
@@ -49,7 +49,7 @@ kwarg ``strict=False`` to the ``Client``.  Disabling strict mode will change
 the following behaviour:
 
  - The XML is parsed with the recover mode enabled
- - Non optional elements are allowed to be missing in xsd:sequences
+ - Nonoptional elements are allowed to be missing in xsd:sequences
 
 Note that disabling strict mode should be considered a last resort since it
 might result in data-loss between the XML and the returned response.
@@ -100,15 +100,15 @@ operation on the binding.
     client.service.X()
 
     # The operation can also be called via an __getitem__ call.
-    # This is usefull if the operation name is not a valid
+    # This is useful if the operation name is not a valid
     # python attribute name.
     client.service['X-Y']()
 
 
 Using non-default bindings
 --------------------------
-As mentioned by default Zeep picks the first binding in the wsdl as the
-default. This binding is availble via ``client.service``. To use a specific
+As mentioned by default Zeep picks the first binding in the WSDL as the
+default. This binding is available via ``client.service``. To use a specific
 binding you can use the ``bind()`` method on the client object:
 
 

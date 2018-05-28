@@ -6,7 +6,7 @@ elements can be passed to all operations using the ``_soapheaders`` kwarg.
 
 There are multiple ways to pass a value to the soapheader.
 
-1. When the soap header expects a complex type you can either pass a dict or
+1. When the SOAP header expects a complex type you can either pass a dict or
    an object created via the ``client.get_element()`` method.
 2. When the header expects a simple type value you can pass it directly to the
    ``_soapheaders`` kwarg. (e.g.: ``client.service.Method(_soapheaders=1234)``)
