@@ -93,7 +93,7 @@ class AsyncTransport(Transport):
         return await self.new_response(response)
 
     async def get(self, address, params, headers):
-        with aiohttp.Timeout(self.operation_timeout):
+        with aio_timeout(self.operation_timeout):
             response = await self.session.get(
                 address, params=params, headers=headers)
 
