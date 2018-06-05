@@ -148,16 +148,19 @@ class ComplexType(AnyType):
         attributes = xmlelement.attrib
         init_kwargs = OrderedDict()
 
+        if allow_none and xmlelement.get(xsi_ns('nil')) == 'true':
+            return None
+
         # If this complexType extends a simpleType then we have no nested
         # elements. Parse it directly via the type object. This is the case
         # for xsd:simpleContent
         if isinstance(self._element, Element) and isinstance(self._element.type, AnySimpleType):
             name, element = self.elements_nested[0]
             init_kwargs[name] = element.type.parse_xmlelement(
-                xmlelement, schema, name, context=context)
+                xmlelement, schema, name, context=context, allow_none=True)
         else:
             elements = deque(xmlelement.iterchildren())
-            if allow_none and (xmlelement.get(xsi_ns('nil')) == 'true' or (len(elements) == 0 and len(attributes) == 0)):
+            if allow_none and len(elements) == 0 and len(attributes) == 0:
                 return
 
             # Parse elements. These are always indicator elements (all, choice,
