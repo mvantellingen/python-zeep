@@ -157,7 +157,7 @@ class ComplexType(AnyType):
         if isinstance(self._element, Element) and isinstance(self._element.type, AnySimpleType):
             name, element = self.elements_nested[0]
             init_kwargs[name] = element.type.parse_xmlelement(
-                xmlelement, schema, name, context=context, allow_none=True)
+                xmlelement, schema, name, context=context)
         else:
             elements = deque(xmlelement.iterchildren())
             if allow_none and len(elements) == 0 and len(attributes) == 0:
