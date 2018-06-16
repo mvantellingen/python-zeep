@@ -28,7 +28,7 @@ with SqliteCache enabled.
 
 Configuring the client
 ----------------------
-The Client class accepts a settings kwarg for configuring the client. You can
+The Client class accepts a settings argument to configuring the client. You can
 initialise the object using the following code:
 
 
@@ -39,6 +39,16 @@ initialise the object using the following code:
     settings = Setting(strict=False, xml_huge_tree=True)
     client = Client('http://my-wsdl/wsdl', settings=settings)
 
+
+The settings object is always accessible via the client using
+``client.settings``. For example:
+
+.. code-block:: python
+
+    with client.settings(raw_response=True):
+        response = client.service.myoperation()
+
+Please see :ref:`settings` for more information.
 
 
 Strict mode
@@ -53,29 +63,6 @@ the following behaviour:
 
 Note that disabling strict mode should be considered a last resort since it
 might result in data-loss between the XML and the returned response.
-
-
-Setting options
----------------
-You can set various options directly as attribute on the client or via a
-context manager.
-
-For example to let zeep return the raw response directly instead of processing
-it you can do the following:
-
-.. code-block:: python
-
-    from zeep import Client
-    from zeep import xsd
-
-    client = Client('http://my-endpoint.com/production.svc?wsdl')
-
-    with client.options(raw_response=True):
-        response = client.service.myoperation()
-
-        # response is now a regular requests.Response object
-        assert response.status_code == 200
-        assert response.content
 
 
 The ServiceProxy object

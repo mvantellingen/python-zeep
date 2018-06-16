@@ -1,5 +1,5 @@
 ========================
-Zeep: Python SOAP client 
+Zeep: Python SOAP client
 ========================
 
 A fast and modern Python SOAP client
@@ -45,8 +45,8 @@ in major speed benefits when processing large SOAP responses.
 The SOAP specifications are unfortunately really vague and leave a lot of
 things open for interpretation.  Due to this there are a lot of WSDL documents
 available which are invalid or SOAP servers which contain bugs. Zeep tries to
-be as compatible as possible but there might be cases where you run into 
-problems. Don't hesitate to submit an issue in this case (but please first 
+be as compatible as possible but there might be cases where you run into
+problems. Don't hesitate to submit an issue in this case (but please first
 read :ref:`reporting_bugs`).
 
 .. _lxml: http://lxml.de
@@ -58,9 +58,9 @@ Installation
 Zeep is a pure-python module.  This means that there is no C code which needs
 to be compiled.  However the lxml dependency does contain C code since it uses
 libxml2 and libxslt.  For linux/bsd this means you need to install libxml2-dev
-and libxslt-dev packages.  For Windows this is unfortunately a bit more 
+and libxslt-dev packages.  For Windows this is unfortunately a bit more
 complicated.  The easiest way is to install lxml via wheel files since that
-contains already compiled code for your platform. 
+contains already compiled code for your platform.
 
 To install wheel files you need a recent pip client.  See
 https://pip.pypa.io/en/stable/installing/ how to install pip on your platform.
@@ -72,7 +72,7 @@ If you have installed pip then run::
 
 
 This assumes that there are wheel files available for the latest lxml release.
-If that is not the case (https://pypi.python.org/pypi/lxml/) then first 
+If that is not the case (https://pypi.python.org/pypi/lxml/) then first
 install lxml 3.7.3 since that release should have the wheel files for all
 platforms::
 
@@ -108,8 +108,8 @@ implement. This can be done with::
 See ``python -mzeep --help`` for more information about this command.
 
 
-.. note:: Zeep follows `semver`_ for versioning, however bugs can always occur.  
-          So as always pin the version of zeep you tested with 
+.. note:: Zeep follows `semver`_ for versioning, however bugs can always occur.
+          So as always pin the version of zeep you tested with
           (e.g. ``zeep==2.5.0``').
 
 
@@ -129,9 +129,9 @@ To give you an idea how zeep works a basic example.
     client = zeep.Client(wsdl=wsdl)
     print(client.service.Method1('Zeep', 'is cool'))
 
-The WSDL used above only defines one simple function (``Method1``) which is 
+The WSDL used above only defines one simple function (``Method1``) which is
 made available by zeep via ``client.service.Method1``. It takes two arguments
-and returns a string. To get an overview of the services available on the 
+and returns a string. To get an overview of the services available on the
 endpoint you can run the following command in your terminal.
 
 .. code-block:: bash
@@ -143,7 +143,7 @@ endpoint you can run the following command in your terminal.
 
     Note that unlike suds, zeep doesn't enable caching of the wsdl documents
     by default. This means that everytime you initialize the client requests
-    are done to retrieve the wsdl contents. 
+    are done to retrieve the wsdl contents.
 
 
 User guide
@@ -154,6 +154,7 @@ User guide
 
    in_depth
    client
+   settings
    transport
    headers
    datastructures
