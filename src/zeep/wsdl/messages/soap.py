@@ -364,7 +364,7 @@ class SoapMessage(ConcreteMessage):
             part_name = item['part']
 
             message = definitions.get('messages', message_name)
-            if message == self.abstract:
+            if message == self.abstract and part_name in parts:
                 del parts[part_name]
 
             part = message.parts[part_name]
