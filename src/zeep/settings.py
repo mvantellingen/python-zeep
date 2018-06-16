@@ -1,6 +1,7 @@
-import attr
-
+import threading
 from contextlib import contextmanager
+
+import attr
 
 
 @attr.s(slots=True)
@@ -34,14 +35,25 @@ class Settings(object):
     forbid_external = attr.ib(default=True)
     force_https = attr.ib(default=True)
 
+    _tls = attr.ib(default=attr.Factory(threading.local))
+
     @contextmanager
     def __call__(self, **options):
         current = {}
         for key, value in options.items():
             current[key] = getattr(self, key)
-            setattr(self, key, value)
+            setattr(self._tls, key, value)
 
         yield
 
         for key, value in current.items():
-            setattr(self, key, value)
+            default = getattr(self, key)
+            if value == default:
+                delattr(self._tls, key)
+            else:
+                setattr(self._tls, key, value)
+
+    def __getattribute__(self, key):
+        if key != '_tls' and hasattr(self._tls, key):
+            return getattr(self._tls, key)
+        return super(Settings, self).__getattribute__(key)
