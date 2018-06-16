@@ -247,14 +247,20 @@ class SchemaVisitor(object):
         # transfer the default namespace to the included schema. We can't
         # update the nsmap of elements in lxml so we create a new schema with
         # the correct nsmap and move all the content there.
-        if not schema_node.nsmap.get(None) and node.nsmap.get(None):
-            nsmap = {None: node.nsmap[None]}
+
+        # Included schemas must have targetNamespace equal to parent schema (the including) or None.
+        # If included schema doesn't have default ns, then it should be set to parent's targetNs.
+        # See Chameleon Inclusion https://www.w3.org/TR/xmlschema11-1/#chameleon-xslt
+        if not schema_node.nsmap.get(None) and (node.nsmap.get(None) or parent.attrib.get('targetNamespace')):
+            nsmap = {None: node.nsmap.get(None) or parent.attrib['targetNamespace']}
             nsmap.update(schema_node.nsmap)
             new = etree.Element(schema_node.tag, nsmap=nsmap)
             for child in schema_node:
                 new.append(child)
             for key, value in schema_node.attrib.items():
                 new.set(key, value)
+            if not new.attrib.get('targetNamespace'):
+                new.attrib['targetNamespace'] = parent.attrib['targetNamespace']
             schema_node = new
 
         # Use the element/attribute form defaults from the schema while
