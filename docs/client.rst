@@ -53,10 +53,10 @@ Please see :ref:`settings` for more information.
 
 Strict mode
 ~~~~~~~~~~~
-By default zeep will operate in 'strict' mode. This can be disabled if you are
-working with a SOAP server which is not standards compliant by passing the
-kwarg ``strict=False`` to the ``Client``.  Disabling strict mode will change
-the following behaviour:
+By default zeep will operate in 'strict' mode. This can be disabled if you
+are working with a SOAP server which is not standards compliant by using the
+strict setting. See :ref:`settings`. Disabling strict mode will change the
+following behaviour:
 
  - The XML is parsed with the recover mode enabled
  - Nonoptional elements are allowed to be missing in xsd:sequences
