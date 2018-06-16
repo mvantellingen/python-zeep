@@ -237,10 +237,10 @@ def test_force_wsa_soap12(recwarn, monkeypatch):
         </wsdl:definitions>
     """.strip())
 
-    client = stub(plugins=[wsa.WsAddressingPlugin()], wsse=None)
+    client = stub(plugins=[wsa.WsAddressingPlugin()], wsse=None, settings=Settings())
 
     transport = DummyTransport()
-    doc = wsdl.Document(wsdl_main, transport, settings=Settings())
+    doc = wsdl.Document(wsdl_main, transport, settings=client.settings)
     binding = doc.services.get('TestService').ports.get('TestPortType').binding
 
     envelope, headers = binding._create(
