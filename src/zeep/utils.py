@@ -37,7 +37,7 @@ def as_qname(value, nsmap, target_namespace=None):
         return etree.QName(namespace, local)
 
     if target_namespace:
-        return etree.QName(target_namespace, value)
+        return etree.QName(target_namespace, value.strip())
 
     if nsmap.get(None):
         return etree.QName(nsmap[None], value)
