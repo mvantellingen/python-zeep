@@ -62,7 +62,7 @@ class Any(Base):
                 # Try to parse the any result by iterating all the schemas
                 for context_schema in context.schemas:
                     try:
-                        data = context_schema.deserialize(xmlelement.getchildren()[0])
+                        data = context_schema.deserialize(list(xmlelement)[0])
                         return data
                     except LookupError:
                         continue

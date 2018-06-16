@@ -50,7 +50,7 @@ class AnyType(Type):
         """
         xsi_type = qname_attr(xmlelement, xsi_ns('type'))
         xsi_nil = xmlelement.get(xsi_ns('nil'))
-        children = list(xmlelement.getchildren())
+        children = list(xmlelement)
 
         # Handle xsi:nil attribute
         if xsi_nil == 'true':

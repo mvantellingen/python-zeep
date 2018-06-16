@@ -144,7 +144,7 @@ def test_serialize_any_array():
     assert_nodes_equal(expected, node)
 
     schema = xsd.Schema()
-    obj = custom_type.parse(node.getchildren()[0], schema=schema)
+    obj = custom_type.parse(list(node)[0], schema=schema)
     result = serialize_object(obj)
 
     assert result == {

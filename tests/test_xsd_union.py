@@ -36,7 +36,7 @@ def test_union_same_types():
         </document>
     """
     assert_nodes_equal(expected, node)
-    value = elm.parse(node.getchildren()[0], schema)
+    value = elm.parse(list(node)[0], schema)
     assert value == 102018
 
 
@@ -73,7 +73,7 @@ def test_union_mixed():
         </document>
     """
     assert_nodes_equal(expected, node)
-    value = elm.parse(node.getchildren()[0], schema)
+    value = elm.parse(list(node)[0], schema)
     assert value == '102018'
 
     node = render_node(elm, '2018')
@@ -83,5 +83,5 @@ def test_union_mixed():
         </document>
     """
     assert_nodes_equal(expected, node)
-    value = elm.parse(node.getchildren()[0], schema)
+    value = elm.parse(list(node)[0], schema)
     assert value == '2018'

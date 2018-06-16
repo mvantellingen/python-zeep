@@ -407,7 +407,7 @@ class DocumentMessage(SoapMessage):
             # TODO: For now we assume that the body only has one child since
             # only one part is specified in the wsdl. This should be handled
             # way better
-            xmlelement = xmlelement.getchildren()[0]
+            xmlelement = list(xmlelement)[0]
 
         context = XmlParserContext(settings=self.wsdl.settings)
         result = self.body.parse(xmlelement, self.wsdl.types, context=context)
@@ -501,7 +501,7 @@ class RpcMessage(SoapMessage):
         """
         process_multiref(body_element)
 
-        response_element = body_element.getchildren()[0]
+        response_element = list(body_element)[0]
         if self.body:
             context = XmlParserContext(self.wsdl.settings)
             result = self.body.parse(

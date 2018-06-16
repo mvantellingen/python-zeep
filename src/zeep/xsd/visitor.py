@@ -340,7 +340,7 @@ class SchemaVisitor(object):
         else:
             qname = etree.QName(node.get('name').strip())
 
-        children = node.getchildren()
+        children = list(node)
         xsd_type = None
         if children:
             value = None
@@ -422,7 +422,7 @@ class SchemaVisitor(object):
         else:
             name = etree.QName(node.get('name'))
 
-        annotation, items = self._pop_annotation(node.getchildren())
+        annotation, items = self._pop_annotation(list(node))
         if items:
             xsd_type = self.visit_simple_type(items[0], node)
         else:
@@ -472,7 +472,7 @@ class SchemaVisitor(object):
         base_type = '{http://www.w3.org/2001/XMLSchema}string'
         qname = as_qname(name, node.nsmap, self.document._target_namespace)
 
-        annotation, items = self._pop_annotation(node.getchildren())
+        annotation, items = self._pop_annotation(list(node))
         child = items[0]
         if child.tag == tags.restriction:
             base_type = self.visit_restriction_simple_type(child, node)
@@ -535,7 +535,7 @@ class SchemaVisitor(object):
         xsd_type = None
 
         # Process content
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
         first_tag = children[0].tag if children else None
 
         if first_tag == tags.simpleContent:
@@ -586,8 +586,8 @@ class SchemaVisitor(object):
         :type parent: lxml.etree._Element
 
         """
-
-        child = node.getchildren()[-1]
+        children = list(node)
+        child = children[-1]
 
         if child.tag == tags.restriction:
             base, element, attributes = self.visit_restriction_complex_content(
@@ -626,7 +626,8 @@ class SchemaVisitor(object):
 
         """
 
-        child = node.getchildren()[-1]
+        children = list(node)
+        child = children[-1]
 
         if child.tag == tags.restriction:
             return self.visit_restriction_simple_content(child, node)
@@ -659,7 +660,7 @@ class SchemaVisitor(object):
         if base_name:
             return self._get_type(base_name)
 
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
         if children[0].tag == tags.simpleType:
             return self.visit_simple_type(children[0], node)
 
@@ -710,7 +711,7 @@ class SchemaVisitor(object):
         """
         base_name = qname_attr(node, 'base')
         base_type = self._get_type(base_name)
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
 
         element = None
         attributes = []
@@ -745,7 +746,7 @@ class SchemaVisitor(object):
         """
         base_name = qname_attr(node, 'base')
         base_type = self._get_type(base_name)
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
 
         element = None
         attributes = []
@@ -773,7 +774,7 @@ class SchemaVisitor(object):
         """
         base_name = qname_attr(node, 'base')
         base_type = self._get_type(base_name)
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
         attributes = self._process_attributes(node, children)
 
         return base_type, attributes
@@ -853,8 +854,8 @@ class SchemaVisitor(object):
         result = xsd_elements.Sequence(
             min_occurs=min_occurs, max_occurs=max_occurs)
 
-        annotation, items = self._pop_annotation(node.getchildren())
-        for child in items:
+        annotation, children = self._pop_annotation(list(node))
+        for child in children:
             if child.tag not in sub_types:
                 raise self._create_error(
                     "Unexpected element %s in xsd:sequence" % child.tag, child)
@@ -892,8 +893,8 @@ class SchemaVisitor(object):
         ]
         result = xsd_elements.All()
 
-        annotation, items = self._pop_annotation(node.getchildren())
-        for child in items:
+        annotation, children = self._pop_annotation(list(node))
+        for child in children:
             assert child.tag in sub_types, child
             item = self.process(child, node)
             result.append(item)
@@ -934,7 +935,7 @@ class SchemaVisitor(object):
         qname = qname_attr(node, 'name', self.document._target_namespace)
 
         # There should be only max nodes, first node (annotation) is irrelevant
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
         child = children[0]
 
         item = self.process(child, parent)
@@ -969,7 +970,7 @@ class SchemaVisitor(object):
         if item_type:
             sub_type = self._get_type(item_type.text)
         else:
-            subnodes = node.getchildren()
+            subnodes = list(node)
             child = subnodes[-1]  # skip annotation
             sub_type = self.visit_simple_type(child, node)
         return xsd_types.ListType(sub_type)
@@ -988,8 +989,7 @@ class SchemaVisitor(object):
         """
         min_occurs, max_occurs = _process_occurs_attrs(node)
 
-        children = node.getchildren()
-        annotation, children = self._pop_annotation(children)
+        annotation, children = self._pop_annotation(list(node))
 
         choices = []
         for child in children:
@@ -1025,7 +1025,7 @@ class SchemaVisitor(object):
                 xsd_type = self._get_type(qname)
                 types.append(xsd_type)
         else:
-            annotation, types = self._pop_annotation(node.getchildren())
+            annotation, types = self._pop_annotation(list(node))
             types = [self.visit_simple_type(t, node) for t in types]
         return xsd_types.UnionType(types)
 
@@ -1076,7 +1076,7 @@ class SchemaVisitor(object):
             return ref
 
         qname = qname_attr(node, 'name', self.document._target_namespace)
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
 
         attributes = self._process_attributes(node, children)
         attribute_group = xsd_elements.AttributeGroup(qname, attributes)

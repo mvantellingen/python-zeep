@@ -545,7 +545,7 @@ def test_element_attribute_name_conflict():
     node = render_node(custom_type, obj)
     assert_nodes_equal(expected, node)
 
-    obj = custom_type.parse(node.getchildren()[0], None)
+    obj = custom_type.parse(list(node)[0], None)
     assert obj.item == 'foo'
     assert obj.foo == 'x'
     assert obj.attr__item == 'bar'

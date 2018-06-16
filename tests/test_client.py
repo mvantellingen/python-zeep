@@ -218,7 +218,7 @@ def test_default_soap_headers():
         doc = load_xml(m.request_history[0].body)
         header = doc.find('{http://schemas.xmlsoap.org/soap/envelope/}Header')
         assert header is not None
-        assert len(header.getchildren()) == 2
+        assert len(list(header)) == 2
 
 
 @pytest.mark.requests
@@ -263,4 +263,4 @@ def test_default_soap_headers_extra():
         doc = load_xml(m.request_history[0].body)
         header = doc.find('{http://schemas.xmlsoap.org/soap/envelope/}Header')
         assert header is not None
-        assert len(header.getchildren()) == 4
+        assert len(list(header)) == 4

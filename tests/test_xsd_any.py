@@ -64,7 +64,7 @@ def test_any_simple():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item._value_1 == 'argh'
 
     # Create via kwarg _value_1
@@ -79,7 +79,7 @@ def test_any_simple():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item._value_1 == 'argh'
 
 
@@ -105,7 +105,7 @@ def test_any_value_element_tree():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert isinstance(item._value_1, etree._Element)
     assert item._value_1.tag == '{http://tests.python-zeep.org}lxml'
 
@@ -156,7 +156,7 @@ def test_any_without_element():
     """
     assert_nodes_equal(expected, node)
 
-    item = item_elm.parse(node.getchildren()[0], schema)
+    item = item_elm.parse(list(node)[0], schema)
     assert item.type == 'attr-1'
     assert item.title == 'attr-2'
     assert item._value_1 is None
@@ -203,7 +203,7 @@ def test_any_with_ref():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.item == 'bar'
     assert item._value_1 == 'argh'
 
@@ -269,7 +269,7 @@ def test_element_any_type():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.something == '18:29:59'
 
 
@@ -300,7 +300,7 @@ def test_element_any_type_unknown_type():
             </ns0:container>
         </document>
     """)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.something == 'bar'
 
 
@@ -346,7 +346,7 @@ def test_element_any_type_elements():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert len(item.something) == 2
     assert item.something[0].text == 'item-1'
     assert item.something[1].text == 'item-2'
@@ -408,7 +408,7 @@ def test_any_in_nested_sequence():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.items._value_1 == datetime.date(2016, 7, 4)
     assert item.version == 'str1234'
     assert item._value_1 == [datetime.date(2016, 7, 4), True]
@@ -532,5 +532,5 @@ def test_any_optional():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.item is None

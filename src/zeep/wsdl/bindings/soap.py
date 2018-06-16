@@ -423,7 +423,7 @@ class SoapOperation(Operation):
         else:
             message_class = DocumentMessage
 
-        for node in xmlelement.getchildren():
+        for node in xmlelement:
             tag_name = etree.QName(node.tag).localname
             if tag_name not in ('input', 'output', 'fault'):
                 continue

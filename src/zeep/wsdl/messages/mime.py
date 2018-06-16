@@ -110,7 +110,7 @@ class MimeContent(MimeMessage):
         elif self.content_type == 'text/xml':
             document = etree.Element('root')
             self.body.render(document, value)
-            data = etree_to_string(document.getchildren()[0])
+            data = etree_to_string(list(document)[0])
 
         return SerializedMessage(
             path=self.operation.location, headers=headers, content=data)

@@ -97,7 +97,7 @@ def parse_abstract_operation(wsdl, xmlelement):
         'fault_messages': {}
     }
 
-    for msg_node in xmlelement.getchildren():
+    for msg_node in xmlelement:
         tag_name = etree.QName(msg_node.tag).localname
         if tag_name not in ('input', 'output', 'fault'):
             continue
