@@ -21,6 +21,7 @@ class OperationProxy(object):
 
         """
 
+        # Merge the default _soapheaders with the passed _soapheaders
         if self._proxy._client._default_soapheaders:
             op_soapheaders = kwargs.get('_soapheaders')
             if op_soapheaders:

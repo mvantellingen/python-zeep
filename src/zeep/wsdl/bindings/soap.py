@@ -87,6 +87,11 @@ class SoapBinding(Binding):
             # Apply WSSE
             if client.wsse:
                 envelope, http_headers = client.wsse.apply(envelope, http_headers)
+
+        # Add extra http headers from the setings object
+        if client.settings.extra_http_headers:
+            http_headers.update(client.settings.extra_http_headers)
+
         return envelope, http_headers
 
     def send(self, client, options, operation, args, kwargs):

@@ -29,6 +29,10 @@ class Settings(object):
     :param force_https: Force all connections to HTTPS if the WSDL is also
       loaded from an HTTPS endpoint. (default: true)
     :type force_https: bool
+    :param extra_http_headers: Additional HTTP headers to be sent to the
+     transport. This can be used in combination with the context manager
+     approach to add http headers for specific calls.
+    :type extra_headers: list
 
     """
     strict = attr.ib(default=True)

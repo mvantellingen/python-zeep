@@ -6,6 +6,7 @@ changes to the API.
  - Refactor the settings logic in Zeep. All settings are now configured using
    the zeep.settings.Settings() class.
  - Allow control of defusedxml settings via zeep.Settings (see #567, #391)
+ - Add ability to set specific http headers for each call (#758)
  - Skip the xsd:annotation element in the all:element (#737)
  - Add Settings.force_https as option so that it can be disabled (#605)
  - Strip spaces from QName's when parsing xsd's (#719)
