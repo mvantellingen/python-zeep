@@ -32,6 +32,26 @@ def test_bind_service_port():
     assert service
 
 
+def test_create_message():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    service = client_obj.bind('StockQuoteService')
+    assert service
+    message = client_obj.create_message(
+        service, 'GetLastTradePrice', tickerSymbol='ABCD')
+    assert len(message)
+
+
+def test_create_message_with_headers():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    service = client_obj.bind('StockQuoteService')
+    assert service
+    message, headers = client_obj.create_message(
+        service, 'GetLastTradePrice', return_headers=True, tickerSymbol='ABCD')
+    assert len(message)
+    assert headers['SOAPAction'] == '"http://example.com/GetLastTradePrice"'
+    assert headers['Content-Type'] == 'text/xml; charset=utf-8'
+
+
 def test_service_proxy_ok():
     client_obj = client.Client('tests/wsdl_files/soap.wsdl')
     assert client_obj.service.GetLastTradePrice
