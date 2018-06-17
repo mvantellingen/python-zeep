@@ -138,6 +138,11 @@ class DateTime(BuiltinType, AnySimpleType):
         return isodate.isostrf.strftime(value, '%Y-%m-%dT%H:%M:%S%Z')
 
     def pythonvalue(self, value):
+
+        # Determine based on the length of the value if it only contains a date
+        # lazy hack ;-)
+        if len(value) == 10:
+            value += 'T00:00:00'
         return isodate.parse_datetime(value)
 
 

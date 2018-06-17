@@ -193,7 +193,7 @@ class SchemaVisitor(object):
         schema_node = load_external(
             location,
             self.schema._transport,
-            strict=self.schema.strict)
+            settings=self.schema.settings)
 
         # Check if the xsd:import namespace matches the targetNamespace. If
         # the xsd:import statement didn't specify a namespace then make sure
@@ -239,7 +239,7 @@ class SchemaVisitor(object):
         schema_node = load_external(
             location, self.schema._transport,
             base_url=self.document._base_url,
-            strict=self.schema.strict)
+            settings=self.schema.settings)
         self._includes.add(location)
 
         # When the included document has no default namespace defined but the
@@ -247,14 +247,20 @@ class SchemaVisitor(object):
         # transfer the default namespace to the included schema. We can't
         # update the nsmap of elements in lxml so we create a new schema with
         # the correct nsmap and move all the content there.
-        if not schema_node.nsmap.get(None) and node.nsmap.get(None):
-            nsmap = {None: node.nsmap[None]}
+
+        # Included schemas must have targetNamespace equal to parent schema (the including) or None.
+        # If included schema doesn't have default ns, then it should be set to parent's targetNs.
+        # See Chameleon Inclusion https://www.w3.org/TR/xmlschema11-1/#chameleon-xslt
+        if not schema_node.nsmap.get(None) and (node.nsmap.get(None) or parent.attrib.get('targetNamespace')):
+            nsmap = {None: node.nsmap.get(None) or parent.attrib['targetNamespace']}
             nsmap.update(schema_node.nsmap)
             new = etree.Element(schema_node.tag, nsmap=nsmap)
             for child in schema_node:
                 new.append(child)
             for key, value in schema_node.attrib.items():
                 new.set(key, value)
+            if not new.attrib.get('targetNamespace'):
+                new.attrib['targetNamespace'] = parent.attrib['targetNamespace']
             schema_node = new
 
         # Use the element/attribute form defaults from the schema while
@@ -319,6 +325,10 @@ class SchemaVisitor(object):
         # be present. Short circuit that here.
         # Ref is prohibited on global elements (parent = schema)
         if not is_global:
+            # Naive workaround to mark fields which are part of a choice element
+            # as optional
+            if parent.tag == tags.choice:
+                min_occurs = 0
             result = self.process_reference(
                 node, min_occurs=min_occurs, max_occurs=max_occurs)
             if result:
@@ -328,9 +338,9 @@ class SchemaVisitor(object):
         if element_form == 'qualified' or is_global:
             qname = qname_attr(node, 'name', self.document._target_namespace)
         else:
-            qname = etree.QName(node.get('name'))
+            qname = etree.QName(node.get('name').strip())
 
-        children = node.getchildren()
+        children = list(node)
         xsd_type = None
         if children:
             value = None
@@ -350,11 +360,6 @@ class SchemaVisitor(object):
                 xsd_type = self._get_type(node_type.text)
             else:
                 xsd_type = xsd_types.AnyType()
-
-        # Naive workaround to mark fields which are part of a choice element
-        # as optional
-        if parent.tag == tags.choice:
-            min_occurs = 0
 
         nillable = node.get('nillable') == 'true'
         default = node.get('default')
@@ -417,7 +422,7 @@ class SchemaVisitor(object):
         else:
             name = etree.QName(node.get('name'))
 
-        annotation, items = self._pop_annotation(node.getchildren())
+        annotation, items = self._pop_annotation(list(node))
         if items:
             xsd_type = self.visit_simple_type(items[0], node)
         else:
@@ -467,7 +472,7 @@ class SchemaVisitor(object):
         base_type = '{http://www.w3.org/2001/XMLSchema}string'
         qname = as_qname(name, node.nsmap, self.document._target_namespace)
 
-        annotation, items = self._pop_annotation(node.getchildren())
+        annotation, items = self._pop_annotation(list(node))
         child = items[0]
         if child.tag == tags.restriction:
             base_type = self.visit_restriction_simple_type(child, node)
@@ -530,7 +535,7 @@ class SchemaVisitor(object):
         xsd_type = None
 
         # Process content
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
         first_tag = children[0].tag if children else None
 
         if first_tag == tags.simpleContent:
@@ -581,8 +586,8 @@ class SchemaVisitor(object):
         :type parent: lxml.etree._Element
 
         """
-
-        child = node.getchildren()[-1]
+        children = list(node)
+        child = children[-1]
 
         if child.tag == tags.restriction:
             base, element, attributes = self.visit_restriction_complex_content(
@@ -621,7 +626,8 @@ class SchemaVisitor(object):
 
         """
 
-        child = node.getchildren()[-1]
+        children = list(node)
+        child = children[-1]
 
         if child.tag == tags.restriction:
             return self.visit_restriction_simple_content(child, node)
@@ -654,7 +660,7 @@ class SchemaVisitor(object):
         if base_name:
             return self._get_type(base_name)
 
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
         if children[0].tag == tags.simpleType:
             return self.visit_simple_type(children[0], node)
 
@@ -705,7 +711,7 @@ class SchemaVisitor(object):
         """
         base_name = qname_attr(node, 'base')
         base_type = self._get_type(base_name)
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
 
         element = None
         attributes = []
@@ -740,7 +746,7 @@ class SchemaVisitor(object):
         """
         base_name = qname_attr(node, 'base')
         base_type = self._get_type(base_name)
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
 
         element = None
         attributes = []
@@ -768,7 +774,7 @@ class SchemaVisitor(object):
         """
         base_name = qname_attr(node, 'base')
         base_type = self._get_type(base_name)
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
         attributes = self._process_attributes(node, children)
 
         return base_type, attributes
@@ -848,9 +854,12 @@ class SchemaVisitor(object):
         result = xsd_elements.Sequence(
             min_occurs=min_occurs, max_occurs=max_occurs)
 
-        annotation, items = self._pop_annotation(node.getchildren())
-        for child in items:
-            assert child.tag in sub_types, child
+        annotation, children = self._pop_annotation(list(node))
+        for child in children:
+            if child.tag not in sub_types:
+                raise self._create_error(
+                    "Unexpected element %s in xsd:sequence" % child.tag, child)
+
             item = self.process(child, node)
             assert item is not None
             result.append(item)
@@ -884,7 +893,8 @@ class SchemaVisitor(object):
         ]
         result = xsd_elements.All()
 
-        for child in node.iterchildren():
+        annotation, children = self._pop_annotation(list(node))
+        for child in children:
             assert child.tag in sub_types, child
             item = self.process(child, node)
             result.append(item)
@@ -925,7 +935,7 @@ class SchemaVisitor(object):
         qname = qname_attr(node, 'name', self.document._target_namespace)
 
         # There should be only max nodes, first node (annotation) is irrelevant
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
         child = children[0]
 
         item = self.process(child, parent)
@@ -960,7 +970,7 @@ class SchemaVisitor(object):
         if item_type:
             sub_type = self._get_type(item_type.text)
         else:
-            subnodes = node.getchildren()
+            subnodes = list(node)
             child = subnodes[-1]  # skip annotation
             sub_type = self.visit_simple_type(child, node)
         return xsd_types.ListType(sub_type)
@@ -979,8 +989,7 @@ class SchemaVisitor(object):
         """
         min_occurs, max_occurs = _process_occurs_attrs(node)
 
-        children = node.getchildren()
-        annotation, children = self._pop_annotation(children)
+        annotation, children = self._pop_annotation(list(node))
 
         choices = []
         for child in children:
@@ -1016,7 +1025,7 @@ class SchemaVisitor(object):
                 xsd_type = self._get_type(qname)
                 types.append(xsd_type)
         else:
-            annotation, types = self._pop_annotation(node.getchildren())
+            annotation, types = self._pop_annotation(list(node))
             types = [self.visit_simple_type(t, node) for t in types]
         return xsd_types.UnionType(types)
 
@@ -1067,7 +1076,7 @@ class SchemaVisitor(object):
             return ref
 
         qname = qname_attr(node, 'name', self.document._target_namespace)
-        annotation, children = self._pop_annotation(node.getchildren())
+        annotation, children = self._pop_annotation(list(node))
 
         attributes = self._process_attributes(node, children)
         attribute_group = xsd_elements.AttributeGroup(qname, attributes)
@@ -1166,11 +1175,15 @@ class SchemaVisitor(object):
                 attribute = self.process(child, node)
                 attributes.append(attribute)
             else:
-                raise XMLParseError(
-                    "Unexpected tag `%s`" % (child.tag),
-                    filename=self.document._location,
-                    sourceline=node.sourceline)
+                raise self._create_error(
+                    "Unexpected tag `%s`" % (child.tag), node)
         return attributes
+
+    def _create_error(self, message, node):
+        return XMLParseError(
+            message,
+            filename=self.document._location,
+            sourceline=node.sourceline)
 
     visitors = {
         tags.any: visit_any,

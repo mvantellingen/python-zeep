@@ -148,15 +148,16 @@ class HttpOperation(Operation):
         location = http_operation.get('location')
         obj = cls(name, binding, location)
 
-        for node in xmlelement.getchildren():
+        for node in xmlelement:
             tag_name = etree.QName(node.tag).localname
             if tag_name not in ('input', 'output'):
                 continue
 
             # XXX Multiple mime types may be declared as alternatives
             message_node = None
-            if len(node.getchildren()) > 0:
-                message_node = node.getchildren()[0]
+            nodes = list(node)
+            if len(nodes) > 0:
+                message_node = nodes[0]
             message_class = None
             if message_node is not None:
                 if message_node.tag == etree.QName(ns.HTTP, 'urlEncoded'):

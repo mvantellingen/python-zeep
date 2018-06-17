@@ -5,10 +5,10 @@ WS-Addressing (WSA)
 .. versionadded:: 0.15
 
 Zeep offers (experimental) support for the `ws-addressing specification`_. The
-specification defines a number of soap:Header elements which basically allows
+specification defines some soap:Header elements which basically allows
 advanced routing of the SOAP messages.
 
-If the WSDL documnt defines that WSA is required then Zeep will automatically
+If the WSDL document defines that WSA is required then Zeep will automatically
 add the required headers to the SOAP envelope. In case you want to customize
 this then you can add the :class:`~zeep.wsa.WsAddressPlugin` to the
 :attr:`Client.plugins` list.
@@ -29,7 +29,7 @@ For example:
 .. note::
     
     The support for ws-addressing is experimental. If you encounter any issues
-    then please don't hesistate to create an issue on the github repository.
+    then please don't hesitate to create an issue on the github repository.
 
 
 .. _ws-addressing specification: https://www.w3.org/TR/2006/REC-ws-addr-soap-20060509/

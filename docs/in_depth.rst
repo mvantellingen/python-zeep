@@ -11,7 +11,7 @@ of the time this is an implementation detail, Zeep should offer the same API
 to the user independent of the underlying protocol.
 
 One of the first things you will do if you start developing an interface to a
-wsdl webservice is to get an overview of all available operations and their
+wsdl web service is to get an overview of all available operations and their
 call signatures. Zeep offers a command line interface to make this easy.
 
 

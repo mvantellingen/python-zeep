@@ -1,5 +1,6 @@
 import io
 
+from defusedxml import EntitiesForbidden, DTDForbidden
 import pytest
 import requests_mock
 from lxml import etree
@@ -7,7 +8,7 @@ from pretend import stub
 from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
-from zeep import Client, wsdl
+from zeep import Client, wsdl, Settings
 from zeep.transports import Transport
 
 
@@ -901,3 +902,135 @@ def test_wsdl_duplicate_tns(recwarn):
     transport.bind('http://tests.python-zeep.org/schema-2.wsdl', wsdl_2)
     document = wsdl.Document(wsdl_main, transport)
     document.dump()
+
+
+def test_wsdl_dtd_entities_rules():
+    wsdl_declaration = u"""<!DOCTYPE Author [
+        <!ENTITY writer "Donald Duck.">
+        ]>
+        <wsdl:definitions
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:tns="http://tests.python-zeep.org/xsd-main"
+        xmlns:mine="http://tests.python-zeep.org/xsd-secondary"
+        xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+        targetNamespace="http://tests.python-zeep.org/xsd-main">
+        <wsdl:types>
+          <xsd:schema
+              targetNamespace="http://tests.python-zeep.org/xsd-main"
+              xmlns:tns="http://tests.python-zeep.org/xsd-main">
+            <xsd:element name="input" type="xsd:string"/>
+          </xsd:schema>
+        </wsdl:types>
+        <wsdl:message name="message-1">
+          <wsdl:part name="response" element="tns:input"/>
+        </wsdl:message>
+        <wsdl:portType name="TestPortType">
+          <wsdl:operation name="TestOperation1">
+            <wsdl:input message="message-1"/>
+          </wsdl:operation>
+        </wsdl:portType>
+        </wsdl:definitions>
+    """.strip()
+
+    transport = DummyTransport()
+    transport.bind('http://tests.python-zeep.org/schema-2.wsdl', wsdl_declaration)
+
+    with pytest.raises(DTDForbidden):
+        wsdl.Document(
+            StringIO(wsdl_declaration), transport,
+            settings=Settings(forbid_dtd=True))
+
+    with pytest.raises(EntitiesForbidden):
+        wsdl.Document(StringIO(wsdl_declaration), transport)
+
+    document = wsdl.Document(
+        StringIO(wsdl_declaration), transport,
+        settings=Settings(forbid_entities=False))
+    document.dump()
+
+
+def test_extra_http_headers(recwarn, monkeypatch):
+
+    wsdl_main = StringIO("""
+        <?xml version="1.0"?>
+        <wsdl:definitions
+          xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+          xmlns:tns="http://tests.python-zeep.org/xsd-main"
+          xmlns:sec="http://tests.python-zeep.org/wsdl-secondary"
+          xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap12/"
+          xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap12/"
+          targetNamespace="http://tests.python-zeep.org/xsd-main">
+          <wsdl:types>
+            <xsd:schema
+                targetNamespace="http://tests.python-zeep.org/xsd-main"
+                xmlns:tns="http://tests.python-zeep.org/xsd-main">
+              <xsd:element name="input" type="xsd:string"/>
+              <xsd:element name="input2" type="xsd:string"/>
+            </xsd:schema>
+          </wsdl:types>
+
+          <wsdl:message name="dummyRequest">
+            <wsdl:part name="response" element="tns:input"/>
+          </wsdl:message>
+          <wsdl:message name="dummyResponse">
+            <wsdl:part name="response" element="tns:input2"/>
+          </wsdl:message>
+
+          <wsdl:portType name="TestPortType">
+            <wsdl:operation name="TestOperation1">
+              <wsdl:input message="dummyRequest"/>
+              <wsdl:output message="dummyResponse"/>
+            </wsdl:operation>
+          </wsdl:portType>
+
+          <wsdl:binding name="TestBinding" type="tns:TestPortType">
+            <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+            <wsdl:operation name="TestOperation1">
+              <soap:operation soapAction="urn:dummyRequest"/>
+              <wsdl:input>
+                <soap:body use="literal"/>
+              </wsdl:input>
+              <wsdl:output>
+                <soap:body use="literal"/>
+              </wsdl:output>
+            </wsdl:operation>
+          </wsdl:binding>
+          <wsdl:service name="TestService">
+            <wsdl:documentation>Test service</wsdl:documentation>
+            <wsdl:port name="TestPortType" binding="tns:TestBinding">
+              <soap:address location="http://tests.python-zeep.org/test"/>
+            </wsdl:port>
+          </wsdl:service>
+        </wsdl:definitions>
+    """.strip())
+
+    client = stub(settings=Settings(), plugins=[], wsse=None)
+
+    transport = DummyTransport()
+    doc = wsdl.Document(wsdl_main, transport, settings=client.settings)
+    binding = doc.services.get('TestService').ports.get('TestPortType').binding
+
+    headers = {
+        'Authorization': 'Bearer 1234'
+    }
+    with client.settings(extra_http_headers=headers):
+        envelope, headers = binding._create(
+            'TestOperation1',
+            args=['foo'],
+            kwargs={},
+            client=client,
+            options={'address': 'http://tests.python-zeep.org/test'})
+
+    expected = """
+        <soap-env:Envelope xmlns:soap-env="http://www.w3.org/2003/05/soap-envelope">
+          <soap-env:Body>
+            <ns0:input xmlns:ns0="http://tests.python-zeep.org/xsd-main">foo</ns0:input>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """
+    assert_nodes_equal(expected, envelope)
+
+    assert headers['Authorization'] == 'Bearer 1234'
+

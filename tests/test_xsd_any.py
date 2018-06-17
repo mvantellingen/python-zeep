@@ -4,6 +4,7 @@ import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
+from zeep.exceptions import ValidationError
 from zeep import xsd
 
 
@@ -63,7 +64,7 @@ def test_any_simple():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item._value_1 == 'argh'
 
     # Create via kwarg _value_1
@@ -78,7 +79,7 @@ def test_any_simple():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item._value_1 == 'argh'
 
 
@@ -104,7 +105,7 @@ def test_any_value_element_tree():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert isinstance(item._value_1, etree._Element)
     assert item._value_1.tag == '{http://tests.python-zeep.org}lxml'
 
@@ -155,7 +156,7 @@ def test_any_without_element():
     """
     assert_nodes_equal(expected, node)
 
-    item = item_elm.parse(node.getchildren()[0], schema)
+    item = item_elm.parse(list(node)[0], schema)
     assert item.type == 'attr-1'
     assert item.title == 'attr-2'
     assert item._value_1 is None
@@ -202,7 +203,7 @@ def test_any_with_ref():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.item == 'bar'
     assert item._value_1 == 'argh'
 
@@ -268,7 +269,7 @@ def test_element_any_type():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.something == '18:29:59'
 
 
@@ -299,7 +300,7 @@ def test_element_any_type_unknown_type():
             </ns0:container>
         </document>
     """)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.something == 'bar'
 
 
@@ -345,7 +346,7 @@ def test_element_any_type_elements():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert len(item.something) == 2
     assert item.something[0].text == 'item-1'
     assert item.something[1].text == 'item-2'
@@ -407,7 +408,129 @@ def test_any_in_nested_sequence():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.items._value_1 == datetime.date(2016, 7, 4)
     assert item.version == 'str1234'
     assert item._value_1 == [datetime.date(2016, 7, 4), True]
+
+
+def test_element_any_parse_inline_schema():
+    node = load_xml("""
+        <xsd:schema
+            elementFormDefault="qualified"
+            targetNamespace="https://tests.python-zeep.org"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element ref="xsd:schema"/>
+                <xsd:any/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """)
+
+    schema = xsd.Schema(node)
+
+    node = load_xml("""
+        <OstatDepoResult>
+            <xs:schema id="OD" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+                <xs:element name="OD" msdata:IsDataSet="true" msdata:UseCurrentLocale="true">
+                    <xs:complexType>
+                        <xs:choice minOccurs="0" maxOccurs="unbounded">
+                            <xs:element name="odr">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="item" msdata:Caption="item" type="xs:string" minOccurs="0" />
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:choice>
+                    </xs:complexType>
+                </xs:element>
+            </xs:schema>
+            <diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">
+                <OD xmlns="">
+                    <odr diffgr:id="odr1" msdata:rowOrder="0">
+                        <item>hetwerkt</item>
+                    </odr>
+                </OD>
+            </diffgr:diffgram>
+        </OstatDepoResult>
+    """)
+
+    elm = schema.get_element('ns0:container')
+    data = elm.parse(node, schema)
+    assert data._value_1._value_1[0]['odr']['item'] == 'hetwerkt'
+
+
+def test_any_missing():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="item">
+                  <complexType>
+                    <sequence>
+                      <any minOccurs="1" maxOccurs="unbounded"/>
+                    </sequence>
+                  </complexType>
+                </element>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """))
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = container_elm({})
+
+    node = etree.Element('document')
+    with pytest.raises(ValidationError):
+        container_elm.render(node, obj)
+
+
+def test_any_optional():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                   elementFormDefault="qualified">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="item">
+                  <complexType>
+                    <sequence>
+                      <any minOccurs="0" maxOccurs="unbounded"/>
+                    </sequence>
+                  </complexType>
+                </element>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """))
+
+    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    obj = container_elm({})
+
+    node = etree.Element('document')
+    container_elm.render(node, obj)
+    expected = """
+        <document>
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+                <ns0:item/>
+            </ns0:container>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+    item = container_elm.parse(list(node)[0], schema)
+    assert item.item is None

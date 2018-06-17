@@ -243,7 +243,7 @@ def test_complex_type_with_extension_optional():
     assert_nodes_equal(expected, node)
 
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.main_1 == 'foo'
 
 
@@ -393,7 +393,7 @@ def test_complex_simple_content():
     """  # noqa
     assert_nodes_equal(expected, node)
 
-    item = value_elm.parse(node.getchildren()[0], schema)
+    item = value_elm.parse(list(node)[0], schema)
     assert item._value_1 == '00163e0c-0ea1-1ed6-93af-e818529bc1f1'
 
 

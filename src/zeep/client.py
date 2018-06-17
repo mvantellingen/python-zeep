@@ -1,82 +1,11 @@
-import copy
 import logging
-from contextlib import contextmanager
+from zeep.settings import Settings
 
+from zeep.proxy import ServiceProxy
 from zeep.transports import Transport
 from zeep.wsdl import Document
-from zeep.xsd.const import NotSet
 
 logger = logging.getLogger(__name__)
-
-
-class OperationProxy(object):
-    def __init__(self, service_proxy, operation_name):
-        self._proxy = service_proxy
-        self._op_name = operation_name
-
-    @property
-    def __doc__(self):
-        return str(self._proxy._binding._operations[self._op_name])
-
-    def __call__(self, *args, **kwargs):
-        """Call the operation with the given args and kwargs.
-
-        :rtype: zeep.xsd.CompoundValue
-
-        """
-
-        if self._proxy._client._default_soapheaders:
-            op_soapheaders = kwargs.get('_soapheaders')
-            if op_soapheaders:
-                soapheaders = copy.deepcopy(self._proxy._client._default_soapheaders)
-                if type(op_soapheaders) != type(soapheaders):
-                    raise ValueError("Incompatible soapheaders definition")
-
-                if isinstance(soapheaders, list):
-                    soapheaders.extend(op_soapheaders)
-                else:
-                    soapheaders.update(op_soapheaders)
-            else:
-                soapheaders = self._proxy._client._default_soapheaders
-            kwargs['_soapheaders'] = soapheaders
-
-        return self._proxy._binding.send(
-            self._proxy._client, self._proxy._binding_options,
-            self._op_name, args, kwargs)
-
-
-class ServiceProxy(object):
-    def __init__(self, client, binding, **binding_options):
-        self._client = client
-        self._binding_options = binding_options
-        self._binding = binding
-
-    def __getattr__(self, key):
-        """Return the OperationProxy for the given key.
-
-        :rtype: OperationProxy()
-
-        """
-        return self[key]
-
-    def __getitem__(self, key):
-        """Return the OperationProxy for the given key.
-
-        :rtype: OperationProxy()
-
-        """
-        try:
-            self._binding.get(key)
-        except ValueError:
-            raise AttributeError('Service has no operation %r' % key)
-        return OperationProxy(self, key)
-
-    def __dir__(self):
-        """ Return the names of the operations. """
-        return list(dir(super(ServiceProxy, self))
-                    + list(self.__dict__)
-                    + list(self._binding.port_type.operations))
-                    # using list() on the dicts for Python 3 compatibility
 
 
 class Factory(object):
@@ -108,7 +37,6 @@ class Factory(object):
 class Client(object):
     """The zeep Client.
 
-
     :param wsdl:
     :param wsse:
     :param transport: Custom transport class.
@@ -118,26 +46,22 @@ class Client(object):
                       first port defined in the service element in the WSDL
                       document.
     :param plugins: a list of Plugin instances
-    :param xml_huge_tree: disable lxml/libxml2 security restrictions and
-                          support very deep trees and very long text content
-
+    :param settings: a zeep.Settings() object
 
     """
 
     def __init__(self, wsdl, wsse=None, transport=None,
                  service_name=None, port_name=None, plugins=None,
-                 strict=True, xml_huge_tree=False):
+                 settings=None):
         if not wsdl:
             raise ValueError("No URL given for the wsdl")
 
+        self.settings = settings or Settings()
         self.transport = transport if transport is not None else Transport()
-        self.wsdl = Document(wsdl, self.transport, strict=strict)
+        self.wsdl = Document(
+            wsdl, self.transport, settings=self.settings)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
-        self.xml_huge_tree = xml_huge_tree
-
-        # options
-        self.raw_response = False
 
         self._default_service = None
         self._default_service_name = service_name
@@ -166,40 +90,6 @@ class Client(object):
                 "There is no default service defined. This is usually due to "
                 "missing wsdl:service definitions in the WSDL")
         return self._default_service
-
-    @contextmanager
-    def options(self, timeout=NotSet, raw_response=NotSet):
-        """Context manager to temporarily overrule various options.
-
-        :param timeout: Set the timeout for POST/GET operations (not used for
-                        loading external WSDL or XSD documents)
-
-        To for example set the timeout to 10 seconds use::
-
-            client = zeep.Client('foo.wsdl')
-            with client.options(timeout=10):
-                client.service.fast_call()
-
-
-        """
-        if raw_response is not NotSet:
-            # Store current options
-            old_raw_response = self.raw_response
-
-            # Set new options
-            self.raw_response = raw_response
-
-        if timeout is not NotSet:
-            timeout_ctx = self.transport._options(timeout=timeout)
-            timeout_ctx.__enter__()
-
-        yield
-
-        if raw_response is not NotSet:
-            self.raw_response = old_raw_response
-
-        if timeout is not NotSet:
-            timeout_ctx.__exit__(None, None, None)
 
     def bind(self, service_name=None, port_name=None):
         """Create a new ServiceProxy for the given service_name and port_name.

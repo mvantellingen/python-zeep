@@ -1228,6 +1228,52 @@ def test_choice_extend():
     assert value['_value_1'][1] == {'item-2-2': 'xabar'}
 
 
+def test_choice_extend_base():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema
+                xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+            <xsd:complexType name="BaseType">
+                <xsd:choice>
+                    <xsd:element name="choice-1" type="xsd:string"/>
+                    <xsd:element name="choice-2" type="xsd:string"/>
+                </xsd:choice>
+            </xsd:complexType>
+            <xsd:element name="container">
+                <xsd:complexType>
+                    <xsd:complexContent>
+                        <xsd:extension base="tns:BaseType">
+                            <xsd:sequence>
+                                <xsd:element name="container-1" type="xsd:string"/>
+                                <xsd:element name="container-2" type="xsd:string"/>
+                            </xsd:sequence>
+                            <xsd:attribute name="version" use="required" fixed="10.0.1.2"/>
+                        </xsd:extension>
+                    </xsd:complexContent>
+                </xsd:complexType>
+            </xsd:element>
+        </schema>
+    """))
+
+    element = schema.get_element('ns0:container')
+    node = load_xml("""
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" version="10.0.1.2">
+          <ns0:choice-1>foo</ns0:choice-1>
+          <ns0:container-1>foo</ns0:container-1>
+          <ns0:container-2>bar</ns0:container-2>
+        </ns0:container>
+    """)
+    value = element.parse(node, schema)
+
+    assert value['container-1'] == 'foo'
+    assert value['container-2'] == 'bar'
+    assert value['choice-1'] == 'foo'
+
+
 def test_nested_choice():
     schema = xsd.Schema(load_xml("""
             <?xml version="1.0"?>

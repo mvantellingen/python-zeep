@@ -10,6 +10,7 @@ from six.moves.urllib.parse import urlparse
 
 from zeep.cache import SqliteCache
 from zeep.client import Client
+from zeep.settings import Settings
 from zeep.transports import Transport
 
 logger = logging.getLogger('zeep')
@@ -77,8 +78,8 @@ def main(args):
     transport = Transport(cache=cache, session=session)
     st = time.time()
 
-    strict = not args.no_strict
-    client = Client(args.wsdl_file, transport=transport, strict=strict)
+    settings = Settings(strict=not args.no_strict)
+    client = Client(args.wsdl_file, transport=transport, settings=settings)
     logger.debug("Loading WSDL took %sms", (time.time() - st) * 1000)
 
     if args.profile:

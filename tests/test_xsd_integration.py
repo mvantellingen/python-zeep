@@ -723,7 +723,7 @@ def test_xml_complex_type_empty():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.something is None
 
 

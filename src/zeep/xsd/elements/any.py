@@ -58,6 +58,14 @@ class Any(Base):
                 if context_schema.documents.has_schema_document_for_ns(qname.namespace):
                     schema = context_schema
                     break
+            else:
+                # Try to parse the any result by iterating all the schemas
+                for context_schema in context.schemas:
+                    try:
+                        data = context_schema.deserialize(list(xmlelement)[0])
+                        return data
+                    except LookupError:
+                        continue
 
         # Lookup type via xsi:type attribute
         xsd_type = qname_attr(xmlelement, xsi_ns('type'))
@@ -136,7 +144,7 @@ class Any(Base):
             self._render_value_item(parent, value, render_path)
 
     def _render_value_item(self, parent, value, render_path):
-        if value is None:  # can be an lxml element
+        if value in (None, NotSet):  # can be an lxml element
             return
 
         elif isinstance(value, etree._Element):
@@ -185,7 +193,12 @@ class Any(Base):
         else:
             expected_types = (etree._Element, dict, AnyObject)
 
-        if not isinstance(value, expected_types):
+        if value in (None, NotSet):
+            if not self.is_optional:
+                raise exceptions.ValidationError(
+                    "Missing element %s" % (self.name), path=render_path)
+
+        elif not isinstance(value, expected_types):
             type_names = [
                 '%s.%s' % (t.__module__, t.__name__) for t in expected_types
             ]

@@ -5,6 +5,7 @@ from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
 from zeep import Client, wsa, wsdl
+from zeep.settings import Settings
 
 
 def test_require_wsa(recwarn, monkeypatch):
@@ -236,10 +237,10 @@ def test_force_wsa_soap12(recwarn, monkeypatch):
         </wsdl:definitions>
     """.strip())
 
-    client = stub(plugins=[wsa.WsAddressingPlugin()], wsse=None)
+    client = stub(plugins=[wsa.WsAddressingPlugin()], wsse=None, settings=Settings())
 
     transport = DummyTransport()
-    doc = wsdl.Document(wsdl_main, transport)
+    doc = wsdl.Document(wsdl_main, transport, settings=client.settings)
     binding = doc.services.get('TestService').ports.get('TestPortType').binding
 
     envelope, headers = binding._create(

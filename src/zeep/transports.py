@@ -127,13 +127,13 @@ class Transport(object):
         return response.content
 
     @contextmanager
-    def _options(self, timeout=None):
+    def settings(self, timeout=None):
         """Context manager to temporarily overrule options.
 
         Example::
 
-            client = zeep.Client('foo.wsdl')
-            with client.options(timeout=10):
+            transport = zeep.Transport()
+            with transport.settings(timeout=10):
                 client.service.fast_call()
 
         :param timeout: Set the timeout for POST/GET operations (not used for

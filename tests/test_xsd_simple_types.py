@@ -34,7 +34,7 @@ def test_simple_type():
         </document>
     """
     assert_nodes_equal(expected, node)
-    item = item_cls.parse(node.getchildren()[0], schema)
+    item = item_cls.parse(list(node)[0], schema)
     assert item.something == 12345678901234567890
 
 
@@ -68,7 +68,7 @@ def test_simple_type_optional():
     """
     assert_nodes_equal(expected, node)
 
-    item = item_cls.parse(node.getchildren()[0], schema)
+    item = item_cls.parse(list(node)[0], schema)
     assert item.something is None
 
 

@@ -141,6 +141,9 @@ class Binding(object):
         return '<%s(name=%r, port_type=%r)>' % (
             self.__class__.__name__, self.name.text, self.port_type)
 
+    def all(self):
+        return self._operations
+
     def get(self, key):
         try:
             return self._operations[key]
@@ -237,7 +240,7 @@ class Port(object):
 
         # Set during resolve()
         self.binding = None
-        self.binding_options = None
+        self.binding_options = {}
 
     def __repr__(self):
         return '<%s(name=%r, binding=%r, %r)>' % (
@@ -257,7 +260,7 @@ class Port(object):
         except IndexError:
             return False
 
-        if definitions.location:
+        if definitions.location and self.binding.wsdl.settings.force_https:
             force_https = definitions.location.startswith('https')
         else:
             force_https = False

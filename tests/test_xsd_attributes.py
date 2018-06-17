@@ -44,7 +44,7 @@ def test_anyattribute():
     container_elm.render(node, obj)
     assert_nodes_equal(expected, node)
 
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item._attr_1 == {'hiep': 'hoi', 'hoi': 'hiep'}
     assert item.foo == 'bar'
 
@@ -88,7 +88,7 @@ def test_attribute_list_type():
     container_elm.render(node, obj)
     assert_nodes_equal(expected, node)
 
-    item = container_elm.parse(node.getchildren()[0], schema)
+    item = container_elm.parse(list(node)[0], schema)
     assert item.lijst == [1, 2, 3]
     assert item.foo == 'bar'
 
