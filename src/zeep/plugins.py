@@ -46,7 +46,7 @@ def apply_ingress(client, envelope, http_headers, operation):
     return envelope, http_headers
 
 
-class ContentInterceptor(object):
+class ContentInterceptor(Plugin):
 
     def alter_content(content):
         return content
