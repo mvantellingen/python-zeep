@@ -152,6 +152,8 @@ class SoapBinding(Binding):
         else:
             content = response.content
 
+        content = plugins.apply_content_interceptors(client, content)
+
         try:
             doc = parse_xml(
                 content, self.transport,

@@ -46,6 +46,19 @@ def apply_ingress(client, envelope, http_headers, operation):
     return envelope, http_headers
 
 
+class ContentInterceptor(object):
+
+    def alter_content(content):
+        return content
+
+
+def apply_content_interceptors(client, content):
+    for plugin in client.plugins:
+        content = plugin.alter_content(content)
+
+    return content
+
+
 class HistoryPlugin(object):
     def __init__(self, maxlen=1):
         self._buffer = deque([], maxlen)
