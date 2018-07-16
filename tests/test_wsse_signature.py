@@ -4,7 +4,7 @@ import sys
 import pytest
 
 from tests.utils import load_xml
-from zeep import wsse
+from zeep import ns, wsse
 from zeep.exceptions import SignatureVerificationFailed
 from zeep.wsse import signature
 
@@ -90,6 +90,36 @@ def test_verify_error():
 
     with pytest.raises(SignatureVerificationFailed):
         signature.verify_envelope(envelope, KEY_FILE)
+
+
+@skip_if_no_xmlsec
+def test_timestamp():
+    envelope = load_xml("""
+        <soapenv:Envelope
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+          <soapenv:Header></soapenv:Header>
+          <soapenv:Body>
+            <tns:Function>
+              <tns:Argument>OK</tns:Argument>
+            </tns:Function>
+          </soapenv:Body>
+        </soapenv:Envelope>
+    """)
+
+    signature.sign_envelope(envelope, KEY_FILE, KEY_FILE)
+    signature.verify_envelope(envelope, KEY_FILE)
+
+    nsmap = {'wsse': ns.WSSE, 'wsu': ns.WSU}
+    # Timestamp must be present
+    timestamp = envelope.xpath('//wsse:Security/wsu:Timestamp', namespaces=nsmap)[0]
+    # Created and Expires must be children
+    created = timestamp.xpath('//wsu:Created', namespaces=nsmap)[0].text
+    expires = timestamp.xpath('//wsu:Expires', namespaces=nsmap)[0].text
+    # And their content is different
+    assert created != expires
 
 
 @skip_if_no_xmlsec

@@ -8,6 +8,7 @@ admittedly painful, will likely assist in understanding the code in this
 module.
 
 """
+import datetime
 from lxml import etree
 from lxml.etree import QName
 
@@ -210,7 +211,10 @@ def _signature_prepare(envelope, key):
     timestamp = etree.Element(QName(ns.WSU, 'Timestamp'))
     created = etree.Element(QName(ns.WSU, 'Created'))
     created.text = get_timestamp()
+    expires = etree.Element(QName(ns.WSU, 'Expires'))
+    expires.text = get_timestamp(datetime.datetime.utcnow() + datetime.timedelta(minutes=5))
     timestamp.append(created)
+    timestamp.append(expires)
     security.append(timestamp)
 
     # Perform the actual signing.
