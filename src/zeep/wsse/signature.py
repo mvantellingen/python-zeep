@@ -215,7 +215,7 @@ def _signature_prepare(envelope, key):
     expires.text = get_timestamp(datetime.datetime.utcnow() + datetime.timedelta(minutes=5))
     timestamp.append(created)
     timestamp.append(expires)
-    security.append(timestamp)
+    security.insert(0,timestamp)
 
     # Perform the actual signing.
     ctx = xmlsec.SignatureContext()
