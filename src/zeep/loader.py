@@ -19,7 +19,7 @@ class ImportResolver(etree.Resolver):
             return self.resolve_string(content, context)
 
 
-def parse_xml(content, transport, base_url=None, strict=True,
+def parse_xml(content, transport, base_url=None, strict=None,
               settings=None):
     """Parse an XML string and return the root Element.
 
@@ -37,7 +37,9 @@ def parse_xml(content, transport, base_url=None, strict=True,
 
     """
     settings = settings or Settings()
-    recover = not strict
+    recover = not settings.strict
+    if strict is not None:
+        recover = not strict
     parser = etree.XMLParser(
         remove_comments=True, resolve_entities=False,
         recover=recover, huge_tree=settings.xml_huge_tree)
