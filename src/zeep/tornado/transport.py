@@ -95,10 +95,11 @@ class TornadoAsyncTransport(Transport):
         # extracting client cert
         client_cert = None
         client_key = None
+        ca_certs = None
 
         if self.session.cert:
             if type(self.session.cert) is str:
-                client_cert = self.session.cert
+                ca_certs = self.session.cert
             elif type(self.session.cert) is tuple:
                 client_cert = self.session.cert[0]
                 client_key = self.session.cert[1]
@@ -113,8 +114,8 @@ class TornadoAsyncTransport(Transport):
             'auth_username': auth_username,
             'auth_password': auth_password,
             'auth_mode': auth_mode,
-            'validate_cert': self.session.verify is not None,
-            'ca_certs': self.session.verify,
+            'validate_cert': bool(self.session.verify),
+            'ca_certs': ca_certs,
             'client_key': client_key,
             'client_cert': client_cert
         }
