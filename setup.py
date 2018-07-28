@@ -9,7 +9,7 @@ install_requires = [
     'cached-property>=1.3.0',
     'defusedxml>=0.4.1',
     'isodate>=0.5.4',
-    'lxml>=3.0.0',
+    'lxml>=3.1.0',
     'requests>=2.7.0',
     'requests-toolbelt>=0.7.1',
     'six>=1.9.0',
@@ -59,7 +59,7 @@ with open('README.rst') as fh:
 
 setup(
     name='zeep',
-    version='3.0.0',
+    version='3.1.0',
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=long_description,
     author="Michael van Tellingen",
