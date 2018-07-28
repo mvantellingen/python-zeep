@@ -36,7 +36,7 @@ initialise the object using the following code:
 
     from zeep import Client, Settings
 
-    settings = Setting(strict=False, xml_huge_tree=True)
+    settings = Settings(strict=False, xml_huge_tree=True)
     client = Client('http://my-wsdl/wsdl', settings=settings)
 
 
