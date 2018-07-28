@@ -47,6 +47,7 @@ to the client in a list
 
     >>> from zeep import Client
     >>> from zeep.wsse.username import UsernameToken
+    >>> from zeep.wsse.signature import Signature
     >>> user_name_token = UsernameToken('username', 'password'))
     >>> signature = Signature(private_key_filename, public_key_filename,
     ...     optional_password))
