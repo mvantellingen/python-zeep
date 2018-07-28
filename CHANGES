@@ -1,3 +1,10 @@
+3.1.0 (2018-07-28)
+------------------
+ - Fix SSL issue on with `TornadoAsyncTransport` (#792)
+ - Fix passing strict keyword in XML loader (#787)
+ - Update documentation
+
+
 3.0.0 (2018-06-16)
 ------------------
 This is a major release, and contains a number of backwards incompatible
