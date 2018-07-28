@@ -114,9 +114,7 @@ class Schema(object):
 
     def add_document_by_url(self, url):
         schema_node = load_external(
-            url,
-            self._transport,
-            strict=self.settings.strict)
+            url, self._transport, settings=self.settings)
 
         document = self.create_new_document(schema_node, url=url)
         document.resolve()

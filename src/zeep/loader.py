@@ -19,8 +19,7 @@ class ImportResolver(etree.Resolver):
             return self.resolve_string(content, context)
 
 
-def parse_xml(content, transport, base_url=None, strict=True,
-              settings=None):
+def parse_xml(content, transport, base_url=None, settings=None):
     """Parse an XML string and return the root Element.
 
     :param content: The XML string
@@ -37,7 +36,7 @@ def parse_xml(content, transport, base_url=None, strict=True,
 
     """
     settings = settings or Settings()
-    recover = not strict
+    recover = not settings.strict
     parser = etree.XMLParser(
         remove_comments=True, resolve_entities=False,
         recover=recover, huge_tree=settings.xml_huge_tree)
@@ -56,7 +55,7 @@ def parse_xml(content, transport, base_url=None, strict=True,
         )
 
 
-def load_external(url, transport, base_url=None, strict=True, settings=None):
+def load_external(url, transport, base_url=None, settings=None):
     """Load an external XML document.
 
     :param url:
@@ -74,7 +73,7 @@ def load_external(url, transport, base_url=None, strict=True, settings=None):
             url = absolute_location(url, base_url)
         content = transport.load(url)
     return parse_xml(
-        content, transport, base_url, strict=strict, settings=settings)
+        content, transport, base_url, settings=settings)
 
 
 def absolute_location(location, base):
