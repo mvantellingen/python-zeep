@@ -119,6 +119,12 @@ def test_create_service():
         assert m.request_history[0].body.startswith(
             b"<?xml version='1.0' encoding='utf-8'?>")
 
+def test_create_message():
+    client_obj = client.Client('tests/wsdl_files/soap.wsdl')
+    data = client_obj.create_message(
+        client_obj.service, 'GetLastTradePrice', tickerSymbol="ZEEP")
+    assert data
+
 
 def test_load_wsdl_with_file_prefix():
     cwd = os.path.dirname(__file__)
@@ -264,3 +270,4 @@ def test_default_soap_headers_extra():
         header = doc.find('{http://schemas.xmlsoap.org/soap/envelope/}Header')
         assert header is not None
         assert len(list(header)) == 4
+
