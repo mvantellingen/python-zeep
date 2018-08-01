@@ -21,7 +21,7 @@ except ImportError:
 # Add support for memcache if running from the App Engine SDK
 try:
     from google.appengine.api import memcache
-except:
+except ImportError:
     memcache = None
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class InMemoryCache(Base):
 
 
 class AppEngineMemcacheCache(Base):
-  """App Engine Memcache caching with timeout support."""
+    """App Engine Memcache caching with timeout support."""
 
     def __init__(self, timeout=3600, namespace='zeep'):
         self._timeout = timeout
