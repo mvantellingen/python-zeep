@@ -35,16 +35,17 @@ class UsernameToken(object):
 
     """
     username_token_profile_ns = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0'  # noqa
-    soap_message_secutity_ns = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0'    # noqa
+    soap_message_security_ns = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0'    # noqa
 
     def __init__(self, username, password=None, password_digest=None,
-                 use_digest=False, nonce=None, created=None):
+                 use_digest=False, nonce=None, created=None, plaintext_nonce=False):
         self.username = username
         self.password = password
         self.password_digest = password_digest
         self.nonce = nonce
         self.created = created
         self.use_digest = use_digest
+        self.plaintext_nonce = plaintext_nonce
 
     def apply(self, envelope, headers):
         security = utils.get_security_header(envelope)
@@ -73,17 +74,30 @@ class UsernameToken(object):
         pass
 
     def _create_password_text(self):
-        return [
+        r = [
             utils.WSSE.Password(
                 self.password,
                 Type='%s#PasswordText' % self.username_token_profile_ns)
         ]
+        if self.plaintext_nonce:
+            nonce = self._create_nonce()
+            timestamp = utils.get_timestamp(self.created)
+            r.append(utils.WSSE.Nonce(
+                base64.b64encode(nonce).decode('utf-8'),
+                EncodingType='%s#Base64Binary' % self.soap_message_security_ns
+            ))
+            r.append(utils.WSU.Created(timestamp))
+        return r
 
-    def _create_password_digest(self):
+    def _create_nonce(self):
         if self.nonce:
             nonce = self.nonce.encode('utf-8')
         else:
             nonce = os.urandom(16)
+        return nonce
+
+    def _create_password_digest(self):
+        nonce = self._create_nonce()
         timestamp = utils.get_timestamp(self.created)
 
         # digest = Base64 ( SHA-1 ( nonce + created + password ) )
@@ -104,7 +118,7 @@ class UsernameToken(object):
             ),
             utils.WSSE.Nonce(
                 base64.b64encode(nonce).decode('utf-8'),
-                EncodingType='%s#Base64Binary' % self.soap_message_secutity_ns
+                EncodingType='%s#Base64Binary' % self.soap_message_security_ns
             ),
             utils.WSU.Created(timestamp)
         ]
