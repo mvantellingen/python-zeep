@@ -308,6 +308,50 @@ def test_choice_element_with_any():
     assert result.item_1 == 'foo'
 
 
+def test_choice_element_with_only_any():
+    node = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xsd:schema
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                elementFormDefault="qualified"
+                targetNamespace="http://tests.python-zeep.org/">
+          <xsd:element name="container">
+            <xsd:complexType>
+              <xsd:choice minOccurs="0" maxOccurs="unbounded">
+                <xsd:any processContents="lax"/>
+              </xsd:choice>
+              <xsd:attribute name="name" type="xsd:QName" use="required" />
+              <xsd:attribute name="something" type="xsd:boolean" use="required" />
+              <xsd:anyAttribute namespace="##other" processContents="lax"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="item_1" type="xsd:string" />
+        </xsd:schema>
+    """.strip())
+    schema = xsd.Schema(node)
+    element = schema.get_element('ns0:container')
+    item_1 = schema.get_element('ns0:item_1')
+    any_object = xsd.AnyObject(item_1, item_1('foo'))
+    value = element(_value_1=[any_object], name="foo", something="bar")
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/" name="foo" something="true">
+          <ns0:item_1>foo</ns0:item_1>
+        </ns0:container>
+      </document>
+    """
+    node = etree.Element('document')
+    element.render(node, value)
+    assert_nodes_equal(expected, node)
+
+    result = element.parse(node[0], schema)
+    assert result.name == 'foo'
+    assert result.something is True
+    assert result._value_1 == ['foo']
+
+
 def test_choice_element_with_any_max_occurs():
     schema = xsd.Schema(load_xml("""
         <schema targetNamespace="http://tests.python-zeep.org/"
