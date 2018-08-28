@@ -80,7 +80,7 @@ platforms::
 
 
 When you want to use wsse.Signature() you will need to install the python
-xmlsec module. This can be done by install the ``xmlsec`` extras::
+xmlsec module. This can be done by installing the ``xmlsec`` extras::
 
     pip install zeep[xmlsec]
 
