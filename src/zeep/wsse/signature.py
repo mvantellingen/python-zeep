@@ -51,7 +51,7 @@ class MemorySignature(object):
         self.signing_key_data = signing_key_data
         self.signing_cert_data = signing_cert_data
         self.password = password
-        self.signature_verification_cert_data = signature_verification_cert_data
+        self.signature_verification_cert_data = signature_verification_cert_data if signature_verification_cert_data is not None else signing_cert_data
 
     def apply(self, envelope, headers):
         key = _make_sign_key(self.signing_key_data, self.signing_cert_data, self.password)
