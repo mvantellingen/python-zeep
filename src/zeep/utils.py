@@ -86,4 +86,4 @@ def detect_soap_env(envelope):
 def get_media_type(value):
     """Parse a HTTP content-type header and return the media-type"""
     main_value, parameters = cgi.parse_header(value)
-    return main_value
+    return main_value.lower()
