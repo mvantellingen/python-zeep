@@ -292,11 +292,15 @@ class Soap11Binding(SoapBinding):
             if child is not None:
                 return child.text
 
+        def setEncoding(string):
+            if isinstance(string, basestring):
+                return string.encode(sys.stdout.encoding)
+
         raise Fault(
-            message=get_text('faultstring'),
-            code=get_text('faultcode'),
-            actor=get_text('faultactor'),
-            detail=fault_node.find('detail'))
+            message=setEncoding(get_text('faultstring')),
+            code=setEncoding(get_text('faultcode')),
+            actor=setEncoding(get_text('faultactor')),
+            detail=setEncoding(fault_node.find('detail')))
 
     def _set_http_headers(self, serialized, operation):
         serialized.headers['Content-Type'] = 'text/xml; charset=utf-8'
