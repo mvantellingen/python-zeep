@@ -157,7 +157,7 @@ class SoapBinding(Binding):
 
         # If the reply is a multipart/related then we need to retrieve all the
         # parts
-        if media_type == 'multipart/related':
+        if media_type.lower() == 'multipart/related':
             decoder = MultipartDecoder(
                 response.content, content_type, response.encoding or 'utf-8')
             content = decoder.parts[0].content
