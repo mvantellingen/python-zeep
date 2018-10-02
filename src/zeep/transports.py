@@ -75,7 +75,7 @@ class Transport(object):
             else:
                 log_message = response.content
                 if isinstance(log_message, bytes):
-                    log_message = log_message.decode('utf-8')
+                    log_message = log_message.decode(response.encoding or 'utf-8')
 
             self.logger.debug(
                 "HTTP Response from %s (status: %d):\n%s",
