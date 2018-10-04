@@ -16,9 +16,10 @@ KEY_FILE = os.path.join(
 KEY_FILE_PW = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'cert_valid_pw.pem')
 
+skip_on_win32 = pytest.mark.skipif(sys.platform == 'win32',
+                                   reason="does not run on windows")
 
-@pytest.mark.skipif(sys.platform == 'win32',
-                    reason="does not run on windows")
+@skip_on_win32
 def test_sign():
     envelope = load_xml("""
         <soapenv:Envelope
@@ -39,8 +40,7 @@ def test_sign():
     signature.verify_envelope(envelope, KEY_FILE)
 
 
-@pytest.mark.skipif(sys.platform == 'win32',
-                    reason="does not run on windows")
+@skip_on_win32
 def test_sign_pw():
     envelope = load_xml("""
         <soapenv:Envelope
@@ -63,6 +63,7 @@ def test_sign_pw():
 
 @pytest.mark.skipif(sys.platform == 'win32',
                     reason="does not run on windows")
+@skip_on_win32
 def test_verify_error():
     envelope = load_xml("""
         <soapenv:Envelope
@@ -89,8 +90,7 @@ def test_verify_error():
         signature.verify_envelope(envelope, KEY_FILE)
 
 
-@pytest.mark.skipif(sys.platform == 'win32',
-                    reason="does not run on windows")
+@skip_on_win32
 def test_signature():
     envelope = load_xml("""
         <soapenv:Envelope
