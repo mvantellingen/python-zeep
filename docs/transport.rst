@@ -1,11 +1,16 @@
 Transports
 ==========
-If you need to change options like cache, timeout or SSL verification you will
-need to create an instance of the Transport class yourself.
+If you need to change options like cache, timeout or TLS (or SSL) verification
+you will need to create an instance of the Transport class yourself.
 
-SSL verification
+.. note::
+    Secure Sockets Layer (SSL) has been deprecated in favor of Transport
+    Layer Security (**TLS**). SSL 2.0 was prohibited in 2011 and SSL 3.0
+    in June 2015.
+
+TLS verification
 ----------------
-If you need to verify the SSL connection (in case you have a self-signed
+If you need to verify the TLS connection (in case you have a self-signed
 certificate for your host), the best way is to create a
 :class:`requests.Session` instance and add the information to that Session,
 so it keeps persistent:
@@ -31,9 +36,9 @@ so it keeps persistent:
     different files, you must combine them manually into one.
 
 Alternatively, instead of using ``session.verify`` you can use
-``session.cert`` if you just want to use an SSL client certificate.
+``session.cert`` if you just want to use an TLS client certificate.
 
-To **disable SSL verification** (not recommended!) you will need to set
+To **disable TLS verification** (not recommended!) you will need to set
 ``verify`` to ``False``.
 
 .. code-block:: python
