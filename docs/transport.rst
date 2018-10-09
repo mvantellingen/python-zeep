@@ -41,8 +41,14 @@ To **disable SSL verification** (not recommended!) you will need to set
     session = Session()
     session.verify = False
 
+Or even simpler way:
+
+.. code-block:: python
+
+    client.transport.session.verify = False
+
 Remember: this should be only done for testing purposes. Python's ``urllib3``
-will warn you with a InsecureRequestWarning.
+will warn you with a ``InsecureRequestWarning``.
 
 See :class:`requests.Session` for further details.
 
