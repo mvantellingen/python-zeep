@@ -23,11 +23,12 @@ so it keeps persistent:
         'http://my.own.sslhost.local/service?WSDL',
         transport=transport)
 
-.. HINT::
-Make sure that the certificate you refer to is a CA_BUNDLE, meaning it
-contains a root CA and an intermediate CA. Accepted are only X.509 ASCII
-files (file extension ``.pem``, sometimes ``.crt``). If you have two
-different files, you must combine them manually into one.
+
+.. hint::
+    Make sure that the certificate you refer to is a CA_BUNDLE, meaning it
+    contains a root CA and an intermediate CA. Accepted are only X.509 ASCII
+    files (file extension ``.pem``, sometimes ``.crt``). If you have two
+    different files, you must combine them manually into one.
 
 Alternatively, instead of using ``session.verify`` you can use
 ``session.cert`` if you just want to use an SSL client certificate.
