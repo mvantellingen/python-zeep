@@ -74,6 +74,32 @@ seconds:
         transport=transport)
 
 
+Using HTTP or SOCKS Proxy
+-------------------------
+
+By default, zeep uses ``requests`` as transport layer, which allows to
+define proxies using the ``proxies`` attribute of :class:`requests.Session`:
+
+.. code-block:: python
+
+    from zeep.import Client
+
+    client = Client(
+        'http://my.own.sslhost.local/service?WSDL')
+
+    client.transport.session.proxies = {
+        # Utilize for all http/https connections
+        'http': 'foo.bar:3128',
+        'https': 'foo.bar:3128',
+        # Utilize for certain URL
+        'http://specific.host.example': 'foo.bar:8080',
+        # Or use socks5 proxy (requires requests[socks])
+        'https://socks5-required.example': 'socks5://foo.bar:8888',
+    }
+
+In order to use **SOCKS** proxies, requests needs to be installed with
+additional packages (for example ``pip install -U requests[socks]``).
+
 .. _transport_caching:
 
 Caching
