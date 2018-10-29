@@ -279,7 +279,7 @@ class SoapMessage(ConcreteMessage):
 
         # If this message has no parts then we have nothing to do. This might
         # happen for output messages which don't return anything.
-        if not abstract_message.parts and self.type != 'input':
+        if (abstract_message is None or not abstract_message.parts) and self.type != 'input':
             return
 
         self.abstract = abstract_message
