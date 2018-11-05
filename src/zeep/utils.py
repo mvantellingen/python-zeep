@@ -79,6 +79,15 @@ def get_base_class(objects):
 
 
 def detect_soap_env(envelope):
+    if isinstance(envelope, etree._Element):
+        pass
+    elif isinstance(envelope, etree._ElementTree):
+        envelope = envelope.getroot()
+    else:
+        raise TypeError(
+            'SOAP Envelope must be passed as an lxml etree or root element. '
+            'You passed an instance of {}.'.format(envelope.__class__)
+        )
     root_tag = etree.QName(envelope)
     return root_tag.namespace
 

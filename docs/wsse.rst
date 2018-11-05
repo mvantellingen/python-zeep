@@ -34,6 +34,19 @@ Example usage::
     ...         private_key_filename, public_key_filename, 
     ...         optional_password))
 
+Example offline usage:
+
+    from zeep.wsse.signature import sign_envelope
+    from lxml import etree
+
+    soap_envelope = etree.parse('unsigned-soapenv.xml')
+
+    sign_envelope(
+        soap_envelope, private_key_filename, public_key_filename, optional_password
+    )
+
+    soap_envelope.write('signed-soapenv.xml')
+
 
 .. _xmlsec: https://pypi.python.org/pypi/xmlsec
 .. _README: https://github.com/mehcode/python-xmlsec
