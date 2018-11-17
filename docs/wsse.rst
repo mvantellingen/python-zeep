@@ -50,9 +50,9 @@ to the client in a list
     >>> from zeep import Client
     >>> from zeep.wsse.username import UsernameToken
     >>> from zeep.wsse.signature import Signature
-    >>> user_name_token = UsernameToken('username', 'password'))
+    >>> user_name_token = UsernameToken('username', 'password')
     >>> signature = Signature(private_key_filename, public_key_filename,
-    ...     optional_password))
+    ...     optional_password)
     >>> client = Client(
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
     ...     wsse=[user_name_token, signature])
