@@ -1,62 +1,8 @@
 from six import StringIO
-
-from tests.utils import assert_nodes_equal, load_xml
 from zeep.wsdl import wsdl
 
 
 def test_wsdl_parses_operations_with_no_output():
-    # wsdl_content = StringIO("""
-    #   <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
-    #              xmlns:tns="http://tests.python-zeep.org/tns"
-    #              xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-    #              xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-    #              targetNamespace="http://tests.python-zeep.org/tns">
-    #
-    #     <types>
-    #         <xsd:schema targetNamespace="http://tests.python-zeep.org/tns">
-    #           <xsd:element name="Request" type="xsd:string"/>
-    #           <xsd:element name="Response" type="xsd:string"/>
-    #         </xsd:schema>
-    #     </types>
-    #
-    #     <message name="MaterialMasterRequest">
-    #         <part element="tns:Request" name="parameters"> </part>
-    #     </message>
-    #     <message name="OrderRequest">
-    #         <part element="tns:Request" name="parameters"> </part>
-    #     </message>
-    #
-    #     <portType name="TestBinding">
-    #         <operation name="Order">
-    #             <input message="tns:OrderRequest"> </input>
-    #         </operation>
-    #         <operation name="MaterialMaster">
-    #             <input message="tns:MaterialMasterRequest"> </input>
-    #         </operation>
-    #     </portType>
-    #     <binding name="TestSOAP" type="tns:TestBinding">
-    #         <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
-    #         <operation name="Order">
-    #             <soap:operation soapAction=""/>
-    #             <input>
-    #                 <body use="literal"/>
-    #             </input>
-    #             <output>
-    #                 <body use="literal"/>
-    #             </output>
-    #         </operation>
-    #         <operation name="MaterialMaster">
-    #             <soap:operation soapAction=""/>
-    #             <input>
-    #                 <body use="literal"/>
-    #             </input>
-    #             <output>
-    #                 <body use="literal"/>
-    #             </output>
-    #         </operation>
-    #     </binding>
-    # </definitions>
-    #     """.strip())
 
     wsdl_content = StringIO("""
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
