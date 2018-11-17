@@ -112,3 +112,26 @@ def test_signature():
     plugin = wsse.Signature(KEY_FILE_PW, KEY_FILE_PW, 'geheim')
     envelope, headers = plugin.apply(envelope, {})
     plugin.verify(envelope)
+
+
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason="does not run on windows")
+def test_signature_binary():
+    envelope = load_xml("""
+        <soapenv:Envelope
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+          <soapenv:Header></soapenv:Header>
+          <soapenv:Body>
+            <tns:Function>
+              <tns:Argument>OK</tns:Argument>
+            </tns:Function>
+          </soapenv:Body>
+        </soapenv:Envelope>
+    """)
+
+    plugin = wsse.BinarySignature(KEY_FILE_PW, KEY_FILE_PW, 'geheim')
+    envelope, headers = plugin.apply(envelope, {})
+    plugin.verify(envelope)

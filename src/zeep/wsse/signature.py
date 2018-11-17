@@ -71,6 +71,17 @@ class Signature(MemorySignature):
             _read_file(key_file), _read_file(certfile), password)
 
 
+class BinarySignature(Signature):
+    """Sign given SOAP envelope with WSSE sig usign given key file and cert file.
+
+    Place the key information into BinarySecurityElement."""
+
+    def apply(self, envelope, headers):
+        key = _make_sign_key(self.key_data, self.cert_data, self.password)
+        _sign_envelope_with_key_binary(envelope, key)
+        return envelope, headers
+
+
 def check_xmlsec_import():
     if xmlsec is None:
         raise ImportError(
@@ -173,7 +184,8 @@ def sign_envelope(envelope, keyfile, certfile, password=None):
     return _sign_envelope_with_key(envelope, key)
 
 
-def _sign_envelope_with_key(envelope, key):
+def _signature_prepare(envelope, key):
+    """Prepare envelope and sign."""
     soap_env = detect_soap_env(envelope)
 
     # Create the Signature node.
@@ -208,7 +220,29 @@ def _sign_envelope_with_key(envelope, key):
     # the X509 data (because it doesn't understand WSSE).
     sec_token_ref = etree.SubElement(
         key_info, QName(ns.WSSE, 'SecurityTokenReference'))
+    return security, sec_token_ref, x509_data
+
+
+def _sign_envelope_with_key(envelope, key):
+    _, sec_token_ref, x509_data = _signature_prepare(envelope, key)
     sec_token_ref.append(x509_data)
+
+
+def _sign_envelope_with_key_binary(envelope, key):
+    security, sec_token_ref, x509_data = _signature_prepare(envelope, key)
+    ref = etree.SubElement(sec_token_ref, QName(ns.WSSE, 'Reference'),
+                           {'ValueType': 'http://docs.oasis-open.org/wss/2004/01/'
+                                         'oasis-200401-wss-x509-token-profile-1.0#X509v3'})
+    ref_id = ensure_id(ref)
+    bintok = etree.Element(QName(ns.WSSE, 'BinarySecurityToken'), {
+        QName(ns.WSU, 'Id'): ref_id,
+        'ValueType': 'http://docs.oasis-open.org/wss/2004/01/'
+                     'oasis-200401-wss-x509-token-profile-1.0#X509v3',
+        'EncodingType': 'http://docs.oasis-open.org/wss/2004/01/'
+                        'oasis-200401-wss-soap-message-security-1.0#Base64Binary'})
+    bintok.text = x509_data.find(QName(ns.DS, 'X509Certificate')).text
+    security.insert(1, bintok)
+    x509_data.getparent().remove(x509_data)
 
 
 def verify_envelope(envelope, certfile):

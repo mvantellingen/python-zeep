@@ -24,6 +24,8 @@ To use the wsse.Signature() plugin you will need to install the `xmlsec`_
 module. See the `README`_ for xmlsec for the required dependencies on your 
 platform.
 
+To append the security token as `BinarySecurityToken`, you can use wsse.BinarySignature() plugin.
+
 Example usage::
 
     >>> from zeep import Client
