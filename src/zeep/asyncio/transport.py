@@ -31,7 +31,7 @@ class AsyncTransport(Transport):
             ]
 
     def __init__(self, loop, cache=None, timeout=300, operation_timeout=None,
-                 session=None):
+                 session=None, verify_ssl=True, proxy=None):
 
         self.loop = loop if loop else asyncio.get_event_loop()
         self.cache = cache
@@ -39,6 +39,8 @@ class AsyncTransport(Transport):
         self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)
 
+        self.verify_ssl = verify_ssl
+        self.proxy = proxy
         self.session = session or aiohttp.ClientSession(loop=self.loop)
         self._close_session = session is None
         self.session._default_headers['User-Agent'] = (
@@ -81,7 +83,8 @@ class AsyncTransport(Transport):
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
         with aio_timeout(self.operation_timeout):
             response = await self.session.post(
-                address, data=message, headers=headers)
+                address, data=message, headers=headers,
+                verify_ssl=self.verify_ssl, proxy=self.proxy)
             self.logger.debug(
                 "HTTP Response from %s (status: %d):\n%s",
                 address, response.status, await response.read())
@@ -95,7 +98,8 @@ class AsyncTransport(Transport):
     async def get(self, address, params, headers):
         with aio_timeout(self.operation_timeout):
             response = await self.session.get(
-                address, params=params, headers=headers)
+                address, params=params, headers=headers,
+                verify_ssl=self.verify_ssl, proxy=self.proxy)
 
             return await self.new_response(response)
 
