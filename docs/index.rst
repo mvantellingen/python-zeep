@@ -73,10 +73,10 @@ If you have installed pip then run::
 
 This assumes that there are wheel files available for the latest lxml release.
 If that is not the case (https://pypi.python.org/pypi/lxml/) then first
-install lxml 3.7.3 since that release should have the wheel files for all
+install lxml 4.2.5 since that release should have the wheel files for all
 platforms::
 
-    pip install lxml==3.7.3 zeep
+    pip install lxml==4.2.5 zeep
 
 
 When you want to use wsse.Signature() you will need to install the python
