@@ -1,23 +1,20 @@
----
+build: false  # Not a C# project, build stuff at the test step instead.
 environment:
   matrix:
-    - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python33"
-    - PYTHON: "C:\\Python34"
-    # - PYTHON: "C:\\Python35"
-
-init:
-  - "%PYTHON%/python -V"
-  - "%PYTHON%/python -c \"import struct;print( 8 * struct.calcsize(\'P\'))\""
+    - PYTHON_VERSION: "2.7"
+      PYTHON : "C:\\Python27"
+    - PYTHON_VERSION: "3.5"
+      PYTHON: "C:\\Python35-x64"
+    - PYTHON_VERSION: "3.6"
+      PYTHON: "C:\\Python36-x64"
+    - PYTHON_VERSION: "3.7"
+      PYTHON: "C:\\Python37-x64"
 
 install:
   - "%PYTHON%/Scripts/easy_install -U pip"
   - "%PYTHON%/Scripts/easy_install lxml==3.5.0"
   - "%PYTHON%/Scripts/pip install wheel"
   - "%PYTHON%/Scripts/pip install -e .[test]"
-
-
-build: false  # Not a C# project, build stuff at the test step instead.
 
 test_script:
   - "%PYTHON%/Scripts/py.test --cov=zeep --cov-report=term-missing"
