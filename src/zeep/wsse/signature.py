@@ -233,13 +233,12 @@ def _sign_envelope_with_key_binary(envelope, key):
     ref = etree.SubElement(sec_token_ref, QName(ns.WSSE, 'Reference'),
                            {'ValueType': 'http://docs.oasis-open.org/wss/2004/01/'
                                          'oasis-200401-wss-x509-token-profile-1.0#X509v3'})
-    ref_id = ensure_id(ref)
     bintok = etree.Element(QName(ns.WSSE, 'BinarySecurityToken'), {
-        QName(ns.WSU, 'Id'): ref_id,
         'ValueType': 'http://docs.oasis-open.org/wss/2004/01/'
                      'oasis-200401-wss-x509-token-profile-1.0#X509v3',
         'EncodingType': 'http://docs.oasis-open.org/wss/2004/01/'
                         'oasis-200401-wss-soap-message-security-1.0#Base64Binary'})
+    ref.attrib['URI'] = '#' + ensure_id(bintok)
     bintok.text = x509_data.find(QName(ns.DS, 'X509Certificate')).text
     security.insert(1, bintok)
     x509_data.getparent().remove(x509_data)
