@@ -39,7 +39,8 @@ class Schema(object):
             nodes = [node] if node is not None else []
         else:
             nodes = node
-        self.add_documents(nodes, location)
+        tns = node.get('targetNameSpace') if node is not None else None
+        self.add_documents(nodes, location, target_namespace=tns)
 
     def __repr__(self):
         main_doc = self.root_document
@@ -101,10 +102,18 @@ class Schema(object):
                     yield type_
                     seen.add(type_.qname)
 
-    def add_documents(self, schema_nodes, location):
+    def add_documents(self, schema_nodes, location, target_namespace=None):
+        """
+
+        :type schema_nodes: List[lxml.etree._Element]
+        :type location: str
+        :type target_namespace: Optional[str]
+
+        """
         resolve_queue = []
         for node in schema_nodes:
-            document = self.create_new_document(node, location)
+            document = self.create_new_document(
+                node, location, target_namespace=target_namespace)
             resolve_queue.append(document)
 
         for document in resolve_queue:
@@ -132,6 +141,7 @@ class Schema(object):
         """Return a global xsd.Type object with the given qname
 
         :rtype: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
+
 
         """
         qname = self._create_qname(qname)
@@ -191,13 +201,15 @@ class Schema(object):
             return 'soap-env'
         return namespace
 
-    def create_new_document(self, node, url, base_url=None):
+    def create_new_document(self, node, url, base_url=None, target_namespace=None):
         """
 
         :rtype: zeep.xsd.schema.SchemaDocument
 
         """
         namespace = node.get('targetNamespace') if node is not None else None
+        if not namespace:
+            namespace = target_namespace
         if base_url is None:
             base_url = url
 

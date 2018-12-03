@@ -129,7 +129,12 @@ class SchemaVisitor(object):
         """
         assert node is not None
 
-        self.document._target_namespace = node.get('targetNamespace')
+        # A schema should always have a targetNamespace attribute, otherwise
+        # it is called a chameleon schema. In that case the schema will inherit
+        # the namespace of the enclosing schema/node.
+        tns = node.get('targetNamespace')
+        if tns:
+            self.document._target_namespace = tns
         self.document._element_form = node.get('elementFormDefault', 'unqualified')
         self.document._attribute_form = node.get('attributeFormDefault', 'unqualified')
 

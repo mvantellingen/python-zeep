@@ -1034,3 +1034,67 @@ def test_extra_http_headers(recwarn, monkeypatch):
 
     assert headers['Authorization'] == 'Bearer 1234'
 
+
+def test_inherit_wsdl_target_namespace():
+    wsdl_main = StringIO("""
+        <wsdl:definitions
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:tns="http://Example.org"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl"
+            targetNamespace="http://Example.org"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+          <wsdl:types>
+            <xsd:schema elementFormDefault="qualified" >
+              <xsd:element name="Add">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element minOccurs="1" name="a" type="xsd:int" />
+                    <xsd:element minOccurs="1" name="b" type="xsd:int" />
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+              <xsd:element name="AddResponse">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element minOccurs="0" name="result" type="xsd:int" />
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+            </xsd:schema>
+          </wsdl:types>
+          <wsdl:message name="ICalculator_Add_InputMessage">
+            <wsdl:part name="parameters" element="Add" />
+          </wsdl:message>
+          <wsdl:message name="ICalculator_Add_OutputMessage">
+            <wsdl:part name="parameters" element="AddResponse" />
+          </wsdl:message>
+          <wsdl:portType name="ICalculator">
+            <wsdl:operation name="Add">
+              <wsdl:input wsaw:Action="http://Example.org/ICalculator/Add" message="tns:ICalculator_Add_InputMessage" />
+              <wsdl:output wsaw:Action="http://Example.org/ICalculator/AddResponse" message="tns:ICalculator_Add_OutputMessage" />
+            </wsdl:operation>
+          </wsdl:portType>
+          <wsdl:binding name="DefaultBinding_ICalculator" type="tns:ICalculator">
+            <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+            <wsdl:operation name="Add">
+              <soap:operation soapAction="http://Example.org/ICalculator/Add" style="document" />
+              <wsdl:input>
+                <soap:body use="literal" />
+              </wsdl:input>
+              <wsdl:output>
+                <soap:body use="literal" />
+              </wsdl:output>
+            </wsdl:operation>
+          </wsdl:binding>
+          <wsdl:service name="CalculatorService">
+            <wsdl:port name="ICalculator" binding="tns:DefaultBinding_ICalculator">
+              <soap:address location="http://Example.org/ICalculator" />
+            </wsdl:port>
+          </wsdl:service>
+        </wsdl:definitions>
+    """)
+
+    transport = DummyTransport()
+    document = wsdl.Document(wsdl_main, transport)
+    document.dump()

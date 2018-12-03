@@ -310,10 +310,19 @@ class Definition(object):
             },
         ]
 
+        # Check if there is a targetNameSpace on the document. Schema's are not
+        # required to have the targetNamespace attribute set, although it is
+        # good practice. When the attribute is not set the schemas is called a
+        # chameleon schema. In that case it should inherit the targetNamespace
+        # of the enclosing schema. Although it is unclear if it should just
+        # inherit the attribute from the root document it does solve some bugs.
+        # See https://github.com/mvantellingen/python-zeep/issues/879
+        target_namespace = doc.get('targetNamespace')
+
         # Find xsd:schema elements (wsdl:types/xsd:schema)
         schema_nodes = findall_multiple_ns(
             doc, 'wsdl:types/xsd:schema', namespace_sets)
-        self.types.add_documents(schema_nodes, self.location)
+        self.types.add_documents(schema_nodes, self.location, target_namespace)
 
     def parse_messages(self, doc):
         """
