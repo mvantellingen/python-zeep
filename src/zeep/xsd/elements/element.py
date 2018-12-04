@@ -160,6 +160,7 @@ class Element(Base):
                     xmlelement, schema, allow_none=True, context=context)
                 result.append(item)
             elif (
+                  schema is not None and
                   schema.settings.xsd_ignore_sequence_order and
                   list(filter(lambda elem: etree.QName(elem.tag).localname == self.qname.localname, xmlelements))
             ):
