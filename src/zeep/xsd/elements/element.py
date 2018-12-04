@@ -159,7 +159,10 @@ class Element(Base):
                 item = self.parse(
                     xmlelement, schema, allow_none=True, context=context)
                 result.append(item)
-            elif list(filter(lambda elem: etree.QName(elem.tag).localname == self.qname.localname, xmlelements)):
+            elif (
+                  schema.settings.xsd_ignore_sequence_order and
+                  list(filter(lambda elem: etree.QName(elem.tag).localname == self.qname.localname, xmlelements))
+            ):
                 # Search for the field in remaining elements, not only the leftmost
                 xmlelement = list(filter(lambda elem: etree.QName(elem.tag).localname == self.qname.localname, xmlelements))[0]
                 xmlelements.remove(xmlelement)
