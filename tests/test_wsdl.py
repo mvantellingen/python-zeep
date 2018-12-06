@@ -1046,6 +1046,13 @@ def test_inherit_wsdl_target_namespace():
             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
           <wsdl:types>
             <xsd:schema elementFormDefault="qualified" >
+              <xsd:element name="AddResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                    <xsd:element minOccurs="0" maxOccurs="1" ref="demo" />
+                    </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
               <xsd:element name="Add">
                 <xsd:complexType>
                   <xsd:sequence>
@@ -1060,6 +1067,10 @@ def test_inherit_wsdl_target_namespace():
                     <xsd:element minOccurs="0" name="result" type="xsd:int" />
                   </xsd:sequence>
                 </xsd:complexType>
+              </xsd:element>
+            </xsd:schema>
+            <xsd:schema elementFormDefault="qualified" >
+              <xsd:element name="demo">
               </xsd:element>
             </xsd:schema>
           </wsdl:types>
