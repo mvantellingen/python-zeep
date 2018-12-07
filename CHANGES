@@ -6,6 +6,7 @@
  - Fix issue with duplicate soap:body tags when multiple parts used (#879)
  - Fix Choice with unbound Any element (#871)
  - Add xsd_ignore_sequence_order flag (#880)
+ - Add support for timestamp token in WSS headers (#817)
 
 
 3.1.0 (2018-07-28)
