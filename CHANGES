@@ -1,6 +1,11 @@
 3.2.0 (unreleased)
 ------------------
  - Fix abstract message check for NoneType before attempting to access parts
+ - Improve support for 'Chameleon' XSD schemas (#879)
+ - Fix resolving qualified references (#879)
+ - Fix issue with duplicate soap:body tags when multiple parts used (#879)
+ - Fix Choice with unbound Any element (#871)
+
 
 3.1.0 (2018-07-28)
 ------------------
