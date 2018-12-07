@@ -38,13 +38,14 @@ class UsernameToken(object):
     soap_message_secutity_ns = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0'    # noqa
 
     def __init__(self, username, password=None, password_digest=None,
-                 use_digest=False, nonce=None, created=None):
+                 use_digest=False, nonce=None, created=None, timestamp_token=None):
         self.username = username
         self.password = password
         self.password_digest = password_digest
         self.nonce = nonce
         self.created = created
         self.use_digest = use_digest
+        self.timestamp_token = timestamp_token
 
     def apply(self, envelope, headers):
         security = utils.get_security_header(envelope)
@@ -55,6 +56,9 @@ class UsernameToken(object):
         if token is None:
             token = utils.WSSE.UsernameToken()
             security.append(token)
+
+        if self.timestamp_token is not None:
+            security.append(self.timestamp_token)
 
         # Create the sub elements of the UsernameToken element
         elements = [
