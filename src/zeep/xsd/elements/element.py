@@ -159,6 +159,18 @@ class Element(Base):
                 item = self.parse(
                     xmlelement, schema, allow_none=True, context=context)
                 result.append(item)
+            elif (
+                  schema is not None and
+                  schema.settings.xsd_ignore_sequence_order and
+                  list(filter(lambda elem: etree.QName(elem.tag).localname == self.qname.localname, xmlelements))
+            ):
+                # Search for the field in remaining elements, not only the leftmost
+                xmlelement = list(filter(lambda elem: etree.QName(elem.tag).localname == self.qname.localname, xmlelements))[0]
+                xmlelements.remove(xmlelement)
+                num_matches += 1
+                item = self.parse(
+                    xmlelement, schema, allow_none=True, context=context)
+                result.append(item)
             else:
                 # If the element passed doesn't match and the current one is
                 # not optional then throw an error
