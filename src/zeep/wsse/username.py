@@ -81,11 +81,11 @@ class UsernameToken(object):
         ]
         if self.plaintext_nonce:
             nonce = self._create_nonce()
-            timestamp = utils.get_timestamp(self.created)
             r.append(utils.WSSE.Nonce(
-                base64.b64encode(nonce).decode('utf-8'),
+                nonce.decode('utf-8'),
                 EncodingType='%s#Base64Binary' % self.soap_message_security_ns
             ))
+            timestamp = utils.get_timestamp(self.created)
             r.append(utils.WSU.Created(timestamp))
         return r
 
@@ -94,7 +94,7 @@ class UsernameToken(object):
             nonce = self.nonce.encode('utf-8')
         else:
             nonce = os.urandom(16)
-        return nonce
+        return base64.b64encode(nonce)
 
     def _create_password_digest(self):
         nonce = self._create_nonce()
@@ -117,7 +117,7 @@ class UsernameToken(object):
                 Type='%s#PasswordDigest' % self.username_token_profile_ns
             ),
             utils.WSSE.Nonce(
-                base64.b64encode(nonce).decode('utf-8'),
+                nonce.decode('utf-8'),
                 EncodingType='%s#Base64Binary' % self.soap_message_security_ns
             ),
             utils.WSU.Created(timestamp)
