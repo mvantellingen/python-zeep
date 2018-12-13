@@ -39,8 +39,7 @@ class Schema(object):
             nodes = [node] if node is not None else []
         else:
             nodes = node
-        tns = node.get('targetNameSpace') if node is not None else None
-        self.add_documents(nodes, location, target_namespace=tns)
+        self.add_documents(nodes, location)
 
     def __repr__(self):
         main_doc = self.root_document
@@ -102,7 +101,7 @@ class Schema(object):
                     yield type_
                     seen.add(type_.qname)
 
-    def add_documents(self, schema_nodes, location, target_namespace=None):
+    def add_documents(self, schema_nodes, location):
         """
 
         :type schema_nodes: List[lxml.etree._Element]
@@ -112,8 +111,7 @@ class Schema(object):
         """
         resolve_queue = []
         for node in schema_nodes:
-            document = self.create_new_document(
-                node, location, target_namespace=target_namespace)
+            document = self.create_new_document(node, location)
             resolve_queue.append(document)
 
         for document in resolve_queue:
@@ -212,7 +210,6 @@ class Schema(object):
             namespace = target_namespace
         if base_url is None:
             base_url = url
-
         schema = SchemaDocument(namespace, url, base_url)
         self.documents.add(schema)
         schema.load(self, node)
@@ -389,6 +386,7 @@ class SchemaDocument(object):
         self._location = location
         self._target_namespace = namespace
         self._is_internal = False
+        self._has_empty_import = False
 
         # Containers for specific types
         self._attribute_groups = {}

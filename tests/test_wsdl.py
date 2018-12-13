@@ -1035,13 +1035,12 @@ def test_extra_http_headers(recwarn, monkeypatch):
     assert headers['Authorization'] == 'Bearer 1234'
 
 
-def test_inherit_wsdl_target_namespace():
+def test_wsdl_no_schema_namespace():
     wsdl_main = StringIO("""
         <wsdl:definitions
             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
             xmlns:tns="http://Example.org"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl"
             targetNamespace="http://Example.org"
             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
           <wsdl:types>
@@ -1082,8 +1081,8 @@ def test_inherit_wsdl_target_namespace():
           </wsdl:message>
           <wsdl:portType name="ICalculator">
             <wsdl:operation name="Add">
-              <wsdl:input wsaw:Action="http://Example.org/ICalculator/Add" message="tns:ICalculator_Add_InputMessage" />
-              <wsdl:output wsaw:Action="http://Example.org/ICalculator/AddResponse" message="tns:ICalculator_Add_OutputMessage" />
+              <wsdl:input message="tns:ICalculator_Add_InputMessage" />
+              <wsdl:output message="tns:ICalculator_Add_OutputMessage" />
             </wsdl:operation>
           </wsdl:portType>
           <wsdl:binding name="DefaultBinding_ICalculator" type="tns:ICalculator">
@@ -1105,7 +1104,55 @@ def test_inherit_wsdl_target_namespace():
           </wsdl:service>
         </wsdl:definitions>
     """)
+    client = stub(settings=Settings(), plugins=[], wsse=None)
+
+    transport = DummyTransport()
+    document = wsdl.Document(wsdl_main, transport)
+    binding = document.services.get('CalculatorService').ports.get('ICalculator').binding
+
+    envelope, headers = binding._create(
+        'Add',
+        args=[3, 4],
+        kwargs={},
+        client=client,
+        options={'address': 'http://tests.python-zeep.org/test'})
+
+    expected = """
+        <soap-env:Envelope xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap-env:Body>
+            <Add>
+                <a>3</a>
+                <b>4</b>
+            </Add>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """
+    assert_nodes_equal(expected, envelope)
+
+
+def test_namespaced_wsdl_with_empty_import():
+    # See https://www.w3.org/TR/2012/REC-xmlschema11-1-20120405/#src-resolve for details
+    wsdl_main = StringIO("""
+        <wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" targetNamespace="weird_wsdl" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:types>
+            <s:schema elementFormDefault="qualified" targetNamespace="weird_wsdl">
+                <s:import />
+                <s:element name="GetVTInfoResponse">
+                    <s:complexType>
+                    <s:sequence>
+                        <s:element minOccurs="0" maxOccurs="1" ref="GetVTInfoResult" />
+                    </s:sequence>
+                    </s:complexType>
+                </s:element>
+            </s:schema>
+            <s:schema elementFormDefault="qualified">
+                <s:element name="GetVTInfoResult" />
+            </s:schema>
+        </wsdl:types>
+        </wsdl:definitions>
+    """)
 
     transport = DummyTransport()
     document = wsdl.Document(wsdl_main, transport)
     document.dump()
+
