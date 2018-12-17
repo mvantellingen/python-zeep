@@ -12,6 +12,7 @@ from zeep.wsdl import definitions
 NSMAP = {
     'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
     'wsaw': 'http://www.w3.org/2006/05/addressing/wsdl',
+    'wsam': 'http://www.w3.org/2007/05/addressing/metadata',
 }
 
 
@@ -118,7 +119,9 @@ def parse_abstract_operation(wsdl, xmlelement):
         else:
             kwargs['fault_messages'][param_name] = param_value
 
-        wsa_action = msg_node.get(etree.QName(NSMAP['wsaw'], 'Action'))
+        wsa_action = msg_node.get(etree.QName(NSMAP['wsam'], 'Action'))
+        if not wsa_action:
+            wsa_action = msg_node.get(etree.QName(NSMAP['wsaw'], 'Action'))
         param_value.wsa_action = wsa_action
 
     kwargs['name'] = name
