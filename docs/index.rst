@@ -181,18 +181,3 @@ Changelog
    :maxdepth: 2
 
    changes
-
-
-Support
-=======
-
-If you encounter bugs then please `let me know`_ . Please see :doc:`reporting_bugs`
-for information how to best report them.
-
-I'm also able to offer commercial support.  As in contracting work. Please
-contact me at info@mvantellingen.nl for more information. If you just have a
-random question and don't intent to actually pay me for my support then please
-DO NOT email me at that e-mail address but just use stackoverflow or something..
-
-
-.. _let me know: https://github.com/mvantellingen/python-zeep/issues
