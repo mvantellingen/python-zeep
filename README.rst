@@ -39,9 +39,6 @@ Status
 .. image:: https://img.shields.io/pypi/v/zeep.svg
     :target: https://pypi.python.org/pypi/zeep/
 
-.. image:: https://requires.io/github/mvantellingen/python-zeep/requirements.svg?branch=master
-     :target: https://requires.io/github/mvantellingen/python-zeep/requirements/?branch=master
-
 .. end-no-pypi
 
 Installation
