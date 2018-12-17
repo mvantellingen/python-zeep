@@ -175,6 +175,16 @@ class SchemaVisitor(object):
                 filename=self._document.location,
                 sourceline=node.sourceline)
 
+        # We found an empty <import/> statement, this needs to trigger 4.1.2
+        # from https://www.w3.org/TR/2012/REC-xmlschema11-1-20120405/#src-resolve
+        # for QName resolving.
+        # In essence this means we will resolve QNames without a namespace to no
+        # namespace instead of the target namespace.
+        # The following code snippet works because imports have to occur before we
+        # visit elements.
+        if not namespace and not location:
+            self.document._has_empty_import = True
+
         # Check if the schema is already imported before based on the
         # namespace. Schema's without namespace are registered as 'None'
         document = self.schema.documents.get_by_namespace_and_location(namespace, location)
@@ -220,8 +230,7 @@ class SchemaVisitor(object):
         elif not schema_tns and not namespace:
             namespace = self.document._target_namespace
 
-        schema = self.schema.create_new_document(
-            schema_node, location, target_namespace=namespace)
+        schema = self.schema.create_new_document(schema_node, location, target_namespace=namespace)
         self.register_import(namespace, schema)
         return schema
 
@@ -1171,8 +1180,9 @@ class SchemaVisitor(object):
                 namespace=name.namespace, schemaLocation=name.namespace)
             self.visit_import(import_node, None)
 
-        if not name.namespace and self.document._element_form == 'qualified' and self.document._target_namespace:
-            name = etree.QName(self.document._target_namespace, name.localname)
+        if (not name.namespace and self.document._element_form == 'qualified' and
+            self.document._target_namespace and not self.document._has_empty_import):
+                name = etree.QName(self.document._target_namespace, name.localname)
         return name
 
     def _pop_annotation(self, items):

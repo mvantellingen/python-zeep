@@ -39,8 +39,8 @@ def parse_abstract_message(wsdl, xmlelement):
 
     for part in xmlelement.findall('wsdl:part', namespaces=NSMAP):
         part_name = part.get('name')
-        part_element = qname_attr(part, 'element', tns)
-        part_type = qname_attr(part, 'type', tns)
+        part_element = qname_attr(part, 'element')
+        part_type = qname_attr(part, 'type')
 
         try:
             if part_element is not None:
