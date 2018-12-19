@@ -551,3 +551,22 @@ def test_xml_soap_enc_string(transport):
 
     obj = shoe_type.parse(node[0], schema)
     assert obj[0]['_value_1'] == "foo"
+
+    # attribute name in string value, #657
+    string_type = schema.get_type('{http://schemas.xmlsoap.org/soap/encoding/}string')
+    obj = shoe_type(string_type('id'))
+    node = render_node(shoe_type, obj)
+    expected = """
+            <document>
+                <ns0:value xmlns:ns0="http://tests.python-zeep.org/">
+                  <string>_value_1</string>
+                  <string>id</string>
+                  <string>href</string>
+                  <string>_attr_1</string>
+                </ns0:value>
+            </document>
+        """
+    assert_nodes_equal(expected, node)
+
+    obj = shoe_type.parse(node[0], schema)
+    assert obj[1]['_value_1'] == "id"
