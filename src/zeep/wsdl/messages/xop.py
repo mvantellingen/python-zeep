@@ -14,7 +14,7 @@ def process_xop(document, message_pack):
         if href.startswith('cid:'):
             href = '<%s>' % href[4:]
 
-        value = message_pack.get_by_content_id(href)
+        value = message_pack.get_by_content_id(href.replace("%40", "@"))
         if not value:
             raise ValueError("No part found for: %r" % xop_node.get('href'))
         num_replaced += 1
