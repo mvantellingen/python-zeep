@@ -383,3 +383,56 @@ def test_ignore_sequence_order():
 
     response = elm.parse(node[0], schema)
     assert response.Baz.id == 3
+
+
+def test_ignore_sequence_order_with_any_in_middle():
+    schema_doc = load_xml(b"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <xsd:schema xmlns:tns="http://tests.python-zeep.org/attr"
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+          elementFormDefault="qualified"
+          targetNamespace="http://tests.python-zeep.org/attr">
+          <xsd:complexType name="Result">
+            <xsd:attribute name="id" type="xsd:int" use="required"/>
+          </xsd:complexType>
+          <xsd:element name="Response">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element minOccurs="0" maxOccurs="1" name="Foo" type="tns:Result"/>
+                <xsd:any namespace="##other" processContents="lax"/>
+                <xsd:element minOccurs="0" maxOccurs="1" name="Bar" type="tns:Result"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+    """)
+
+    response_doc = load_xml(b"""
+        <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+          <s:Body xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            <Response xmlns="http://tests.python-zeep.org/attr">
+                <Bar id="2"/>
+                <Baz id="3"/>
+                <Foo id="1"/>
+            </Response>
+          </s:Body>
+        </s:Envelope>
+    """)
+
+    schema = xsd.Schema(schema_doc)
+    elm = schema.get_element('{http://tests.python-zeep.org/attr}Response')
+    schema.settings.xsd_ignore_sequence_order = True
+
+    node = response_doc.xpath(
+        '//ns0:Response', namespaces={
+            'xsd': 'http://www.w3.org/2001/XMLSchema',
+            'ns0': 'http://tests.python-zeep.org/attr',
+        })
+
+    response = elm.parse(node[0], schema)
+    assert hasattr(response.Foo, 'id')
+    assert response.Foo.id == 1
+    assert hasattr(response.Bar, 'id')
+    assert response.Bar.id == 2
+    assert hasattr(response, '_value_1')
+    assert '3' in response._value_1.values()
