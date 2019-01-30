@@ -16,7 +16,7 @@ __all__ = ['AsyncSoap11Binding', 'AsyncSoap12Binding']
 class AsyncSoapBinding(object):
 
     async def send(self, client, options, operation, args, kwargs):
-        envelope, http_headers = self._create(
+        envelope, http_headers = await self._create(
             operation, args, kwargs,
             client=client,
             options=options)
