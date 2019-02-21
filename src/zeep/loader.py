@@ -94,7 +94,7 @@ def normalize_location(settings, url, base_url):
             base_url_parts.netloc == url_parts.netloc and
             base_url_parts.scheme != url_parts.scheme
         ):
-            url = urllib.parse.urlunparse(('https', *url_parts[1:]))
+            url = urllib.parse.urlunparse(('https',) + url_parts[1:])
     return url
 
 
