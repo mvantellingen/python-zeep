@@ -72,7 +72,7 @@ class Signature(MemorySignature):
 
 
 class BinarySignature(Signature):
-    """Sign given SOAP envelope with WSSE sig usign given key file and cert file.
+    """Sign given SOAP envelope with WSSE sig using given key file and cert file.
 
     Place the key information into BinarySecurityElement."""
 
