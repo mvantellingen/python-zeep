@@ -1,4 +1,5 @@
 import os.path
+import urllib
 
 from defusedxml.lxml import fromstring
 from lxml import etree
@@ -74,6 +75,27 @@ def load_external(url, transport, base_url=None, settings=None):
         content = transport.load(url)
     return parse_xml(
         content, transport, base_url, settings=settings)
+
+
+def normalize_location(settings, url, base_url):
+    """Return a 'normalized' url for the given url.
+
+    This will make the url absolute and force it to https when that setting is
+    enabled.
+
+    """
+    if base_url:
+        url = absolute_location(url, base_url)
+
+    if settings.force_https:
+        base_url_parts = urllib.parse.urlparse(base_url)
+        url_parts = urllib.parse.urlparse(url)
+        if (
+            base_url_parts.netloc == url_parts.netloc and
+            base_url_parts.scheme != url_parts.scheme
+        ):
+            url = urllib.parse.urlunparse(('https', *url_parts[1:]))
+    return url
 
 
 def absolute_location(location, base):

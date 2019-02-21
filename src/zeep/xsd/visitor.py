@@ -5,7 +5,7 @@ import re
 from lxml import etree
 
 from zeep.exceptions import XMLParseError
-from zeep.loader import absolute_location, load_external
+from zeep.loader import absolute_location, load_external, normalize_location
 from zeep.utils import as_qname, qname_attr
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import types as xsd_types
@@ -207,9 +207,11 @@ class SchemaVisitor(object):
             return
 
         # Load the XML
+        location = normalize_location(self.schema.settings, location, self.document._location)
         schema_node = load_external(
             location,
-            self.schema._transport,
+            transport=self.schema._transport,
+            base_url=self.document._location,
             settings=self.schema.settings)
 
         # Check if the xsd:import namespace matches the targetNamespace. If

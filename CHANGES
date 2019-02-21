@@ -1,3 +1,8 @@
+3.3.0 (2019-02-21)
+------------------
+ - Extend the force_https flag to also force loading xsd files from https when
+   a http url is encountered from a https domain
+
 3.2.0 (2018-12-17)
 ------------------
  - Fix abstract message check for NoneType before attempting to access parts
