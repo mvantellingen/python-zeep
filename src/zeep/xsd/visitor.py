@@ -428,7 +428,7 @@ class SchemaVisitor(object):
         # Check of wsdl:arayType
         array_type = node.get('{http://schemas.xmlsoap.org/wsdl/}arrayType')
         if array_type:
-            match = re.match('([^\[]+)', array_type)
+            match = re.match(r'([^\[]+)', array_type)
             if match:
                 array_type = match.groups()[0]
                 qname = as_qname(array_type, node.nsmap)
