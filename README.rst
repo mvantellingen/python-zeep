@@ -27,11 +27,8 @@ Status
 .. image:: https://readthedocs.org/projects/python-zeep/badge/?version=latest
     :target: https://readthedocs.org/projects/python-zeep/
    
-.. image:: https://travis-ci.org/mvantellingen/python-zeep.svg?branch=master
-    :target: https://travis-ci.org/mvantellingen/python-zeep
-
-.. image:: https://ci.appveyor.com/api/projects/status/im609ng9h29vt89r?svg=true
-    :target: https://ci.appveyor.com/project/mvantellingen/python-zeep
+.. image:: https://dev.azure.com/mvantellingen/zeep/_apis/build/status/python-zeep?branchName=master
+    :target: https://dev.azure.com/mvantellingen/zeep/_build?definitionId=1
 
 .. image:: http://codecov.io/github/mvantellingen/python-zeep/coverage.svg?branch=master 
     :target: http://codecov.io/github/mvantellingen/python-zeep?branch=master
