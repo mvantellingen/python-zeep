@@ -1,9 +1,8 @@
 import os.path
-import urllib
 
 from defusedxml.lxml import fromstring
 from lxml import etree
-from six.moves.urllib.parse import urljoin, urlparse
+from six.moves.urllib.parse import urljoin, urlparse, urlunparse
 
 from zeep.exceptions import XMLSyntaxError
 from zeep.settings import Settings
@@ -87,14 +86,14 @@ def normalize_location(settings, url, base_url):
     if base_url:
         url = absolute_location(url, base_url)
 
-    if settings.force_https:
-        base_url_parts = urllib.parse.urlparse(base_url)
-        url_parts = urllib.parse.urlparse(url)
+    if base_url and settings.force_https:
+        base_url_parts = urlparse(base_url)
+        url_parts = urlparse(url)
         if (
             base_url_parts.netloc == url_parts.netloc and
             base_url_parts.scheme != url_parts.scheme
         ):
-            url = urllib.parse.urlunparse(('https',) + url_parts[1:])
+            url = urlunparse(('https',) + url_parts[1:])
     return url
 
 
