@@ -28,7 +28,7 @@ class PrettyPrinter(object):
             if num > 0:
                 for i, (key, value) in enumerate(obj.items()):
                     write(' ' * (indent * level))
-                    write("'%s'" % key)
+                    write('"%s"' % key)
                     write(': ')
                     self._format(value, stream, level=level + 1)
                     if i < num - 1:
@@ -53,7 +53,7 @@ class PrettyPrinter(object):
                 write(' ' * (indent * (level - 1)))
             write(']')
         else:
-            value = repr(obj)
+            value = '%s' % obj
             if '\n' in value:
                 lines = value.split('\n')
                 num = len(lines)
@@ -64,4 +64,4 @@ class PrettyPrinter(object):
                     if i < num - 1:
                         write('\n')
             else:
-                write(value)
+                write('"%s"' % value)

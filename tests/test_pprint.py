@@ -1,5 +1,5 @@
+import json
 from zeep.xsd import printer
-
 
 def test_dict():
     pprint = printer.PrettyPrinter()
@@ -32,3 +32,19 @@ def test_list():
         },
     ]
     pprint.pformat(data)
+
+
+def test_json_load():
+    pprint = printer.PrettyPrinter()
+    data = [
+        {
+            'foo': 'bar',
+            'foo_2': 'bar',
+        },
+        {
+            'foo': 'bar',
+            'foo_2': 'bar',
+        },
+    ]
+    json.loads(pprint.pformat(data))
+
