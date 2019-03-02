@@ -40,8 +40,8 @@ def _unpickle_compound_value(name, values):
     See CompoundValue.__reduce__
 
     """
-    cls = type(name, (CompoundValue,), {
-        '_xsd_type': None, '__module__': 'zeep.objects'
+    cls = type(name.__name__, (CompoundValue,), {
+        '_xsd_type': name._xsd_type, '__module__': 'zeep.objects'
     })
     obj = cls()
     obj.__values__ = values
@@ -93,7 +93,7 @@ class CompoundValue(object):
         self.__values__ = values
 
     def __reduce__(self):
-        return (_unpickle_compound_value, (self.__class__.__name__, self.__values__,))
+        return (_unpickle_compound_value, (self.__class__, self.__values__,))
 
     def __contains__(self, key):
         return self.__values__.__contains__(key)
