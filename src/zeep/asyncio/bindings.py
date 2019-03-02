@@ -15,6 +15,10 @@ class AsyncSoapBinding(object):
             options['address'], envelope, http_headers)
 
         operation_obj = self.get(operation)
+       
+        if client.settings.raw_response:
+            return response        
+
         return self.process_reply(client, operation_obj, response)
 
 
