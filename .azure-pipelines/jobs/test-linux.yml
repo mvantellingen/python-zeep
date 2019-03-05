@@ -27,6 +27,8 @@ jobs:
           TOXENV: "py37"
 
     steps:
+      - script: sudo apt-get update
+        displayName: "Apt update"
       - script: sudo apt-get install -y
           libssl-dev
           libxmlsec1
