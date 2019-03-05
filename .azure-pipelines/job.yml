@@ -1,0 +1,31 @@
+parameters:
+  name:
+  vmImage:
+  os:
+
+
+jobs:
+- job: ${{ parameters.name }}
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+  strategy:
+    matrix:
+      Python 2.7:
+        python.version: "2.7"
+        TOXENV: "py27-${{ parameters.os }}"
+      Python 3.4:
+        python.version: "3.4"
+        TOXENV: "py34-${{ parameters.os }}"
+      Python 3.5:
+        python.version: "3.5"
+        TOXENV: "py35-${{ parameters.os }}"
+      Python 3.6:
+        python.version: "3.6"
+        TOXENV: "py36-${{ parameters.os }}"
+      Python 3.7:
+        python.version: "3.7"
+        TOXENV: "py37-${{ parameters.os }}"
+  steps:
+  - template: steps.yml
+    parameters:
+      os: ${{ parameters.os }}

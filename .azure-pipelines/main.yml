@@ -1,7 +1,11 @@
 jobs:
-- template: jobs/test-linux.yml
+- template: job.yml
   parameters:
+    name: Linux
+    os: linux
     vmImage: ubuntu-16.04
-- template: jobs/test-windows.yml
+- template: job.yml
   parameters:
+    name: Windows
+    os: windows
     vmImage: vs2017-win2016
