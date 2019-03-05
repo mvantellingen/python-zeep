@@ -185,6 +185,8 @@ class SchemaVisitor(object):
         if not namespace and not location:
             self.document._has_empty_import = True
 
+        location = normalize_location(self.schema.settings, location, self.document._location)
+
         # Check if the schema is already imported before based on the
         # namespace. Schema's without namespace are registered as 'None'
         document = self.schema.documents.get_by_namespace_and_location(namespace, location)
@@ -207,7 +209,6 @@ class SchemaVisitor(object):
             return
 
         # Load the XML
-        location = normalize_location(self.schema.settings, location, self.document._location)
         schema_node = load_external(
             location,
             transport=self.schema._transport,
