@@ -17,6 +17,8 @@ from collections import OrderedDict, defaultdict, deque
 
 from cached_property import threaded_cached_property
 
+from lxml import etree
+
 from zeep.exceptions import UnexpectedElementError, ValidationError
 from zeep.xsd.const import NotSet, SkipValue
 from zeep.xsd.elements import Any, Element
@@ -588,6 +590,13 @@ class Sequence(OrderIndicator):
 
         """
         result = []
+
+        if schema is not None and schema.settings.xsd_ignore_sequence_order:
+            self.elements = sorted(self.elements, key=lambda e: isinstance(e[1], Any))
+            reordered_elements = sorted(xmlelements, key=lambda e: {k: v for v, k in enumerate(
+                [x[1].name for x in self.elements])}.get(etree.QName(e.tag).localname, len(xmlelements)))
+            xmlelements.clear()
+            xmlelements.extend(reordered_elements)
 
         if self.accepts_multiple:
             assert name
