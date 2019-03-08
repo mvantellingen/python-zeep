@@ -121,7 +121,11 @@ class Binding(object):
         self._operations = {}
 
     def resolve(self, definitions):
-        self.port_type = definitions.get('port_types', self.port_name.text)
+        try:
+            self.port_type = definitions.get('port_types', self.port_name.text)
+        except IndexError:
+            warnings.warn('The port_name %s has no bindings, for now we are going to ignore it', self.port_name.text)
+            return
 
         for name, operation in list(self._operations.items()):
             try:
