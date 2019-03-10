@@ -10,83 +10,98 @@ from zeep.helpers import serialize_object
 
 def test_serialize_simple():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'name'),
-                    xsd.String()),
-                xsd.Attribute(
-                    etree.QName('http://tests.python-zeep.org/', 'attr'),
-                    xsd.String()),
-            ])
-        ))
+            xsd.Sequence(
+                [
+                    xsd.Element(
+                        etree.QName("http://tests.python-zeep.org/", "name"),
+                        xsd.String(),
+                    ),
+                    xsd.Attribute(
+                        etree.QName("http://tests.python-zeep.org/", "attr"),
+                        xsd.String(),
+                    ),
+                ]
+            )
+        ),
+    )
 
-    obj = custom_type(name='foo', attr='x')
-    assert obj.name == 'foo'
-    assert obj.attr == 'x'
+    obj = custom_type(name="foo", attr="x")
+    assert obj.name == "foo"
+    assert obj.attr == "x"
 
     result = serialize_object(obj)
 
-    assert result == {
-        'name': 'foo',
-        'attr': 'x',
-    }
+    assert result == {"name": "foo", "attr": "x"}
 
 
 def test_serialize_nested_complex_type():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'items'),
-                    xsd.ComplexType(
-                        xsd.Sequence([
-                            xsd.Element(
-                                etree.QName('http://tests.python-zeep.org/', 'x'),
-                                xsd.String()),
-                            xsd.Element(
-                                etree.QName('http://tests.python-zeep.org/', 'y'),
-                                xsd.ComplexType(
-                                    xsd.Sequence([
-                                        xsd.Element(
-                                            etree.QName('http://tests.python-zeep.org/', 'x'),
-                                            xsd.String()),
-                                    ])
-                                )
+            xsd.Sequence(
+                [
+                    xsd.Element(
+                        etree.QName("http://tests.python-zeep.org/", "items"),
+                        xsd.ComplexType(
+                            xsd.Sequence(
+                                [
+                                    xsd.Element(
+                                        etree.QName(
+                                            "http://tests.python-zeep.org/", "x"
+                                        ),
+                                        xsd.String(),
+                                    ),
+                                    xsd.Element(
+                                        etree.QName(
+                                            "http://tests.python-zeep.org/", "y"
+                                        ),
+                                        xsd.ComplexType(
+                                            xsd.Sequence(
+                                                [
+                                                    xsd.Element(
+                                                        etree.QName(
+                                                            "http://tests.python-zeep.org/",
+                                                            "x",
+                                                        ),
+                                                        xsd.String(),
+                                                    )
+                                                ]
+                                            )
+                                        ),
+                                    ),
+                                ]
                             )
-                        ])
-                    ),
-                    max_occurs=2
-                )
-            ])
-        ))
+                        ),
+                        max_occurs=2,
+                    )
+                ]
+            )
+        ),
+    )
 
     obj = custom_type(
-        items=[
-            {'x': 'bla', 'y': {'x': 'deep'}},
-            {'x': 'foo', 'y': {'x': 'deeper'}},
-        ])
+        items=[{"x": "bla", "y": {"x": "deep"}}, {"x": "foo", "y": {"x": "deeper"}}]
+    )
 
     assert len(obj.items) == 2
-    obj.items[0].x == 'bla'
-    obj.items[0].y.x == 'deep'
-    obj.items[1].x == 'foo'
-    obj.items[1].y.x == 'deeper'
+    obj.items[0].x == "bla"
+    obj.items[0].y.x == "deep"
+    obj.items[1].x == "foo"
+    obj.items[1].y.x == "deeper"
 
     result = serialize_object(obj)
 
     assert result == {
-        'items': [
-            {'x': 'bla', 'y': {'x': 'deep'}},
-            {'x': 'foo', 'y': {'x': 'deeper'}},
-        ]
+        "items": [{"x": "bla", "y": {"x": "deep"}}, {"x": "foo", "y": {"x": "deeper"}}]
     }
 
 
 def test_nested_complex_types():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
                 targetNamespace="http://tests.python-zeep.org/"
@@ -104,29 +119,28 @@ def test_nested_complex_types():
             </xsd:sequence>
           </xsd:complexType>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    item_type = schema.get_type('{http://tests.python-zeep.org/}item')
+    container_elm = schema.get_element("{http://tests.python-zeep.org/}container")
+    item_type = schema.get_type("{http://tests.python-zeep.org/}item")
 
-    instance = container_elm(item=item_type(item_1='foo'))
+    instance = container_elm(item=item_type(item_1="foo"))
     result = serialize_object(instance)
     assert isinstance(result, dict), type(result)
-    assert isinstance(result['item'], dict), type(result['item'])
-    assert result['item']['item_1'] == 'foo'
+    assert isinstance(result["item"], dict), type(result["item"])
+    assert result["item"]["item_1"] == "foo"
 
 
 def test_serialize_any_array():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
-        xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Any(max_occurs=2),
-            ])
-        ))
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
+        xsd.ComplexType(xsd.Sequence([xsd.Any(max_occurs=2)])),
+    )
 
-    any_obj = etree.Element('{http://tests.python-zeep.org}lxml')
-    etree.SubElement(any_obj, 'node').text = 'foo'
+    any_obj = etree.Element("{http://tests.python-zeep.org}lxml")
+    etree.SubElement(any_obj, "node").text = "foo"
 
     obj = custom_type(any_obj)
 
@@ -139,7 +153,7 @@ def test_serialize_any_array():
           </ns0:authentication>
         </document>
     """
-    node = etree.Element('document')
+    node = etree.Element("document")
     custom_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
@@ -147,21 +161,21 @@ def test_serialize_any_array():
     obj = custom_type.parse(list(node)[0], schema=schema)
     result = serialize_object(obj)
 
-    assert result == {
-        '_value_1': [any_obj],
-    }
+    assert result == {"_value_1": [any_obj]}
 
 
 def test_create_xml_soap_map():
-    data = OrderedDict([
-        ('text', u'String'),
-        ('bytes', b'Bytes'),
-        ('boolean', True),
-        ('integer', 100),
-        ('float', 100.1234),
-        ('datetime', datetime.datetime(2017, 10, 28, 12, 30, 10)),
-        ('date', datetime.date(2016, 1, 14)),
-    ])
+    data = OrderedDict(
+        [
+            ("text", u"String"),
+            ("bytes", b"Bytes"),
+            ("boolean", True),
+            ("integer", 100),
+            ("float", 100.1234),
+            ("datetime", datetime.datetime(2017, 10, 28, 12, 30, 10)),
+            ("date", datetime.date(2016, 1, 14)),
+        ]
+    )
     value = helpers.create_xml_soap_map(data)
 
     expected = """

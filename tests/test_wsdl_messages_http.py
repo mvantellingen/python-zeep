@@ -8,7 +8,8 @@ from zeep.wsdl import wsdl
 # URLEncoded Message
 #
 def test_urlencoded_serialize():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
@@ -45,30 +46,41 @@ def test_urlencoded_serialize():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    assert operation.input.body.signature(schema=root.types) == 'TestOperation(arg1: xsd:string, arg2: xsd:string)'
-    assert operation.input.signature(as_output=False) == 'arg1: xsd:string, arg2: xsd:string'
+    assert (
+        operation.input.body.signature(schema=root.types)
+        == "TestOperation(arg1: xsd:string, arg2: xsd:string)"
+    )
+    assert (
+        operation.input.signature(as_output=False)
+        == "arg1: xsd:string, arg2: xsd:string"
+    )
 
-    assert operation.output.body.signature(schema=root.types) == 'TestOperation(Body: xsd:string)'
-    assert operation.output.signature(as_output=True) == 'xsd:string'
+    assert (
+        operation.output.body.signature(schema=root.types)
+        == "TestOperation(Body: xsd:string)"
+    )
+    assert operation.output.signature(as_output=True) == "xsd:string"
 
-    serialized = operation.input.serialize(arg1='ah1', arg2='ah2')
-    assert serialized.headers == {'Content-Type': 'text/xml; charset=utf-8'}
-    assert serialized.path == 'test-operation'
-    assert serialized.content == {'arg1': 'ah1', 'arg2': 'ah2'}
+    serialized = operation.input.serialize(arg1="ah1", arg2="ah2")
+    assert serialized.headers == {"Content-Type": "text/xml; charset=utf-8"}
+    assert serialized.path == "test-operation"
+    assert serialized.content == {"arg1": "ah1", "arg2": "ah2"}
 
 
 ##
 # URLReplacement Message
 #
 def test_urlreplacement_serialize():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
@@ -105,30 +117,41 @@ def test_urlreplacement_serialize():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    assert operation.input.body.signature(schema=root.types) == 'TestOperation(arg1: xsd:string, arg2: xsd:string)'
-    assert operation.input.signature(as_output=False) == 'arg1: xsd:string, arg2: xsd:string'
+    assert (
+        operation.input.body.signature(schema=root.types)
+        == "TestOperation(arg1: xsd:string, arg2: xsd:string)"
+    )
+    assert (
+        operation.input.signature(as_output=False)
+        == "arg1: xsd:string, arg2: xsd:string"
+    )
 
-    assert operation.output.body.signature(schema=root.types) == 'TestOperation(Body: xsd:string)'
-    assert operation.output.signature(as_output=True) == 'xsd:string'
+    assert (
+        operation.output.body.signature(schema=root.types)
+        == "TestOperation(Body: xsd:string)"
+    )
+    assert operation.output.signature(as_output=True) == "xsd:string"
 
-    serialized = operation.input.serialize(arg1='ah1', arg2='ah2')
-    assert serialized.headers == {'Content-Type': 'text/xml; charset=utf-8'}
-    assert serialized.path == 'test-operation/ah1/ah2/'
-    assert serialized.content == ''
+    serialized = operation.input.serialize(arg1="ah1", arg2="ah2")
+    assert serialized.headers == {"Content-Type": "text/xml; charset=utf-8"}
+    assert serialized.path == "test-operation/ah1/ah2/"
+    assert serialized.content == ""
 
 
 ##
 # MimeContent Message
 #
 def test_mime_content_serialize_form_urlencoded():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
@@ -165,27 +188,38 @@ def test_mime_content_serialize_form_urlencoded():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    assert operation.input.body.signature(schema=root.types) == 'TestOperation(arg1: xsd:string, arg2: xsd:string)'
-    assert operation.input.signature(as_output=False) == 'arg1: xsd:string, arg2: xsd:string'
+    assert (
+        operation.input.body.signature(schema=root.types)
+        == "TestOperation(arg1: xsd:string, arg2: xsd:string)"
+    )
+    assert (
+        operation.input.signature(as_output=False)
+        == "arg1: xsd:string, arg2: xsd:string"
+    )
 
-    assert operation.output.body.signature(schema=root.types) == 'TestOperation(Body: xsd:string)'
-    assert operation.output.signature(as_output=True) == 'xsd:string'
+    assert (
+        operation.output.body.signature(schema=root.types)
+        == "TestOperation(Body: xsd:string)"
+    )
+    assert operation.output.signature(as_output=True) == "xsd:string"
 
-    serialized = operation.input.serialize(arg1='ah1', arg2='ah2')
-    assert serialized.headers == {'Content-Type': 'application/x-www-form-urlencoded'}
-    assert serialized.path == 'test-operation'
-    assert serialized.content == 'arg1=ah1&arg2=ah2'
+    serialized = operation.input.serialize(arg1="ah1", arg2="ah2")
+    assert serialized.headers == {"Content-Type": "application/x-www-form-urlencoded"}
+    assert serialized.path == "test-operation"
+    assert serialized.content == "arg1=ah1&arg2=ah2"
 
 
 def test_mime_content_serialize_text_xml():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
@@ -222,29 +256,41 @@ def test_mime_content_serialize_text_xml():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    assert operation.input.body.signature(schema=root.types) == 'TestOperation(arg1: xsd:string, arg2: xsd:string)'
-    assert operation.input.signature(as_output=False) == 'arg1: xsd:string, arg2: xsd:string'
+    assert (
+        operation.input.body.signature(schema=root.types)
+        == "TestOperation(arg1: xsd:string, arg2: xsd:string)"
+    )
+    assert (
+        operation.input.signature(as_output=False)
+        == "arg1: xsd:string, arg2: xsd:string"
+    )
 
-    assert operation.output.body.signature(schema=root.types) == 'TestOperation(Body: xsd:string)'
-    assert operation.output.signature(as_output=True) == 'xsd:string'
+    assert (
+        operation.output.body.signature(schema=root.types)
+        == "TestOperation(Body: xsd:string)"
+    )
+    assert operation.output.signature(as_output=True) == "xsd:string"
 
-    serialized = operation.input.serialize(arg1='ah1', arg2='ah2')
-    assert serialized.headers == {'Content-Type': 'text/xml'}
-    assert serialized.path == 'test-operation'
+    serialized = operation.input.serialize(arg1="ah1", arg2="ah2")
+    assert serialized.headers == {"Content-Type": "text/xml"}
+    assert serialized.path == "test-operation"
     assert_nodes_equal(
         load_xml(serialized.content),
-        load_xml("<TestOperation><arg1>ah1</arg1><arg2>ah2</arg2></TestOperation>"))
+        load_xml("<TestOperation><arg1>ah1</arg1><arg2>ah2</arg2></TestOperation>"),
+    )
 
 
 def test_mime_content_no_parts():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
@@ -278,21 +324,23 @@ def test_mime_content_no_parts():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    assert operation.input.signature() == ''
+    assert operation.input.signature() == ""
 
     serialized = operation.input.serialize()
-    assert serialized.content == ''
+    assert serialized.content == ""
 
 
 def test_mime_xml_deserialize():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
@@ -345,16 +393,18 @@ def test_mime_xml_deserialize():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    assert operation.input.signature() == 'arg1: xsd:string, arg2: xsd:string'
+    assert operation.input.signature() == "arg1: xsd:string, arg2: xsd:string"
     assert operation.output.signature(as_output=True) == (
-        'item_1: xsd:string, item_2: xsd:string')
+        "item_1: xsd:string, item_2: xsd:string"
+    )
 
     node = """
         <response xmlns="http://tests.python-zeep.org/tns">
@@ -364,12 +414,13 @@ def test_mime_xml_deserialize():
     """.strip()
 
     serialized = operation.output.deserialize(node)
-    assert serialized.item_1 == 'foo'
-    assert serialized.item_2 == 'bar'
+    assert serialized.item_1 == "foo"
+    assert serialized.item_2 == "bar"
 
 
 def test_mime_multipart_parse():
-    load_xml("""
+    load_xml(
+        """
         <output
             xmlns="http://schemas.xmlsoap.org/wsdl/"
             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -387,4 +438,5 @@ def test_mime_multipart_parse():
               </mime:part>
           </mime:multipartRelated>
        </output>
-    """)
+    """
+    )

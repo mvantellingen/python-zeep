@@ -6,16 +6,17 @@ from zeep.xsd.types.simple import AnySimpleType  # FIXME
 class UnresolvedType(Type):
     def __init__(self, qname, schema):
         self.qname = qname
-        assert self.qname.text != 'None'
+        assert self.qname.text != "None"
         self.schema = schema
 
     def __repr__(self):
-        return '<%s(qname=%r)>' % (self.__class__.__name__, self.qname.text)
+        return "<%s(qname=%r)>" % (self.__class__.__name__, self.qname.text)
 
     def render(self, parent, value, xsd_type=None, render_path=None):
         raise RuntimeError(
-            "Unable to render unresolved type %s. This is probably a bug." % (
-                self.qname))
+            "Unable to render unresolved type %s. This is probably a bug."
+            % (self.qname)
+        )
 
     def resolve(self):
         retval = self.schema.get_type(self.qname)
@@ -23,7 +24,6 @@ class UnresolvedType(Type):
 
 
 class UnresolvedCustomType(Type):
-
     def __init__(self, qname, base_type, schema):
         assert qname is not None
         self.qname = qname
@@ -32,16 +32,17 @@ class UnresolvedCustomType(Type):
         self.base_type = base_type
 
     def __repr__(self):
-        return '<%s(qname=%r, base_type=%r)>' % (
-            self.__class__.__name__, self.qname.text, self.base_type)
+        return "<%s(qname=%r, base_type=%r)>" % (
+            self.__class__.__name__,
+            self.qname.text,
+            self.base_type,
+        )
 
     def resolve(self):
         base = self.base_type
         base = base.resolve()
 
-        cls_attributes = {
-            '__module__': 'zeep.xsd.dynamic_types',
-        }
+        cls_attributes = {"__module__": "zeep.xsd.dynamic_types"}
 
         if issubclass(base.__class__, UnionType):
             xsd_type = type(self.name, (base.__class__,), cls_attributes)

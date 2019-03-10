@@ -8,13 +8,10 @@ from lxml.builder import ElementMaker
 from zeep import ns
 from zeep.wsdl.utils import get_or_create_header
 
-NSMAP = {
-    'wsse': ns.WSSE,
-    'wsu': ns.WSU,
-}
-WSSE = ElementMaker(namespace=NSMAP['wsse'], nsmap={'wsse': ns.WSSE})
-WSU = ElementMaker(namespace=NSMAP['wsu'], nsmap={'wsu': ns.WSU})
-ID_ATTR = etree.QName(NSMAP['wsu'], 'Id')
+NSMAP = {"wsse": ns.WSSE, "wsu": ns.WSU}
+WSSE = ElementMaker(namespace=NSMAP["wsse"], nsmap={"wsse": ns.WSSE})
+WSU = ElementMaker(namespace=NSMAP["wsu"], nsmap={"wsu": ns.WSU})
+ID_ATTR = etree.QName(NSMAP["wsu"], "Id")
 
 
 def get_security_header(doc):
@@ -23,7 +20,7 @@ def get_security_header(doc):
 
     """
     header = get_or_create_header(doc)
-    security = header.find('wsse:Security', namespaces=NSMAP)
+    security = header.find("wsse:Security", namespaces=NSMAP)
     if security is None:
         security = WSSE.Security()
         header.append(security)
@@ -37,7 +34,7 @@ def get_timestamp(timestamp=None):
 
 
 def get_unique_id():
-    return 'id-{0}'.format(uuid4())
+    return "id-{0}".format(uuid4())
 
 
 def ensure_id(node):

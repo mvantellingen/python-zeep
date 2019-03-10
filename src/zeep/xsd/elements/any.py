@@ -12,14 +12,15 @@ from zeep.xsd.valueobjects import AnyObject
 logger = logging.getLogger(__name__)
 
 
-__all__ = ['Any', 'AnyAttribute']
+__all__ = ["Any", "AnyAttribute"]
 
 
 class Any(Base):
     name = None
 
-    def __init__(self, max_occurs=1, min_occurs=1, process_contents='strict',
-                 restrict=None):
+    def __init__(
+        self, max_occurs=1, min_occurs=1, process_contents="strict", restrict=None
+    ):
         """
 
         :param process_contents: Specifies how the XML processor should handle
@@ -36,19 +37,20 @@ class Any(Base):
 
         # cyclic import
         from zeep.xsd import AnyType
+
         self.type = AnyType()
 
     def __call__(self, any_object):
         return any_object
 
     def __repr__(self):
-        return '<%s(name=%r)>' % (self.__class__.__name__, self.name)
+        return "<%s(name=%r)>" % (self.__class__.__name__, self.name)
 
     def accept(self, value):
         return True
 
     def parse(self, xmlelement, schema, context=None):
-        if self.process_contents == 'skip':
+        if self.process_contents == "skip":
             return xmlelement
 
         # If a schema was passed inline then check for a matching one
@@ -68,15 +70,14 @@ class Any(Base):
                         continue
 
         # Lookup type via xsi:type attribute
-        xsd_type = qname_attr(xmlelement, xsi_ns('type'))
+        xsd_type = qname_attr(xmlelement, xsi_ns("type"))
         if xsd_type is not None:
             xsd_type = schema.get_type(xsd_type)
             return xsd_type.parse_xmlelement(xmlelement, schema, context=context)
 
         # Check if a restrict is used
         if self.restrict:
-            return self.restrict.parse_xmlelement(
-                xmlelement, schema, context=context)
+            return self.restrict.parse_xmlelement(xmlelement, schema, context=context)
 
         try:
             element = schema.get_element(xmlelement.tag)
@@ -129,8 +130,8 @@ class Any(Base):
 
             if isinstance(self.restrict, AnySimpleType):
                 for val in value:
-                    node = etree.SubElement(parent, 'item')
-                    node.set(xsi_ns('type'), self.restrict.qname)
+                    node = etree.SubElement(parent, "item")
+                    node.set(xsi_ns("type"), self.restrict.qname)
                     self._render_value_item(node, val, render_path)
             elif self.restrict:
                 for val in value:
@@ -169,10 +170,12 @@ class Any(Base):
             # Validate bounds
             if len(value) < self.min_occurs:
                 raise exceptions.ValidationError(
-                    "Expected at least %d items (minOccurs check)" % self.min_occurs)
-            if self.max_occurs != 'unbounded' and len(value) > self.max_occurs:
+                    "Expected at least %d items (minOccurs check)" % self.min_occurs
+                )
+            if self.max_occurs != "unbounded" and len(value) > self.max_occurs:
                 raise exceptions.ValidationError(
-                    "Expected at most %d items (maxOccurs check)" % self.min_occurs)
+                    "Expected at most %d items (maxOccurs check)" % self.min_occurs
+                )
 
             for val in value:
                 self._validate_item(val, render_path)
@@ -189,27 +192,32 @@ class Any(Base):
         # Check if we received a proper value object. If we receive the wrong
         # type then return a nice error message
         if self.restrict:
-            expected_types = (etree._Element, dict,) + self.restrict.accepted_types
+            expected_types = (etree._Element, dict) + self.restrict.accepted_types
         else:
             expected_types = (etree._Element, dict, AnyObject)
 
         if value in (None, NotSet):
             if not self.is_optional:
                 raise exceptions.ValidationError(
-                    "Missing element %s" % (self.name), path=render_path)
+                    "Missing element %s" % (self.name), path=render_path
+                )
 
         elif not isinstance(value, expected_types):
-            type_names = [
-                '%s.%s' % (t.__module__, t.__name__) for t in expected_types
-            ]
+            type_names = ["%s.%s" % (t.__module__, t.__name__) for t in expected_types]
             err_message = "Any element received object of type %r, expected %s" % (
-                type(value).__name__, ' or '.join(type_names))
+                type(value).__name__,
+                " or ".join(type_names),
+            )
 
-            raise TypeError('\n'.join((
-                err_message,
-                "See http://docs.python-zeep.org/en/master/datastructures.html"
-                "#any-objects for more information"
-            )))
+            raise TypeError(
+                "\n".join(
+                    (
+                        err_message,
+                        "See http://docs.python-zeep.org/en/master/datastructures.html"
+                        "#any-objects for more information",
+                    )
+                )
+            )
 
     def resolve(self):
         return self
@@ -218,20 +226,18 @@ class Any(Base):
         if self.restrict:
             base = self.restrict.name
         else:
-            base = 'ANY'
+            base = "ANY"
 
         if self.accepts_multiple:
-            return '%s[]' % base
+            return "%s[]" % base
         return base
 
 
 class AnyAttribute(Base):
     name = None
-    _ignore_attributes = [
-        etree.QName(ns.XSI, 'type')
-    ]
+    _ignore_attributes = [etree.QName(ns.XSI, "type")]
 
-    def __init__(self, process_contents='strict'):
+    def __init__(self, process_contents="strict"):
         self.qname = None
         self.process_contents = process_contents
 
@@ -253,4 +259,4 @@ class AnyAttribute(Base):
             parent.set(name, val)
 
     def signature(self, schema=None, standalone=True):
-        return '{}'
+        return "{}"

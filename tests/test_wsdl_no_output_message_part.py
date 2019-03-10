@@ -1,10 +1,12 @@
 from six import StringIO
+
 from zeep.wsdl import wsdl
 
 
 def test_wsdl_parses_operations_with_no_output():
 
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -43,14 +45,20 @@ def test_wsdl_parses_operations_with_no_output():
         </operation>
       </binding>
     </definitions>
-    """)
+    """
+    )
     # parse the content
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
     # General assertions on the input
-    assert operation.input.body.signature(schema=root.types) == 'ns0:Request(xsd:string)'
-    assert operation.input.header.signature(schema=root.types) == 'soap-env:Header()'
-    assert operation.input.envelope.signature(schema=root.types) == 'soap-env:envelope(body: xsd:string)'
-    assert operation.input.signature(as_output=False) == 'xsd:string'
+    assert (
+        operation.input.body.signature(schema=root.types) == "ns0:Request(xsd:string)"
+    )
+    assert operation.input.header.signature(schema=root.types) == "soap-env:Header()"
+    assert (
+        operation.input.envelope.signature(schema=root.types)
+        == "soap-env:envelope(body: xsd:string)"
+    )
+    assert operation.input.signature(as_output=False) == "xsd:string"

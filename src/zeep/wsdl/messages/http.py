@@ -6,10 +6,7 @@
 from zeep import xsd
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
 
-__all__ = [
-    'UrlEncoded',
-    'UrlReplacement',
-]
+__all__ = ["UrlEncoded", "UrlReplacement"]
 
 
 class HttpMessage(ConcreteMessage):
@@ -26,7 +23,8 @@ class HttpMessage(ConcreteMessage):
                 elm = xsd.Element(name, message.type)
             children.append(elm)
         self.body = xsd.Element(
-            self.operation.name, xsd.ComplexType(xsd.Sequence(children)))
+            self.operation.name, xsd.ComplexType(xsd.Sequence(children))
+        )
 
 
 class UrlEncoded(HttpMessage):
@@ -46,13 +44,14 @@ class UrlEncoded(HttpMessage):
         params = {key: None for key in self.abstract.parts.keys()}
         params.update(zip(self.abstract.parts.keys(), args))
         params.update(kwargs)
-        headers = {'Content-Type': 'text/xml; charset=utf-8'}
+        headers = {"Content-Type": "text/xml; charset=utf-8"}
         return SerializedMessage(
-            path=self.operation.location, headers=headers, content=params)
+            path=self.operation.location, headers=headers, content=params
+        )
 
     @classmethod
     def parse(cls, definitions, xmlelement, operation):
-        name = xmlelement.get('name')
+        name = xmlelement.get("name")
         obj = cls(definitions.wsdl, name, operation)
         return obj
 
@@ -82,15 +81,15 @@ class UrlReplacement(HttpMessage):
         params = {key: None for key in self.abstract.parts.keys()}
         params.update(zip(self.abstract.parts.keys(), args))
         params.update(kwargs)
-        headers = {'Content-Type': 'text/xml; charset=utf-8'}
+        headers = {"Content-Type": "text/xml; charset=utf-8"}
 
         path = self.operation.location
         for key, value in params.items():
-            path = path.replace('(%s)' % key, value if value is not None else '')
-        return SerializedMessage(path=path, headers=headers, content='')
+            path = path.replace("(%s)" % key, value if value is not None else "")
+        return SerializedMessage(path=path, headers=headers, content="")
 
     @classmethod
     def parse(cls, definitions, xmlelement, operation):
-        name = xmlelement.get('name')
+        name = xmlelement.get("name")
         obj = cls(definitions.wsdl, name, operation)
         return obj

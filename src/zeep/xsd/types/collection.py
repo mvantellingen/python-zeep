@@ -1,7 +1,7 @@
 from zeep.utils import get_base_class
 from zeep.xsd.types.simple import AnySimpleType
 
-__all__ = ['ListType', 'UnionType']
+__all__ = ["ListType", "UnionType"]
 
 
 class ListType(AnySimpleType):
@@ -24,7 +24,7 @@ class ListType(AnySimpleType):
 
     def xmlvalue(self, value):
         item_type = self.item_type
-        return ' '.join(item_type.xmlvalue(v) for v in value)
+        return " ".join(item_type.xmlvalue(v) for v in value)
 
     def pythonvalue(self, value):
         if not value:
@@ -33,7 +33,7 @@ class ListType(AnySimpleType):
         return [item_type.pythonvalue(v) for v in value.split()]
 
     def signature(self, schema=None, standalone=True):
-        return self.item_type.signature(schema) + '[]'
+        return self.item_type.signature(schema) + "[]"
 
 
 class UnionType(AnySimpleType):
@@ -53,13 +53,15 @@ class UnionType(AnySimpleType):
         return self
 
     def signature(self, schema=None, standalone=True):
-        return ''
+        return ""
 
-    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
-                         context=None, schema_type=None):
+    def parse_xmlelement(
+        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
+    ):
         if self.item_class:
             return self.item_class().parse_xmlelement(
-                xmlelement, schema, allow_none, context)
+                xmlelement, schema, allow_none, context
+            )
         return xmlelement.text
 
     def pythonvalue(self, value):

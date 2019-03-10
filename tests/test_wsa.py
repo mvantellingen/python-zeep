@@ -10,9 +10,11 @@ from zeep.settings import Settings
 
 def test_require_wsa(recwarn, monkeypatch):
     monkeypatch.setattr(
-        uuid, 'uuid4', lambda: uuid.UUID('ada686f9-5995-4088-bea4-239f694b2eaf'))
+        uuid, "uuid4", lambda: uuid.UUID("ada686f9-5995-4088-bea4-239f694b2eaf")
+    )
 
-    wsdl_main = StringIO("""
+    wsdl_main = StringIO(
+        """
         <?xml version="1.0"?>
         <wsdl:definitions
           xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -65,20 +67,22 @@ def test_require_wsa(recwarn, monkeypatch):
             </wsdl:port>
           </wsdl:service>
         </wsdl:definitions>
-    """.strip())
+    """.strip()
+    )
 
     client = stub(plugins=[], wsse=None)
 
     transport = DummyTransport()
     client = Client(wsdl_main, transport=transport)
-    binding = client.wsdl.services.get('TestService').ports.get('TestPortType').binding
+    binding = client.wsdl.services.get("TestService").ports.get("TestPortType").binding
 
     envelope, headers = binding._create(
-        'TestOperation1',
-        args=['foo'],
+        "TestOperation1",
+        args=["foo"],
         kwargs={},
         client=client,
-        options={'address': 'http://tests.python-zeep.org/test'})
+        options={"address": "http://tests.python-zeep.org/test"},
+    )
     expected = """
         <soap-env:Envelope
             xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
@@ -97,9 +101,11 @@ def test_require_wsa(recwarn, monkeypatch):
 
 def test_force_wsa(recwarn, monkeypatch):
     monkeypatch.setattr(
-        uuid, 'uuid4', lambda: uuid.UUID('ada686f9-5995-4088-bea4-239f694b2eaf'))
+        uuid, "uuid4", lambda: uuid.UUID("ada686f9-5995-4088-bea4-239f694b2eaf")
+    )
 
-    wsdl_main = StringIO("""
+    wsdl_main = StringIO(
+        """
         <?xml version="1.0"?>
         <wsdl:definitions
           xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -151,18 +157,20 @@ def test_force_wsa(recwarn, monkeypatch):
             </wsdl:port>
           </wsdl:service>
         </wsdl:definitions>
-    """.strip())
+    """.strip()
+    )
 
     transport = DummyTransport()
     client = Client(wsdl_main, transport=transport, plugins=[wsa.WsAddressingPlugin()])
-    binding = client.wsdl.services.get('TestService').ports.get('TestPortType').binding
+    binding = client.wsdl.services.get("TestService").ports.get("TestPortType").binding
 
     envelope, headers = binding._create(
-        'TestOperation1',
-        args=['foo'],
+        "TestOperation1",
+        args=["foo"],
         kwargs={},
         client=client,
-        options={'address': 'http://tests.python-zeep.org/test'})
+        options={"address": "http://tests.python-zeep.org/test"},
+    )
     expected = """
         <soap-env:Envelope
             xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
@@ -181,9 +189,11 @@ def test_force_wsa(recwarn, monkeypatch):
 
 def test_force_wsa_soap12(recwarn, monkeypatch):
     monkeypatch.setattr(
-        uuid, 'uuid4', lambda: uuid.UUID('ada686f9-5995-4088-bea4-239f694b2eaf'))
+        uuid, "uuid4", lambda: uuid.UUID("ada686f9-5995-4088-bea4-239f694b2eaf")
+    )
 
-    wsdl_main = StringIO("""
+    wsdl_main = StringIO(
+        """
         <?xml version="1.0"?>
         <wsdl:definitions
           xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -235,20 +245,22 @@ def test_force_wsa_soap12(recwarn, monkeypatch):
             </wsdl:port>
           </wsdl:service>
         </wsdl:definitions>
-    """.strip())
+    """.strip()
+    )
 
     client = stub(plugins=[wsa.WsAddressingPlugin()], wsse=None, settings=Settings())
 
     transport = DummyTransport()
     doc = wsdl.Document(wsdl_main, transport, settings=client.settings)
-    binding = doc.services.get('TestService').ports.get('TestPortType').binding
+    binding = doc.services.get("TestService").ports.get("TestPortType").binding
 
     envelope, headers = binding._create(
-        'TestOperation1',
-        args=['foo'],
+        "TestOperation1",
+        args=["foo"],
         kwargs={},
         client=client,
-        options={'address': 'http://tests.python-zeep.org/test'})
+        options={"address": "http://tests.python-zeep.org/test"},
+    )
     expected = """
         <soap-env:Envelope
             xmlns:soap-env="http://www.w3.org/2003/05/soap-envelope">
@@ -265,15 +277,18 @@ def test_force_wsa_soap12(recwarn, monkeypatch):
     """
     assert_nodes_equal(expected, envelope)
 
-    assert headers['Content-Type'] == (
-        'application/soap+xml; charset=utf-8; action="urn:dummyRequest"')
+    assert headers["Content-Type"] == (
+        'application/soap+xml; charset=utf-8; action="urn:dummyRequest"'
+    )
 
 
 def test_require_wsa_new(recwarn, monkeypatch):
     monkeypatch.setattr(
-        uuid, 'uuid4', lambda: uuid.UUID('ada686f9-5995-4088-bea4-239f694b2eaf'))
+        uuid, "uuid4", lambda: uuid.UUID("ada686f9-5995-4088-bea4-239f694b2eaf")
+    )
 
-    wsdl_main = StringIO("""
+    wsdl_main = StringIO(
+        """
         <?xml version="1.0"?>
         <wsdl:definitions
           xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -326,20 +341,22 @@ def test_require_wsa_new(recwarn, monkeypatch):
             </wsdl:port>
           </wsdl:service>
         </wsdl:definitions>
-    """.strip())
+    """.strip()
+    )
 
     client = stub(plugins=[], wsse=None)
 
     transport = DummyTransport()
     client = Client(wsdl_main, transport=transport)
-    binding = client.wsdl.services.get('TestService').ports.get('TestPortType').binding
+    binding = client.wsdl.services.get("TestService").ports.get("TestPortType").binding
 
     envelope, headers = binding._create(
-        'TestOperation1',
-        args=['foo'],
+        "TestOperation1",
+        args=["foo"],
         kwargs={},
         client=client,
-        options={'address': 'http://tests.python-zeep.org/test'})
+        options={"address": "http://tests.python-zeep.org/test"},
+    )
     expected = """
         <soap-env:Envelope
             xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">

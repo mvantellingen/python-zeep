@@ -9,7 +9,9 @@ from zeep import xsd
 
 
 def test_simple_content_extension():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -27,10 +29,12 @@ def test_simple_content_extension():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """.strip()))
-    shoe_type = schema.get_element('{http://tests.python-zeep.org/}ShoeSize')
+    """.strip()
+        )
+    )
+    shoe_type = schema.get_element("{http://tests.python-zeep.org/}ShoeSize")
 
-    obj = shoe_type(20, sizing='EUR')
+    obj = shoe_type(20, sizing="EUR")
 
     node = render_node(shoe_type, obj)
     expected = """
@@ -44,11 +48,13 @@ def test_simple_content_extension():
 
     obj = shoe_type.parse(node[0], schema)
     assert obj._value_1 == 20
-    assert obj.sizing == 'EUR'
+    assert obj.sizing == "EUR"
 
 
 def test_complex_content_sequence_extension():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -74,13 +80,14 @@ def test_complex_content_sequence_extension():
             </xsd:sequence>
           </xsd:complexType>
         </xsd:schema>
-    """))
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    """
+        )
+    )
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
 
-    obj = address_type(
-        first_name='foo', last_name='bar', country='The Netherlands')
+    obj = address_type(first_name="foo", last_name="bar", country="The Netherlands")
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     expected = """
         <document>
@@ -95,7 +102,9 @@ def test_complex_content_sequence_extension():
 
 
 def test_complex_content_with_recursive_elements():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -121,18 +130,23 @@ def test_complex_content_with_recursive_elements():
             </xsd:sequence>
           </xsd:complexType>
         </xsd:schema>
-    """))
-    pet_type = schema.get_element('{http://tests.python-zeep.org/}Pet')
-    assert(pet_type.signature(schema=schema) == 'ns0:Pet(ns0:Pet)')
-    assert(pet_type.type.signature(schema=schema) == 'ns0:Pet(name: xsd:string, common_name: xsd:string, children: ns0:Pet[])')
+    """
+        )
+    )
+    pet_type = schema.get_element("{http://tests.python-zeep.org/}Pet")
+    assert pet_type.signature(schema=schema) == "ns0:Pet(ns0:Pet)"
+    assert (
+        pet_type.type.signature(schema=schema)
+        == "ns0:Pet(name: xsd:string, common_name: xsd:string, children: ns0:Pet[])"
+    )
 
     obj = pet_type(
-        name='foo', common_name='bar',
-        children=[
-            pet_type(name='child-1', common_name='child-cname-1')
-        ])
+        name="foo",
+        common_name="bar",
+        children=[pet_type(name="child-1", common_name="child-cname-1")],
+    )
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     pet_type.render(node, obj)
     expected = """
         <document>
@@ -150,7 +164,9 @@ def test_complex_content_with_recursive_elements():
 
 
 def test_complex_content_sequence_extension_2():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -176,10 +192,13 @@ def test_complex_content_sequence_extension_2():
             </xsd:complexContent>
           </xsd:complexType>
         </xsd:schema>
-    """))
-    elm_cls = schema.get_element('{http://tests.python-zeep.org/}container')
+    """
+        )
+    )
+    elm_cls = schema.get_element("{http://tests.python-zeep.org/}container")
 
-    node = load_xml("""
+    node = load_xml(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/"
                        xmlns:i="http://www.w3.org/2001/XMLSchema-instance"
                        i:type="ns0:response">
@@ -187,15 +206,18 @@ def test_complex_content_sequence_extension_2():
             <ns0:item-2>item-2</ns0:item-2>
             <ns0:item-3>item-3</ns0:item-3>
         </ns0:container>
-    """)
+    """
+    )
     data = elm_cls.parse(node, schema)
-    assert data['item-1'] == 'item-1'
-    assert data['item-2'] == 'item-2'
-    assert data['item-3'] == 'item-3'
+    assert data["item-1"] == "item-1"
+    assert data["item-2"] == "item-2"
+    assert data["item-3"] == "item-3"
 
 
 def test_complex_type_with_extension_optional():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -227,11 +249,13 @@ def test_complex_type_with_extension_optional():
             </xsd:sequence>
           </xsd:complexType>
         </xsd:schema>
-    """))
-    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    obj = container_elm(main_1='foo')
+    """
+        )
+    )
+    container_elm = schema.get_element("{http://tests.python-zeep.org/}container")
+    obj = container_elm(main_1="foo")
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     container_elm.render(node, obj)
     expected = """
         <document>
@@ -244,11 +268,13 @@ def test_complex_type_with_extension_optional():
 
     assert_nodes_equal(expected, node)
     item = container_elm.parse(list(node)[0], schema)
-    assert item.main_1 == 'foo'
+    assert item.main_1 == "foo"
 
 
 def test_complex_with_simple():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -269,12 +295,14 @@ def test_complex_with_simple():
             <xsd:restriction base="xsd:dateTime"/>
           </xsd:simpleType>
         </xsd:schema>
-    """))
-    address_type = schema.get_element('ns0:Address')
+    """
+        )
+    )
+    address_type = schema.get_element("ns0:Address")
 
     assert address_type.type.signature()
     val = datetime.datetime(2016, 5, 29, 11, 13, 45)
-    obj = address_type(val, name='foobie')
+    obj = address_type(val, name="foobie")
 
     expected = """
       <document>
@@ -282,13 +310,15 @@ def test_complex_with_simple():
             name="foobie">2016-05-29T11:13:45</ns0:Address>
       </document>
     """
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_sequence_with_type():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema
                 xmlns="http://www.w3.org/2001/XMLSchema"
@@ -319,12 +349,14 @@ def test_sequence_with_type():
 
           <element name="Seq" type="tns:polytype"/>
         </schema>
-    """))
-    seq = schema.get_type('ns0:polytype')
-    sub_type = schema.get_type('ns0:subtype')
-    value = seq(item=[sub_type(attr_1='test', name='name')])
+    """
+        )
+    )
+    seq = schema.get_type("ns0:polytype")
+    sub_type = schema.get_type("ns0:subtype")
+    value = seq(item=[sub_type(attr_1="test", name="name")])
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     seq.render(node, value)
 
     expected = """
@@ -341,7 +373,9 @@ def test_sequence_with_type():
 
 
 def test_complex_simple_content():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:tns="http://tests.python-zeep.org/"
@@ -380,11 +414,13 @@ def test_complex_simple_content():
             </xsd:restriction>
           </xsd:simpleType>
         </xsd:schema>
-    """))  # noqa
-    value_elm = schema.get_element('ns0:value')
-    value = value_elm('00163e0c-0ea1-1ed6-93af-e818529bc1f1')
+    """
+        )
+    )  # noqa
+    value_elm = schema.get_element("ns0:value")
+    value = value_elm("00163e0c-0ea1-1ed6-93af-e818529bc1f1")
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     value_elm.render(node, value)
     expected = """
       <document>
@@ -394,16 +430,23 @@ def test_complex_simple_content():
     assert_nodes_equal(expected, node)
 
     item = value_elm.parse(list(node)[0], schema)
-    assert item._value_1 == '00163e0c-0ea1-1ed6-93af-e818529bc1f1'
+    assert item._value_1 == "00163e0c-0ea1-1ed6-93af-e818529bc1f1"
 
 
 def test_issue_221():
     transport = DummyTransport()
     transport.bind(
-        'https://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd',
-        load_xml(io.open('tests/wsdl_files/xmldsig-core-schema.xsd', 'r').read().encode('utf-8')))
+        "https://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd",
+        load_xml(
+            io.open("tests/wsdl_files/xmldsig-core-schema.xsd", "r")
+            .read()
+            .encode("utf-8")
+        ),
+    )
 
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -462,14 +505,17 @@ def test_issue_221():
             </restriction>
           </simpleType>x
         </schema>
-    """), transport=transport)
+    """
+        ),
+        transport=transport,
+    )
 
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
-    elm = schema.get_element('tns:exportOrgRegistryRequest')
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
+    elm = schema.get_element("tns:exportOrgRegistryRequest")
 
     # Args
-    obj = elm(None, {'OGRN': '123123123123', 'isRegistered': True})
-    node = etree.Element('document')
+    obj = elm(None, {"OGRN": "123123123123", "isRegistered": True})
+    node = etree.Element("document")
     elm.render(node, obj)
     expected = """
       <document>
@@ -483,8 +529,8 @@ def test_issue_221():
     """
     assert_nodes_equal(expected, node)
 
-    obj = elm(SearchCriteria={'orgVersionGUID': '1234', 'isRegistered': False})
-    node = etree.Element('document')
+    obj = elm(SearchCriteria={"orgVersionGUID": "1234", "isRegistered": False})
+    node = etree.Element("document")
     elm.render(node, obj)
     expected = """
       <document>
@@ -498,8 +544,8 @@ def test_issue_221():
     """
     assert_nodes_equal(expected, node)
 
-    obj = elm(SearchCriteria={'OGRNIP': '123123123123', 'isRegistered': True})
-    node = etree.Element('document')
+    obj = elm(SearchCriteria={"OGRNIP": "123123123123", "isRegistered": True})
+    node = etree.Element("document")
     elm.render(node, obj)
     expected = """
       <document>
@@ -515,7 +561,9 @@ def test_issue_221():
 
 
 def test_complex_content_extension_with_sequence():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -547,13 +595,14 @@ def test_complex_content_extension_with_sequence():
 
           <xsd:element name="SpecialPackage" type="tns:SpecialPackage"/>
         </xsd:schema>
-    """))
-    address_type = schema.get_element('{http://tests.python-zeep.org/}SpecialPackage')
+    """
+        )
+    )
+    address_type = schema.get_element("{http://tests.python-zeep.org/}SpecialPackage")
 
-    obj = address_type(
-        id='testString', pkg_id='nameId', otherElement='foobar')
+    obj = address_type(id="testString", pkg_id="nameId", otherElement="foobar")
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     expected = """
         <document>
@@ -566,7 +615,9 @@ def test_complex_content_extension_with_sequence():
 
 
 def test_extension_abstract_complex_type():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -588,12 +639,14 @@ def test_extension_abstract_complex_type():
 
           <xsd:element name="SpecialPackage" type="tns:SpecialPackage"/>
         </xsd:schema>
-    """))
-    package_cls = schema.get_element('{http://tests.python-zeep.org/}SpecialPackage')
+    """
+        )
+    )
+    package_cls = schema.get_element("{http://tests.python-zeep.org/}SpecialPackage")
 
-    obj = package_cls(item='foo')
+    obj = package_cls(item="foo")
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     package_cls.render(node, obj)
     expected = """
         <document>
@@ -606,7 +659,9 @@ def test_extension_abstract_complex_type():
 
 
 def test_extension_base_anytype():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -625,13 +680,16 @@ def test_extension_base_anytype():
               </xsd:complexType>
             </xsd:element>
           </xsd:schema>
-    """))
-    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    """
+        )
+    )
+    container_elm = schema.get_element("{http://tests.python-zeep.org/}container")
 
     assert container_elm.signature() == (
-        '{http://tests.python-zeep.org/}container(attr: xsd:unsignedInt, _attr_1: {})')
+        "{http://tests.python-zeep.org/}container(attr: xsd:unsignedInt, _attr_1: {})"
+    )
 
-    obj = container_elm(attr='foo')
+    obj = container_elm(attr="foo")
 
     node = render_node(container_elm, obj)
     expected = """
@@ -643,7 +701,9 @@ def test_extension_base_anytype():
 
 
 def test_extension_on_ref():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -666,14 +726,18 @@ def test_extension_on_ref():
           </xsd:complexType>
           <xsd:element name="extra" type="xsd:string"/>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    type_cls = schema.get_type('ns0:type')
+    type_cls = schema.get_type("ns0:type")
     assert type_cls.signature()
 
 
 def test_restrict_on_ref():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -696,7 +760,9 @@ def test_restrict_on_ref():
           </xsd:complexType>
           <xsd:element name="extra" type="xsd:string"/>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    type_cls = schema.get_type('ns0:type')
+    type_cls = schema.get_type("ns0:type")
     assert type_cls.signature()

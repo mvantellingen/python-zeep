@@ -23,7 +23,7 @@ class OperationProxy(object):
 
         # Merge the default _soapheaders with the passed _soapheaders
         if self._proxy._client._default_soapheaders:
-            op_soapheaders = kwargs.get('_soapheaders')
+            op_soapheaders = kwargs.get("_soapheaders")
             if op_soapheaders:
                 soapheaders = copy.deepcopy(self._proxy._client._default_soapheaders)
                 if type(op_soapheaders) != type(soapheaders):
@@ -35,11 +35,15 @@ class OperationProxy(object):
                     soapheaders.update(op_soapheaders)
             else:
                 soapheaders = self._proxy._client._default_soapheaders
-            kwargs['_soapheaders'] = soapheaders
+            kwargs["_soapheaders"] = soapheaders
 
         return self._proxy._binding.send(
-            self._proxy._client, self._proxy._binding_options,
-            self._op_name, args, kwargs)
+            self._proxy._client,
+            self._proxy._binding_options,
+            self._op_name,
+            args,
+            kwargs,
+        )
 
 
 class ServiceProxy(object):
@@ -68,7 +72,7 @@ class ServiceProxy(object):
         try:
             return self._operations[key]
         except KeyError:
-            raise AttributeError('Service has no operation %r' % key)
+            raise AttributeError("Service has no operation %r" % key)
 
     def __iter__(self):
         """ Return iterator over the services and their callables. """
@@ -76,5 +80,4 @@ class ServiceProxy(object):
 
     def __dir__(self):
         """ Return the names of the operations. """
-        return list(itertools.chain(
-            dir(super(ServiceProxy, self)), self._operations))
+        return list(itertools.chain(dir(super(ServiceProxy, self)), self._operations))
