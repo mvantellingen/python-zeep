@@ -166,7 +166,9 @@ class SchemaVisitor(object):
         namespace = node.get('namespace')
         location = node.get('schemaLocation')
         if location:
-            location = absolute_location(location, self.document._base_url)
+            location = normalize_location(
+                self.schema.settings, location, self.document._location
+            )
 
         if not namespace and not self.document._target_namespace:
             raise XMLParseError(
@@ -184,8 +186,6 @@ class SchemaVisitor(object):
         # visit elements.
         if not namespace and not location:
             self.document._has_empty_import = True
-
-        location = normalize_location(self.schema.settings, location, self.document._location)
 
         # Check if the schema is already imported before based on the
         # namespace. Schema's without namespace are registered as 'None'

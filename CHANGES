@@ -1,3 +1,8 @@
+3.3.1 (2019-03-10)
+------------------
+ - Fix issue with empty xsd:import statements on Python 2.7 (#930)
+
+
 3.3.0 (2019-03-08)
 ------------------
  - Extend the force_https flag to also force loading xsd files from https when

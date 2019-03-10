@@ -1222,3 +1222,44 @@ def test_import_cyclic():
 
     document = wsdl.Document(
         wsdl_content, transport, 'https://tests.python-zeep.org/content.wsdl')
+
+
+def test_import_no_location():
+    node_a = etree.fromstring("""
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+        </xs:schema>
+    """.strip())
+
+    wsdl_content = StringIO("""
+    <?xml version='1.0'?>
+    <definitions
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:tns="http://tests.python-zeep.org/root"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://tests.python-zeep.org/root" name="root">
+        <types>
+          <xsd:schema
+              xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:tns="http://tests.python-zeep.org/b"
+              targetNamespace="http://tests.python-zeep.org/b"
+              elementFormDefault="qualified">
+
+              <xs:import namespace="http://tests.python-zeep.org/a"/>
+              <xs:element name="foo" type="xs:string"/>
+          </xsd:schema>
+        </types>
+    </definitions>
+    """.strip())
+
+    transport = DummyTransport()
+    transport.bind('https://tests.python-zeep.org/a.xsd', node_a)
+
+    document = wsdl.Document(
+        wsdl_content, transport, 'https://tests.python-zeep.org/content.wsdl')
