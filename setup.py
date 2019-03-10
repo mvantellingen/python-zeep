@@ -41,7 +41,7 @@ tests_require = [
 
     # Linting
     'isort==4.2.15',
-    'flake8==3.3.0',
+    'flake8==3.3.1',
     'flake8-blind-except==0.1.1',
     'flake8-debugger==1.4.0',
     'flake8-imports==0.1.1',
@@ -59,7 +59,7 @@ with open('README.rst') as fh:
 
 setup(
     name='zeep',
-    version='3.3.0',
+    version='3.3.1',
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=long_description,
     author="Michael van Tellingen",
