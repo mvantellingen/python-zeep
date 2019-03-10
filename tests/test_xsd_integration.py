@@ -8,7 +8,9 @@ from zeep import xsd
 
 
 def test_xml_complex_type_nested_wrong_type():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -29,15 +31,19 @@ def test_xml_complex_type_nested_wrong_type():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    container_elm = schema.get_element('ns0:container')
+    container_elm = schema.get_element("ns0:container")
     with pytest.raises(TypeError):
-        container_elm(item={'bar': 1})
+        container_elm(item={"bar": 1})
 
 
 def test_xml_element_with_annotation():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -54,15 +60,19 @@ def test_xml_element_with_annotation():
             </sequence>
           </complexType>
         </schema>
-    """))
+    """
+        )
+    )
 
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
-    address_type = schema.get_element('tns:Address')
-    address_type(foo='bar')
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
+    address_type = schema.get_element("tns:Address")
+    address_type(foo="bar")
 
 
 def test_xml_complex_type_parsexml():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -76,22 +86,28 @@ def test_xml_complex_type_parsexml():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
 
-    input_node = load_xml("""
+    input_node = load_xml(
+        """
         <Address xmlns="http://tests.python-zeep.org/">
           <foo>bar</foo>
         </Address>
-    """)
+    """
+    )
 
     obj = address_type.parse(input_node, None)
-    assert obj.foo == 'bar'
+    assert obj.foo == "bar"
 
 
 def test_xml_array():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -105,15 +121,17 @@ def test_xml_array():
             </complexType>
           </element>
         </schema>
-    """))
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
 
-    address_type = schema.get_element('tns:Address')
+    address_type = schema.get_element("tns:Address")
 
     obj = address_type()
     assert obj.foo == []
-    obj.foo.append('foo')
-    obj.foo.append('bar')
+    obj.foo.append("foo")
+    obj.foo.append("bar")
 
     expected = """
         <document  xmlns:tns="http://tests.python-zeep.org/">
@@ -123,13 +141,15 @@ def test_xml_array():
           </tns:Address>
         </document>
     """
-    node = etree.Element('document', nsmap=schema._prefix_map_custom)
+    node = etree.Element("document", nsmap=schema._prefix_map_custom)
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_xml_complex_type_unbounded_one():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -143,9 +163,11 @@ def test_xml_complex_type_unbounded_one():
             </complexType>
           </element>
         </schema>
-    """))
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-    obj = address_type(foo=['foo'])
+    """
+        )
+    )
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
+    obj = address_type(foo=["foo"])
 
     expected = """
         <document>
@@ -155,13 +177,15 @@ def test_xml_complex_type_unbounded_one():
         </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_xml_complex_type_unbounded_named():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -174,13 +198,15 @@ def test_xml_complex_type_unbounded_named():
             </sequence>
           </complexType>
         </schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
     obj = address_type()
     assert obj.foo == []
-    obj.foo.append('foo')
-    obj.foo.append('bar')
+    obj.foo.append("foo")
+    obj.foo.append("bar")
 
     expected = """
         <document>
@@ -191,13 +217,15 @@ def test_xml_complex_type_unbounded_named():
         </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_xml_complex_type_array_to_other_complex_object():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
           <xs:complexType name="Address">
@@ -212,14 +240,16 @@ def test_xml_complex_type_array_to_other_complex_object():
           </xs:complexType>
           <xs:element name="ArrayOfAddress" type="ArrayOfAddress"/>
         </xs:schema>
-    """))
+    """
+        )
+    )
 
-    address_array = schema.get_element('ArrayOfAddress')
+    address_array = schema.get_element("ArrayOfAddress")
     obj = address_array()
     assert obj.Address == []
 
-    obj.Address.append(schema.get_type('Address')(foo='foo'))
-    obj.Address.append(schema.get_type('Address')(foo='bar'))
+    obj.Address.append(schema.get_type("Address")(foo="foo"))
+    obj.Address.append(schema.get_type("Address")(foo="bar"))
 
     expected = """
         <?xml version="1.0"?>
@@ -240,7 +270,9 @@ def test_xml_complex_type_array_to_other_complex_object():
 
 
 def test_xml_complex_type_init_kwargs():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -255,18 +287,21 @@ def test_xml_complex_type_init_kwargs():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-    obj = address_type(
-        NameFirst='John', NameLast='Doe', Email='j.doe@example.com')
-    assert obj.NameFirst == 'John'
-    assert obj.NameLast == 'Doe'
-    assert obj.Email == 'j.doe@example.com'
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
+    obj = address_type(NameFirst="John", NameLast="Doe", Email="j.doe@example.com")
+    assert obj.NameFirst == "John"
+    assert obj.NameLast == "Doe"
+    assert obj.Email == "j.doe@example.com"
 
 
 def test_xml_complex_type_init_args():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -281,17 +316,21 @@ def test_xml_complex_type_init_args():
             </complexType>
           </element>
         </schema>
-    """))
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-    obj = address_type('John', 'Doe', 'j.doe@example.com')
-    assert obj.NameFirst == 'John'
-    assert obj.NameLast == 'Doe'
-    assert obj.Email == 'j.doe@example.com'
+    """
+        )
+    )
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
+    obj = address_type("John", "Doe", "j.doe@example.com")
+    assert obj.NameFirst == "John"
+    assert obj.NameLast == "Doe"
+    assert obj.Email == "j.doe@example.com"
 
 
 def test_xml_element_ref_missing_namespace():
     # For buggy soap servers (#170)
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -305,20 +344,26 @@ def test_xml_element_ref_missing_namespace():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    custom_type = schema.get_element('{http://tests.python-zeep.org/}bar')
-    input_xml = load_xml("""
+    custom_type = schema.get_element("{http://tests.python-zeep.org/}bar")
+    input_xml = load_xml(
+        """
             <ns0:bar xmlns:ns0="http://tests.python-zeep.org/">
                 <foo>bar</foo>
             </ns0:bar>
-    """)
+    """
+    )
     item = custom_type.parse(input_xml, schema)
-    assert item.foo == 'bar'
+    assert item.foo == "bar"
 
 
 def test_xml_element_ref():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -333,16 +378,18 @@ def test_xml_element_ref():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    foo_type = schema.get_element('{http://tests.python-zeep.org/}foo')
+    foo_type = schema.get_element("{http://tests.python-zeep.org/}foo")
     assert isinstance(foo_type.type, xsd.String)
 
-    custom_type = schema.get_element('{http://tests.python-zeep.org/}bar')
+    custom_type = schema.get_element("{http://tests.python-zeep.org/}bar")
     custom_type.signature()
-    obj = custom_type(foo='bar')
+    obj = custom_type(foo="bar")
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     custom_type.render(node, obj)
     expected = """
         <document>
@@ -355,7 +402,9 @@ def test_xml_element_ref():
 
 
 def test_xml_element_ref_occurs():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -371,16 +420,18 @@ def test_xml_element_ref_occurs():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    foo_type = schema.get_element('{http://tests.python-zeep.org/}foo')
+    foo_type = schema.get_element("{http://tests.python-zeep.org/}foo")
     assert isinstance(foo_type.type, xsd.String)
 
-    custom_type = schema.get_element('{http://tests.python-zeep.org/}bar')
+    custom_type = schema.get_element("{http://tests.python-zeep.org/}bar")
     custom_type.signature()
-    obj = custom_type(bar='foo')
+    obj = custom_type(bar="foo")
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     custom_type.render(node, obj)
     expected = """
         <document>
@@ -393,7 +444,9 @@ def test_xml_element_ref_occurs():
 
 
 def test_xml_unqualified():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -409,10 +462,12 @@ def test_xml_unqualified():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-    obj = address_type(foo='bar')
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
+    obj = address_type(foo="bar")
 
     expected = """
       <document>
@@ -422,13 +477,15 @@ def test_xml_unqualified():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_xml_defaults():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -445,10 +502,11 @@ def test_xml_defaults():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    container_type = schema.get_element(
-        '{http://tests.python-zeep.org/}container')
+    container_type = schema.get_element("{http://tests.python-zeep.org/}container")
     obj = container_type()
     assert obj.item_1 == "hoi"
     assert obj.item_2 is None
@@ -461,11 +519,11 @@ def test_xml_defaults():
         </ns0:container>
       </document>
     """
-    node = etree.Element('document')
+    node = etree.Element("document")
     container_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
-    obj.item_2 = 'ok'
+    obj.item_2 = "ok"
 
     expected = """
       <document>
@@ -475,13 +533,15 @@ def test_xml_defaults():
         </ns0:container>
       </document>
     """
-    node = etree.Element('document')
+    node = etree.Element("document")
     container_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_xml_defaults_parse_boolean():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -497,10 +557,11 @@ def test_xml_defaults_parse_boolean():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    container_type = schema.get_element(
-        '{http://tests.python-zeep.org/}container')
+    container_type = schema.get_element("{http://tests.python-zeep.org/}container")
     obj = container_type()
     assert obj.foo == "false"
     assert obj.bar == "0"
@@ -512,13 +573,15 @@ def test_xml_defaults_parse_boolean():
         </ns0:container>
       </document>
     """
-    node = etree.Element('document')
+    node = etree.Element("document")
     container_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_xml_defaults_parse():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -534,22 +597,27 @@ def test_xml_defaults_parse():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    container_elm = schema.get_element(
-        '{http://tests.python-zeep.org/}container')
+    container_elm = schema.get_element("{http://tests.python-zeep.org/}container")
 
-    node = load_xml("""
+    node = load_xml(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>hoi</ns0:item_1>
         </ns0:container>
-    """)
+    """
+    )
     item = container_elm.parse(node, schema)
-    assert item.attr_1 == 'hoi'
+    assert item.attr_1 == "hoi"
 
 
 def test_xml_init_with_dicts():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -580,10 +648,12 @@ def test_xml_init_with_dicts():
             </xsd:sequence>
           </xsd:complexType>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-    obj = address_type(name='foo', container={'service': [{'name': 'foo'}]})
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
+    obj = address_type(name="foo", container={"service": [{"name": "foo"}]})
 
     expected = """
       <document>
@@ -598,13 +668,15 @@ def test_xml_init_with_dicts():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_xml_sequence_in_sequence():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema
                 xmlns="http://www.w3.org/2001/XMLSchema"
@@ -624,11 +696,13 @@ def test_xml_sequence_in_sequence():
           </element>
           <element name="foobar" type="xsd:string"/>
         </schema>
-    """))
-    element = schema.get_element('ns0:container')
+    """
+        )
+    )
+    element = schema.get_element("ns0:container")
     value = element(item_1="foo", item_2="bar")
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     element.render(node, value)
 
     expected = """
@@ -643,7 +717,8 @@ def test_xml_sequence_in_sequence():
 
 
 def test_xml_sequence_in_sequence_many():
-    node = load_xml("""
+    node = load_xml(
+        """
         <?xml version="1.0"?>
         <schema
                 xmlns="http://www.w3.org/2001/XMLSchema"
@@ -663,20 +738,23 @@ def test_xml_sequence_in_sequence_many():
           </element>
           <element name="foobar" type="xsd:string"/>
         </schema>
-    """)
+    """
+    )
     schema = xsd.Schema(node)
-    element = schema.get_element('ns0:container')
-    value = element(_value_1=[
-        {'item_1': "value-1-1", 'item_2': "value-1-2"},
-        {'item_1': "value-2-1", 'item_2': "value-2-2"},
-    ])
+    element = schema.get_element("ns0:container")
+    value = element(
+        _value_1=[
+            {"item_1": "value-1-1", "item_2": "value-1-2"},
+            {"item_1": "value-2-1", "item_2": "value-2-2"},
+        ]
+    )
 
     assert value._value_1 == [
-        {'item_1': "value-1-1", 'item_2': "value-1-2"},
-        {'item_1': "value-2-1", 'item_2': "value-2-2"},
+        {"item_1": "value-1-1", "item_2": "value-1-2"},
+        {"item_1": "value-2-1", "item_2": "value-2-2"},
     ]
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     element.render(node, value)
 
     expected = """
@@ -693,7 +771,9 @@ def test_xml_sequence_in_sequence_many():
 
 
 def test_xml_complex_type_empty():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -708,12 +788,14 @@ def test_xml_complex_type_empty():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    container_elm = schema.get_element("{http://tests.python-zeep.org/}container")
     obj = container_elm(something={})
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     container_elm.render(node, obj)
     expected = """
         <document>
@@ -728,7 +810,9 @@ def test_xml_complex_type_empty():
 
 
 def test_xml_schema_as_payload():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
                 targetNamespace="http://tests.python-zeep.org/"
@@ -742,10 +826,13 @@ def test_xml_schema_as_payload():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """))
-    elm_class = schema.get_element('{http://tests.python-zeep.org/}container')
+    """
+        )
+    )
+    elm_class = schema.get_element("{http://tests.python-zeep.org/}container")
 
-    node = load_xml("""
+    node = load_xml(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/"
                        xmlns:xsd="http://www.w3.org/2001/XMLSchema">
           <xsd:schema
@@ -765,14 +852,17 @@ def test_xml_schema_as_payload():
             <ns1:item-2>value-2</ns1:item-2>
           </ns1:sub-element>
         </ns0:container>
-    """)
+    """
+    )
     value = elm_class.parse(node, schema)
-    assert value._value_1['item-1'] == 'value-1'
-    assert value._value_1['item-2'] == 'value-2'
+    assert value._value_1["item-1"] == "value-1"
+    assert value._value_1["item-2"] == "value-2"
 
 
 def test_xml_nill():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -787,9 +877,11 @@ def test_xml_nill():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('ns0:container')
+    address_type = schema.get_element("ns0:container")
     obj = address_type()
     expected = """
       <document>
@@ -798,7 +890,7 @@ def test_xml_nill():
         </ns0:container>
       </document>
     """
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     etree.cleanup_namespaces(node)
 
@@ -806,7 +898,9 @@ def test_xml_nill():
 
 
 def test_xml_empty_xmlns():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -822,10 +916,13 @@ def test_xml_empty_xmlns():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
-    node = load_xml("""
+    container_elm = schema.get_element("{http://tests.python-zeep.org/}container")
+    node = load_xml(
+        """
         <container>
             <xs:schema
                 xmlns=""
@@ -835,13 +932,16 @@ def test_xml_empty_xmlns():
             </xs:schema>
             <something>foo</something>
         </container>
-    """)
+    """
+    )
     item = container_elm.parse(node, schema)
-    assert item._value_1 == 'foo'
+    assert item._value_1 == "foo"
 
 
 def test_xml_keep_objects_intact():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -872,16 +972,18 @@ def test_xml_keep_objects_intact():
             </xsd:sequence>
           </xsd:complexType>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-    obj = address_type(name='foo', container={'service': [{'name': 'foo'}]})
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
+    obj = address_type(name="foo", container={"service": [{"name": "foo"}]})
 
     org_obj = copy.deepcopy(obj)
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
 
     print(org_obj)
     print(obj)
-    assert org_obj['container']['service'] == obj['container']['service']
+    assert org_obj["container"]["service"] == obj["container"]["service"]

@@ -1,15 +1,16 @@
-import pytest
 import datetime
 
+import pytest
 from lxml import etree
 
 from tests.utils import load_xml
-from zeep import exceptions,xsd
+from zeep import exceptions, xsd
 from zeep.xsd.schema import Schema
 
 
 def test_sequence_parse_regression():
-    schema_doc = load_xml(b"""
+    schema_doc = load_xml(
+        b"""
         <?xml version="1.0" encoding="utf-8"?>
         <xsd:schema xmlns:tns="http://tests.python-zeep.org/attr"
           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -26,9 +27,11 @@ def test_sequence_parse_regression():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """)
+    """
+    )
 
-    response_doc = load_xml(b"""
+    response_doc = load_xml(
+        b"""
         <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
           <s:Body xmlns:xsd="http://www.w3.org/2001/XMLSchema">
             <Response xmlns="http://tests.python-zeep.org/attr">
@@ -36,41 +39,52 @@ def test_sequence_parse_regression():
             </Response>
           </s:Body>
         </s:Envelope>
-    """)
+    """
+    )
 
     schema = xsd.Schema(schema_doc)
-    elm = schema.get_element('{http://tests.python-zeep.org/attr}Response')
+    elm = schema.get_element("{http://tests.python-zeep.org/attr}Response")
 
     node = response_doc.xpath(
-        '//ns0:Response', namespaces={
-            'xsd': 'http://www.w3.org/2001/XMLSchema',
-            'ns0': 'http://tests.python-zeep.org/attr',
-        })
+        "//ns0:Response",
+        namespaces={
+            "xsd": "http://www.w3.org/2001/XMLSchema",
+            "ns0": "http://tests.python-zeep.org/attr",
+        },
+    )
     response = elm.parse(node[0], None)
     assert response.Result.id == 2
 
 
 def test_sequence_parse_anytype():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'container'),
+        etree.QName("http://tests.python-zeep.org/", "container"),
         xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                    xsd.AnyType()),
-            ])
-        ))
-    expected = etree.fromstring("""
+            xsd.Sequence(
+                [
+                    xsd.Element(
+                        etree.QName("http://tests.python-zeep.org/", "item_1"),
+                        xsd.AnyType(),
+                    )
+                ]
+            )
+        ),
+    )
+    expected = etree.fromstring(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>foo</ns0:item_1>
         </ns0:container>
-    """)
+    """
+    )
     obj = custom_type.parse(expected, None)
-    assert obj.item_1 == 'foo'
+    assert obj.item_1 == "foo"
 
 
 def test_sequence_parse_anytype_nil():
-    schema = xsd.Schema(load_xml(b"""
+    schema = xsd.Schema(
+        load_xml(
+            b"""
         <?xml version="1.0" encoding="utf-8"?>
         <xsd:schema xmlns:tns="http://tests.python-zeep.org/"
           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -84,49 +98,58 @@ def test_sequence_parse_anytype_nil():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    container = schema.get_element('{http://tests.python-zeep.org/}container')
+    container = schema.get_element("{http://tests.python-zeep.org/}container")
 
-    expected = etree.fromstring("""
+    expected = etree.fromstring(
+        """
         <ns0:container
             xmlns:ns0="http://tests.python-zeep.org/"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
           <ns0:item_1 xsi:type="xsd:anyType"/>
         </ns0:container>
-    """)
+    """
+    )
     obj = container.parse(expected, schema)
     assert obj.item_1 is None
 
 
 def test_sequence_parse_anytype_obj():
     value_type = xsd.ComplexType(
-        xsd.Sequence([
-            xsd.Element(
-                '{http://tests.python-zeep.org/}value',
-                xsd.Integer()),
-        ])
+        xsd.Sequence(
+            [xsd.Element("{http://tests.python-zeep.org/}value", xsd.Integer())]
+        )
     )
 
     schema = Schema(
         etree.Element(
-            '{http://www.w3.org/2001/XMLSchema}Schema',
-            targetNamespace='http://tests.python-zeep.org/'))
+            "{http://www.w3.org/2001/XMLSchema}Schema",
+            targetNamespace="http://tests.python-zeep.org/",
+        )
+    )
 
     root = schema.root_document
-    root.register_type('{http://tests.python-zeep.org/}something', value_type)
+    root.register_type("{http://tests.python-zeep.org/}something", value_type)
 
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'container'),
+        etree.QName("http://tests.python-zeep.org/", "container"),
         xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                    xsd.AnyType()),
-            ])
-        ))
-    expected = etree.fromstring("""
+            xsd.Sequence(
+                [
+                    xsd.Element(
+                        etree.QName("http://tests.python-zeep.org/", "item_1"),
+                        xsd.AnyType(),
+                    )
+                ]
+            )
+        ),
+    )
+    expected = etree.fromstring(
+        """
         <ns0:container
             xmlns:ns0="http://tests.python-zeep.org/"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -134,13 +157,15 @@ def test_sequence_parse_anytype_obj():
             <ns0:value>100</ns0:value>
           </ns0:item_1>
         </ns0:container>
-    """)
+    """
+    )
     obj = custom_type.parse(expected, schema)
     assert obj.item_1.value == 100
 
 
 def test_sequence_parse_anytype_regression_17():
-    schema_doc = load_xml(b"""
+    schema_doc = load_xml(
+        b"""
         <?xml version="1.0" encoding="utf-8"?>
         <schema
             xmlns="http://www.w3.org/2001/XMLSchema"
@@ -171,9 +196,11 @@ def test_sequence_parse_anytype_regression_17():
             </complexType>
           </element>
         </schema>
-    """)
+    """
+    )
 
-    xml = load_xml(b"""
+    xml = load_xml(
+        b"""
         <?xml version="1.0" encoding="utf-8"?>
         <tst:getCustomFieldResponse
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -189,40 +216,48 @@ def test_sequence_parse_anytype_regression_17():
             </tst:value>
           </tst:getCustomFieldReturn>
         </tst:getCustomFieldResponse>
-    """)
+    """
+    )
 
     schema = xsd.Schema(schema_doc)
-    elm = schema.get_element(
-        '{http://tests.python-zeep.org/tst}getCustomFieldResponse'
-    )
+    elm = schema.get_element("{http://tests.python-zeep.org/tst}getCustomFieldResponse")
     result = elm.parse(xml, schema)
-    assert result.getCustomFieldReturn.value.content == 'Test Solution'
+    assert result.getCustomFieldReturn.value.content == "Test Solution"
 
 
 def test_nested_complex_type():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                    xsd.String()),
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'item_2'),
-                    xsd.ComplexType(
-                        xsd.Sequence([
-                            xsd.Element(
-                                '{http://tests.python-zeep.org/}item_2a',
-                                xsd.String()),
-                            xsd.Element(
-                                '{http://tests.python-zeep.org/}item_2b',
-                                xsd.String()),
-                        ])
-                    )
-                )
-            ])
-        ))
-    expected = etree.fromstring("""
+            xsd.Sequence(
+                [
+                    xsd.Element(
+                        etree.QName("http://tests.python-zeep.org/", "item_1"),
+                        xsd.String(),
+                    ),
+                    xsd.Element(
+                        etree.QName("http://tests.python-zeep.org/", "item_2"),
+                        xsd.ComplexType(
+                            xsd.Sequence(
+                                [
+                                    xsd.Element(
+                                        "{http://tests.python-zeep.org/}item_2a",
+                                        xsd.String(),
+                                    ),
+                                    xsd.Element(
+                                        "{http://tests.python-zeep.org/}item_2b",
+                                        xsd.String(),
+                                    ),
+                                ]
+                            )
+                        ),
+                    ),
+                ]
+            )
+        ),
+    )
+    expected = etree.fromstring(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>foo</ns0:item_1>
           <ns0:item_2>
@@ -230,77 +265,97 @@ def test_nested_complex_type():
             <ns0:item_2b>2b</ns0:item_2b>
           </ns0:item_2>
         </ns0:container>
-    """)
+    """
+    )
     obj = custom_type.parse(expected, None)
-    assert obj.item_1 == 'foo'
-    assert obj.item_2.item_2a == '2a'
-    assert obj.item_2.item_2b == '2b'
+    assert obj.item_1 == "foo"
+    assert obj.item_2.item_2a == "2a"
+    assert obj.item_2.item_2b == "2b"
 
 
 def test_nested_complex_type_optional():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                    xsd.String()),
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'item_2'),
-                    xsd.ComplexType(
-                        xsd.Sequence([
-                            xsd.Choice([
-                                xsd.Element(
-                                    '{http://tests.python-zeep.org/}item_2a1',
-                                    xsd.String(),
-                                    min_occurs=0),
-                                xsd.Element(
-                                    '{http://tests.python-zeep.org/}item_2a2',
-                                    xsd.String(),
-                                    min_occurs=0),
-                            ]),
-                            xsd.Element(
-                                '{http://tests.python-zeep.org/}item_2b',
-                                xsd.String()),
-                        ])
+            xsd.Sequence(
+                [
+                    xsd.Element(
+                        etree.QName("http://tests.python-zeep.org/", "item_1"),
+                        xsd.String(),
                     ),
-                    min_occurs=0, max_occurs='unbounded'
-                )
-            ])
-        ))
-    expected = etree.fromstring("""
+                    xsd.Element(
+                        etree.QName("http://tests.python-zeep.org/", "item_2"),
+                        xsd.ComplexType(
+                            xsd.Sequence(
+                                [
+                                    xsd.Choice(
+                                        [
+                                            xsd.Element(
+                                                "{http://tests.python-zeep.org/}item_2a1",
+                                                xsd.String(),
+                                                min_occurs=0,
+                                            ),
+                                            xsd.Element(
+                                                "{http://tests.python-zeep.org/}item_2a2",
+                                                xsd.String(),
+                                                min_occurs=0,
+                                            ),
+                                        ]
+                                    ),
+                                    xsd.Element(
+                                        "{http://tests.python-zeep.org/}item_2b",
+                                        xsd.String(),
+                                    ),
+                                ]
+                            )
+                        ),
+                        min_occurs=0,
+                        max_occurs="unbounded",
+                    ),
+                ]
+            )
+        ),
+    )
+    expected = etree.fromstring(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>foo</ns0:item_1>
         </ns0:container>
-    """)
+    """
+    )
     obj = custom_type.parse(expected, None)
-    assert obj.item_1 == 'foo'
+    assert obj.item_1 == "foo"
     assert obj.item_2 == []
 
-    expected = etree.fromstring("""
+    expected = etree.fromstring(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>foo</ns0:item_1>
           <ns0:item_2/>
         </ns0:container>
-    """)
+    """
+    )
     obj = custom_type.parse(expected, None)
-    assert obj.item_1 == 'foo'
+    assert obj.item_1 == "foo"
     assert obj.item_2 == [None]
 
-    expected = etree.fromstring("""
+    expected = etree.fromstring(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>foo</ns0:item_1>
           <ns0:item_2>
             <ns0:item_2a1>x</ns0:item_2a1>
           </ns0:item_2>
         </ns0:container>
-    """)
+    """
+    )
     obj = custom_type.parse(expected, None)
-    assert obj.item_1 == 'foo'
-    assert obj.item_2[0].item_2a1 == 'x'
+    assert obj.item_1 == "foo"
+    assert obj.item_2[0].item_2a1 == "x"
     assert obj.item_2[0].item_2b is None
 
-    expected = etree.fromstring("""
+    expected = etree.fromstring(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>foo</ns0:item_1>
           <ns0:item_2>
@@ -308,56 +363,68 @@ def test_nested_complex_type_optional():
             <ns0:item_2b/>
           </ns0:item_2>
         </ns0:container>
-    """)
+    """
+    )
     obj = custom_type.parse(expected, None)
-    assert obj.item_1 == 'foo'
-    assert obj.item_2[0].item_2a1 == 'x'
+    assert obj.item_1 == "foo"
+    assert obj.item_2[0].item_2a1 == "x"
     assert obj.item_2[0].item_2b is None
 
 
 def test_nested_choice_optional():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                    xsd.String()),
-                xsd.Choice([
+            xsd.Sequence(
+                [
                     xsd.Element(
-                        '{http://tests.python-zeep.org/}item_2',
-                        xsd.String()),
-                    xsd.Element(
-                        '{http://tests.python-zeep.org/}item_3',
-                        xsd.String()),
-                ],
-                    min_occurs=0, max_occurs=1
-                ),
-            ])
-        ))
-    expected = etree.fromstring("""
+                        etree.QName("http://tests.python-zeep.org/", "item_1"),
+                        xsd.String(),
+                    ),
+                    xsd.Choice(
+                        [
+                            xsd.Element(
+                                "{http://tests.python-zeep.org/}item_2", xsd.String()
+                            ),
+                            xsd.Element(
+                                "{http://tests.python-zeep.org/}item_3", xsd.String()
+                            ),
+                        ],
+                        min_occurs=0,
+                        max_occurs=1,
+                    ),
+                ]
+            )
+        ),
+    )
+    expected = etree.fromstring(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>foo</ns0:item_1>
           <ns0:item_2>bar</ns0:item_2>
         </ns0:container>
-    """)
+    """
+    )
     obj = custom_type.parse(expected, None)
-    assert obj.item_1 == 'foo'
-    assert obj.item_2 == 'bar'
+    assert obj.item_1 == "foo"
+    assert obj.item_2 == "bar"
 
-    expected = etree.fromstring("""
+    expected = etree.fromstring(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>foo</ns0:item_1>
         </ns0:container>
-    """)
+    """
+    )
     obj = custom_type.parse(expected, None)
-    assert obj.item_1 == 'foo'
+    assert obj.item_1 == "foo"
     assert obj.item_2 is None
     assert obj.item_3 is None
 
 
 def test_union():
-    schema_doc = load_xml(b"""
+    schema_doc = load_xml(
+        b"""
         <?xml version="1.0" encoding="utf-8"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -394,21 +461,26 @@ def test_union():
             </xsd:restriction>
           </xsd:simpleType>
         </xsd:schema>
-    """)
+    """
+    )
 
-    xml = load_xml(b"""
+    xml = load_xml(
+        b"""
         <?xml version="1.0" encoding="utf-8"?>
         <tst:State xmlns:tst="http://tests.python-zeep.org/tst">Idle</tst:State>
-    """)
+    """
+    )
 
     schema = xsd.Schema(schema_doc)
-    elm = schema.get_element('{http://tests.python-zeep.org/tst}State')
+    elm = schema.get_element("{http://tests.python-zeep.org/tst}State")
     result = elm.parse(xml, schema)
-    assert result._value_1 == 'Idle'
+    assert result._value_1 == "Idle"
 
 
 def test_parse_invalid_values():
-    schema = xsd.Schema(load_xml(b"""
+    schema = xsd.Schema(
+        load_xml(
+            b"""
         <?xml version="1.0" encoding="utf-8"?>
         <schema
             xmlns="http://www.w3.org/2001/XMLSchema"
@@ -427,9 +499,12 @@ def test_parse_invalid_values():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    xml = load_xml(b"""
+    xml = load_xml(
+        b"""
         <?xml version="1.0" encoding="utf-8"?>
         <tns:container
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -439,9 +514,10 @@ def test_parse_invalid_values():
           <tns:item_1>foo</tns:item_1>
           <tns:item_2>2016-10-20</tns:item_2>
         </tns:container>
-    """)
+    """
+    )
 
-    elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    elm = schema.get_element("{http://tests.python-zeep.org/}container")
     result = elm.parse(xml, schema)
     assert result.item_1 is None
     assert result.item_2 == datetime.date(2016, 10, 20)
@@ -450,7 +526,9 @@ def test_parse_invalid_values():
 
 
 def test_xsd_missing_localname():
-    schema = xsd.Schema(load_xml(b"""
+    schema = xsd.Schema(
+        load_xml(
+            b"""
         <?xml version="1.0" encoding="utf-8"?>
         <schema
             xmlns="http://www.w3.org/2001/XMLSchema"
@@ -460,12 +538,17 @@ def test_xsd_missing_localname():
             targetNamespace="http://tests.python-zeep.org/">
           <element name="container" type="xsd:"/>
         </schema>
-    """))
+    """
+        )
+    )
 
-    schema.get_element('{http://tests.python-zeep.org/}container')
+    schema.get_element("{http://tests.python-zeep.org/}container")
+
 
 def test_xsd_choice_with_references():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
             <xsd:schema
                 xmlns:zeep="http://tests.python-zeep.org/"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -487,27 +570,33 @@ def test_xsd_choice_with_references():
               </xsd:element>
 
              </xsd:schema>
-        """))
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+        """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
 
-    xml = load_xml(b"""
+    xml = load_xml(
+        b"""
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:BAD_ELEMENT>BAD VALUE</ns0:BAD_ELEMENT>
         </ns0:container>
-    """)
+    """
+    )
 
-    elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    elm = schema.get_element("{http://tests.python-zeep.org/}container")
 
     with pytest.raises(exceptions.XMLParseError) as exc:
         result = elm.parse(xml, schema)
-    assert 'BAD_ELEMENT' in str(exc)
+    assert "BAD_ELEMENT" in str(exc)
 
-    xml = load_xml(b"""
+    xml = load_xml(
+        b"""
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:el2>value2</ns0:el2>
         </ns0:container>
-    """)
+    """
+    )
 
     result = elm.parse(xml, schema)
 
-    assert result.el2 == 'value2'
+    assert result.el2 == "value2"

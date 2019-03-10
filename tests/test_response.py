@@ -4,7 +4,8 @@ from zeep.xsd import Schema
 
 
 def test_parse_response():
-    schema_node = etree.fromstring(b"""
+    schema_node = etree.fromstring(
+        b"""
         <?xml version="1.0"?>
         <wsdl:definitions
             xmlns="http://www.w3.org/2001/XMLSchema"
@@ -42,9 +43,11 @@ def test_parse_response():
             </schema>
           </wsdl:types>
         </wsdl:definitions>
-    """.strip())  # noqa
+    """.strip()
+    )  # noqa
 
-    response_node = etree.fromstring(b"""
+    response_node = etree.fromstring(
+        b"""
         <?xml version="1.0" encoding="utf-8"?>
         <soap:Envelope
             xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
@@ -68,22 +71,24 @@ def test_parse_response():
             </ZeepExampleResponse>
           </soap:Body>
         </soap:Envelope>
-    """.strip())
-    schema = Schema(schema_node.find('*/{http://www.w3.org/2001/XMLSchema}schema'))
+    """.strip()
+    )
+    schema = Schema(schema_node.find("*/{http://www.w3.org/2001/XMLSchema}schema"))
     assert schema
     response_type = schema.get_element(
-        '{http://tests.python-zeep.org/}ZeepExampleResponse')
+        "{http://tests.python-zeep.org/}ZeepExampleResponse"
+    )
 
     nsmap = {
-        'soap': 'http://schemas.xmlsoap.org/soap/envelope/',
-        'tns': 'http://tests.python-zeep.org/',
+        "soap": "http://schemas.xmlsoap.org/soap/envelope/",
+        "tns": "http://tests.python-zeep.org/",
     }
-    node = response_node.find('soap:Body/tns:ZeepExampleResponse', namespaces=nsmap)
+    node = response_node.find("soap:Body/tns:ZeepExampleResponse", namespaces=nsmap)
     assert node is not None
     obj = response_type.parse(node, schema)
     assert obj.ZeepExampleResult.SomeValue == 45313
     assert len(obj.ZeepExampleResult.Results.Item) == 2
-    assert obj.ZeepExampleResult.Results.Item[0].Key == 'ABC100'
+    assert obj.ZeepExampleResult.Results.Item[0].Key == "ABC100"
     assert obj.ZeepExampleResult.Results.Item[0].Value == 10
-    assert obj.ZeepExampleResult.Results.Item[1].Key == 'ABC200'
+    assert obj.ZeepExampleResult.Results.Item[1].Key == "ABC200"
     assert obj.ZeepExampleResult.Results.Item[1].Value == 20

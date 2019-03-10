@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 class Base(object):
-
     def add(self, url, content):
         raise NotImplemented()
 
@@ -32,6 +31,7 @@ class Base(object):
 
 class InMemoryCache(Base):
     """Simple in-memory caching using dict lookup with support for timeouts"""
+
     _cache = {}  # global cache, thread-safe by default
 
     def __init__(self, timeout=3600):
@@ -41,7 +41,8 @@ class InMemoryCache(Base):
         logger.debug("Caching contents of %s", url)
         if not isinstance(content, (str, bytes)):
             raise TypeError(
-                "a bytes-like object is required, not {}".format(type(content).__name__))
+                "a bytes-like object is required, not {}".format(type(content).__name__)
+            )
         self._cache[url] = (datetime.datetime.utcnow(), content)
 
     def get(self, url):
@@ -59,7 +60,8 @@ class InMemoryCache(Base):
 
 class SqliteCache(Base):
     """Cache contents via an sqlite database on the filesystem"""
-    _version = '1'
+
+    _version = "1"
 
     def __init__(self, path=None, timeout=3600):
 
@@ -67,10 +69,11 @@ class SqliteCache(Base):
             raise RuntimeError("sqlite3 module is required for the SqliteCache")
 
         # No way we can support this when we want to achieve thread safety
-        if path == ':memory:':
+        if path == ":memory:":
             raise ValueError(
-                "The SqliteCache doesn't support :memory: since it is not " +
-                "thread-safe. Please use zeep.cache.InMemoryCache()")
+                "The SqliteCache doesn't support :memory: since it is not "
+                + "thread-safe. Please use zeep.cache.InMemoryCache()"
+            )
 
         self._lock = threading.RLock()
         self._timeout = timeout
@@ -83,14 +86,16 @@ class SqliteCache(Base):
                 """
                     CREATE TABLE IF NOT EXISTS request
                     (created timestamp, url text, content text)
-                """)
+                """
+            )
             conn.commit()
 
     @contextmanager
     def db_connection(self):
         with self._lock:
             connection = sqlite3.connect(
-                self._db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+                self._db_path, detect_types=sqlite3.PARSE_DECLTYPES
+            )
             yield connection
             connection.close()
 
@@ -103,14 +108,14 @@ class SqliteCache(Base):
             cursor.execute("DELETE FROM request WHERE url = ?", (url,))
             cursor.execute(
                 "INSERT INTO request (created, url, content) VALUES (?, ?, ?)",
-                (datetime.datetime.utcnow(), url, data))
+                (datetime.datetime.utcnow(), url, data),
+            )
             conn.commit()
 
     def get(self, url):
         with self.db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT created, content FROM request WHERE url=?", (url, ))
+            cursor.execute("SELECT created, content FROM request WHERE url=?", (url,))
             rows = cursor.fetchall()
 
         if rows:
@@ -130,12 +135,12 @@ class SqliteCache(Base):
         if six.PY2:
             data = str(data)
         if data.startswith(self._version_string):
-            return base64.b64decode(data[len(self._version_string):])
+            return base64.b64decode(data[len(self._version_string) :])
 
     @property
     def _version_string(self):
-        prefix = u'$ZEEP:%s$' % self._version
-        return bytes(prefix.encode('ascii'))
+        prefix = u"$ZEEP:%s$" % self._version
+        return bytes(prefix.encode("ascii"))
 
 
 def _is_expired(value, timeout):
@@ -150,7 +155,7 @@ def _is_expired(value, timeout):
 
 
 def _get_default_cache_path():
-    path = appdirs.user_cache_dir('zeep', False)
+    path = appdirs.user_cache_dir("zeep", False)
     try:
         os.makedirs(path)
     except OSError as exc:
@@ -158,4 +163,4 @@ def _get_default_cache_path():
             pass
         else:
             raise
-    return os.path.join(path, 'cache.db')
+    return os.path.join(path, "cache.db")

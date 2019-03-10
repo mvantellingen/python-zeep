@@ -20,16 +20,16 @@ class Transport(object):
 
     """
 
-    def __init__(self, cache=None, timeout=300, operation_timeout=None,
-                 session=None):
+    def __init__(self, cache=None, timeout=300, operation_timeout=None, session=None):
         self.cache = cache
         self.load_timeout = timeout
         self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)
 
         self.session = session or requests.Session()
-        self.session.headers['User-Agent'] = (
-            'Zeep/%s (www.python-zeep.org)' % (get_version()))
+        self.session.headers["User-Agent"] = "Zeep/%s (www.python-zeep.org)" % (
+            get_version()
+        )
 
     def get(self, address, params, headers):
         """Proxy to requests.get()
@@ -40,10 +40,8 @@ class Transport(object):
 
         """
         response = self.session.get(
-            address,
-            params=params,
-            headers=headers,
-            timeout=self.operation_timeout)
+            address, params=params, headers=headers, timeout=self.operation_timeout
+        )
         return response
 
     def post(self, address, message, headers):
@@ -57,29 +55,31 @@ class Transport(object):
         if self.logger.isEnabledFor(logging.DEBUG):
             log_message = message
             if isinstance(log_message, bytes):
-                log_message = log_message.decode('utf-8')
+                log_message = log_message.decode("utf-8")
             self.logger.debug("HTTP Post to %s:\n%s", address, log_message)
 
         response = self.session.post(
-            address,
-            data=message,
-            headers=headers,
-            timeout=self.operation_timeout)
+            address, data=message, headers=headers, timeout=self.operation_timeout
+        )
 
         if self.logger.isEnabledFor(logging.DEBUG):
             media_type = get_media_type(
-                response.headers.get('Content-Type', 'text/xml'))
+                response.headers.get("Content-Type", "text/xml")
+            )
 
-            if media_type == 'multipart/related':
+            if media_type == "multipart/related":
                 log_message = response.content
             else:
                 log_message = response.content
                 if isinstance(log_message, bytes):
-                    log_message = log_message.decode(response.encoding or 'utf-8')
+                    log_message = log_message.decode(response.encoding or "utf-8")
 
             self.logger.debug(
                 "HTTP Response from %s (status: %d):\n%s",
-                address, response.status_code, log_message)
+                address,
+                response.status_code,
+                log_message,
+            )
 
         return response
 
@@ -100,7 +100,7 @@ class Transport(object):
             raise ValueError("No url given to load")
 
         scheme = urlparse(url).scheme
-        if scheme in ('http', 'https'):
+        if scheme in ("http", "https"):
 
             if self.cache:
                 response = self.cache.get(url)
@@ -114,11 +114,11 @@ class Transport(object):
 
             return content
 
-        elif scheme == 'file':
-            if url.startswith('file://'):
+        elif scheme == "file":
+            if url.startswith("file://"):
                 url = url[7:]
 
-        with open(os.path.expanduser(url), 'rb') as fh:
+        with open(os.path.expanduser(url), "rb") as fh:
             return fh.read()
 
     def _load_remote_data(self, url):

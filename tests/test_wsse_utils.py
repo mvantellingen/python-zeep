@@ -4,7 +4,8 @@ from zeep.wsse import utils
 
 
 def test_get_security_header():
-    doc = etree.fromstring("""
+    doc = etree.fromstring(
+        """
         <soap-env:Envelope
             xmlns:ns0="http://example.com/stockquote.xsd"
             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -19,7 +20,11 @@ def test_get_security_header():
             </ns0:TradePriceRequest>
           </soap-env:Body>
         </soap-env:Envelope>
-    """.strip())
+    """.strip()
+    )
 
     element = utils.get_security_header(doc)
-    assert element.tag == '{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}Security'  # noqa
+    assert (
+        element.tag
+        == "{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}Security"
+    )  # noqa

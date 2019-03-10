@@ -6,7 +6,9 @@ from zeep import exceptions, xsd
 
 
 def test_xml_xml_single_node():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -20,11 +22,13 @@ def test_xml_xml_single_node():
             </complexType>
           </element>
         </schema>
-    """))
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
 
-    container_elm = schema.get_element('tns:container')
-    obj = container_elm(item='bar')
+    container_elm = schema.get_element("tns:container")
+    obj = container_elm(item="bar")
 
     expected = """
       <document>
@@ -37,11 +41,13 @@ def test_xml_xml_single_node():
     assert_nodes_equal(result, expected)
 
     obj = container_elm.parse(result[0], schema)
-    assert obj.item == 'bar'
+    assert obj.item == "bar"
 
 
 def test_xml_nested_sequence():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -62,11 +68,13 @@ def test_xml_nested_sequence():
             </complexType>
           </element>
         </schema>
-    """))
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
 
-    container_elm = schema.get_element('tns:container')
-    obj = container_elm(item={'x': 1, 'y': 2})
+    container_elm = schema.get_element("tns:container")
+    obj = container_elm(item={"x": 1, "y": 2})
 
     expected = """
       <document>
@@ -87,7 +95,9 @@ def test_xml_nested_sequence():
 
 
 def test_xml_restriction_self():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -110,14 +120,18 @@ def test_xml_restriction_self():
             </complexContent>
           </complexType>
         </schema>
-    """))
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
-    container_elm = schema.get_element('tns:container')
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
+    container_elm = schema.get_element("tns:container")
     container_elm.signature(schema)
 
 
 def test_xml_single_node_array():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -131,12 +145,14 @@ def test_xml_single_node_array():
             </complexType>
           </element>
         </schema>
-    """))
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
 
-    container_elm = schema.get_element('tns:container')
-    obj = container_elm(item=['item-1', 'item-2', 'item-3'])
-    assert obj.item == ['item-1', 'item-2', 'item-3']
+    container_elm = schema.get_element("tns:container")
+    obj = container_elm(item=["item-1", "item-2", "item-3"])
+    assert obj.item == ["item-1", "item-2", "item-3"]
 
     expected = """
       <document>
@@ -151,11 +167,13 @@ def test_xml_single_node_array():
     assert_nodes_equal(result, expected)
 
     obj = container_elm.parse(result[0], schema)
-    assert obj.item == ['item-1', 'item-2', 'item-3']
+    assert obj.item == ["item-1", "item-2", "item-3"]
 
 
 def test_xml_single_node_no_iterable():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -169,13 +187,15 @@ def test_xml_single_node_no_iterable():
             </complexType>
           </element>
         </schema>
-    """))
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
 
-    container_elm = schema.get_element('tns:container')
+    container_elm = schema.get_element("tns:container")
 
-    obj = container_elm(item=['item-1', 'item-2', 'item-3'])
-    assert obj.item == ['item-1', 'item-2', 'item-3']
+    obj = container_elm(item=["item-1", "item-2", "item-3"])
+    assert obj.item == ["item-1", "item-2", "item-3"]
 
     with pytest.raises(ValueError):
         render_node(container_elm, obj)
@@ -183,7 +203,9 @@ def test_xml_single_node_no_iterable():
 
 def test_xml_complex_any_types():
     # see https://github.com/mvantellingen/python-zeep/issues/252
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -198,47 +220,47 @@ def test_xml_complex_any_types():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
     KeyValueData = xsd.Element(
-        '{http://xml.apache.org/xml-soap}KeyValueData',
+        "{http://xml.apache.org/xml-soap}KeyValueData",
         xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    'key',
-                    xsd.AnyType(),
-                ),
-                xsd.Element(
-                    'value',
-                    xsd.AnyType(),
-                ),
-            ]),
+            xsd.Sequence(
+                [xsd.Element("key", xsd.AnyType()), xsd.Element("value", xsd.AnyType())]
+            )
         ),
     )
 
     Map = xsd.ComplexType(
-        xsd.Sequence([
-            xsd.Element(
-                'item',
-                xsd.AnyType(),
-                min_occurs=1,
-                max_occurs="unbounded"),
-        ]),
-        qname=etree.QName('{http://xml.apache.org/xml-soap}Map'))
+        xsd.Sequence(
+            [xsd.Element("item", xsd.AnyType(), min_occurs=1, max_occurs="unbounded")]
+        ),
+        qname=etree.QName("{http://xml.apache.org/xml-soap}Map"),
+    )
 
-    header_Username = KeyValueData(xsd.AnyObject(xsd.String(), 'Username'), value=xsd.AnyObject(xsd.String(), 'abc'))
-    header_ShopId = KeyValueData(xsd.AnyObject(xsd.String(), 'ShopId'), value=xsd.AnyObject(xsd.Int(), 123))
+    header_Username = KeyValueData(
+        xsd.AnyObject(xsd.String(), "Username"),
+        value=xsd.AnyObject(xsd.String(), "abc"),
+    )
+    header_ShopId = KeyValueData(
+        xsd.AnyObject(xsd.String(), "ShopId"), value=xsd.AnyObject(xsd.Int(), 123)
+    )
     auth = Map(item=[header_Username, header_ShopId])
 
-    header_LimitNum = KeyValueData(xsd.AnyObject(xsd.String(), 'LimitNum'), value=xsd.AnyObject(xsd.Int(), 2))
+    header_LimitNum = KeyValueData(
+        xsd.AnyObject(xsd.String(), "LimitNum"), value=xsd.AnyObject(xsd.Int(), 2)
+    )
     params = Map(item=[header_LimitNum])
 
-    container = schema.get_element('ns0:container')
+    container = schema.get_element("ns0:container")
     obj = container(auth=auth, params=params)
 
     result = render_node(container, obj)
-    expected = load_xml("""
+    expected = load_xml(
+        """
     <document>
       <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
         <ns0:auth xmlns:ns1="http://xml.apache.org/xml-soap" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:Map">
@@ -259,12 +281,15 @@ def test_xml_complex_any_types():
         </ns0:params>
       </ns0:container>
     </document>
-    """)  # noqa
+    """
+    )  # noqa
     assert_nodes_equal(result, expected)
 
 
 def test_xml_unparsed_elements():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -278,27 +303,33 @@ def test_xml_unparsed_elements():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
     schema.settings.strict = False
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
 
-    expected = load_xml("""
+    expected = load_xml(
+        """
       <document>
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item>bar</ns0:item>
           <ns0:idontbelonghere>bar</ns0:idontbelonghere>
         </ns0:container>
       </document>
-    """)
+    """
+    )
 
-    container_elm = schema.get_element('tns:container')
+    container_elm = schema.get_element("tns:container")
     obj = container_elm.parse(expected[0], schema)
-    assert obj.item == 'bar'
+    assert obj.item == "bar"
     assert obj._raw_elements
 
 
 def test_xml_simple_content_nil():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
     <?xml version="1.0"?>
     <schema xmlns="http://www.w3.org/2001/XMLSchema"
             xmlns:tns="http://tests.python-zeep.org/"
@@ -314,9 +345,11 @@ def test_xml_simple_content_nil():
         </complexType>
       </element>
     </schema>
-    """))
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
-    container_elm = schema.get_element('tns:container')
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
+    container_elm = schema.get_element("tns:container")
     obj = container_elm(xsd.Nil)
     result = render_node(container_elm, obj)
 
@@ -333,7 +366,8 @@ def test_xml_simple_content_nil():
 
 
 def test_ignore_sequence_order():
-    schema_doc = load_xml(b"""
+    schema_doc = load_xml(
+        b"""
         <?xml version="1.0" encoding="utf-8"?>
         <xsd:schema xmlns:tns="http://tests.python-zeep.org/attr"
           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -352,9 +386,11 @@ def test_ignore_sequence_order():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """)
+    """
+    )
 
-    response_doc = load_xml(b"""
+    response_doc = load_xml(
+        b"""
         <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
           <s:Body xmlns:xsd="http://www.w3.org/2001/XMLSchema">
             <Response xmlns="http://tests.python-zeep.org/attr">
@@ -364,17 +400,20 @@ def test_ignore_sequence_order():
             </Response>
           </s:Body>
         </s:Envelope>
-    """)
+    """
+    )
 
     schema = xsd.Schema(schema_doc)
-    elm = schema.get_element('{http://tests.python-zeep.org/attr}Response')
+    elm = schema.get_element("{http://tests.python-zeep.org/attr}Response")
     schema.settings.xsd_ignore_sequence_order = False
 
     node = response_doc.xpath(
-        '//ns0:Response', namespaces={
-            'xsd': 'http://www.w3.org/2001/XMLSchema',
-            'ns0': 'http://tests.python-zeep.org/attr',
-        })
+        "//ns0:Response",
+        namespaces={
+            "xsd": "http://www.w3.org/2001/XMLSchema",
+            "ns0": "http://tests.python-zeep.org/attr",
+        },
+    )
     with pytest.raises(exceptions.XMLParseError) as exc:
         response = elm.parse(node[0], schema)
     assert str(exc) is not None

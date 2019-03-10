@@ -23,10 +23,10 @@ def test_load():
     transport = transports.Transport(cache=cache)
 
     with requests_mock.mock() as m:
-        m.get('http://tests.python-zeep.org/test.xml', text='x')
-        result = transport.load('http://tests.python-zeep.org/test.xml')
+        m.get("http://tests.python-zeep.org/test.xml", text="x")
+        result = transport.load("http://tests.python-zeep.org/test.xml")
 
-        assert result == b'x'
+        assert result == b"x"
 
 
 def test_settings_set_context_timeout():

@@ -7,32 +7,33 @@ from zeep.xsd.valueobjects import AnyObject
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['AnyType']
+__all__ = ["AnyType"]
 
 
 class AnyType(Type):
-    _default_qname = xsd_ns('anyType')
+    _default_qname = xsd_ns("anyType")
     _attributes_unwrapped = []
     _element = None
 
     def __call__(self, value=None):
-        return value or ''
+        return value or ""
 
     def render(self, parent, value, xsd_type=None, render_path=None):
         if isinstance(value, AnyObject):
             if value.xsd_type is None:
-                parent.set(xsi_ns('nil'), 'true')
+                parent.set(xsi_ns("nil"), "true")
             else:
                 value.xsd_type.render(parent, value.value, None, render_path)
-                parent.set(xsi_ns('type'), value.xsd_type.qname)
-        elif hasattr(value, '_xsd_elm'):
+                parent.set(xsi_ns("type"), value.xsd_type.qname)
+        elif hasattr(value, "_xsd_elm"):
             value._xsd_elm.render(parent, value, render_path)
-            parent.set(xsi_ns('type'), value._xsd_elm.qname)
+            parent.set(xsi_ns("type"), value._xsd_elm.qname)
         else:
             parent.text = self.xmlvalue(value)
 
-    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
-                         context=None, schema_type=None):
+    def parse_xmlelement(
+        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
+    ):
         """Consume matching xmlelements and call parse() on each
 
         :param xmlelement: XML element objects
@@ -48,12 +49,12 @@ class AnyType(Type):
         :rtype: dict or None
 
         """
-        xsi_type = qname_attr(xmlelement, xsi_ns('type'))
-        xsi_nil = xmlelement.get(xsi_ns('nil'))
+        xsi_type = qname_attr(xmlelement, xsi_ns("type"))
+        xsi_nil = xmlelement.get(xsi_ns("nil"))
         children = list(xmlelement)
 
         # Handle xsi:nil attribute
-        if xsi_nil == 'true':
+        if xsi_nil == "true":
             return None
 
         # Check if a xsi:type is defined and try to parse the xml according
@@ -65,8 +66,8 @@ class AnyType(Type):
             # buggy soap servers) then we just return the text or lxml element.
             if not xsd_type:
                 logger.debug(
-                    "Unable to resolve type for %r, returning raw data",
-                    xsi_type.text)
+                    "Unable to resolve type for %r, returning raw data", xsi_type.text
+                )
 
                 if xmlelement.text:
                     return xmlelement.text
@@ -77,8 +78,7 @@ class AnyType(Type):
             if isinstance(xsd_type, self.__class__):
                 return xmlelement.text or None
 
-            return xsd_type.parse_xmlelement(
-                xmlelement, schema, context=context)
+            return xsd_type.parse_xmlelement(xmlelement, schema, context=context)
 
         # If no xsi:type is set and the element has children then there is
         # not much we can do. Just return the children
@@ -115,4 +115,4 @@ class AnyType(Type):
         return value
 
     def signature(self, schema=None, standalone=True):
-        return 'xsd:anyType'
+        return "xsd:anyType"

@@ -29,8 +29,7 @@ class Plugin(object):
 
 def apply_egress(client, envelope, http_headers, operation, binding_options):
     for plugin in client.plugins:
-        result = plugin.egress(
-            envelope, http_headers, operation, binding_options)
+        result = plugin.egress(envelope, http_headers, operation, binding_options)
         if result is not None:
             envelope, http_headers = result
 
@@ -54,26 +53,22 @@ class HistoryPlugin(object):
     def last_sent(self):
         last_tx = self._buffer[-1]
         if last_tx:
-            return last_tx['sent']
+            return last_tx["sent"]
 
     @property
     def last_received(self):
         last_tx = self._buffer[-1]
         if last_tx:
-            return last_tx['received']
+            return last_tx["received"]
 
     def ingress(self, envelope, http_headers, operation):
         last_tx = self._buffer[-1]
-        last_tx['received'] = {
-            'envelope': envelope,
-            'http_headers': http_headers,
-        }
+        last_tx["received"] = {"envelope": envelope, "http_headers": http_headers}
 
     def egress(self, envelope, http_headers, operation, binding_options):
-        self._buffer.append({
-            'received': None,
-            'sent': {
-                'envelope': envelope,
-                'http_headers': http_headers,
-            },
-        })
+        self._buffer.append(
+            {
+                "received": None,
+                "sent": {"envelope": envelope, "http_headers": http_headers},
+            }
+        )

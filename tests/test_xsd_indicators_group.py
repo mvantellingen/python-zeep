@@ -7,25 +7,33 @@ from zeep import xsd
 
 def test_build_objects():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    etree.QName('http://tests.python-zeep.org/', 'username'),
-                    xsd.String()),
-                xsd.Group(
-                    etree.QName('http://tests.python-zeep.org/', 'groupie'),
-                    xsd.Sequence([
-                        xsd.Element(
-                            etree.QName('http://tests.python-zeep.org/', 'password'),
-                            xsd.String(),
-                        )
-                    ])
-                )
-            ])
-        ))
+            xsd.Sequence(
+                [
+                    xsd.Element(
+                        etree.QName("http://tests.python-zeep.org/", "username"),
+                        xsd.String(),
+                    ),
+                    xsd.Group(
+                        etree.QName("http://tests.python-zeep.org/", "groupie"),
+                        xsd.Sequence(
+                            [
+                                xsd.Element(
+                                    etree.QName(
+                                        "http://tests.python-zeep.org/", "password"
+                                    ),
+                                    xsd.String(),
+                                )
+                            ]
+                        ),
+                    ),
+                ]
+            )
+        ),
+    )
     assert custom_type.signature()
-    obj = custom_type(username='foo', password='bar')
+    obj = custom_type(username="foo", password="bar")
 
     expected = """
       <document>
@@ -35,104 +43,128 @@ def test_build_objects():
         </ns0:authentication>
       </document>
     """
-    node = etree.Element('document')
+    node = etree.Element("document")
     custom_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
     obj = custom_type.parse(node[0], None)
-    assert obj.username == 'foo'
-    assert obj.password == 'bar'
+    assert obj.username == "foo"
+    assert obj.password == "bar"
 
 
 def test_build_group_min_occurs_1():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
             xsd.Group(
-                etree.QName('http://tests.python-zeep.org/', 'foobar'),
-                xsd.Sequence([
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                        xsd.String()),
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_2'),
-                        xsd.String()),
-                ]),
-                min_occurs=1)
-        ))
+                etree.QName("http://tests.python-zeep.org/", "foobar"),
+                xsd.Sequence(
+                    [
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_1"),
+                            xsd.String(),
+                        ),
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_2"),
+                            xsd.String(),
+                        ),
+                    ]
+                ),
+                min_occurs=1,
+            )
+        ),
+    )
 
-    obj = custom_type(item_1='foo', item_2='bar')
-    assert obj.item_1 == 'foo'
-    assert obj.item_2 == 'bar'
+    obj = custom_type(item_1="foo", item_2="bar")
+    assert obj.item_1 == "foo"
+    assert obj.item_2 == "bar"
 
     result = render_node(custom_type, obj)
-    expected = load_xml("""
+    expected = load_xml(
+        """
         <document>
           <ns0:authentication xmlns:ns0="http://tests.python-zeep.org/">
             <ns0:item_1>foo</ns0:item_1>
             <ns0:item_2>bar</ns0:item_2>
           </ns0:authentication>
         </document>
-    """)
+    """
+    )
 
     assert_nodes_equal(result, expected)
 
     obj = custom_type.parse(result[0], None)
-    assert obj.item_1 == 'foo'
-    assert obj.item_2 == 'bar'
-    assert not hasattr(obj, 'foobar')
+    assert obj.item_1 == "foo"
+    assert obj.item_2 == "bar"
+    assert not hasattr(obj, "foobar")
 
 
 def test_build_group_min_occurs_1_parse_args():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
             xsd.Group(
-                etree.QName('http://tests.python-zeep.org/', 'foobar'),
-                xsd.Sequence([
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                        xsd.String()),
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_2'),
-                        xsd.String()),
-                ]),
-                min_occurs=1)
-        ))
+                etree.QName("http://tests.python-zeep.org/", "foobar"),
+                xsd.Sequence(
+                    [
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_1"),
+                            xsd.String(),
+                        ),
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_2"),
+                            xsd.String(),
+                        ),
+                    ]
+                ),
+                min_occurs=1,
+            )
+        ),
+    )
 
-    obj = custom_type('foo', 'bar')
-    assert obj.item_1 == 'foo'
-    assert obj.item_2 == 'bar'
+    obj = custom_type("foo", "bar")
+    assert obj.item_1 == "foo"
+    assert obj.item_2 == "bar"
 
 
 def test_build_group_min_occurs_2():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
             xsd.Group(
-                etree.QName('http://tests.python-zeep.org/', 'foobar'),
-                xsd.Sequence([
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                        xsd.String()),
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_2'),
-                        xsd.String()),
-                ]),
-                min_occurs=2, max_occurs=2)
-        ))
+                etree.QName("http://tests.python-zeep.org/", "foobar"),
+                xsd.Sequence(
+                    [
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_1"),
+                            xsd.String(),
+                        ),
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_2"),
+                            xsd.String(),
+                        ),
+                    ]
+                ),
+                min_occurs=2,
+                max_occurs=2,
+            )
+        ),
+    )
 
-    obj = custom_type(_value_1=[
-        {'item_1': 'foo', 'item_2': 'bar'},
-        {'item_1': 'foo', 'item_2': 'bar'},
-    ])
+    obj = custom_type(
+        _value_1=[
+            {"item_1": "foo", "item_2": "bar"},
+            {"item_1": "foo", "item_2": "bar"},
+        ]
+    )
     assert obj._value_1 == [
-        {'item_1': 'foo', 'item_2': 'bar'},
-        {'item_1': 'foo', 'item_2': 'bar'},
+        {"item_1": "foo", "item_2": "bar"},
+        {"item_1": "foo", "item_2": "bar"},
     ]
 
     result = render_node(custom_type, obj)
-    expected = load_xml("""
+    expected = load_xml(
+        """
         <document>
           <ns0:authentication xmlns:ns0="http://tests.python-zeep.org/">
             <ns0:item_1>foo</ns0:item_1>
@@ -141,35 +173,46 @@ def test_build_group_min_occurs_2():
             <ns0:item_2>bar</ns0:item_2>
           </ns0:authentication>
         </document>
-    """)
+    """
+    )
 
     assert_nodes_equal(result, expected)
 
     obj = custom_type.parse(result[0], None)
     assert obj._value_1 == [
-        {'item_1': 'foo', 'item_2': 'bar'},
-        {'item_1': 'foo', 'item_2': 'bar'},
+        {"item_1": "foo", "item_2": "bar"},
+        {"item_1": "foo", "item_2": "bar"},
     ]
-    assert not hasattr(obj, 'foobar')
+    assert not hasattr(obj, "foobar")
 
 
 def test_build_group_min_occurs_2_sequence_min_occurs_2():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
             xsd.Group(
-                etree.QName('http://tests.python-zeep.org/', 'foobar'),
-                xsd.Sequence([
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                        xsd.String()),
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_2'),
-                        xsd.String()),
-                ], min_occurs=2, max_occurs=2),
-                min_occurs=2, max_occurs=2)
-        ))
-    expected = etree.fromstring("""
+                etree.QName("http://tests.python-zeep.org/", "foobar"),
+                xsd.Sequence(
+                    [
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_1"),
+                            xsd.String(),
+                        ),
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_2"),
+                            xsd.String(),
+                        ),
+                    ],
+                    min_occurs=2,
+                    max_occurs=2,
+                ),
+                min_occurs=2,
+                max_occurs=2,
+            )
+        ),
+    )
+    expected = etree.fromstring(
+        """
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:item_1>foo</ns0:item_1>
           <ns0:item_2>bar</ns0:item_2>
@@ -180,68 +223,91 @@ def test_build_group_min_occurs_2_sequence_min_occurs_2():
           <ns0:item_1>foo</ns0:item_1>
           <ns0:item_2>bar</ns0:item_2>
         </ns0:container>
-    """)
+    """
+    )
     obj = custom_type.parse(expected, None)
     assert obj._value_1 == [
-        {'_value_1': [
-            {'item_1': 'foo', 'item_2': 'bar'},
-            {'item_1': 'foo', 'item_2': 'bar'},
-        ]},
-        {'_value_1': [
-            {'item_1': 'foo', 'item_2': 'bar'},
-            {'item_1': 'foo', 'item_2': 'bar'},
-        ]},
+        {
+            "_value_1": [
+                {"item_1": "foo", "item_2": "bar"},
+                {"item_1": "foo", "item_2": "bar"},
+            ]
+        },
+        {
+            "_value_1": [
+                {"item_1": "foo", "item_2": "bar"},
+                {"item_1": "foo", "item_2": "bar"},
+            ]
+        },
     ]
-    assert not hasattr(obj, 'foobar')
+    assert not hasattr(obj, "foobar")
 
 
 def test_build_group_occurs_1_invalid_kwarg():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
             xsd.Group(
-                etree.QName('http://tests.python-zeep.org/', 'foobar'),
-                xsd.Sequence([
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                        xsd.String()),
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_2'),
-                        xsd.String()),
-                ]),
-                min_occurs=1, max_occurs=1)
-        ))
+                etree.QName("http://tests.python-zeep.org/", "foobar"),
+                xsd.Sequence(
+                    [
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_1"),
+                            xsd.String(),
+                        ),
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_2"),
+                            xsd.String(),
+                        ),
+                    ]
+                ),
+                min_occurs=1,
+                max_occurs=1,
+            )
+        ),
+    )
 
     with pytest.raises(TypeError):
-        custom_type(item_1='foo', item_2='bar', error=True)
+        custom_type(item_1="foo", item_2="bar", error=True)
 
 
 def test_build_group_min_occurs_2_invalid_kwarg():
     custom_type = xsd.Element(
-        etree.QName('http://tests.python-zeep.org/', 'authentication'),
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
         xsd.ComplexType(
             xsd.Group(
-                etree.QName('http://tests.python-zeep.org/', 'foobar'),
-                xsd.Sequence([
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_1'),
-                        xsd.String()),
-                    xsd.Element(
-                        etree.QName('http://tests.python-zeep.org/', 'item_2'),
-                        xsd.String()),
-                ]),
-                min_occurs=2, max_occurs=2)
-        ))
+                etree.QName("http://tests.python-zeep.org/", "foobar"),
+                xsd.Sequence(
+                    [
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_1"),
+                            xsd.String(),
+                        ),
+                        xsd.Element(
+                            etree.QName("http://tests.python-zeep.org/", "item_2"),
+                            xsd.String(),
+                        ),
+                    ]
+                ),
+                min_occurs=2,
+                max_occurs=2,
+            )
+        ),
+    )
 
     with pytest.raises(TypeError):
-        custom_type(_value_1=[
-            {'item_1': 'foo', 'item_2': 'bar', 'error': True},
-            {'item_1': 'foo', 'item_2': 'bar'},
-        ])
+        custom_type(
+            _value_1=[
+                {"item_1": "foo", "item_2": "bar", "error": True},
+                {"item_1": "foo", "item_2": "bar"},
+            ]
+        )
 
 
 def test_xml_group_via_ref():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                    xmlns:tns="http://tests.python-zeep.org/"
@@ -262,12 +328,14 @@ def test_xml_group_via_ref():
           </xs:group>
 
         </xs:schema>
-    """))
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    """
+        )
+    )
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
 
-    obj = address_type(first_name='foo', last_name='bar')
+    obj = address_type(first_name="foo", last_name="bar")
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     expected = """
         <document>
@@ -281,7 +349,9 @@ def test_xml_group_via_ref():
 
 
 def test_xml_group_via_ref_max_occurs_unbounded():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                    xmlns:tns="http://tests.python-zeep.org/"
@@ -302,16 +372,19 @@ def test_xml_group_via_ref_max_occurs_unbounded():
           </xs:group>
 
         </xs:schema>
-    """))
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    """
+        )
+    )
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
 
     obj = address_type(
         _value_1=[
-            {'first_name': 'foo-1', 'last_name': 'bar-1'},
-            {'first_name': 'foo-2', 'last_name': 'bar-2'},
-        ])
+            {"first_name": "foo-1", "last_name": "bar-1"},
+            {"first_name": "foo-2", "last_name": "bar-2"},
+        ]
+    )
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     expected = """
         <document>
@@ -326,14 +399,16 @@ def test_xml_group_via_ref_max_occurs_unbounded():
     assert_nodes_equal(expected, node)
 
     obj = address_type.parse(node[0], None)
-    assert obj._value_1[0]['first_name'] == 'foo-1'
-    assert obj._value_1[0]['last_name'] == 'bar-1'
-    assert obj._value_1[1]['first_name'] == 'foo-2'
-    assert obj._value_1[1]['last_name'] == 'bar-2'
+    assert obj._value_1[0]["first_name"] == "foo-1"
+    assert obj._value_1[0]["last_name"] == "bar-1"
+    assert obj._value_1[1]["first_name"] == "foo-2"
+    assert obj._value_1[1]["last_name"] == "bar-2"
 
 
 def test_xml_multiple_groups_in_sequence():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                    xmlns:tns="http://tests.python-zeep.org/"
@@ -366,14 +441,16 @@ def test_xml_multiple_groups_in_sequence():
             </xs:sequence>
           </xs:group>
         </xs:schema>
-    """))
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
+    """
+        )
+    )
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
 
     obj = address_type(
-        first_name='foo', last_name='bar',
-        city='Utrecht', country='The Netherlands')
+        first_name="foo", last_name="bar", city="Utrecht", country="The Netherlands"
+    )
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     expected = """
         <document>
@@ -389,7 +466,9 @@ def test_xml_multiple_groups_in_sequence():
 
 
 def test_xml_group_methods():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                    xmlns:tns="http://tests.python-zeep.org/"
@@ -407,18 +486,24 @@ def test_xml_group_methods():
           </xs:group>
 
         </xs:schema>
-    """))
-    Group = schema.get_group('{http://tests.python-zeep.org/}Group')
+    """
+        )
+    )
+    Group = schema.get_group("{http://tests.python-zeep.org/}Group")
     assert Group.signature(schema) == (
-        'ns0:Group(city: xsd:string, country: xsd:string)')
+        "ns0:Group(city: xsd:string, country: xsd:string)"
+    )
     assert str(Group) == (
-        '{http://tests.python-zeep.org/}Group(city: xsd:string, country: xsd:string)')
+        "{http://tests.python-zeep.org/}Group(city: xsd:string, country: xsd:string)"
+    )
 
     assert len(list(Group)) == 2
 
 
 def test_xml_group_extension():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                    xmlns:tns="http://tests.python-zeep.org/"
@@ -446,8 +531,11 @@ def test_xml_group_extension():
             </xs:complexContent>
           </xs:complexType>
         </xs:schema>
-    """))
-    SubGroup = schema.get_type('{http://tests.python-zeep.org/}SubGroup')
+    """
+        )
+    )
+    SubGroup = schema.get_type("{http://tests.python-zeep.org/}SubGroup")
     assert SubGroup.signature(schema) == (
-        'ns0:SubGroup(item_1: xsd:string, item_2: xsd:string, item_3: xsd:string)')
-    SubGroup(item_1='een', item_2='twee', item_3='drie')
+        "ns0:SubGroup(item_1: xsd:string, item_2: xsd:string, item_3: xsd:string)"
+    )
+    SubGroup(item_1="een", item_2="twee", item_3="drie")

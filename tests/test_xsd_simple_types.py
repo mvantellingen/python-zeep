@@ -5,7 +5,9 @@ from zeep import xsd
 
 
 def test_simple_type():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -19,12 +21,14 @@ def test_simple_type():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    item_cls = schema.get_element('{http://tests.python-zeep.org/}item')
+    item_cls = schema.get_element("{http://tests.python-zeep.org/}item")
     item = item_cls(something=12345678901234567890)
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     item_cls.render(node, item)
     expected = """
         <document>
@@ -39,7 +43,9 @@ def test_simple_type():
 
 
 def test_simple_type_optional():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -53,13 +59,15 @@ def test_simple_type_optional():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    item_cls = schema.get_element('{http://tests.python-zeep.org/}item')
+    item_cls = schema.get_element("{http://tests.python-zeep.org/}item")
     item = item_cls()
     assert item.something is None
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     item_cls.render(node, item)
     expected = """
         <document>
@@ -73,7 +81,9 @@ def test_simple_type_optional():
 
 
 def test_restriction_global():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -86,14 +96,18 @@ def test_restriction_global():
             </restriction>
           </simpleType>
         </schema>
-    """))
+    """
+        )
+    )
 
-    type_cls = schema.get_type('{http://tests.python-zeep.org/}foo')
-    assert type_cls.qname.text == '{http://tests.python-zeep.org/}foo'
+    type_cls = schema.get_type("{http://tests.python-zeep.org/}foo")
+    assert type_cls.qname.text == "{http://tests.python-zeep.org/}foo"
 
 
 def test_restriction_anon():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -108,15 +122,18 @@ def test_restriction_anon():
             </simpleType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    element_cls = schema.get_element('{http://tests.python-zeep.org/}something')
+    element_cls = schema.get_element("{http://tests.python-zeep.org/}something")
     assert element_cls.type.qname == etree.QName(
-        '{http://tests.python-zeep.org/}something')
+        "{http://tests.python-zeep.org/}something"
+    )
 
     obj = element_cls(75)
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     element_cls.render(node, obj)
     expected = """
         <document>
@@ -127,7 +144,9 @@ def test_restriction_anon():
 
 
 def test_simple_type_list():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -139,13 +158,15 @@ def test_simple_type_list():
           </simpleType>
           <element name="something" type="tns:values"/>
         </schema>
-    """))
+    """
+        )
+    )
 
-    element_cls = schema.get_element('{http://tests.python-zeep.org/}something')
+    element_cls = schema.get_element("{http://tests.python-zeep.org/}something")
     obj = element_cls([1, 2, 3])
     assert obj == [1, 2, 3]
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     element_cls.render(node, obj)
     expected = """
         <document>
@@ -156,7 +177,9 @@ def test_simple_type_list():
 
 
 def test_simple_type_list_custom_type():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -178,13 +201,15 @@ def test_simple_type_list_custom_type():
           </simpleType>
           <element name="something" type="tns:CountryNameType"/>
         </schema>
-    """))
+    """
+        )
+    )
 
-    element_cls = schema.get_element('{http://tests.python-zeep.org/}something')
-    obj = element_cls(['Code', 'City'])
-    assert obj == ['Code', 'City']
+    element_cls = schema.get_element("{http://tests.python-zeep.org/}something")
+    obj = element_cls(["Code", "City"])
+    assert obj == ["Code", "City"]
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     element_cls.render(node, obj)
     expected = """
         <document>
