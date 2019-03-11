@@ -3,7 +3,9 @@ from zeep import xsd
 
 
 def test_union_same_types():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns="http://tests.python-zeep.org/"
@@ -26,10 +28,12 @@ def test_union_same_types():
           </xsd:simpleType>
           <xsd:element name="item" type="tns:Date"/>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    elm = schema.get_element('ns0:item')
-    node = render_node(elm, '102018')
+    elm = schema.get_element("ns0:item")
+    node = render_node(elm, "102018")
     expected = """
         <document>
           <ns0:item xmlns:ns0="http://tests.python-zeep.org/">102018</ns0:item>
@@ -41,7 +45,9 @@ def test_union_same_types():
 
 
 def test_union_mixed():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -63,10 +69,12 @@ def test_union_mixed():
             </xsd:restriction>
           </xsd:simpleType>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    elm = schema.get_element('ns0:item')
-    node = render_node(elm, '102018')
+    elm = schema.get_element("ns0:item")
+    node = render_node(elm, "102018")
     expected = """
         <document>
           <ns0:item xmlns:ns0="http://tests.python-zeep.org/">102018</ns0:item>
@@ -74,9 +82,9 @@ def test_union_mixed():
     """
     assert_nodes_equal(expected, node)
     value = elm.parse(list(node)[0], schema)
-    assert value == '102018'
+    assert value == "102018"
 
-    node = render_node(elm, '2018')
+    node = render_node(elm, "2018")
     expected = """
         <document>
           <ns0:item xmlns:ns0="http://tests.python-zeep.org/">2018</ns0:item>
@@ -84,4 +92,4 @@ def test_union_mixed():
     """
     assert_nodes_equal(expected, node)
     value = elm.parse(list(node)[0], schema)
-    assert value == '2018'
+    assert value == "2018"

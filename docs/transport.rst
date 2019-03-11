@@ -82,7 +82,7 @@ define proxies using the ``proxies`` attribute of :class:`requests.Session`:
 
 .. code-block:: python
 
-    from zeep.import Client
+    from zeep import Client
 
     client = Client(
         'http://my.own.sslhost.local/service?WSDL')

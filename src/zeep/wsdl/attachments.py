@@ -15,8 +15,9 @@ class MessagePack(object):
         self._parts = parts
 
     def __repr__(self):
-        return '<MessagePack(attachments=[%s])>' % (
-            ', '.join(repr(a) for a in self.attachments))
+        return "<MessagePack(attachments=[%s])>" % (
+            ", ".join(repr(a) for a in self.attachments)
+        )
 
     @property
     def root(self):
@@ -49,18 +50,17 @@ class MessagePack(object):
 
 class Attachment(object):
     def __init__(self, part):
-        encoding = part.encoding or 'utf-8'
-        self.headers = CaseInsensitiveDict({
-            k.decode(encoding): v.decode(encoding)
-            for k, v in part.headers.items()
-        })
-        self.content_type = self.headers.get('Content-Type', None)
-        self.content_id = self.headers.get('Content-ID', None)
-        self.content_location = self.headers.get('Content-Location', None)
+        encoding = part.encoding or "utf-8"
+        self.headers = CaseInsensitiveDict(
+            {k.decode(encoding): v.decode(encoding) for k, v in part.headers.items()}
+        )
+        self.content_type = self.headers.get("Content-Type", None)
+        self.content_id = self.headers.get("Content-ID", None)
+        self.content_location = self.headers.get("Content-Location", None)
         self._part = part
 
     def __repr__(self):
-        return '<Attachment(%r, %r)>' % (self.content_id, self.content_type)
+        return "<Attachment(%r, %r)>" % (self.content_id, self.content_type)
 
     @cached_property
     def content(self):
@@ -69,12 +69,12 @@ class Attachment(object):
         :rtype: bytes or str
 
         """
-        encoding = self.headers.get('Content-Transfer-Encoding', None)
+        encoding = self.headers.get("Content-Transfer-Encoding", None)
         content = self._part.content
 
-        if encoding == 'base64':
+        if encoding == "base64":
             return base64.b64decode(content)
-        elif encoding == 'binary':
-            return content.strip(b'\r\n')
+        elif encoding == "binary":
+            return content.strip(b"\r\n")
         else:
             return content

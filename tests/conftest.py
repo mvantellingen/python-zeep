@@ -4,16 +4,14 @@ import pytest
 
 # Don't try to test asyncio since it is py3 only syntax
 if sys.version_info < (3, 5):
-    collect_ignore = [
-        'test_asyncio_transport.py'
-    ]
+    collect_ignore = ["test_asyncio_transport.py"]
 
-pytest.register_assert_rewrite('tests.utils')
+pytest.register_assert_rewrite("tests.utils")
 
 
 @pytest.fixture(autouse=True)
 def no_requests(request, monkeypatch):
-    if request.node.get_marker('requests'):
+    if request.node.get_marker("requests"):
         return
 
     def func(*args, **kwargs):

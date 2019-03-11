@@ -7,7 +7,8 @@ from zeep.wsdl import wsdl
 
 
 def test_parse():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -47,26 +48,38 @@ def test_parse():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    assert operation.input.body.signature(schema=root.types) == 'ns0:Request(xsd:string)'
-    assert operation.input.header.signature(schema=root.types) == 'soap-env:Header()'
-    assert operation.input.envelope.signature(schema=root.types) == 'soap-env:envelope(body: xsd:string)'
-    assert operation.input.signature(as_output=False) == 'xsd:string'
+    assert (
+        operation.input.body.signature(schema=root.types) == "ns0:Request(xsd:string)"
+    )
+    assert operation.input.header.signature(schema=root.types) == "soap-env:Header()"
+    assert (
+        operation.input.envelope.signature(schema=root.types)
+        == "soap-env:envelope(body: xsd:string)"
+    )
+    assert operation.input.signature(as_output=False) == "xsd:string"
 
-    assert operation.output.body.signature(schema=root.types) == 'ns0:Response(xsd:string)'
-    assert operation.output.header.signature(schema=root.types) == 'soap-env:Header()'
-    assert operation.output.envelope.signature(schema=root.types) == 'soap-env:envelope(body: xsd:string)'
-    assert operation.output.signature(as_output=True) == 'xsd:string'
+    assert (
+        operation.output.body.signature(schema=root.types) == "ns0:Response(xsd:string)"
+    )
+    assert operation.output.header.signature(schema=root.types) == "soap-env:Header()"
+    assert (
+        operation.output.envelope.signature(schema=root.types)
+        == "soap-env:envelope(body: xsd:string)"
+    )
+    assert operation.output.signature(as_output=True) == "xsd:string"
 
 
 def test_parse_with_header():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -112,26 +125,50 @@ def test_parse_with_header():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    assert operation.input.body.signature(schema=root.types) == 'ns0:Request(xsd:string)'
-    assert operation.input.header.signature(schema=root.types) == 'soap-env:Header(auth: xsd:string)'
-    assert operation.input.envelope.signature(schema=root.types) == 'soap-env:envelope(header: {auth: xsd:string}, body: xsd:string)'  # noqa
-    assert operation.input.signature(as_output=False) == 'xsd:string, _soapheaders={auth: xsd:string}'  # noqa
+    assert (
+        operation.input.body.signature(schema=root.types) == "ns0:Request(xsd:string)"
+    )
+    assert (
+        operation.input.header.signature(schema=root.types)
+        == "soap-env:Header(auth: xsd:string)"
+    )
+    assert (
+        operation.input.envelope.signature(schema=root.types)
+        == "soap-env:envelope(header: {auth: xsd:string}, body: xsd:string)"
+    )  # noqa
+    assert (
+        operation.input.signature(as_output=False)
+        == "xsd:string, _soapheaders={auth: xsd:string}"
+    )  # noqa
 
-    assert operation.output.body.signature(schema=root.types) == 'ns0:Response(xsd:string)'
-    assert operation.output.header.signature(schema=root.types) == 'soap-env:Header(auth: xsd:string)'
-    assert operation.output.envelope.signature(schema=root.types) == 'soap-env:envelope(header: {auth: xsd:string}, body: xsd:string)'  # noqa
-    assert operation.output.signature(as_output=True) == 'header: {auth: xsd:string}, body: xsd:string'  # noqa
+    assert (
+        operation.output.body.signature(schema=root.types) == "ns0:Response(xsd:string)"
+    )
+    assert (
+        operation.output.header.signature(schema=root.types)
+        == "soap-env:Header(auth: xsd:string)"
+    )
+    assert (
+        operation.output.envelope.signature(schema=root.types)
+        == "soap-env:envelope(header: {auth: xsd:string}, body: xsd:string)"
+    )  # noqa
+    assert (
+        operation.output.signature(as_output=True)
+        == "header: {auth: xsd:string}, body: xsd:string"
+    )  # noqa
 
 
 def test_parse_with_header_type():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -181,26 +218,50 @@ def test_parse_with_header_type():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    assert operation.input.body.signature(schema=root.types) == 'ns0:Request(xsd:string)'
-    assert operation.input.header.signature(schema=root.types) == 'soap-env:Header(auth: ns0:RequestHeaderType)'
-    assert operation.input.envelope.signature(schema=root.types) == 'soap-env:envelope(header: {auth: ns0:RequestHeaderType}, body: xsd:string)'  # noqa
-    assert operation.input.signature(as_output=False) == 'xsd:string, _soapheaders={auth: ns0:RequestHeaderType}'  # noqa
+    assert (
+        operation.input.body.signature(schema=root.types) == "ns0:Request(xsd:string)"
+    )
+    assert (
+        operation.input.header.signature(schema=root.types)
+        == "soap-env:Header(auth: ns0:RequestHeaderType)"
+    )
+    assert (
+        operation.input.envelope.signature(schema=root.types)
+        == "soap-env:envelope(header: {auth: ns0:RequestHeaderType}, body: xsd:string)"
+    )  # noqa
+    assert (
+        operation.input.signature(as_output=False)
+        == "xsd:string, _soapheaders={auth: ns0:RequestHeaderType}"
+    )  # noqa
 
-    assert operation.output.body.signature(schema=root.types) == 'ns0:Response(xsd:string)'
-    assert operation.output.header.signature(schema=root.types) == 'soap-env:Header(auth: ns0:ResponseHeaderType)'
-    assert operation.output.envelope.signature(schema=root.types) == 'soap-env:envelope(header: {auth: ns0:ResponseHeaderType}, body: xsd:string)'  # noqa
-    assert operation.output.signature(as_output=True) == 'header: {auth: ns0:ResponseHeaderType}, body: xsd:string'  # noqa
+    assert (
+        operation.output.body.signature(schema=root.types) == "ns0:Response(xsd:string)"
+    )
+    assert (
+        operation.output.header.signature(schema=root.types)
+        == "soap-env:Header(auth: ns0:ResponseHeaderType)"
+    )
+    assert (
+        operation.output.envelope.signature(schema=root.types)
+        == "soap-env:envelope(header: {auth: ns0:ResponseHeaderType}, body: xsd:string)"
+    )  # noqa
+    assert (
+        operation.output.signature(as_output=True)
+        == "header: {auth: ns0:ResponseHeaderType}, body: xsd:string"
+    )  # noqa
 
 
 def test_parse_with_header_other_message():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -237,22 +298,27 @@ def test_parse_with_header_other_message():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
-    root.types.set_ns_prefix('soap-env', 'http://schemas.xmlsoap.org/soap/envelope/')
+    root.types.set_ns_prefix("soap-env", "http://schemas.xmlsoap.org/soap/envelope/")
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    assert operation.input.header.signature(schema=root.types) == 'soap-env:Header(header: xsd:string)'
-    assert operation.input.body.signature(schema=root.types) == 'ns0:Request(xsd:string)'
+    assert (
+        operation.input.header.signature(schema=root.types)
+        == "soap-env:Header(header: xsd:string)"
+    )
+    assert (
+        operation.input.body.signature(schema=root.types) == "ns0:Request(xsd:string)"
+    )
 
-    header = root.types.get_element(
-        '{http://tests.python-zeep.org/tns}RequestHeader'
-    )('foo')
-    serialized = operation.input.serialize(
-        'ah1', _soapheaders={'header': header})
+    header = root.types.get_element("{http://tests.python-zeep.org/tns}RequestHeader")(
+        "foo"
+    )
+    serialized = operation.input.serialize("ah1", _soapheaders={"header": header})
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
@@ -269,7 +335,8 @@ def test_parse_with_header_other_message():
 
 
 def test_serialize():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -309,14 +376,15 @@ def test_serialize():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    serialized = operation.input.serialize(arg1='ah1', arg2='ah2')
+    serialized = operation.input.serialize(arg1="ah1", arg2="ah2")
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
@@ -333,7 +401,8 @@ def test_serialize():
 
 
 def test_serialize_multiple_parts():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -374,16 +443,16 @@ def test_serialize_multiple_parts():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
     serialized = operation.input.serialize(
-        request1={'arg1': 'ah1', 'arg2': 'ah2'},
-        request2={'arg1': 'ah1', 'arg2': 'ah2'}
+        request1={"arg1": "ah1", "arg2": "ah2"}, request2={"arg1": "ah1", "arg2": "ah2"}
     )
     expected = """
         <?xml version="1.0"?>
@@ -405,7 +474,8 @@ def test_serialize_multiple_parts():
 
 
 def test_serialize_with_header():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -454,18 +524,22 @@ def test_serialize_with_header():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    AuthHeader = root.types.get_element('{http://tests.python-zeep.org/tns}Authentication')
-    auth_header = AuthHeader(username='mvantellingen')
+    AuthHeader = root.types.get_element(
+        "{http://tests.python-zeep.org/tns}Authentication"
+    )
+    auth_header = AuthHeader(username="mvantellingen")
 
     serialized = operation.input.serialize(
-        arg1='ah1', arg2='ah2', _soapheaders=[auth_header])
+        arg1="ah1", arg2="ah2", _soapheaders=[auth_header]
+    )
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
@@ -487,7 +561,8 @@ def test_serialize_with_header():
 
 
 def test_serialize_with_headers_simple():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -536,23 +611,28 @@ def test_serialize_with_headers_simple():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
     header = xsd.ComplexType(
-        xsd.Sequence([
-            xsd.Element('{http://www.w3.org/2005/08/addressing}Action', xsd.String()),
-            xsd.Element('{http://www.w3.org/2005/08/addressing}To', xsd.String()),
-        ])
+        xsd.Sequence(
+            [
+                xsd.Element(
+                    "{http://www.w3.org/2005/08/addressing}Action", xsd.String()
+                ),
+                xsd.Element("{http://www.w3.org/2005/08/addressing}To", xsd.String()),
+            ]
+        )
     )
-    header_value = header(Action='doehet', To='server')
+    header_value = header(Action="doehet", To="server")
     serialized = operation.input.serialize(
-        arg1='ah1', arg2='ah2',
-        _soapheaders=[header_value])
+        arg1="ah1", arg2="ah2", _soapheaders=[header_value]
+    )
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
@@ -573,7 +653,8 @@ def test_serialize_with_headers_simple():
 
 
 def test_serialize_with_header_and_custom_mixed():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -622,29 +703,28 @@ def test_serialize_with_header_and_custom_mixed():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    header = root.types.get_element(
-        '{http://tests.python-zeep.org/tns}Authentication'
-    )
-    header_1 = header(username='mvantellingen')
+    header = root.types.get_element("{http://tests.python-zeep.org/tns}Authentication")
+    header_1 = header(username="mvantellingen")
 
     header = xsd.Element(
-        '{http://test.python-zeep.org/custom}custom',
-        xsd.ComplexType([
-            xsd.Element('{http://test.python-zeep.org/custom}foo', xsd.String()),
-        ])
+        "{http://test.python-zeep.org/custom}custom",
+        xsd.ComplexType(
+            [xsd.Element("{http://test.python-zeep.org/custom}foo", xsd.String())]
+        ),
     )
-    header_2 = header(foo='bar')
+    header_2 = header(foo="bar")
 
     serialized = operation.input.serialize(
-        arg1='ah1', arg2='ah2',
-        _soapheaders=[header_1, header_2])
+        arg1="ah1", arg2="ah2", _soapheaders=[header_1, header_2]
+    )
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
@@ -669,7 +749,8 @@ def test_serialize_with_header_and_custom_mixed():
 
 
 def test_serializer_with_header_custom_elm():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -709,22 +790,24 @@ def test_serializer_with_header_custom_elm():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
     header = xsd.Element(
-        '{http://test.python-zeep.org/custom}auth',
-        xsd.ComplexType([
-            xsd.Element('{http://test.python-zeep.org/custom}username', xsd.String()),
-        ])
+        "{http://test.python-zeep.org/custom}auth",
+        xsd.ComplexType(
+            [xsd.Element("{http://test.python-zeep.org/custom}username", xsd.String())]
+        ),
     )
 
     serialized = operation.input.serialize(
-        arg1='ah1', arg2='ah2', _soapheaders=[header(username='mvantellingen')])
+        arg1="ah1", arg2="ah2", _soapheaders=[header(username="mvantellingen")]
+    )
 
     expected = """
         <?xml version="1.0"?>
@@ -747,7 +830,8 @@ def test_serializer_with_header_custom_elm():
 
 
 def test_serializer_with_header_custom_xml():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -787,19 +871,21 @@ def test_serializer_with_header_custom_xml():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    header_value = etree.Element('{http://test.python-zeep.org/custom}auth')
+    header_value = etree.Element("{http://test.python-zeep.org/custom}auth")
     etree.SubElement(
-        header_value, '{http://test.python-zeep.org/custom}username'
-    ).text = 'mvantellingen'
+        header_value, "{http://test.python-zeep.org/custom}username"
+    ).text = "mvantellingen"
 
     serialized = operation.input.serialize(
-        arg1='ah1', arg2='ah2', _soapheaders=[header_value])
+        arg1="ah1", arg2="ah2", _soapheaders=[header_value]
+    )
 
     expected = """
         <?xml version="1.0"?>
@@ -822,7 +908,8 @@ def test_serializer_with_header_custom_xml():
 
 
 def test_deserialize():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -869,14 +956,16 @@ def test_deserialize():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    response_body = load_xml("""
+    response_body = load_xml(
+        """
         <?xml version="1.0"?>
         <soap-env:Envelope
             xmlns:ns0="http://tests.python-zeep.org/tns"
@@ -888,14 +977,16 @@ def test_deserialize():
             </ns0:Request>
           </soap-env:Body>
         </soap-env:Envelope>
-    """)
+    """
+    )
     result = operation.process_reply(response_body)
-    assert result.arg1 == 'ah1'
-    assert result.arg2 == 'ah2'
+    assert result.arg1 == "ah1"
+    assert result.arg2 == "ah2"
 
 
 def test_deserialize_no_content():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -935,14 +1026,16 @@ def test_deserialize_no_content():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    response_body = load_xml("""
+    response_body = load_xml(
+        """
         <?xml version="1.0"?>
         <soap-env:Envelope
             xmlns:ns0="http://tests.python-zeep.org/tns"
@@ -951,13 +1044,15 @@ def test_deserialize_no_content():
             <ns0:Request/>
           </soap-env:Body>
         </soap-env:Envelope>
-    """)
+    """
+    )
     result = operation.process_reply(response_body)
     assert result is None
 
 
 def test_deserialize_choice():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -1004,14 +1099,16 @@ def test_deserialize_choice():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    response_body = load_xml("""
+    response_body = load_xml(
+        """
         <?xml version="1.0"?>
         <soap-env:Envelope
             xmlns:ns0="http://tests.python-zeep.org/tns"
@@ -1022,13 +1119,15 @@ def test_deserialize_choice():
             </ns0:Request>
           </soap-env:Body>
         </soap-env:Envelope>
-    """)
+    """
+    )
     result = operation.process_reply(response_body)
-    assert result.arg1 == 'ah1'
+    assert result.arg1 == "ah1"
 
 
 def test_deserialize_one_part():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -1076,14 +1175,16 @@ def test_deserialize_one_part():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    response_body = load_xml("""
+    response_body = load_xml(
+        """
         <?xml version="1.0"?>
         <soap-env:Envelope
             xmlns:ns0="http://tests.python-zeep.org/tns"
@@ -1100,15 +1201,17 @@ def test_deserialize_one_part():
             </ns0:Request>
           </soap-env:Body>
         </soap-env:Envelope>
-    """)  # noqa
+    """
+    )  # noqa
 
     serialized = operation.process_reply(response_body)
-    assert serialized.arg1 == 'ah1'
-    assert serialized.arg2 == 'ah2'
+    assert serialized.arg1 == "ah1"
+    assert serialized.arg2 == "ah2"
 
 
 def test_deserialize_with_headers():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -1180,14 +1283,16 @@ def test_deserialize_with_headers():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    response_body = load_xml("""
+    response_body = load_xml(
+        """
         <?xml version="1.0"?>
         <soap-env:Envelope
             xmlns:ns0="http://tests.python-zeep.org/tns"
@@ -1207,19 +1312,22 @@ def test_deserialize_with_headers():
             </ns0:Request2>
           </soap-env:Body>
         </soap-env:Envelope>
-    """)  # noqa
+    """
+    )  # noqa
 
     serialized = operation.process_reply(response_body)
 
     assert operation.output.signature(as_output=True) == (
-        'header: {header_1: ns0:Header1, header_2: xsd:string}, body: {request_1: ns0:Request1, request_2: ns0:Request2}')
-    assert serialized.body.request_1.arg1 == 'ah1'
-    assert serialized.body.request_2.arg2 == 'ah2'
-    assert serialized.header.header_1.username == 'mvantellingen'
+        "header: {header_1: ns0:Header1, header_2: xsd:string}, body: {request_1: ns0:Request1, request_2: ns0:Request2}"
+    )
+    assert serialized.body.request_1.arg1 == "ah1"
+    assert serialized.body.request_2.arg2 == "ah2"
+    assert serialized.header.header_1.username == "mvantellingen"
 
 
 def test_serialize_any_type():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
                  xmlns:tns="http://tests.python-zeep.org/tns"
                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -1258,15 +1366,15 @@ def test_serialize_any_type():
         </operation>
       </binding>
     </definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/tns}TestBinding']
-    operation = binding.get('TestOperation')
+    binding = root.bindings["{http://tests.python-zeep.org/tns}TestBinding"]
+    operation = binding.get("TestOperation")
 
-    serialized = operation.input.serialize(
-        arg1=xsd.AnyObject(xsd.String(), 'ah1'))
+    serialized = operation.input.serialize(arg1=xsd.AnyObject(xsd.String(), "ah1"))
     expected = """
         <?xml version="1.0"?>
         <soap-env:Envelope
@@ -1284,11 +1392,12 @@ def test_serialize_any_type():
     assert_nodes_equal(expected, serialized.content)
     deserialized = operation.input.deserialize(serialized.content)
 
-    assert deserialized == 'ah1'
+    assert deserialized == "ah1"
 
 
 def test_empty_input_parse():
-    wsdl_content = StringIO("""
+    wsdl_content = StringIO(
+        """
     <wsdl:definitions
         xmlns:tns="http://tests.python-zeep.org/"
         xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -1333,13 +1442,14 @@ def test_empty_input_parse():
         </wsdl:port>
       </wsdl:service>
     </wsdl:definitions>
-    """.strip())
+    """.strip()
+    )
 
     root = wsdl.Document(wsdl_content, None)
 
-    binding = root.bindings['{http://tests.python-zeep.org/}Binding']
-    operation = binding.get('getResult')
-    assert operation.input.signature() == ''
+    binding = root.bindings["{http://tests.python-zeep.org/}Binding"]
+    operation = binding.get("getResult")
+    assert operation.input.signature() == ""
 
     serialized = operation.input.serialize()
     expected = """

@@ -2,7 +2,7 @@ import os.path
 
 from defusedxml.lxml import fromstring
 from lxml import etree
-from six.moves.urllib.parse import urljoin, urlparse
+from six.moves.urllib.parse import urljoin, urlparse, urlunparse
 
 from zeep.exceptions import XMLSyntaxError
 from zeep.settings import Settings
@@ -10,11 +10,12 @@ from zeep.settings import Settings
 
 class ImportResolver(etree.Resolver):
     """Custom lxml resolve to use the transport object"""
+
     def __init__(self, transport):
         self.transport = transport
 
     def resolve(self, url, pubid, context):
-        if urlparse(url).scheme in ('http', 'https'):
+        if urlparse(url).scheme in ("http", "https"):
             content = self.transport.load(url)
             return self.resolve_string(content, context)
 
@@ -38,8 +39,11 @@ def parse_xml(content, transport, base_url=None, settings=None):
     settings = settings or Settings()
     recover = not settings.strict
     parser = etree.XMLParser(
-        remove_comments=True, resolve_entities=False,
-        recover=recover, huge_tree=settings.xml_huge_tree)
+        remove_comments=True,
+        resolve_entities=False,
+        recover=recover,
+        huge_tree=settings.xml_huge_tree,
+    )
     parser.resolvers.add(ImportResolver(transport))
     try:
         return fromstring(
@@ -47,11 +51,11 @@ def parse_xml(content, transport, base_url=None, settings=None):
             parser=parser,
             base_url=base_url,
             forbid_dtd=settings.forbid_dtd,
-            forbid_entities=settings.forbid_entities)
+            forbid_entities=settings.forbid_entities,
+        )
     except etree.XMLSyntaxError as exc:
         raise XMLSyntaxError(
-            "Invalid XML content received (%s)" % exc.msg,
-            content=content
+            "Invalid XML content received (%s)" % exc.msg, content=content
         )
 
 
@@ -66,14 +70,40 @@ def load_external(url, transport, base_url=None, settings=None):
 
     """
     settings = settings or Settings()
-    if hasattr(url, 'read'):
+    if hasattr(url, "read"):
         content = url.read()
     else:
         if base_url:
             url = absolute_location(url, base_url)
         content = transport.load(url)
-    return parse_xml(
-        content, transport, base_url, settings=settings)
+    return parse_xml(content, transport, base_url, settings=settings)
+
+
+def normalize_location(settings, url, base_url):
+    """Return a 'normalized' url for the given url.
+
+    This will make the url absolute and force it to https when that setting is
+    enabled.
+
+    """
+    # Python 2.7 doesn't accept None to urlparse() calls, but Python 3 does.
+    # So as a guard convert None to '' here so that we can't introduce errors in
+    # Python 2.7 like #930. Can be removed when we drop Python 2 support.
+    if url is None:
+        url = ""
+
+    if base_url:
+        url = absolute_location(url, base_url)
+
+    if base_url and settings.force_https:
+        base_url_parts = urlparse(base_url)
+        url_parts = urlparse(url)
+        if (
+            base_url_parts.netloc == url_parts.netloc
+            and base_url_parts.scheme != url_parts.scheme
+        ):
+            url = urlunparse(("https",) + url_parts[1:])
+    return url
 
 
 def absolute_location(location, base):
@@ -90,17 +120,16 @@ def absolute_location(location, base):
     if location == base:
         return location
 
-    if urlparse(location).scheme in ('http', 'https', 'file'):
+    if urlparse(location).scheme in ("http", "https", "file"):
         return location
 
-    if base and urlparse(base).scheme in ('http', 'https', 'file'):
+    if base and urlparse(base).scheme in ("http", "https", "file"):
         return urljoin(base, location)
     else:
         if os.path.isabs(location):
             return location
         if base:
-            return os.path.realpath(
-                os.path.join(os.path.dirname(base), location))
+            return os.path.realpath(os.path.join(os.path.dirname(base), location))
     return location
 
 
@@ -114,6 +143,6 @@ def is_relative_path(value):
     :rtype: boolean
 
     """
-    if urlparse(value).scheme in ('http', 'https', 'file'):
+    if urlparse(value).scheme in ("http", "https", "file"):
         return False
     return not os.path.isabs(value)

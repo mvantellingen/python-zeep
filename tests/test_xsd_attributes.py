@@ -7,7 +7,9 @@ from zeep import xsd
 
 
 def test_anyattribute():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -23,14 +25,17 @@ def test_anyattribute():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    container_elm = schema.get_element("{http://tests.python-zeep.org/}container")
     assert container_elm.signature(schema) == (
-        'ns0:container(foo: xsd:string, _attr_1: {})')
-    obj = container_elm(foo='bar', _attr_1=OrderedDict([
-        ('hiep', 'hoi'), ('hoi', 'hiep')
-    ]))
+        "ns0:container(foo: xsd:string, _attr_1: {})"
+    )
+    obj = container_elm(
+        foo="bar", _attr_1=OrderedDict([("hiep", "hoi"), ("hoi", "hiep")])
+    )
 
     expected = """
       <document>
@@ -40,17 +45,19 @@ def test_anyattribute():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     container_elm.render(node, obj)
     assert_nodes_equal(expected, node)
 
     item = container_elm.parse(list(node)[0], schema)
-    assert item._attr_1 == {'hiep': 'hoi', 'hoi': 'hiep'}
-    assert item.foo == 'bar'
+    assert item._attr_1 == {"hiep": "hoi", "hoi": "hiep"}
+    assert item.foo == "bar"
 
 
 def test_attribute_list_type():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -70,12 +77,15 @@ def test_attribute_list_type():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    container_elm = schema.get_element("{http://tests.python-zeep.org/}container")
     assert container_elm.signature(schema) == (
-        'ns0:container(foo: xsd:string, lijst: xsd:int[])')
-    obj = container_elm(foo='bar', lijst=[1, 2, 3])
+        "ns0:container(foo: xsd:string, lijst: xsd:int[])"
+    )
+    obj = container_elm(foo="bar", lijst=[1, 2, 3])
     expected = """
       <document>
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/" lijst="1 2 3">
@@ -84,17 +94,19 @@ def test_attribute_list_type():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     container_elm.render(node, obj)
     assert_nodes_equal(expected, node)
 
     item = container_elm.parse(list(node)[0], schema)
     assert item.lijst == [1, 2, 3]
-    assert item.foo == 'bar'
+    assert item.foo == "bar"
 
 
 def test_ref_attribute_qualified():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -108,9 +120,11 @@ def test_ref_attribute_qualified():
           </xsd:element>
           <xsd:attribute name="attr" type="xsd:string" />
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    elm_cls = schema.get_element('{http://tests.python-zeep.org/}container')
+    elm_cls = schema.get_element("{http://tests.python-zeep.org/}container")
     instance = elm_cls(attr="hoi")
 
     expected = """
@@ -119,13 +133,15 @@ def test_ref_attribute_qualified():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     elm_cls.render(node, instance)
     assert_nodes_equal(expected, node)
 
 
 def test_ref_attribute_unqualified():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -139,9 +155,11 @@ def test_ref_attribute_unqualified():
           </xsd:element>
           <xsd:attribute name="attr" type="xsd:string" />
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    elm_cls = schema.get_element('{http://tests.python-zeep.org/}container')
+    elm_cls = schema.get_element("{http://tests.python-zeep.org/}container")
     instance = elm_cls(attr="hoi")
 
     expected = """
@@ -150,13 +168,15 @@ def test_ref_attribute_unqualified():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     elm_cls.render(node, instance)
     assert_nodes_equal(expected, node)
 
 
 def test_complex_type_with_attributes():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
           <xs:complexType name="Address">
@@ -169,13 +189,16 @@ def test_complex_type_with_attributes():
           </xs:complexType>
           <xs:element name="Address" type="Address"/>
         </xs:schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('Address')
+    address_type = schema.get_element("Address")
     obj = address_type(
-        NameFirst='John', NameLast='Doe', Email='j.doe@example.com', id='123')
+        NameFirst="John", NameLast="Doe", Email="j.doe@example.com", id="123"
+    )
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
 
     expected = """
@@ -191,7 +214,9 @@ def test_complex_type_with_attributes():
 
 
 def test_qualified_attribute():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -209,10 +234,12 @@ def test_qualified_attribute():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-    obj = address_type(foo='bar', id="20", pos="30")
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
+    obj = address_type(foo="bar", id="20", pos="30")
 
     expected = """
       <document>
@@ -222,13 +249,15 @@ def test_qualified_attribute():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_group():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -250,10 +279,12 @@ def test_group():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-    obj = address_type(foo='bar', id="20", pos="30")
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
+    obj = address_type(foo="bar", id="20", pos="30")
 
     expected = """
       <document>
@@ -263,13 +294,15 @@ def test_group():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_group_nested():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -297,10 +330,12 @@ def test_group_nested():
             </xsd:complexType>
           </xsd:element>
         </xsd:schema>
-    """))
+    """
+        )
+    )
 
-    address_type = schema.get_element('{http://tests.python-zeep.org/}Address')
-    obj = address_type(foo='bar', id="20", pos="30", size="maat")
+    address_type = schema.get_element("{http://tests.python-zeep.org/}Address")
+    obj = address_type(foo="bar", id="20", pos="30", size="maat")
 
     expected = """
       <document>
@@ -311,13 +346,15 @@ def test_group_nested():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     address_type.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_nested_attribute():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -339,12 +376,15 @@ def test_nested_attribute():
             </complexType>
           </element>
         </schema>
-    """))
+    """
+        )
+    )
 
-    container_elm = schema.get_element('{http://tests.python-zeep.org/}container')
+    container_elm = schema.get_element("{http://tests.python-zeep.org/}container")
     assert container_elm.signature(schema) == (
-        'ns0:container(item: {x: xsd:string, y: xsd:string})')
-    obj = container_elm(item={'x': 'foo', 'y': 'bar'})
+        "ns0:container(item: {x: xsd:string, y: xsd:string})"
+    )
+    obj = container_elm(item={"x": "foo", "y": "bar"})
 
     expected = """
       <document>
@@ -356,13 +396,15 @@ def test_nested_attribute():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     container_elm.render(node, obj)
     assert_nodes_equal(expected, node)
 
 
 def test_attribute_union_type():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -385,14 +427,18 @@ def test_attribute_union_type():
             </restriction>
           </simpleType>
         </schema>
-    """))
+    """
+        )
+    )
 
-    attr = schema.get_attribute('{http://tests.python-zeep.org/}something')
-    assert attr('foo') == 'foo'
+    attr = schema.get_attribute("{http://tests.python-zeep.org/}something")
+    assert attr("foo") == "foo"
 
 
 def test_attribute_union_type_inline():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -416,14 +462,18 @@ def test_attribute_union_type_inline():
             </restriction>
           </simpleType>
         </schema>
-    """))
+    """
+        )
+    )
 
-    attr = schema.get_attribute('{http://tests.python-zeep.org/}something')
-    assert attr('foo') == 'foo'
+    attr = schema.get_attribute("{http://tests.python-zeep.org/}something")
+    assert attr("foo") == "foo"
 
 
 def test_attribute_value_retrieval():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -444,15 +494,14 @@ def test_attribute_value_retrieval():
             <attribute name="Postcode" type="string"/>
           </complexType>
         </schema>
-    """))
+    """
+        )
+    )
 
-    Addr = schema.get_type('{http://tests.python-zeep.org/}Address')
+    Addr = schema.get_type("{http://tests.python-zeep.org/}Address")
 
     address = Addr()
-    address.Street = {
-        'ID': 100,
-        'Name': 'Foo',
-    }
+    address.Street = {"ID": 100, "Name": "Foo"}
 
     expected = """
       <document>
@@ -462,6 +511,6 @@ def test_attribute_value_retrieval():
       </document>
     """
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     Addr.render(node, address)
     assert_nodes_equal(expected, node)

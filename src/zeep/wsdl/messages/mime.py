@@ -12,17 +12,11 @@ from zeep.helpers import serialize_object
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
 from zeep.wsdl.utils import etree_to_string
 
-__all__ = [
-    'MimeContent',
-    'MimeXML',
-    'MimeMultipart',
-]
+__all__ = ["MimeContent", "MimeXML", "MimeMultipart"]
 
 
 class MimeMessage(ConcreteMessage):
-    _nsmap = {
-        'mime': ns.MIME,
-    }
+    _nsmap = {"mime": ns.MIME}
 
     def __init__(self, wsdl, name, operation, part_name):
         super(MimeMessage, self).__init__(wsdl, name, operation)
@@ -50,14 +44,17 @@ class MimeMessage(ConcreteMessage):
                 message = list(self.abstract.parts.values())[0]
             else:
                 raise ValueError(
-                    "Multiple parts for message %r while no matching part found" % self.part_name)
+                    "Multiple parts for message %r while no matching part found"
+                    % self.part_name
+                )
 
             if message.element:
                 self.body = message.element
             else:
                 elm = xsd.Element(self.part_name, message.type)
                 self.body = xsd.Element(
-                    self.operation.name, xsd.ComplexType(xsd.Sequence([elm])))
+                    self.operation.name, xsd.ComplexType(xsd.Sequence([elm]))
+                )
         else:
             children = []
             for name, message in self.abstract.parts.items():
@@ -67,7 +64,8 @@ class MimeMessage(ConcreteMessage):
                     elm = xsd.Element(name, message.type)
                 children.append(elm)
             self.body = xsd.Element(
-                self.operation.name, xsd.ComplexType(xsd.Sequence(children)))
+                self.operation.name, xsd.ComplexType(xsd.Sequence(children))
+            )
 
 
 class MimeContent(MimeMessage):
@@ -93,27 +91,27 @@ class MimeContent(MimeMessage):
     :type type: str
 
     """
+
     def __init__(self, wsdl, name, operation, content_type, part_name):
         super(MimeContent, self).__init__(wsdl, name, operation, part_name)
         self.content_type = content_type
 
     def serialize(self, *args, **kwargs):
         value = self.body(*args, **kwargs)
-        headers = {
-            'Content-Type': self.content_type
-        }
+        headers = {"Content-Type": self.content_type}
 
-        data = ''
-        if self.content_type == 'application/x-www-form-urlencoded':
+        data = ""
+        if self.content_type == "application/x-www-form-urlencoded":
             items = serialize_object(value)
             data = six.moves.urllib.parse.urlencode(items)
-        elif self.content_type == 'text/xml':
-            document = etree.Element('root')
+        elif self.content_type == "text/xml":
+            document = etree.Element("root")
             self.body.render(document, value)
             data = etree_to_string(list(document)[0])
 
         return SerializedMessage(
-            path=self.operation.location, headers=headers, content=data)
+            path=self.operation.location, headers=headers, content=data
+        )
 
     def deserialize(self, node):
         node = fromstring(node)
@@ -122,13 +120,13 @@ class MimeContent(MimeMessage):
 
     @classmethod
     def parse(cls, definitions, xmlelement, operation):
-        name = xmlelement.get('name')
+        name = xmlelement.get("name")
 
         part_name = content_type = None
-        content_node = xmlelement.find('mime:content', namespaces=cls._nsmap)
+        content_node = xmlelement.find("mime:content", namespaces=cls._nsmap)
         if content_node is not None:
-            content_type = content_node.get('type')
-            part_name = content_node.get('part')
+            content_type = content_node.get("type")
+            part_name = content_node.get("part")
 
         obj = cls(definitions.wsdl, name, operation, content_type, part_name)
         return obj
@@ -153,6 +151,7 @@ class MimeXML(MimeMessage):
     :type type: str
 
     """
+
     def serialize(self, *args, **kwargs):
         raise NotImplementedError()
 
@@ -163,12 +162,12 @@ class MimeXML(MimeMessage):
 
     @classmethod
     def parse(cls, definitions, xmlelement, operation):
-        name = xmlelement.get('name')
+        name = xmlelement.get("name")
         part_name = None
 
-        content_node = xmlelement.find('mime:mimeXml', namespaces=cls._nsmap)
+        content_node = xmlelement.find("mime:mimeXml", namespaces=cls._nsmap)
         if content_node is not None:
-            part_name = content_node.get('part')
+            part_name = content_node.get("part")
         obj = cls(definitions.wsdl, name, operation, part_name)
         return obj
 
@@ -200,4 +199,5 @@ class MimeMultipart(MimeMessage):
     :type type: str
 
     """
+
     pass

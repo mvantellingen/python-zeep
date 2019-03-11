@@ -11,15 +11,10 @@ from zeep.wsdl.definitions import Binding, Operation
 
 logger = logging.getLogger(__name__)
 
-NSMAP = {
-    'http': ns.HTTP,
-    'wsdl': ns.WSDL,
-    'mime': ns.MIME,
-}
+NSMAP = {"http": ns.HTTP, "wsdl": ns.WSDL, "mime": ns.MIME}
 
 
 class HttpBinding(Binding):
-
     def create_message(self, operation, *args, **kwargs):
         if isinstance(operation, six.string_types):
             operation = self.get(operation)
@@ -28,27 +23,25 @@ class HttpBinding(Binding):
         return operation.create(*args, **kwargs)
 
     def process_service_port(self, xmlelement, force_https=False):
-        address_node = xmlelement.find('http:address', namespaces=NSMAP)
+        address_node = xmlelement.find("http:address", namespaces=NSMAP)
         if address_node is None:
             raise ValueError("No `http:address` node found")
 
         # Force the usage of HTTPS when the force_https boolean is true
-        location = address_node.get('location')
-        if force_https and location and location.startswith('http://'):
+        location = address_node.get("location")
+        if force_https and location and location.startswith("http://"):
             logger.warning("Forcing http:address location to HTTPS")
-            location = 'https://' + location[8:]
+            location = "https://" + location[8:]
 
-        return {
-            'address': location
-        }
+        return {"address": location}
 
     @classmethod
     def parse(cls, definitions, xmlelement):
-        name = qname_attr(xmlelement, 'name', definitions.target_namespace)
-        port_name = qname_attr(xmlelement, 'type', definitions.target_namespace)
+        name = qname_attr(xmlelement, "name", definitions.target_namespace)
+        port_name = qname_attr(xmlelement, "type", definitions.target_namespace)
 
         obj = cls(definitions.wsdl, name, port_name)
-        for node in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
+        for node in xmlelement.findall("wsdl:operation", namespaces=NSMAP):
             operation = HttpOperation.parse(definitions, node, obj)
             obj._operation_add(operation)
         return obj
@@ -64,7 +57,6 @@ class HttpBinding(Binding):
 
 
 class HttpPostBinding(HttpBinding):
-
     def send(self, client, options, operation, args, kwargs):
         """Called from the service"""
         operation_obj = self.get(operation)
@@ -73,9 +65,10 @@ class HttpPostBinding(HttpBinding):
 
         serialized = operation_obj.create(*args, **kwargs)
 
-        url = options['address'] + serialized.path
+        url = options["address"] + serialized.path
         response = client.transport.post(
-            url, serialized.content, headers=serialized.headers)
+            url, serialized.content, headers=serialized.headers
+        )
         return self.process_reply(client, operation_obj, response)
 
     @classmethod
@@ -87,12 +80,11 @@ class HttpPostBinding(HttpBinding):
         :type node: lxml.etree._Element
 
         """
-        http_node = node.find(etree.QName(NSMAP['http'], 'binding'))
-        return http_node is not None and http_node.get('verb') == 'POST'
+        http_node = node.find(etree.QName(NSMAP["http"], "binding"))
+        return http_node is not None and http_node.get("verb") == "POST"
 
 
 class HttpGetBinding(HttpBinding):
-
     def send(self, client, options, operation, args, kwargs):
         """Called from the service"""
         operation_obj = self.get(operation)
@@ -101,9 +93,10 @@ class HttpGetBinding(HttpBinding):
 
         serialized = operation_obj.create(*args, **kwargs)
 
-        url = options['address'] + serialized.path
+        url = options["address"] + serialized.path
         response = client.transport.get(
-            url, serialized.content, headers=serialized.headers)
+            url, serialized.content, headers=serialized.headers
+        )
         return self.process_reply(client, operation_obj, response)
 
     @classmethod
@@ -115,8 +108,8 @@ class HttpGetBinding(HttpBinding):
         :type node: lxml.etree._Element
 
         """
-        http_node = node.find(etree.QName(ns.HTTP, 'binding'))
-        return http_node is not None and http_node.get('verb') == 'GET'
+        http_node = node.find(etree.QName(ns.HTTP, "binding"))
+        return http_node is not None and http_node.get("verb") == "GET"
 
 
 class HttpOperation(Operation):
@@ -142,15 +135,15 @@ class HttpOperation(Operation):
             </wsdl:operation>
 
         """
-        name = xmlelement.get('name')
+        name = xmlelement.get("name")
 
-        http_operation = xmlelement.find('http:operation', namespaces=NSMAP)
-        location = http_operation.get('location')
+        http_operation = xmlelement.find("http:operation", namespaces=NSMAP)
+        location = http_operation.get("location")
         obj = cls(name, binding, location)
 
         for node in xmlelement:
             tag_name = etree.QName(node.tag).localname
-            if tag_name not in ('input', 'output'):
+            if tag_name not in ("input", "output"):
                 continue
 
             # XXX Multiple mime types may be declared as alternatives
@@ -160,13 +153,13 @@ class HttpOperation(Operation):
                 message_node = nodes[0]
             message_class = None
             if message_node is not None:
-                if message_node.tag == etree.QName(ns.HTTP, 'urlEncoded'):
+                if message_node.tag == etree.QName(ns.HTTP, "urlEncoded"):
                     message_class = messages.UrlEncoded
-                elif message_node.tag == etree.QName(ns.HTTP, 'urlReplacement'):
+                elif message_node.tag == etree.QName(ns.HTTP, "urlReplacement"):
                     message_class = messages.UrlReplacement
-                elif message_node.tag == etree.QName(ns.MIME, 'content'):
+                elif message_node.tag == etree.QName(ns.MIME, "content"):
                     message_class = messages.MimeContent
-                elif message_node.tag == etree.QName(ns.MIME, 'mimeXml'):
+                elif message_node.tag == etree.QName(ns.MIME, "mimeXml"):
                     message_class = messages.MimeXML
 
             if message_class:

@@ -39,6 +39,7 @@ class Settings(object):
      don't respect sequence order.
     :type xsd_ignore_sequence_order: boolean
     """
+
     strict = attr.ib(default=True)
     raw_response = attr.ib(default=False)
 
@@ -74,6 +75,6 @@ class Settings(object):
                 setattr(self._tls, key, value)
 
     def __getattribute__(self, key):
-        if key != '_tls' and hasattr(self._tls, key):
+        if key != "_tls" and hasattr(self._tls, key):
             return getattr(self._tls, key)
         return super(Settings, self).__getattribute__(key)

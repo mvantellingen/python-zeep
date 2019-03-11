@@ -10,19 +10,21 @@ from zeep.utils import as_qname, get_media_type, qname_attr
 from zeep.wsdl.attachments import MessagePack
 from zeep.wsdl.messages.xop import process_xop
 
-__all__ = ['AsyncSoap11Binding', 'AsyncSoap12Binding']
+__all__ = ["AsyncSoap11Binding", "AsyncSoap12Binding"]
 
 
 class AsyncSoapBinding(object):
-
     async def send(self, client, options, operation, args, kwargs):
         envelope, http_headers = await self._create(
-            operation, args, kwargs,
-            client=client,
-            options=options)
+            operation, args, kwargs, client=client, options=options
+        )
 
         response = await client.transport.post_xml(
-            options['address'], envelope, http_headers)
+            options["address"], envelope, http_headers
+        )
+
+        if client.settings.raw_response:
+            return response
 
         operation_obj = self.get(operation)
         return await self.process_reply(client, operation_obj, response)
