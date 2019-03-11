@@ -53,21 +53,21 @@ class AsyncSoapBinding(object):
 
             if operation_obj.abstract.input_message.wsa_action:
                 envelope, http_headers = wsa.WsAddressingPlugin().egress(
-                    envelope, http_headers, operation_obj, options)
+                    envelope, http_headers, operation_obj, options
+                )
 
             # Apply plugins
             envelope, http_headers = await plugins.apply_egress(
-                client, envelope, http_headers, operation_obj, options)
+                client, envelope, http_headers, operation_obj, options
+            )
 
             # Apply WSSE
             if client.wsse:
                 if isinstance(client.wsse, list):
                     for wsse in client.wsse:
-                        envelope, http_headers = wsse.apply(
-                            envelope, http_headers)
+                        envelope, http_headers = wsse.apply(envelope, http_headers)
                 else:
-                    envelope, http_headers = client.wsse.apply(
-                        envelope, http_headers)
+                    envelope, http_headers = client.wsse.apply(envelope, http_headers)
 
         # Add extra http headers from the setings object
         if client.settings.extra_http_headers:
@@ -91,19 +91,21 @@ class AsyncSoapBinding(object):
 
         elif response.status_code != 200 and not response.content:
             raise TransportError(
-                u'Server returned HTTP status %d (no content available)'
+                u"Server returned HTTP status %d (no content available)"
                 % response.status_code,
-                status_code=response.status_code)
+                status_code=response.status_code,
+            )
 
-        content_type = response.headers.get('Content-Type', 'text/xml')
+        content_type = response.headers.get("Content-Type", "text/xml")
         media_type = get_media_type(content_type)
         message_pack = None
 
         # If the reply is a multipart/related then we need to retrieve all the
         # parts
-        if media_type == 'multipart/related':
+        if media_type == "multipart/related":
             decoder = MultipartDecoder(
-                response.content, content_type, response.encoding or 'utf-8')
+                response.content, content_type, response.encoding or "utf-8"
+            )
             content = decoder.parts[0].content
             if len(decoder.parts) > 1:
                 message_pack = MessagePack(parts=decoder.parts[1:])
@@ -114,10 +116,11 @@ class AsyncSoapBinding(object):
             doc = parse_xml(content, self.transport, settings=client.settings)
         except XMLSyntaxError as exc:
             raise TransportError(
-                'Server returned response (%s) with invalid XML: %s.\nContent: %r'
+                "Server returned response (%s) with invalid XML: %s.\nContent: %r"
                 % (response.status_code, exc, response.content),
                 status_code=response.status_code,
-                content=response.content)
+                content=response.content,
+            )
 
         # Check if this is an XOP message which we need to decode first
         if message_pack:
@@ -128,12 +131,12 @@ class AsyncSoapBinding(object):
             client.wsse.verify(doc)
 
         doc, http_headers = await plugins.apply_ingress(
-            client, doc, response.headers, operation)
+            client, doc, response.headers, operation
+        )
 
         # If the response code is not 200 or if there is a Fault node available
         # then assume that an error occured.
-        fault_node = doc.find(
-            'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
+        fault_node = doc.find("soap-env:Body/soap-env:Fault", namespaces=self.nsmap)
         if response.status_code != 200 or fault_node is not None:
             return self.process_error(doc, operation)
 
