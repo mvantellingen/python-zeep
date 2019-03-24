@@ -1,4 +1,5 @@
 import base64
+from six.moves.urllib.parse import unquote
 
 
 def process_xop(document, message_pack):
@@ -12,7 +13,8 @@ def process_xop(document, message_pack):
     for xop_node in xop_nodes:
         href = xop_node.get("href")
         if href.startswith("cid:"):
-            href = "<%s>" % href[4:]
+            # URL can be encoded. RFC2392
+            href = "<%s>" % unquote(href[4:])
 
         value = message_pack.get_by_content_id(href)
         if not value:
