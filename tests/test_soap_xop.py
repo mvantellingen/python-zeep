@@ -75,7 +75,7 @@ def test_rebuild_xml():
     assert_nodes_equal(etree.tostring(document), expected)
 
 
-def test_xop():
+def get_client_service():
     wsdl_main = StringIO(
         """
         <?xml version="1.0"?>
@@ -172,6 +172,11 @@ def test_xop():
         "http://tests.python-zeep.org/test",
     )
 
+    return service
+
+
+def test_xop():
+    service = get_client_service()
     content_type = 'multipart/related; boundary="boundary"; type="application/xop+xml"; start="<soap:Envelope>"; start-info="application/soap+xml; charset=utf-8"'
 
     response1 = "\r\n".join(
@@ -252,3 +257,48 @@ def test_xop():
         )
         result = service.TestOperation1("")
         assert result == "BINARYDATA".encode()
+
+
+def test_xop_cid_encoded():
+    service = get_client_service()
+    content_type = 'multipart/related; boundary="boundary"; type="application/xop+xml"; start="<soap:Envelope>"; start-info="application/soap+xml; charset=utf-8"'
+
+    response_encoded_cid = "\r\n".join(
+        line.strip()
+        for line in """
+            Content-Type: application/xop+xml; charset=utf-8; type="application/soap+xml"
+            Content-Transfer-Encoding: binary
+            Content-ID: <soap:Envelope>
+
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope
+                xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                xmlns:xop="http://www.w3.org/2004/08/xop/include"
+                xmlns:test="http://tests.python-zeep.org/xsd-main">
+                <soap:Body>
+                    <test:resultComplex>
+                        <test:BinaryData>
+                            <xop:Include href="cid:test_encoding%20cid%25%24%7D%40"/>
+                        </test:BinaryData>
+                    </test:resultComplex>
+                </soap:Body>
+            </soap:Envelope>
+            --boundary
+            Content-Type: application/binary
+            Content-Transfer-Encoding: binary
+            Content-ID: <test_encoding cid%$}@>
+
+            BINARYDATA
+
+            --boundary--
+        """.splitlines()
+    )
+
+    with requests_mock.mock() as m:
+        m.post(
+            "http://tests.python-zeep.org/test",
+            content=response_encoded_cid.encode("utf-8"),
+            headers={"Content-Type": content_type},
+        )
+        result = service.TestOperation2("")
+        assert result["_value_1"] == "BINARYDATA".encode()
