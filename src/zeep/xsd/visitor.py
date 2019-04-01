@@ -538,16 +538,18 @@ class SchemaVisitor(object):
         annotation, children = self._pop_annotation(list(node))
         first_tag = children[0].tag if children else None
 
+        mixed = (node.get("mixed") == 'true')
+
         if first_tag == tags.simpleContent:
             base_type, attributes = self.visit_simple_content(children[0], node)
 
             xsd_type = xsd_cls(
                 attributes=attributes, extension=base_type, qname=qname,
-                is_global=is_global)
+                is_global=is_global, mixed=mixed)
 
         elif first_tag == tags.complexContent:
             kwargs = self.visit_complex_content(children[0], node)
-            xsd_type = xsd_cls(qname=qname, is_global=is_global, **kwargs)
+            xsd_type = xsd_cls(qname=qname, is_global=is_global, mixed=mixed, **kwargs)
 
         elif first_tag:
             element = None
@@ -559,9 +561,9 @@ class SchemaVisitor(object):
             attributes = self._process_attributes(node, children)
             xsd_type = xsd_cls(
                 element=element, attributes=attributes, qname=qname,
-                is_global=is_global)
+                is_global=is_global, mixed=mixed)
         else:
-            xsd_type = xsd_cls(qname=qname, is_global=is_global)
+            xsd_type = xsd_cls(qname=qname, is_global=is_global, mixed=mixed)
 
         if is_global:
             self.register_type(qname, xsd_type)

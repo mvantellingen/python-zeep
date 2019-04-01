@@ -24,7 +24,7 @@ class ComplexType(AnyType):
     _xsd_name = None
 
     def __init__(self, element=None, attributes=None,
-                 restriction=None, extension=None, qname=None, is_global=False):
+                 restriction=None, extension=None, qname=None, is_global=False, mixed=False):
         if element and type(element) == list:
             element = Sequence(element)
 
@@ -34,6 +34,7 @@ class ComplexType(AnyType):
         self._restriction = restriction
         self._extension = extension
         self._extension_types = tuple()
+        self._mixed = mixed
         super(ComplexType, self).__init__(qname=qname, is_global=is_global)
 
     def __call__(self, *args, **kwargs):
@@ -247,6 +248,10 @@ class ComplexType(AnyType):
             if element_value is SkipValue:
                 continue
 
+            if self._mixed and not hasattr(type(value),'_xsd_type'):
+                parent.text = value
+                continue
+
             if isinstance(element, Element):
                 element.type.render(parent, element_value, None, child_path)
             else:
@@ -301,6 +306,9 @@ class ComplexType(AnyType):
 
         if isinstance(value, dict):
             return self(**value)
+
+        if self._mixed and not hasattr(type(value),'_xsd_type'):
+            return value
 
         # Try to automatically create an object. This might fail if there
         # are multiple required arguments.
@@ -401,7 +409,8 @@ class ComplexType(AnyType):
             element=element,
             attributes=attributes,
             qname=self.qname,
-            is_global=self.is_global)
+            is_global=self.is_global, 
+            mixed=self._mixed)
 
         new._extension_types = base.accepted_types
         return new
@@ -437,7 +446,8 @@ class ComplexType(AnyType):
             element=self._element or base._element,
             attributes=attributes,
             qname=self.qname,
-            is_global=self.is_global)
+            is_global=self.is_global, 
+            mixed=self._mixed)
         return new.resolve()
 
     def signature(self, schema=None, standalone=True):
