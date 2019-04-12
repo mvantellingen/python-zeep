@@ -204,13 +204,14 @@ def _signature_prepare(envelope, key):
     # Insert the Signature node in the wsse:Security header.
     security = get_security_header(envelope)
     security.insert(0, signature)
-    security.append(etree.Element(QName(ns.WSU, "Timestamp")))
 
     # Perform the actual signing.
     ctx = xmlsec.SignatureContext()
     ctx.key = key
     _sign_node(ctx, signature, envelope.find(QName(soap_env, "Body")))
-    _sign_node(ctx, signature, security.find(QName(ns.WSU, "Timestamp")))
+    timestamp = security.find(QName(ns.WSU, "Timestamp"))
+    if timestamp != None:
+        _sign_node(ctx, signature, timestamp)
     ctx.sign(signature)
 
     # Place the X509 data inside a WSSE SecurityTokenReference within
