@@ -3,7 +3,7 @@ import sys
 
 import pytest
 from lxml.etree import QName
-
+from lxml import etree
 from tests.utils import load_xml
 from zeep import ns, wsse
 from zeep.exceptions import SignatureVerificationFailed
@@ -30,24 +30,28 @@ skip_if_no_xmlsec = pytest.mark.skipif(
 def test_sign_timestamp_if_present():
     envelope = load_xml(
         """
-        <soapenv:Envelope
-            xmlns:tns="http://tests.python-zeep.org/"
-            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        <soap-env:Envelope
+            xmlns:ns0="http://example.com/stockquote.xsd"
             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-            xmlns:wsu="http://schemas.xmlsoap.org/ws/2003/06/utility">
-          <soapenv:Header>
-            <wsu:Timestamp>
-              <wsu:Created>2018-11-18T15:44:27Z</wsu:Created>
-              <wsu:Expires>2018-11-18T15:54:27Z</wsu:Expires>
-            </wsu:Timestamp>
-          </soapenv:Header>
-          <soapenv:Body>
-            <tns:Function>
-              <tns:Argument>OK</tns:Argument>
-            </tns:Function>
-          </soapenv:Body>
-        </soapenv:Envelope>
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:wsu="http://schemas.xmlsoap.org/ws/2003/06/utility"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <soap-env:Header xmlns:ns0="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+            <ns0:Security>
+              <wsu:Timestamp xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                    <wsu:Created>2018-11-18T15:44:27Z</wsu:Created>
+                    <wsu:Expires>2018-11-18T15:54:27Z</wsu:Expires>
+              </wsu:Timestamp>
+            </ns0:Security>
+          </soap-env:Header>
+          <soap-env:Body>
+            <ns0:TradePriceRequest>
+              <tickerSymbol>foobar</tickerSymbol>
+              <ns0:country/>
+            </ns0:TradePriceRequest>
+          </soap-env:Body>
+        </soap-env:Envelope>
     """
     )
 
