@@ -27,6 +27,34 @@ skip_if_no_xmlsec = pytest.mark.skipif(
 
 
 @skip_if_no_xmlsec
+def test_sign_timestamp_if_present():
+    envelope = load_xml(
+        """
+        <soapenv:Envelope
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:wsu="http://schemas.xmlsoap.org/ws/2003/06/utility">
+          <soapenv:Header>
+            <wsu:Timestamp>
+              <wsu:Created>2018-11-18T15:44:27Z</wsu:Created>
+              <wsu:Expires>2018-11-18T15:54:27Z</wsu:Expires>
+            </wsu:Timestamp>
+          </soapenv:Header>
+          <soapenv:Body>
+            <tns:Function>
+              <tns:Argument>OK</tns:Argument>
+            </tns:Function>
+          </soapenv:Body>
+        </soapenv:Envelope>
+    """
+    )
+
+    signature.sign_envelope(envelope, KEY_FILE, KEY_FILE)
+    signature.verify_envelope(envelope, KEY_FILE)
+
+@skip_if_no_xmlsec
 def test_sign():
     envelope = load_xml(
         """
