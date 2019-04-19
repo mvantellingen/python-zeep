@@ -1,5 +1,7 @@
 import logging
 
+from lxml import etree
+
 from zeep.utils import qname_attr
 from zeep.xsd.const import xsd_ns, xsi_ns
 from zeep.xsd.types.base import Type
@@ -19,7 +21,9 @@ class AnyType(Type):
         return value or ""
 
     def render(self, parent, value, xsd_type=None, render_path=None):
-        if isinstance(value, AnyObject):
+        if etree.iselement(value):
+            parent.append(value)
+        elif isinstance(value, AnyObject):
             if value.xsd_type is None:
                 parent.set(xsi_ns("nil"), "true")
             else:
