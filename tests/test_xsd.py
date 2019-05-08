@@ -143,11 +143,27 @@ def test_nil_elements():
                             )
                         ),
                     ),
+                    xsd.Element(
+                        "{http://tests.python-zeep.org/}item_5",
+                        xsd.ComplexType(
+                            xsd.Sequence(
+                                [
+                                    xsd.Element(
+                                        "{http://tests.python-zeep.org/}item_5_1",
+                                        xsd.String(),
+                                        min_occurs=1,
+                                        nillable=False,
+                                    )
+                                ],
+                                min_occurs=0
+                            )
+                        ),
+                    ),
                 ]
             )
         ),
     )
-    obj = custom_type(item_1=None, item_2=None, item_3=None, item_4={})
+    obj = custom_type(item_1=None, item_2=None, item_3=None, item_4={}, item_5=xsd.Nil)
 
     expected = """
       <document>
@@ -157,6 +173,7 @@ def test_nil_elements():
           <ns0:item_4>
             <ns0:item_4_1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
           </ns0:item_4>
+          <ns0:item_5 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
         </ns0:container>
       </document>
     """

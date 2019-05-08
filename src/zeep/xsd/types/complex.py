@@ -6,7 +6,7 @@ from itertools import chain
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
-from zeep.xsd.const import NotSet, SkipValue, xsi_ns
+from zeep.xsd.const import NotSet, SkipValue, Nil, xsi_ns
 from zeep.xsd.elements import (
     Any, AnyAttribute, AttributeGroup, Choice, Element, Group, Sequence)
 from zeep.xsd.elements.indicators import OrderIndicator
@@ -305,7 +305,9 @@ class ComplexType(AnyType):
             value = kwargs[name]
             available_kwargs.remove(name)
 
-            value = self._create_object(value, name)
+            if value is not Nil:
+                value = self._create_object(value, name)
+
             return {name: value}
         return {}
 
