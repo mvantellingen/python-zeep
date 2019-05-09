@@ -25,6 +25,19 @@ def assert_nodes_equal(result, expected):
         expected = expected.decode("utf-8")
     assert result == expected
 
+def assert_failure(exception_class, fn):
+    try:
+        fn()
+    except Exception as e:
+        assert isinstance(e, exception_class)
+    else:
+        assert False, "exception wasn't detected"
+
+def assert_success(fn):
+    try:
+        fn()
+    except Exception as e:
+        raise e
 
 def render_node(element, value):
     node = etree.Element("document")

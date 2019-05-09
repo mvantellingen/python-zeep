@@ -529,14 +529,14 @@ def test_issue_221():
     """
     assert_nodes_equal(expected, node)
 
-    obj = elm(SearchCriteria={"orgVersionGUID": "1234", "isRegistered": False})
+    obj = elm(SearchCriteria={"orgVersionGUID": "6ad0517f-8e46-415c-a27d-051092a58795", "isRegistered": False})
     node = etree.Element("document")
     elm.render(node, obj)
     expected = """
       <document>
         <ns0:exportOrgRegistryRequest xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:SearchCriteria>
-            <ns0:orgVersionGUID>1234</ns0:orgVersionGUID>
+            <ns0:orgVersionGUID>6ad0517f-8e46-415c-a27d-051092a58795</ns0:orgVersionGUID>
             <ns0:isRegistered>false</ns0:isRegistered>
           </ns0:SearchCriteria>
         </ns0:exportOrgRegistryRequest>
@@ -544,14 +544,14 @@ def test_issue_221():
     """
     assert_nodes_equal(expected, node)
 
-    obj = elm(SearchCriteria={"OGRNIP": "123123123123", "isRegistered": True})
+    obj = elm(SearchCriteria={"OGRNIP": "1231231231231", "isRegistered": True})
     node = etree.Element("document")
     elm.render(node, obj)
     expected = """
       <document>
         <ns0:exportOrgRegistryRequest xmlns:ns0="http://tests.python-zeep.org/">
           <ns0:SearchCriteria>
-            <ns0:OGRNIP>123123123123</ns0:OGRNIP>
+            <ns0:OGRNIP>1231231231231</ns0:OGRNIP>
             <ns0:isRegistered>true</ns0:isRegistered>
           </ns0:SearchCriteria>
         </ns0:exportOrgRegistryRequest>

@@ -16,6 +16,8 @@ __all__ = ["AnySimpleType"]
 class AnySimpleType(AnyType):
     _default_qname = xsd_ns("anySimpleType")
 
+    constraints = None
+
     def __init__(self, qname=None, is_global=False):
         super(AnySimpleType, self).__init__(
             qname or etree.QName(self._default_qname), is_global
@@ -89,3 +91,6 @@ class AnySimpleType(AnyType):
     def validate(self, value, required=False):
         if required and value is None:
             raise ValidationError("Value is required")
+
+        if self.constraints:
+            self.constraints.validate(self, value)

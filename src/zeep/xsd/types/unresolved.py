@@ -24,12 +24,13 @@ class UnresolvedType(Type):
 
 
 class UnresolvedCustomType(Type):
-    def __init__(self, qname, base_type, schema):
+    def __init__(self, qname, base_type, constraints, schema):
         assert qname is not None
         self.qname = qname
         self.name = str(qname.localname)
         self.schema = schema
         self.base_type = base_type
+        self.constraints = constraints
 
     def __repr__(self):
         return "<%s(qname=%r, base_type=%r)>" % (
@@ -42,7 +43,7 @@ class UnresolvedCustomType(Type):
         base = self.base_type
         base = base.resolve()
 
-        cls_attributes = {"__module__": "zeep.xsd.dynamic_types"}
+        cls_attributes = {"__module__": "zeep.xsd.dynamic_types", "constraints": self.constraints}
 
         if issubclass(base.__class__, UnionType):
             xsd_type = type(self.name, (base.__class__,), cls_attributes)
