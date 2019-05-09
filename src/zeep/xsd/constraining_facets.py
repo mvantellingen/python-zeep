@@ -157,7 +157,11 @@ class ConstrainingFacets(object):
                         "Value cannot satisfy minInclusive constraint"
                     )
         elif isinstance(typ, (gYearMonth, gYear, gMonthDay, gDay, gMonth)):
-            pass  # TODO support additional date format
+            for min_inclusive in self.min_inclusive:
+                if typ.datetimevalue(value) < typ.datetimevalue(typ.pythonvalue(min_inclusive)):
+                    raise ValidationError(
+                        "Value cannot satisfy minInclusive constraint"
+                    )
 
     def _validate_max_inclusive(self, typ, value):
         if isinstance(typ, (Decimal, Float, Double, Duration, DateTime, Time, Date)):
@@ -167,7 +171,11 @@ class ConstrainingFacets(object):
                         "Value cannot satisfy maxInclusive constraint"
                     )
         elif isinstance(typ, (gYearMonth, gYear, gMonthDay, gDay, gMonth)):
-            pass
+            for max_inclusive in self.max_inclusive:
+                if typ.datetimevalue(value) > typ.datetimevalue(typ.pythonvalue(max_inclusive)):
+                    raise ValidationError(
+                        "Value cannot satisfy maxInclusive constraint"
+                    )
 
     def _validate_min_exclusive(self, typ, value):
         if isinstance(typ, (Decimal, Float, Double, Duration, DateTime, Time, Date)):
@@ -177,7 +185,11 @@ class ConstrainingFacets(object):
                         "Value cannot satisfy minExclusive constraint"
                     )
         elif isinstance(typ, (gYearMonth, gYear, gMonthDay, gDay, gMonth)):
-            pass  # TODO support additional date format
+            for min_exclusive in self.min_exclusive:
+                if typ.datetimevalue(value) <= typ.datetimevalue(typ.pythonvalue(min_exclusive)):
+                    raise ValidationError(
+                        "Value cannot satisfy minExclusive constraint"
+                    )
 
     def _validate_max_exclusive(self, typ, value):
         if isinstance(typ, (Decimal, Float, Double, Duration, DateTime, Time, Date)):
@@ -187,7 +199,11 @@ class ConstrainingFacets(object):
                         "Value cannot satisfy maxExclusive constraint"
                     )
         elif isinstance(typ, (gYearMonth, gYear, gMonthDay, gDay, gMonth)):
-            pass  # TODO support additional date format
+            for max_exclusive in self.max_exclusive:
+                if typ.datetimevalue(value) >= typ.datetimevalue(typ.pythonvalue(max_exclusive)):
+                    raise ValidationError(
+                        "Value cannot satisfy maxExclusive constraint"
+                    )
 
     def _validate_total_digits(self, typ, value):
         if isinstance(typ, Decimal):

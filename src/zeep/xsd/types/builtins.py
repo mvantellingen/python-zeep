@@ -215,6 +215,10 @@ class gYearMonth(BuiltinType, AnySimpleType):
             _parse_timezone(group["timezone"]),
         )
 
+    def datetimevalue(self, value):
+        year, month, tzinfo = value
+        return datetime.datetime(year=year, month=month, day=1, tzinfo=tzinfo)
+
 
 class gYear(BuiltinType, AnySimpleType):
     """gYear represents a gregorian calendar year.
@@ -239,6 +243,9 @@ class gYear(BuiltinType, AnySimpleType):
         group = match.groupdict()
         return (int(group["year"]), _parse_timezone(group["timezone"]))
 
+    def datetimevalue(self, value):
+        year, tzinfo = value
+        return datetime.datetime(year=year, month=1, day=1, tzinfo=tzinfo)
 
 class gMonthDay(BuiltinType, AnySimpleType):
     """gMonthDay is a gregorian date that recurs, specifically a day of the
@@ -271,6 +278,9 @@ class gMonthDay(BuiltinType, AnySimpleType):
             _parse_timezone(group["timezone"]),
         )
 
+    def datetimevalue(self, value):
+        month, day, tzinfo = value
+        return datetime.datetime(year=1, month=month, day=day, tzinfo=tzinfo)
 
 class gDay(BuiltinType, AnySimpleType):
     """gDay is a gregorian day that recurs, specifically a day of the month
@@ -296,6 +306,9 @@ class gDay(BuiltinType, AnySimpleType):
         group = match.groupdict()
         return (int(group["day"]), _parse_timezone(group["timezone"]))
 
+    def datetimevalue(self, value):
+        day, tzinfo = value
+        return datetime.datetime(year=1, month=1, day=day, tzinfo=tzinfo)
 
 class gMonth(BuiltinType, AnySimpleType):
     """gMonth is a gregorian month that recurs every year.
@@ -320,6 +333,9 @@ class gMonth(BuiltinType, AnySimpleType):
         group = match.groupdict()
         return (int(group["month"]), _parse_timezone(group["timezone"]))
 
+    def datetimevalue(self, value):
+        month, tzinfo = value
+        return datetime.datetime(year=1, month=month, day=1, tzinfo=tzinfo)
 
 class HexBinary(BuiltinType, AnySimpleType):
     accepted_types = six.string_types

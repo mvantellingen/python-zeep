@@ -1,5 +1,6 @@
 from lxml import etree
 import isodate
+import pytz
 
 from tests.utils import assert_nodes_equal, assert_failure, assert_success, load_xml
 from zeep import xsd
@@ -288,6 +289,14 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+          <element name="inclusive_test3">
+            <simpleType>
+              <restriction base="gYear">
+                <minInclusive value="1999Z" />
+                <maxInclusive value="2012Z" />
+              </restriction>
+            </simpleType>
+          </element>
           <element name="exclusive_test">
             <simpleType>
               <restriction base="integer">
@@ -383,6 +392,12 @@ def test_constraints():
     assert_success(lambda: inclusive_test2.type.validate(3))
     assert_failure(ValidationError, lambda: inclusive_test2.type.validate(1))
     assert_failure(ValidationError, lambda: inclusive_test2.type.validate(4))
+
+    inclusive_test3 = schema.get_element(
+        "{http://tests.python-zeep.org/}inclusive_test3"
+    )
+    assert_success(lambda: inclusive_test3.type.validate((2000, pytz.UTC)))
+    assert_failure(ValidationError, lambda: inclusive_test3.type.validate((2020, pytz.UTC)))
 
     exclusive_test = schema.get_element("{http://tests.python-zeep.org/}exclusive_test")
     assert_success(lambda: exclusive_test.type.validate(2))
