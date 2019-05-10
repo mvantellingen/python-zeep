@@ -2,6 +2,7 @@ import decimal
 import keyword
 import re
 
+from lxml import etree
 from zeep.exceptions import ValidationError
 from zeep.xsd.const import xsd_ns
 from zeep.xsd.types.builtins import (
@@ -26,6 +27,7 @@ from zeep.xsd.types.builtins import (
     gYearMonth,
 )
 
+xpath = etree.Element('_').xpath
 
 class tags(object):
     pass
@@ -45,7 +47,7 @@ for name in [
     "minExclusive",
     "totalDigits",
     "fractionDigits",
-    "assertions",
+    "assertion",
     "explicitTimezone",
 ]:
     attr = name if name not in keyword.kwlist else name + "_"
@@ -91,10 +93,16 @@ class ConstrainingFacets(object):
                 if k.startswith("_"):
                     continue
                 if v == child.tag:
-                    name = self._to_snake_case(k)
-                    values = getattr(self, name)
-                    values += child.values()
-                    setattr(self, name, values)
+                    if child.tag == tags.assertion:
+                        name = "assertions"
+                        value = child.get('test')
+                    else:
+                        name = self._to_snake_case(k)
+                        value = child.get('value')
+                    if value is not None:
+                        values = getattr(self, name)
+                        values.append(value)
+                        setattr(self, name, values)
                     break
 
     def _to_snake_case(self, s):
@@ -225,7 +233,11 @@ class ConstrainingFacets(object):
                     )
 
     def _validate_assertions(self, typ, value):
-        pass  # TODO assertions are not supported yet
+        for assertion in self.assertions:
+            if not xpath(assertion, value=value):
+                raise ValidationError(
+                    "Value cannot satisfy assertions constraint"
+                )
 
     def _validate_explicit_timezone(self, typ, value):
         pass  # TODO explicitTimezone are not supported yet

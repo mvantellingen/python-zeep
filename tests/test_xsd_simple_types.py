@@ -228,6 +228,7 @@ def test_constraints():
                 xmlns:tns="http://tests.python-zeep.org/"
                 targetNamespace="http://tests.python-zeep.org/"
                 elementFormDefault="qualified">
+
           <element name="length_test">
             <simpleType>
               <restriction base="string">
@@ -235,6 +236,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="length_test2">
             <simpleType>
               <restriction base="string">
@@ -243,6 +245,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="pattern_test">
             <simpleType>
               <restriction base="string">
@@ -250,6 +253,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="pattern_test2">
             <simpleType>
               <restriction base="integer">
@@ -257,6 +261,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="enumeration_test">
             <simpleType>
               <restriction base="string">
@@ -265,6 +270,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="enumeration_test2">
             <simpleType>
               <restriction base="integer">
@@ -273,6 +279,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="inclusive_test">
             <simpleType>
               <restriction base="integer">
@@ -281,6 +288,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="inclusive_test2">
             <simpleType>
               <restriction base="float">
@@ -289,6 +297,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="inclusive_test3">
             <simpleType>
               <restriction base="gYear">
@@ -297,6 +306,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="exclusive_test">
             <simpleType>
               <restriction base="integer">
@@ -305,6 +315,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="exclusive_test2">
             <simpleType>
               <restriction base="date">
@@ -313,6 +324,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="total_digits_test">
             <simpleType>
               <restriction base="integer">
@@ -320,6 +332,7 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
           <element name="fraction_digits_test">
             <simpleType>
               <restriction base="decimal">
@@ -327,6 +340,24 @@ def test_constraints():
               </restriction>
             </simpleType>
           </element>
+
+          <element name="fraction_digits_test">
+            <simpleType>
+              <restriction base="decimal">
+                <fractionDigits value="2" />
+              </restriction>
+            </simpleType>
+          </element>
+
+          <element name="assertions_test">
+            <simpleType>
+              <restriction base="integer">
+                <assertion test="$value mod 2 = 0" />
+                <assertion test="$value > 2" />
+              </restriction>
+            </simpleType>
+          </element>
+
           <element name="complex_test">
             <simpleType>
               <restriction base="integer">
@@ -422,6 +453,13 @@ def test_constraints():
     assert_success(lambda: fraction_digits_test.type.validate(12.3))
     assert_success(lambda: fraction_digits_test.type.validate(12.34))
     assert_failure(ValidationError, lambda: fraction_digits_test.type.validate(12.345))
+
+    assertions_test = schema.get_element(
+        "{http://tests.python-zeep.org/}assertions_test"
+    )
+    assert_success(lambda: assertions_test.type.validate(4))
+    assert_failure(ValidationError, lambda: assertions_test.type.validate(3))
+    assert_failure(ValidationError, lambda: assertions_test.type.validate(2))
 
     complex_test = schema.get_element("{http://tests.python-zeep.org/}complex_test")
     assert_success(lambda: complex_test.type.validate(4))
