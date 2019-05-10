@@ -183,7 +183,7 @@ class SchemaVisitor(object):
         location = node.get("schemaLocation")
         if location:
             location = normalize_location(
-                self.schema.settings, location, self.document._location
+                self.schema.settings, location, self.document._base_url
             )
 
         if not namespace and not self.document._target_namespace:
