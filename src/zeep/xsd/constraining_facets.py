@@ -143,16 +143,19 @@ class ConstrainingFacets(object):
                     raise ValidationError("Value cannot satisfy maxLength constraint")
 
     def _validate_pattern(self, typ, value):
-        for pattern in self.pattern:
-            if not re.match(pattern, str(value)):
-                raise ValidationError("Value cannot satisfy pattern constraint")
+        if self.pattern:
+            for pattern in self.pattern:
+                if re.match(pattern, str(value)):
+                    return
+            raise ValidationError("Value cannot satisfy pattern constraint")
 
     def _validate_enumeration(self, typ, value):
-        if not isinstance(typ, Boolean):
-            if self.enumeration and value not in set(
-                [typ.pythonvalue(enum) for enum in self.enumeration]
-            ):
-                raise ValidationError("Value cannot satisfy enumeration constraint")
+        if self.enumeration:
+            if not isinstance(typ, Boolean):
+                if value not in set(
+                    [typ.pythonvalue(enum) for enum in self.enumeration]
+                ):
+                    raise ValidationError("Value cannot satisfy enumeration constraint")
 
     def _validate_white_space(self, typ, value):
         pass  # whiteSpace doesn't specify constraint. It's used for canonicalization.
@@ -240,4 +243,37 @@ class ConstrainingFacets(object):
                 )
 
     def _validate_explicit_timezone(self, typ, value):
-        pass  # TODO explicitTimezone are not supported yet
+        for explicit_timezone in self.explicit_timezone:
+            if isinstance(typ, (DateTime, Time, Date)):
+                if explicit_timezone == "required":
+                    if not hasattr(value, "tzinfo"):
+                        raise ValidationError(
+                            "Value cannot satisfy explicitTimezone constraint"
+                        )
+                    if value.tzinfo is None:
+                        raise ValidationError(
+                            "Value cannot satisfy explicitTimezone constraint"
+                        )
+                elif explicit_timezone == "prohibited":
+                    if not hasattr(value, "tzinfo"):
+                        return
+                    if value.tzinfo is not None:
+                        raise ValidationError(
+                            "Value cannot satisfy explicitTimezone constraint"
+                        )
+                elif explicit_timezone == "optional":
+                    pass
+            elif isinstance(typ, (gYearMonth, gYear, gMonthDay, gDay, gMonth)):
+                tzinfo = value[-1]
+                if explicit_timezone == "required":
+                    if tzinfo is None:
+                        raise ValidationError(
+                            "Value cannot satisfy explicitTimezone constraint"
+                        )
+                elif explicit_timezone == "prohibited":
+                    if tzinfo is not None:
+                        raise ValidationError(
+                            "Value cannot satisfy explicitTimezone constraint"
+                        )
+                elif explicit_timezone == "optional":
+                    pass

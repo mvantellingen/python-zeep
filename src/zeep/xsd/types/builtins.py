@@ -172,6 +172,8 @@ class Time(BuiltinType, AnySimpleType):
 
 
 class Date(BuiltinType, AnySimpleType):
+    # TODO? timezone support is missing
+
     _default_qname = xsd_ns("date")
     accepted_types = (datetime.date,) + six.string_types
 
