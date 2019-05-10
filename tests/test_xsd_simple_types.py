@@ -332,6 +332,8 @@ def test_constraints():
             <simpleType name="inherit_base">
               <restriction base="integer">
                 <enumeration value="4" />
+                <enumeration value="6" />
+                <enumeration value="8" />
               </restriction>
             </simpleType>
 
@@ -449,10 +451,10 @@ def test_constraints():
     assert_success(lambda: explicit_timezone_test.validate(isodate.parse_time("19:00Z")))
     assert_failure(ValidationError, lambda: explicit_timezone_test.validate(isodate.parse_time("19:00")))
 
-    # inherit_test = schema.get_type("{http://tests.python-zeep.org/}inherit_test")
-    # assert_success(lambda: inherit_test.validate(4))
-    # assert_success(lambda: inherit_test.validate(6))
-    # assert_failure(ValidationError, lambda: inherit_test.validate(8))
+    inherit_test = schema.get_type("{http://tests.python-zeep.org/}inherit_test")
+    assert_success(lambda: inherit_test.validate(6))
+    assert_failure(ValidationError, lambda: inherit_test.validate(8))
+    assert_failure(ValidationError, lambda: inherit_test.validate(10))
 
     complex_test = schema.get_type("{http://tests.python-zeep.org/}complex_test")
     assert_success(lambda: complex_test.validate(4))

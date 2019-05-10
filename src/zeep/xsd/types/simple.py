@@ -89,6 +89,8 @@ class AnySimpleType(AnyType):
         return self.get_prefixed_name(schema)
 
     def validate(self, value, required=False):
+        super(AnySimpleType, self).validate(value, required=required)
+
         if required and value is None:
             raise ValidationError("Value is required")
 

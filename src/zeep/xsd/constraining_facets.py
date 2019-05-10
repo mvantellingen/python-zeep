@@ -1,4 +1,3 @@
-import decimal
 import keyword
 import re
 
