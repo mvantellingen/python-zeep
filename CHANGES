@@ -1,3 +1,11 @@
+3.4.0 (unreleased)
+------------------
+ - Allow passing xsd.Nil to sequences (#959, smilingDima)
+ - Add support for passing custom digest and signature methods during WSSE
+   signing (#957, Florian Apolloner)
+ - Fix path resolving during XSD imports (#962, adambogocz)
+
+
 3.3.1 (2019-03-10)
 ------------------
  - Fix issue with empty xsd:import statements on Python 2.7 (#930)
@@ -9,8 +17,8 @@
    a http url is encountered from a https domain
  - Fix handling recursive xsd imports when the url's are enforced from http to
    https.
- - Fix reference attribute when using the Binary Security Token (#873)
- - Add support for the WSAM namespace (#890)
+ - Fix reference attribute when using the Binary Security Token (#873, tpazderka)
+ - Add support for the WSAM namespace (#890, David Adam)
 
 
 3.2.0 (2018-12-17)
