@@ -247,7 +247,12 @@ class ComplexType(AnyType):
 
         # Render attributes
         for name, attribute in self.attributes:
-            attr_value = value[name] if name in value else NotSet
+             if isinstance(value, str):
+                # Solve the value of a long string containing certain fields, such as id, href, _attr_1, etc.
+                # unexpected string value, attr_value set to NotSet by default
+                attr_value = NotSet
+            else:
+                attr_value = value[name] if name in value else NotSet
             child_path = render_path + [name]
             attribute.render(parent, attr_value, child_path)
 
