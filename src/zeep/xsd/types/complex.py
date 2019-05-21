@@ -241,12 +241,12 @@ class ComplexType(AnyType):
         # TODO: Implement test case for this
         if value is None:
             value = {}
-            
+
         if isinstance(value, str) or isinstance(value, unicode):
             # Solve the value of a long string containing certain fields, such as id, href, _attr_1, etc.
             # unexpected string value, attr_value set to NotSet by default
             value = {}
-            
+
         if isinstance(value, ArrayValue):
             value = value.as_value_object()
 
