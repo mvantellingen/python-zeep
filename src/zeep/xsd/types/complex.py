@@ -241,18 +241,18 @@ class ComplexType(AnyType):
         # TODO: Implement test case for this
         if value is None:
             value = {}
-
+            
+        if isinstance(value, str) or isinstance(value, unicode):
+            # Solve the value of a long string containing certain fields, such as id, href, _attr_1, etc.
+            # unexpected string value, attr_value set to NotSet by default
+            value = {}
+            
         if isinstance(value, ArrayValue):
             value = value.as_value_object()
 
         # Render attributes
         for name, attribute in self.attributes:
-             if isinstance(value, str):
-                # Solve the value of a long string containing certain fields, such as id, href, _attr_1, etc.
-                # unexpected string value, attr_value set to NotSet by default
-                attr_value = NotSet
-            else:
-                attr_value = value[name] if name in value else NotSet
+            attr_value = value[name] if name in value else NotSet
             child_path = render_path + [name]
             attribute.render(parent, attr_value, child_path)
 
