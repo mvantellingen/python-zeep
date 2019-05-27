@@ -1313,3 +1313,122 @@ def test_import_no_location():
     document = wsdl.Document(
         wsdl_content, transport, "https://tests.python-zeep.org/content.wsdl"
     )
+
+
+BASE_WSDL = """
+    <?xml version="1.0"?>
+    <wsdl:definitions
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+        xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy"
+        xmlns:tns="http://tests.python-zeep.org/xsd-main"
+        xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        targetNamespace="http://tests.python-zeep.org/xsd-main">
+
+      {policy}
+
+      <wsdl:types>
+        <xsd:schema
+            targetNamespace="http://tests.python-zeep.org/xsd-main"
+            xmlns:tns="http://tests.python-zeep.org/xsd-main">
+          <xsd:element name="input" type="xsd:string"/>
+        </xsd:schema>
+      </wsdl:types>
+
+      <wsdl:message name="message-1">
+        <wsdl:part name="response" element="tns:input"/>
+      </wsdl:message>
+
+      <wsdl:portType name="TestPortType">
+        <wsdl:operation name="TestOperation1">
+          <wsdl:input message="message-1"/>
+        </wsdl:operation>
+      </wsdl:portType>
+
+      <wsdl:binding name="TestBinding" type="tns:TestPortType">
+        <wsp:PolicyReference URI="#TestBinding"/>
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="TestOperation1">
+          <soap:operation soapAction=""/>
+        </wsdl:operation>
+      </wsdl:binding>
+
+      <wsdl:service name="TestService">
+        <wsdl:documentation>Test service</wsdl:documentation>
+        <wsdl:port name="TestPortType" binding="tns:TestBinding">
+          <soap:address location="https://tests.python-zeep.org/tests"/>
+        </wsdl:port>
+      </wsdl:service>
+    </wsdl:definitions>
+    """
+
+
+def test_parse_bindings_signed_unknown():
+    policy = """
+      <wsp:Policy wsu:Id="TestBinding_policy">
+        <sp:SignedParts>
+          <sp:Other/>
+        </sp:SignedParts>
+      </wsp:Policy>
+    """
+    content = StringIO(BASE_WSDL.format(policy=policy).strip())
+    document = wsdl.Document(content, None)
+    assert document.bindings[
+        "{http://tests.python-zeep.org/xsd-main}TestBinding"
+    ].signatures == {"body": False, "everything": False, "header": []}
+
+def test_parse_bindings_signed_body():
+    policy = """
+      <wsp:Policy wsu:Id="TestBinding_policy">
+        <sp:SignedParts>
+          <sp:Body/>
+        </sp:SignedParts>
+      </wsp:Policy>
+    """
+    content = StringIO(BASE_WSDL.format(policy=policy).strip())
+    document = wsdl.Document(content, None)
+    assert document.bindings[
+        "{http://tests.python-zeep.org/xsd-main}TestBinding"
+    ].signatures == {"body": True, "everything": False, "header": []}
+
+
+def test_parse_bindings_signed_everything():
+    policy = """
+      <wsp:Policy wsu:Id="TestBinding_policy">
+        <sp:SignedParts/>
+      </wsp:Policy>
+    """
+    content = StringIO(BASE_WSDL.format(policy=policy).strip())
+    document = wsdl.Document(content, None)
+    assert document.bindings[
+        "{http://tests.python-zeep.org/xsd-main}TestBinding"
+    ].signatures == {"body": True, "everything": True, "header": []}
+
+
+def test_parse_bindings_signed_headers():
+    policy = """
+      <wsp:Policy wsu:Id="TestBinding_policy">
+        <sp:SignedParts>
+          <sp:Header Name="To" Namespace="http://www.w3.org/2005/08/addressing"/>
+        </sp:SignedParts>
+      </wsp:Policy>
+    """
+    content = StringIO(BASE_WSDL.format(policy=policy).strip())
+    document = wsdl.Document(content, None)
+    assert document.bindings[
+        "{http://tests.python-zeep.org/xsd-main}TestBinding"
+    ].signatures == {
+        "body": False,
+        "everything": False,
+        "header": [{"Name": "To", "Namespace": "http://www.w3.org/2005/08/addressing"}],
+    }
+
+
+def test_parse_bindings_signed_nothing():
+    content = StringIO(BASE_WSDL.format(policy="").strip())
+    document = wsdl.Document(content, None)
+    assert document.bindings[
+        "{http://tests.python-zeep.org/xsd-main}TestBinding"
+    ].signatures == {"body": False, "everything": False, "header": []}
