@@ -25,6 +25,8 @@ except ImportError:
 
 # SOAP envelope
 SOAP_NS = "http://schemas.xmlsoap.org/soap/envelope/"
+# Namespaces omitted from signing
+OMITTED_HEADERS = [ns.WSSE]
 
 
 def _read_file(f_name):
@@ -259,7 +261,9 @@ def _signature_prepare(envelope, key, signature_method, digest_method, signature
         header = get_or_create_header(envelope)
         if signatures["everything"]:
             for node in header.iterchildren():
-                _sign_node(ctx, signature, node, digest_method)
+                # Everything doesn't mean everything ...
+                if node.nsmap.get(node.prefix) not in OMITTED_HEADERS:
+                    _sign_node(ctx, signature, node, digest_method)
         else:
             for node in signatures["header"]:
                 _sign_node(
