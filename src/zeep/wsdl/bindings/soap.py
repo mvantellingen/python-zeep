@@ -181,8 +181,12 @@ class SoapBinding(Binding):
             if process_xop(doc, message_pack):
                 message_pack = None
 
-        if client.wsse:
-            client.wsse.verify(doc)
+        security_tokens = client.wsse
+        if security_tokens:
+            if not isinstance(security_tokens, (list, tuple)):
+                security_tokens = [security_tokens]
+            for token in security_tokens:
+                token.verify(doc)
 
         doc, http_headers = plugins.apply_ingress(
             client, doc, response.headers, operation
