@@ -1,4 +1,4 @@
-3.4.0 (unreleased)
+3.4.0 (2019-06-05)
 ------------------
  - Allow passing xsd.Nil to sequences (#959, smilingDima)
  - Add support for passing custom digest and signature methods during WSSE
