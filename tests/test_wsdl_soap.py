@@ -12,7 +12,7 @@ from zeep.wsdl import bindings
 
 
 def test_soap11_no_output():
-    client = Client('tests/wsdl_files/soap.wsdl')
+    client = Client("tests/wsdl_files/soap.wsdl")
     content = """
         <soapenv:Envelope
             xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -20,18 +20,16 @@ def test_soap11_no_output():
           <soapenv:Body></soapenv:Body>
         </soapenv:Envelope>
     """.strip()
-    response = stub(
-        status_code=200,
-        headers={},
-        content=content)
+    response = stub(status_code=200, headers={}, content=content)
 
-    operation = client.service._binding._operations['GetLastTradePriceNoOutput']
+    operation = client.service._binding._operations["GetLastTradePriceNoOutput"]
     res = client.service._binding.process_reply(client, operation, response)
     assert res is None
 
 
 def test_soap11_process_error():
-    response = load_xml("""
+    response = load_xml(
+        """
         <soapenv:Envelope
             xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
             xmlns:stoc="http://example.com/stockquote.xsd">
@@ -48,20 +46,21 @@ def test_soap11_process_error():
             </soapenv:Fault>
           </soapenv:Body>
         </soapenv:Envelope>
-    """)
+    """
+    )
 
     binding = bindings.Soap11Binding(
-        wsdl=None, name=None, port_name=None, transport=None,
-        default_style=None)
+        wsdl=None, name=None, port_name=None, transport=None, default_style=None
+    )
     try:
         binding.process_error(response, None)
         assert False
     except Fault as exc:
-        assert exc.message == 'fault-string'
-        assert exc.code == 'fault-code'
+        assert exc.message == "fault-string"
+        assert exc.code == "fault-code"
         assert exc.actor is None
         assert exc.subcodes is None
-        assert 'detail-message' in etree.tostring(exc.detail).decode('utf-8')
+        assert "detail-message" in etree.tostring(exc.detail).decode("utf-8")
 
 
 def test_soap12_process_error():
@@ -98,41 +97,47 @@ def test_soap12_process_error():
                </soapenv:Subcode>
     """
     binding = bindings.Soap12Binding(
-        wsdl=None, name=None, port_name=None, transport=None,
-        default_style=None)
+        wsdl=None, name=None, port_name=None, transport=None, default_style=None
+    )
 
     try:
         binding.process_error(load_xml(response % ""), None)
         assert False
     except Fault as exc:
-        assert exc.message == 'us-error'
-        assert exc.code == 'fault-code'
+        assert exc.message == "us-error"
+        assert exc.code == "fault-code"
         assert exc.subcodes == []
 
     try:
         binding.process_error(
-            load_xml(response % subcode % ("fault-subcode1", "")), None)
+            load_xml(response % subcode % ("fault-subcode1", "")), None
+        )
         assert False
     except Fault as exc:
-        assert exc.message == 'us-error'
-        assert exc.code == 'fault-code'
+        assert exc.message == "us-error"
+        assert exc.code == "fault-code"
         assert len(exc.subcodes) == 1
-        assert exc.subcodes[0].namespace == 'http://example.com/example1'
-        assert exc.subcodes[0].localname == 'fault-subcode1'
+        assert exc.subcodes[0].namespace == "http://example.com/example1"
+        assert exc.subcodes[0].localname == "fault-subcode1"
 
     try:
         binding.process_error(
-            load_xml(response % subcode % ("fault-subcode1", subcode % ("ex:fault-subcode2", ""))),
-            None)
+            load_xml(
+                response
+                % subcode
+                % ("fault-subcode1", subcode % ("ex:fault-subcode2", ""))
+            ),
+            None,
+        )
         assert False
     except Fault as exc:
-        assert exc.message == 'us-error'
-        assert exc.code == 'fault-code'
+        assert exc.message == "us-error"
+        assert exc.code == "fault-code"
         assert len(exc.subcodes) == 2
-        assert exc.subcodes[0].namespace == 'http://example.com/example1'
-        assert exc.subcodes[0].localname == 'fault-subcode1'
-        assert exc.subcodes[1].namespace == 'http://example.com/example2'
-        assert exc.subcodes[1].localname == 'fault-subcode2'
+        assert exc.subcodes[0].namespace == "http://example.com/example1"
+        assert exc.subcodes[0].localname == "fault-subcode1"
+        assert exc.subcodes[1].namespace == "http://example.com/example2"
+        assert exc.subcodes[1].localname == "fault-subcode2"
 
 
 def test_no_content_type():
@@ -150,99 +155,74 @@ def test_no_content_type():
         </soapenv:Envelope>
     """.strip()
 
-    client = Client('tests/wsdl_files/soap.wsdl')
+    client = Client("tests/wsdl_files/soap.wsdl")
     binding = client.service._binding
 
-    response = stub(
-        status_code=200,
-        content=data,
-        encoding='utf-8',
-        headers={}
-    )
+    response = stub(status_code=200, content=data, encoding="utf-8", headers={})
 
-    result = binding.process_reply(
-        client, binding.get('GetLastTradePrice'), response)
+    result = binding.process_reply(client, binding.get("GetLastTradePrice"), response)
 
     assert result == 120.123
 
 
-@pytest.mark.skipif(platform.python_implementation() == 'PyPy',
-                    reason="Fails on PyPy")
+@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Fails on PyPy")
 def test_wrong_content():
     data = """
         The request is answered something unexpected,
         like an html page or a raw internal stack trace
     """.strip()
 
-    client = Client('tests/wsdl_files/soap.wsdl')
+    client = Client("tests/wsdl_files/soap.wsdl")
     binding = client.service._binding
 
-    response = stub(
-        status_code=200,
-        content=data,
-        encoding='utf-8',
-        headers={}
-    )
+    response = stub(status_code=200, content=data, encoding="utf-8", headers={})
 
     with pytest.raises(TransportError) as exc:
-        binding.process_reply(
-            client, binding.get('GetLastTradePrice'), response)
+        binding.process_reply(client, binding.get("GetLastTradePrice"), response)
     assert 200 == exc.value.status_code
     assert data == exc.value.content
 
 
-@pytest.mark.skipif(platform.python_implementation() == 'PyPy',
-                    reason="Fails on PyPy")
+@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Fails on PyPy")
 def test_wrong_no_unicode_content():
     data = """
         The request is answered something unexpected,
         and the content charset is beyond unicode òñÇÿ
     """.strip()
 
-    client = Client('tests/wsdl_files/soap.wsdl')
+    client = Client("tests/wsdl_files/soap.wsdl")
     binding = client.service._binding
 
-    response = stub(
-        status_code=200,
-        content=data,
-        encoding='utf-8',
-        headers={}
-    )
+    response = stub(status_code=200, content=data, encoding="utf-8", headers={})
 
     with pytest.raises(TransportError) as exc:
-        binding.process_reply(
-            client, binding.get('GetLastTradePrice'), response)
+        binding.process_reply(client, binding.get("GetLastTradePrice"), response)
 
     assert 200 == exc.value.status_code
     assert data == exc.value.content
 
 
-@pytest.mark.skipif(platform.python_implementation() == 'PyPy',
-                    reason="Fails on PyPy")
+@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Fails on PyPy")
 def test_http_error():
     data = """
         Unauthorized!
     """.strip()
 
-    client = Client('tests/wsdl_files/soap.wsdl')
+    client = Client("tests/wsdl_files/soap.wsdl")
     binding = client.service._binding
 
-    response = stub(
-        status_code=401,
-        content=data,
-        encoding='utf-8',
-        headers={}
-    )
+    response = stub(status_code=401, content=data, encoding="utf-8", headers={})
 
     with pytest.raises(TransportError) as exc:
-        binding.process_reply(
-            client, binding.get('GetLastTradePrice'), response)
+        binding.process_reply(client, binding.get("GetLastTradePrice"), response)
     assert 401 == exc.value.status_code
     assert data == exc.value.content
 
 
 def test_mime_multipart():
-    data = '\r\n'.join(line.strip() for line in """
+    data = "\r\n".join(
+        line.strip()
+        for line in """
         --MIME_boundary
         Content-Type: text/xml; charset=UTF-8
         Content-Transfer-Encoding: 8bit
@@ -275,32 +255,34 @@ def test_mime_multipart():
 
         ...Raw JPEG image..
         --MIME_boundary--
-    """.splitlines()).encode('utf-8')
+    """.splitlines()
+    ).encode("utf-8")
 
-    client = Client('tests/wsdl_files/claim.wsdl')
+    client = Client("tests/wsdl_files/claim.wsdl")
     binding = client.service._binding
 
     response = stub(
         status_code=200,
         content=data,
-        encoding='utf-8',
+        encoding="utf-8",
         headers={
-            'Content-Type': 'multipart/related; type="text/xml"; start="<claim061400a.xml@claiming-it.com>"; boundary="MIME_boundary"'
-        }
+            "Content-Type": 'multipart/related; type="text/xml"; start="<claim061400a.xml@claiming-it.com>"; boundary="MIME_boundary"'
+        },
     )
 
-    result = binding.process_reply(
-        client, binding.get('GetClaimDetails'), response)
+    result = binding.process_reply(client, binding.get("GetClaimDetails"), response)
 
     assert result.root is None
     assert len(result.attachments) == 2
 
-    assert result.attachments[0].content == b'...Base64 encoded TIFF image...'
-    assert result.attachments[1].content == b'...Raw JPEG image..'
+    assert result.attachments[0].content == b"...Base64 encoded TIFF image..."
+    assert result.attachments[1].content == b"...Raw JPEG image.."
 
 
 def test_mime_multipart_no_encoding():
-    data = '\r\n'.join(line.strip() for line in """
+    data = "\r\n".join(
+        line.strip()
+        for line in """
         --MIME_boundary
         Content-Type: text/xml
         Content-Transfer-Encoding: 8bit
@@ -332,9 +314,10 @@ def test_mime_multipart_no_encoding():
 
         ...Raw JPEG image..
         --MIME_boundary--
-    """.splitlines()).encode('utf-8')
+    """.splitlines()
+    ).encode("utf-8")
 
-    client = Client('tests/wsdl_files/claim.wsdl')
+    client = Client("tests/wsdl_files/claim.wsdl")
     binding = client.service._binding
 
     response = stub(
@@ -342,18 +325,17 @@ def test_mime_multipart_no_encoding():
         content=data,
         encoding=None,
         headers={
-            'Content-Type': 'multipart/related; type="text/xml"; start="<claim061400a.xml@claiming-it.com>"; boundary="MIME_boundary"'
-        }
+            "Content-Type": 'multipart/related; type="text/xml"; start="<claim061400a.xml@claiming-it.com>"; boundary="MIME_boundary"'
+        },
     )
 
-    result = binding.process_reply(
-        client, binding.get('GetClaimDetails'), response)
+    result = binding.process_reply(client, binding.get("GetClaimDetails"), response)
 
     assert result.root is None
     assert len(result.attachments) == 2
 
-    assert result.attachments[0].content == b'...Base64 encoded TIFF image...'
-    assert result.attachments[1].content == b'...Raw JPEG image..'
+    assert result.attachments[0].content == b"...Base64 encoded TIFF image..."
+    assert result.attachments[1].content == b"...Raw JPEG image.."
 
 
 def test_unexpected_headers():
@@ -373,18 +355,12 @@ def test_unexpected_headers():
         </soapenv:Envelope>
     """.strip()
 
-    client = Client('tests/wsdl_files/soap_header.wsdl')
+    client = Client("tests/wsdl_files/soap_header.wsdl")
     binding = client.service._binding
 
-    response = stub(
-        status_code=200,
-        content=data,
-        encoding='utf-8',
-        headers={}
-    )
+    response = stub(status_code=200, content=data, encoding="utf-8", headers={})
 
-    result = binding.process_reply(
-        client, binding.get('GetLastTradePrice'), response)
+    result = binding.process_reply(client, binding.get("GetLastTradePrice"), response)
 
     assert result.body.price == 120.123
     assert result.header.body is None
@@ -392,32 +368,20 @@ def test_unexpected_headers():
 
 
 def test_response_201():
-    client = Client('tests/wsdl_files/soap_header.wsdl')
+    client = Client("tests/wsdl_files/soap_header.wsdl")
     binding = client.service._binding
 
-    response = stub(
-        status_code=201,
-        content='',
-        encoding='utf-8',
-        headers={}
-    )
+    response = stub(status_code=201, content="", encoding="utf-8", headers={})
 
-    result = binding.process_reply(
-        client, binding.get('GetLastTradePrice'), response)
+    result = binding.process_reply(client, binding.get("GetLastTradePrice"), response)
     assert result is None
 
 
 def test_response_202():
-    client = Client('tests/wsdl_files/soap_header.wsdl')
+    client = Client("tests/wsdl_files/soap_header.wsdl")
     binding = client.service._binding
 
-    response = stub(
-        status_code=202,
-        content='',
-        encoding='utf-8',
-        headers={}
-    )
+    response = stub(status_code=202, content="", encoding="utf-8", headers={})
 
-    result = binding.process_reply(
-        client, binding.get('GetLastTradePrice'), response)
+    result = binding.process_reply(client, binding.get("GetLastTradePrice"), response)
     assert result is None

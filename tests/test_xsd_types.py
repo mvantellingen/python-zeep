@@ -9,7 +9,7 @@ def test_base_type():
     # Basically just for coverage... ;-)
     base = types.Type()
     with pytest.raises(NotImplementedError):
-        base.accept('x')
+        base.accept("x")
 
     with pytest.raises(NotImplementedError):
         base.parse_xmlelement(None)
@@ -23,7 +23,7 @@ def test_base_type():
     with pytest.raises(NotImplementedError):
         base.resolve()
 
-    base.signature() == ''
+    base.signature() == ""
 
 
 def test_simpletype_eq():
@@ -34,7 +34,7 @@ def test_simpletype_eq():
 
 
 def test_simpletype_parse():
-    node = etree.Element('foobar')
+    node = etree.Element("foobar")
     item = types.AnySimpleType()
 
     assert item.parse_xmlelement(node) is None
@@ -51,23 +51,23 @@ def test_simpletype_call_wrong_arg_count():
     item = types.AnySimpleType()
 
     with pytest.raises(TypeError):
-        item('foo', 'bar')
+        item("foo", "bar")
 
 
 def test_simpletype_call_wrong_kwarg():
     item = types.AnySimpleType()
 
     with pytest.raises(TypeError):
-        item(uhhh='x')
+        item(uhhh="x")
 
 
 def test_simpletype_str():
     item = types.AnySimpleType()
-    item.name = u'foobar'
-    assert six.text_type(item) == 'AnySimpleType(value)'
+    item.name = u"foobar"
+    assert six.text_type(item) == "AnySimpleType(value)"
 
 
 def test_complextype_parse_xmlelement_no_childs():
-    xmlelement = etree.Element('foobar')
+    xmlelement = etree.Element("foobar")
     item = types.ComplexType()
     assert item.parse_xmlelement(xmlelement, None) is None

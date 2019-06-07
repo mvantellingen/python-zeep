@@ -1,7 +1,7 @@
 import logging
-from zeep.settings import Settings
 
 from zeep.proxy import ServiceProxy
+from zeep.settings import Settings
 from zeep.transports import Transport
 from zeep.wsdl import Document
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class Factory(object):
     def __init__(self, types, kind, namespace):
-        self._method = getattr(types, 'get_%s' % kind)
+        self._method = getattr(types, "get_%s" % kind)
 
         if namespace in types.namespaces:
             self._ns = namespace
@@ -31,7 +31,7 @@ class Factory(object):
         :rtype: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
 
         """
-        return self._method('{%s}%s' % (self._ns, key))
+        return self._method("{%s}%s" % (self._ns, key))
 
 
 class Client(object):
@@ -50,16 +50,22 @@ class Client(object):
 
     """
 
-    def __init__(self, wsdl, wsse=None, transport=None,
-                 service_name=None, port_name=None, plugins=None,
-                 settings=None):
+    def __init__(
+        self,
+        wsdl,
+        wsse=None,
+        transport=None,
+        service_name=None,
+        port_name=None,
+        plugins=None,
+        settings=None,
+    ):
         if not wsdl:
             raise ValueError("No URL given for the wsdl")
 
         self.settings = settings or Settings()
         self.transport = transport if transport is not None else Transport()
-        self.wsdl = Document(
-            wsdl, self.transport, settings=self.settings)
+        self.wsdl = Document(wsdl, self.transport, settings=self.settings)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
 
@@ -83,12 +89,13 @@ class Client(object):
             return self._default_service
 
         self._default_service = self.bind(
-            service_name=self._default_service_name,
-            port_name=self._default_port_name)
+            service_name=self._default_service_name, port_name=self._default_port_name
+        )
         if not self._default_service:
             raise ValueError(
                 "There is no default service defined. This is usually due to "
-                "missing wsdl:service definitions in the WSDL")
+                "missing wsdl:service definitions in the WSDL"
+            )
         return self._default_service
 
     def bind(self, service_name=None, port_name=None):
@@ -118,7 +125,8 @@ class Client(object):
         except KeyError:
             raise ValueError(
                 "No binding found with the given QName. Available bindings "
-                "are: %s" % (', '.join(self.wsdl.bindings.keys())))
+                "are: %s" % (", ".join(self.wsdl.bindings.keys()))
+            )
         return ServiceProxy(self, binding, address=address)
 
     def create_message(self, service, operation_name, *args, **kwargs):
@@ -128,7 +136,8 @@ class Client(object):
 
         """
         envelope, http_headers = service._binding._create(
-            operation_name, args, kwargs, client=self)
+            operation_name, args, kwargs, client=self
+        )
         return envelope
 
     def type_factory(self, namespace):
@@ -142,7 +151,7 @@ class Client(object):
         :rtype: Factory
 
         """
-        return Factory(self.wsdl.types, 'type', namespace)
+        return Factory(self.wsdl.types, "type", namespace)
 
     def get_type(self, name):
         """Return the type for the given qualified name.
@@ -203,11 +212,12 @@ class CachingClient(Client):
     in earlier versions of zeep.
 
     """
+
     def __init__(self, *args, **kwargs):
 
         # Don't use setdefault since we want to lazily init the Transport cls
         from zeep.cache import SqliteCache
-        kwargs['transport'] = (
-            kwargs.get('transport') or Transport(cache=SqliteCache()))
+
+        kwargs["transport"] = kwargs.get("transport") or Transport(cache=SqliteCache())
 
         super(CachingClient, self).__init__(*args, **kwargs)

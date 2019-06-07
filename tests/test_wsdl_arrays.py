@@ -8,17 +8,20 @@ from tests.utils import (
 from zeep import xsd
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def transport():
     transport = DummyTransport()
     transport.bind(
-        'http://schemas.xmlsoap.org/soap/encoding/',
-        load_xml(io.open('tests/wsdl_files/soap-enc.xsd', 'r').read().encode('utf-8')))
+        "http://schemas.xmlsoap.org/soap/encoding/",
+        load_xml(io.open("tests/wsdl_files/soap-enc.xsd", "r").read().encode("utf-8")),
+    )
     return transport
 
 
 def test_simple_type(transport):
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
     <xsd:schema
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -33,14 +36,17 @@ def test_simple_type(transport):
         </xsd:complexContent>
       </xsd:complexType>
     </xsd:schema>
-    """), transport=transport)
+    """
+        ),
+        transport=transport,
+    )
 
-    ArrayOfString = schema.get_type('ns0:ArrayOfString')
+    ArrayOfString = schema.get_type("ns0:ArrayOfString")
     print(ArrayOfString.__dict__)
 
-    value = ArrayOfString(['item', 'and', 'even', 'more', 'items'])
+    value = ArrayOfString(["item", "and", "even", "more", "items"])
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     ArrayOfString.render(node, value)
 
     expected = """
@@ -56,12 +62,14 @@ def test_simple_type(transport):
     assert_nodes_equal(expected, node)
 
     data = ArrayOfString.parse_xmlelement(node, schema)
-    assert data == ['item', 'and', 'even', 'more', 'items']
+    assert data == ["item", "and", "even", "more", "items"]
     assert data.as_value_object()
 
 
 def test_simple_type_nested(transport):
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
     <xsd:schema
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -83,14 +91,17 @@ def test_simple_type_nested(transport):
         </xsd:complexContent>
       </xsd:complexType>
     </xsd:schema>
-    """), transport=transport)
+    """
+        ),
+        transport=transport,
+    )
 
-    Container = schema.get_type('ns0:container')
-    value = Container(strings=['item', 'and', 'even', 'more', 'items'])
+    Container = schema.get_type("ns0:container")
+    value = Container(strings=["item", "and", "even", "more", "items"])
 
-    assert value.strings == ['item', 'and', 'even', 'more', 'items']
+    assert value.strings == ["item", "and", "even", "more", "items"]
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     Container.render(node, value)
 
     expected = """
@@ -108,11 +119,13 @@ def test_simple_type_nested(transport):
     assert_nodes_equal(expected, node)
 
     data = Container.parse_xmlelement(node, schema)
-    assert data.strings == ['item', 'and', 'even', 'more', 'items']
+    assert data.strings == ["item", "and", "even", "more", "items"]
 
 
 def test_simple_type_nested_inline_type(transport):
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
     <xsd:schema
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -134,10 +147,14 @@ def test_simple_type_nested_inline_type(transport):
         </xsd:complexContent>
       </xsd:complexType>
     </xsd:schema>
-    """), transport=transport)
+    """
+        ),
+        transport=transport,
+    )
 
-    Container = schema.get_type('ns0:container')
-    node = load_xml("""
+    Container = schema.get_type("ns0:container")
+    node = load_xml(
+        """
         <document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <strings xsi:type="soapenc:Array" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">
               <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">item</item>
@@ -147,14 +164,17 @@ def test_simple_type_nested_inline_type(transport):
               <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">items</item>
             </strings>
         </document>
-    """)  # noqa
+    """
+    )  # noqa
 
     data = Container.parse_xmlelement(node, schema)
-    assert data.strings == ['item', 'and', 'even', 'more', 'items']
+    assert data.strings == ["item", "and", "even", "more", "items"]
 
 
 def test_complex_type(transport):
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
     <xsd:schema
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -180,18 +200,23 @@ def test_complex_type(transport):
         </xsd:complexContent>
       </xsd:complexType>
     </xsd:schema>
-    """), transport=transport)
+    """
+        ),
+        transport=transport,
+    )
 
-    ArrayOfObject = schema.get_type('ns0:ArrayOfObject')
-    ArrayObject = schema.get_type('ns0:ArrayObject')
+    ArrayOfObject = schema.get_type("ns0:ArrayOfObject")
+    ArrayObject = schema.get_type("ns0:ArrayObject")
 
-    value = ArrayOfObject([
-        ArrayObject(attr_1='attr-1', attr_2='attr-2'),
-        ArrayObject(attr_1='attr-3', attr_2='attr-4'),
-        ArrayObject(attr_1='attr-5', attr_2='attr-6'),
-    ])
+    value = ArrayOfObject(
+        [
+            ArrayObject(attr_1="attr-1", attr_2="attr-2"),
+            ArrayObject(attr_1="attr-3", attr_2="attr-4"),
+            ArrayObject(attr_1="attr-5", attr_2="attr-6"),
+        ]
+    )
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     ArrayOfObject.render(node, value)
 
     expected = """
@@ -213,16 +238,18 @@ def test_complex_type(transport):
     assert_nodes_equal(expected, node)
     data = ArrayOfObject.parse_xmlelement(node, schema)
 
-    assert data[0].attr_1 == 'attr-1'
-    assert data[0].attr_2 == 'attr-2'
-    assert data[1].attr_1 == 'attr-3'
-    assert data[1].attr_2 == 'attr-4'
-    assert data[2].attr_1 == 'attr-5'
-    assert data[2].attr_2 == 'attr-6'
+    assert data[0].attr_1 == "attr-1"
+    assert data[0].attr_2 == "attr-2"
+    assert data[1].attr_1 == "attr-3"
+    assert data[1].attr_2 == "attr-4"
+    assert data[2].attr_1 == "attr-5"
+    assert data[2].attr_2 == "attr-6"
 
 
 def test_complex_type_without_name(transport):
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
     <xsd:schema
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -245,18 +272,23 @@ def test_complex_type_without_name(transport):
         </xsd:complexContent>
       </xsd:complexType>
     </xsd:schema>
-    """), transport=transport)
+    """
+        ),
+        transport=transport,
+    )
 
-    ArrayOfObject = schema.get_type('ns0:ArrayOfObject')
-    ArrayObject = schema.get_type('ns0:ArrayObject')
+    ArrayOfObject = schema.get_type("ns0:ArrayOfObject")
+    ArrayObject = schema.get_type("ns0:ArrayObject")
 
-    value = ArrayOfObject([
-        ArrayObject(attr_1='attr-1', attr_2='attr-2'),
-        ArrayObject(attr_1='attr-3', attr_2='attr-4'),
-        ArrayObject(attr_1='attr-5', attr_2='attr-6'),
-    ])
+    value = ArrayOfObject(
+        [
+            ArrayObject(attr_1="attr-1", attr_2="attr-2"),
+            ArrayObject(attr_1="attr-3", attr_2="attr-4"),
+            ArrayObject(attr_1="attr-5", attr_2="attr-6"),
+        ]
+    )
 
-    node = etree.Element('document')
+    node = etree.Element("document")
     ArrayOfObject.render(node, value)
 
     expected = """
@@ -279,21 +311,24 @@ def test_complex_type_without_name(transport):
     data = ArrayOfObject.parse_xmlelement(node, schema)
 
     assert len(data) == 3
-    assert data[0]['attr_1'] == 'attr-1'
-    assert data[0]['attr_2'] == 'attr-2'
-    assert data[1]['attr_1'] == 'attr-3'
-    assert data[1]['attr_2'] == 'attr-4'
-    assert data[2]['attr_1'] == 'attr-5'
-    assert data[2]['attr_2'] == 'attr-6'
+    assert data[0]["attr_1"] == "attr-1"
+    assert data[0]["attr_2"] == "attr-2"
+    assert data[1]["attr_1"] == "attr-3"
+    assert data[1]["attr_2"] == "attr-4"
+    assert data[2]["attr_1"] == "attr-5"
+    assert data[2]["attr_2"] == "attr-6"
 
 
 def test_soap_array_parse_remote_ns():
     transport = DummyTransport()
     transport.bind(
-        'http://schemas.xmlsoap.org/soap/encoding/',
-        load_xml(io.open('tests/wsdl_files/soap-enc.xsd', 'r').read().encode('utf-8')))
+        "http://schemas.xmlsoap.org/soap/encoding/",
+        load_xml(io.open("tests/wsdl_files/soap-enc.xsd", "r").read().encode("utf-8")),
+    )
 
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -325,9 +360,13 @@ def test_soap_array_parse_remote_ns():
           </xsd:complexType>
           <xsd:element name="countries" type="tns:CountriesArrayType"/>
         </xsd:schema>
-    """), transport)
+    """
+        ),
+        transport,
+    )
 
-    doc = load_xml("""
+    doc = load_xml(
+        """
       <countries
             SOAP-ENC:arrayType="ns1:CountryItemType[1]"
             xsi:type="ns1:CountriesArrayType"
@@ -340,22 +379,26 @@ def test_soap_array_parse_remote_ns():
           <name xsi:type="xsd:string">The Netherlands</name>
         </item>
       </countries>
-    """)
+    """
+    )
 
-    elm = schema.get_element('ns0:countries')
+    elm = schema.get_element("ns0:countries")
     data = elm.parse(doc, schema)
 
-    assert data[0].code == 'NL'
-    assert data[0].name == 'The Netherlands'
+    assert data[0].code == "NL"
+    assert data[0].name == "The Netherlands"
 
 
 def test_wsdl_array_type():
     transport = DummyTransport()
     transport.bind(
-        'http://schemas.xmlsoap.org/soap/encoding/',
-        load_xml(io.open('tests/wsdl_files/soap-enc.xsd', 'r').read().encode('utf-8')))
+        "http://schemas.xmlsoap.org/soap/encoding/",
+        load_xml(io.open("tests/wsdl_files/soap-enc.xsd", "r").read().encode("utf-8")),
+    )
 
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                     xmlns:tns="http://tests.python-zeep.org/"
                     xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
@@ -378,12 +421,15 @@ def test_wsdl_array_type():
           </xsd:complexType>
           <xsd:element name="array" type="tns:array"/>
         </xsd:schema>
-    """), transport)
-    array_elm = schema.get_element('{http://tests.python-zeep.org/}array')
+    """
+        ),
+        transport,
+    )
+    array_elm = schema.get_element("{http://tests.python-zeep.org/}array")
 
-    item_type = schema.get_type('{http://tests.python-zeep.org/}base')
-    item_1 = item_type(item_1='foo_1', item_2='bar_1')
-    item_2 = item_type(item_1='foo_2', item_2='bar_2')
+    item_type = schema.get_type("{http://tests.python-zeep.org/}base")
+    item_1 = item_type(item_1="foo_1", item_2="bar_1")
+    item_2 = item_type(item_1="foo_2", item_2="bar_2")
 
     # array = array_elm([
     #     xsd.AnyObject(item_type, item_1),
@@ -391,13 +437,14 @@ def test_wsdl_array_type():
     # ])
 
     array = array_elm([item_1, item_2])
-    node = etree.Element('document')
-    assert array_elm.signature(schema=schema) == 'ns0:array(ns0:array)'
+    node = etree.Element("document")
+    assert array_elm.signature(schema=schema) == "ns0:array(ns0:array)"
 
-    array_type = schema.get_type('ns0:array')
+    array_type = schema.get_type("ns0:array")
     assert array_type.signature(schema=schema) == (
-        'ns0:array(_value_1: base[], arrayType: xsd:string, ' +
-        'offset: ns1:arrayCoordinate, id: xsd:ID, href: xsd:anyURI, _attr_1: {})')
+        "ns0:array(_value_1: base[], arrayType: xsd:string, "
+        + "offset: ns1:arrayCoordinate, id: xsd:ID, href: xsd:anyURI, _attr_1: {})"
+    )
     array_elm.render(node, array)
     expected = """
         <document>
@@ -419,10 +466,13 @@ def test_wsdl_array_type():
 def test_soap_array_parse():
     transport = DummyTransport()
     transport.bind(
-        'http://schemas.xmlsoap.org/soap/encoding/',
-        load_xml(io.open('tests/wsdl_files/soap-enc.xsd', 'r').read().encode('utf-8')))
+        "http://schemas.xmlsoap.org/soap/encoding/",
+        load_xml(io.open("tests/wsdl_files/soap-enc.xsd", "r").read().encode("utf-8")),
+    )
 
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
     <?xml version="1.0"?>
     <schema xmlns="http://www.w3.org/2001/XMLSchema"
             xmlns:tns="http://tests.python-zeep.org/"
@@ -457,9 +507,13 @@ def test_soap_array_parse():
       </complexType>
       <element name="FlagDetailsList" type="tns:FlagDetailsList"/>
     </schema>
-    """), transport)
+    """
+        ),
+        transport,
+    )
 
-    doc = load_xml("""
+    doc = load_xml(
+        """
          <FlagDetailsList xmlns="http://tests.python-zeep.org/">
             <FlagDetailsStruct>
                <Name>flag1</Name>
@@ -470,18 +524,21 @@ def test_soap_array_parse():
                <Value>value2</Value>
             </FlagDetailsStruct>
          </FlagDetailsList>
-    """)
+    """
+    )
 
-    elm = schema.get_element('ns0:FlagDetailsList')
+    elm = schema.get_element("ns0:FlagDetailsList")
     data = elm.parse(doc, schema)
-    assert data[0].Name == 'flag1'
-    assert data[0].Value == 'value1'
-    assert data[1].Name == 'flag2'
-    assert data[1].Value == 'value2'
+    assert data[0].Name == "flag1"
+    assert data[0].Value == "value1"
+    assert data[1].Name == "flag2"
+    assert data[1].Value == "value2"
 
 
 def test_xml_soap_enc_string(transport):
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -503,8 +560,11 @@ def test_xml_soap_enc_string(transport):
           </xsd:complexType>
 
         </xsd:schema>
-    """), transport)
-    shoe_type = schema.get_element('{http://tests.python-zeep.org/}value')
+    """
+        ),
+        transport,
+    )
+    shoe_type = schema.get_element("{http://tests.python-zeep.org/}value")
 
     obj = shoe_type(["foo"])
     node = render_node(shoe_type, obj)
@@ -518,11 +578,11 @@ def test_xml_soap_enc_string(transport):
     assert_nodes_equal(expected, node)
 
     obj = shoe_type.parse(node[0], schema)
-    assert obj[0]['_value_1'] == "foo"
+    assert obj[0]["_value_1"] == "foo"
 
     # Via string-types
-    string_type = schema.get_type('{http://schemas.xmlsoap.org/soap/encoding/}string')
-    obj = shoe_type([string_type('foo')])
+    string_type = schema.get_type("{http://schemas.xmlsoap.org/soap/encoding/}string")
+    obj = shoe_type([string_type("foo")])
     node = render_node(shoe_type, obj)
     expected = """
         <document>
@@ -534,11 +594,11 @@ def test_xml_soap_enc_string(transport):
     assert_nodes_equal(expected, node)
 
     obj = shoe_type.parse(node[0], schema)
-    assert obj[0]['_value_1'] == "foo"
+    assert obj[0]["_value_1"] == "foo"
 
     # Via dicts
-    string_type = schema.get_type('{http://schemas.xmlsoap.org/soap/encoding/}string')
-    obj = shoe_type([{'_value_1': 'foo'}])
+    string_type = schema.get_type("{http://schemas.xmlsoap.org/soap/encoding/}string")
+    obj = shoe_type([{"_value_1": "foo"}])
     node = render_node(shoe_type, obj)
     expected = """
         <document>
@@ -550,4 +610,4 @@ def test_xml_soap_enc_string(transport):
     assert_nodes_equal(expected, node)
 
     obj = shoe_type.parse(node[0], schema)
-    assert obj[0]['_value_1'] == "foo"
+    assert obj[0]["_value_1"] == "foo"

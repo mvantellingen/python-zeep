@@ -5,7 +5,8 @@ from six import binary_type, string_types
 
 def load_xml(xml):
     parser = etree.XMLParser(
-        remove_blank_text=True, remove_comments=True, resolve_entities=False)
+        remove_blank_text=True, remove_comments=True, resolve_entities=False
+    )
     return etree.fromstring(xml.strip(), parser=parser)
 
 
@@ -20,13 +21,13 @@ def assert_nodes_equal(result, expected):
     expected = etree.tostring(_convert_node(expected), pretty_print=True)
 
     if six.PY3:
-        result = result.decode('utf-8')
-        expected = expected.decode('utf-8')
+        result = result.decode("utf-8")
+        expected = expected.decode("utf-8")
     assert result == expected
 
 
 def render_node(element, value):
-    node = etree.Element('document')
+    node = etree.Element("document")
     element.render(node, value)
     return node
 

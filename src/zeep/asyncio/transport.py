@@ -20,18 +20,24 @@ except ImportError:
     from aiohttp import Timeout as aio_timeout  # Python 3.5, aiohttp < 3
 
 
-__all__ = ['AsyncTransport']
+__all__ = ["AsyncTransport"]
 
 
 class AsyncTransport(Transport):
     """Asynchronous Transport class using aiohttp."""
-    binding_classes = [
-                bindings.AsyncSoap11Binding,
-                bindings.AsyncSoap12Binding,
-            ]
 
-    def __init__(self, loop, cache=None, timeout=300, operation_timeout=None,
-                 session=None):
+    binding_classes = [bindings.AsyncSoap11Binding, bindings.AsyncSoap12Binding]
+
+    def __init__(
+        self,
+        loop,
+        cache=None,
+        timeout=300,
+        operation_timeout=None,
+        session=None,
+        verify_ssl=True,
+        proxy=None,
+    ):
 
         self.loop = loop if loop else asyncio.get_event_loop()
         self.cache = cache
@@ -39,10 +45,13 @@ class AsyncTransport(Transport):
         self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)
 
+        self.verify_ssl = verify_ssl
+        self.proxy = proxy
         self.session = session or aiohttp.ClientSession(loop=self.loop)
         self._close_session = session is None
-        self.session._default_headers['User-Agent'] = (
-            'Zeep/%s (www.python-zeep.org)' % (get_version()))
+        self.session._default_headers[
+            "User-Agent"
+        ] = "Zeep/%s (www.python-zeep.org)" % (get_version())
 
     def __del__(self):
         if self._close_session:
@@ -68,9 +77,7 @@ class AsyncTransport(Transport):
                     response.raise_for_status()
                 except aiohttp.ClientError as exc:
                     raise TransportError(
-                        message=str(exc),
-                        status_code=response.status,
-                        content=result
+                        message=str(exc), status_code=response.status, content=result
                     ).with_traceback(exc.__traceback__) from exc
 
         # Block until we have the data
@@ -81,10 +88,18 @@ class AsyncTransport(Transport):
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
         with aio_timeout(self.operation_timeout):
             response = await self.session.post(
-                address, data=message, headers=headers)
+                address,
+                data=message,
+                headers=headers,
+                verify_ssl=self.verify_ssl,
+                proxy=self.proxy,
+            )
             self.logger.debug(
                 "HTTP Response from %s (status: %d):\n%s",
-                address, response.status, await response.read())
+                address,
+                response.status,
+                await response.read(),
+            )
             return response
 
     async def post_xml(self, address, envelope, headers):
@@ -93,9 +108,14 @@ class AsyncTransport(Transport):
         return await self.new_response(response)
 
     async def get(self, address, params, headers):
-        with aiohttp.Timeout(self.operation_timeout):
+        with aio_timeout(self.operation_timeout):
             response = await self.session.get(
-                address, params=params, headers=headers)
+                address,
+                params=params,
+                headers=headers,
+                verify_ssl=self.verify_ssl,
+                proxy=self.proxy,
+            )
 
             return await self.new_response(response)
 

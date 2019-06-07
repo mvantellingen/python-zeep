@@ -5,7 +5,9 @@ from zeep import exceptions, xsd
 
 
 def test_validate_element_value():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -19,10 +21,12 @@ def test_validate_element_value():
             </complexType>
           </element>
         </schema>
-    """))
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
 
-    container_elm = schema.get_element('tns:container')
+    container_elm = schema.get_element("tns:container")
     obj = container_elm()
 
     expected = """
@@ -35,19 +39,21 @@ def test_validate_element_value():
 
     with pytest.raises(exceptions.ValidationError) as exc:
         result = render_node(container_elm, obj)
-    assert 'Missing element item (container.item)' in str(exc)
+    assert "Missing element item (container.item)" in str(exc)
 
-    obj.item = 'bar'
+    obj.item = "bar"
     result = render_node(container_elm, obj)
 
     assert_nodes_equal(result, expected)
 
     obj = container_elm.parse(result[0], schema)
-    assert obj.item == 'bar'
+    assert obj.item == "bar"
 
 
 def test_validate_required_attribute():
-    schema = xsd.Schema(load_xml("""
+    schema = xsd.Schema(
+        load_xml(
+            """
         <?xml version="1.0"?>
         <schema xmlns="http://www.w3.org/2001/XMLSchema"
                 xmlns:tns="http://tests.python-zeep.org/"
@@ -59,10 +65,12 @@ def test_validate_required_attribute():
             </complexType>
           </element>
         </schema>
-    """))
-    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
 
-    container_elm = schema.get_element('tns:container')
+    container_elm = schema.get_element("tns:container")
     obj = container_elm()
 
     expected = """
@@ -73,12 +81,14 @@ def test_validate_required_attribute():
 
     with pytest.raises(exceptions.ValidationError) as exc:
         result = render_node(container_elm, obj)
-    assert 'The attribute item is not valid: Value is required (container.item)' in str(exc)
+    assert "The attribute item is not valid: Value is required (container.item)" in str(
+        exc
+    )
 
-    obj.item = 'bar'
+    obj.item = "bar"
     result = render_node(container_elm, obj)
 
     assert_nodes_equal(result, expected)
 
     obj = container_elm.parse(result[0], schema)
-    assert obj.item == 'bar'
+    assert obj.item == "bar"

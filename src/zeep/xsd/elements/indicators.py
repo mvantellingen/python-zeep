@@ -25,24 +25,23 @@ from zeep.xsd.utils import (
     NamePrefixGenerator, UniqueNameGenerator, create_prefixed_name,
     max_occurs_iter)
 
-__all__ = ['All', 'Choice', 'Group', 'Sequence']
+__all__ = ["All", "Choice", "Group", "Sequence"]
 
 
 class Indicator(Base):
     """Base class for the other indicators"""
 
     def __repr__(self):
-        return '<%s(%s)>' % (
-            self.__class__.__name__, super(Indicator, self).__repr__())
+        return "<%s(%s)>" % (self.__class__.__name__, super(Indicator, self).__repr__())
 
     @property
     def default_value(self):
-        values = OrderedDict([
-            (name, element.default_value) for name, element in self.elements
-        ])
+        values = OrderedDict(
+            [(name, element.default_value) for name, element in self.elements]
+        )
 
         if self.accepts_multiple:
-            return {'_value_1': values}
+            return {"_value_1": values}
         return values
 
     def clone(self, name, min_occurs=1, max_occurs=1):
@@ -51,6 +50,7 @@ class Indicator(Base):
 
 class OrderIndicator(Indicator, list):
     """Base class for All, Choice and Sequence classes."""
+
     name = None
 
     def __init__(self, elements=None, min_occurs=1, max_occurs=1):
@@ -62,9 +62,8 @@ class OrderIndicator(Indicator, list):
 
     def clone(self, name, min_occurs=1, max_occurs=1):
         return self.__class__(
-            elements=list(self),
-            min_occurs=min_occurs,
-            max_occurs=max_occurs)
+            elements=list(self), min_occurs=min_occurs, max_occurs=max_occurs
+        )
 
     @threaded_cached_property
     def elements(self):
@@ -174,7 +173,8 @@ class OrderIndicator(Indicator, list):
                     item_kwargs = set(item_value.keys())
                 except AttributeError:
                     raise TypeError(
-                        "A list of dicts is expected for unbounded Sequences")
+                        "A list of dicts is expected for unbounded Sequences"
+                    )
 
                 subresult = OrderedDict()
                 for item_name, element in self.elements:
@@ -183,9 +183,10 @@ class OrderIndicator(Indicator, list):
                         subresult.update(value)
 
                 if item_kwargs:
-                    raise TypeError((
-                        "%s() got an unexpected keyword argument %r."
-                    ) % (self, list(item_kwargs)[0]))
+                    raise TypeError(
+                        ("%s() got an unexpected keyword argument %r.")
+                        % (self, list(item_kwargs)[0])
+                    )
 
                 result.append(subresult)
 
@@ -248,16 +249,16 @@ class OrderIndicator(Indicator, list):
     def signature(self, schema=None, standalone=True):
         parts = []
         for name, element in self.elements_nested:
-            if isinstance(element,  Indicator):
+            if isinstance(element, Indicator):
                 parts.append(element.signature(schema, standalone=False))
             else:
                 value = element.signature(schema, standalone=False)
-                parts.append('%s: %s' % (name, value))
+                parts.append("%s: %s" % (name, value))
 
-        part = ', '.join(parts)
+        part = ", ".join(parts)
 
         if self.accepts_multiple:
-            return '[%s]' % (part,)
+            return "[%s]" % (part,)
         return part
 
 
@@ -267,8 +268,7 @@ class All(OrderIndicator):
 
     """
 
-    def __init__(self, elements=None, min_occurs=1, max_occurs=1,
-                 consume_other=False):
+    def __init__(self, elements=None, min_occurs=1, max_occurs=1, consume_other=False):
         super(All, self).__init__(elements, min_occurs, max_occurs)
         self._consume_other = consume_other
 
@@ -304,10 +304,11 @@ class All(OrderIndicator):
             sub_elements = values.get(element.qname)
             if sub_elements:
                 result[name] = element.parse_xmlelements(
-                    sub_elements, schema, context=context)
+                    sub_elements, schema, context=context
+                )
 
         if self._consume_other and xmlelements:
-            result['_raw_elements'] = list(xmlelements)
+            result["_raw_elements"] = list(xmlelements)
             xmlelements.clear()
         return result
 
@@ -358,7 +359,8 @@ class Choice(OrderIndicator):
                         xmlelements=local_xmlelements,
                         schema=schema,
                         name=element_name,
-                        context=context)
+                        context=context,
+                    )
                 except UnexpectedElementError:
                     continue
 
@@ -426,14 +428,18 @@ class Choice(OrderIndicator):
                             result.append(choice_value)
                             break
                     else:
-                        if element.name in value:
+                        if isinstance(element, Any):
+                            result.append(value)
+                            break
+                        elif element.name in value:
                             choice_value = value.get(element.name)
                             result.append({element.name: choice_value})
                             break
                 else:
                     raise TypeError(
                         "No complete xsd:Sequence found for the xsd:Choice %r.\n"
-                        "The signature is: %s" % (name, self.signature()))
+                        "The signature is: %s" % (name, self.signature())
+                    )
 
             if not self.accepts_multiple:
                 result = result[0] if result else None
@@ -539,7 +545,7 @@ class Choice(OrderIndicator):
                 if name is not None:
                     try:
                         choice_value = value[name]
-                    except KeyError:
+                    except (KeyError, TypeError):
                         choice_value = value
                 else:
                     choice_value = value
@@ -556,12 +562,14 @@ class Choice(OrderIndicator):
         parts = []
         for name, element in self.elements_nested:
             if isinstance(element, OrderIndicator):
-                parts.append('{%s}' % (element.signature(schema, standalone=False)))
+                parts.append("{%s}" % (element.signature(schema, standalone=False)))
             else:
-                parts.append('{%s: %s}' % (name, element.signature(schema, standalone=False)))
-        part = '(%s)' % ' | '.join(parts)
+                parts.append(
+                    "{%s: %s}" % (name, element.signature(schema, standalone=False))
+                )
+        part = "(%s)" % " | ".join(parts)
         if self.accepts_multiple:
-            return '%s[]' % (part,)
+            return "%s[]" % (part,)
         return part
 
 
@@ -570,6 +578,7 @@ class Sequence(OrderIndicator):
     within the containing element.
 
     """
+
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Consume matching xmlelements
 
@@ -597,7 +606,8 @@ class Sequence(OrderIndicator):
             for elm_name, element in self.elements:
                 try:
                     item_subresult = element.parse_xmlelements(
-                        xmlelements, schema, name, context=context)
+                        xmlelements, schema, name, context=context
+                    )
                 except UnexpectedElementError:
                     if schema.settings.strict:
                         raise
@@ -643,15 +653,13 @@ class Group(Indicator):
     @threaded_cached_property
     def elements(self):
         if self.accepts_multiple:
-            return [('_value_1', self.child)]
+            return [("_value_1", self.child)]
         return self.child.elements
 
     def clone(self, name, min_occurs=1, max_occurs=1):
         return self.__class__(
-            name=None,
-            child=self.child,
-            min_occurs=min_occurs,
-            max_occurs=max_occurs)
+            name=None, child=self.child, min_occurs=min_occurs, max_occurs=max_occurs
+        )
 
     def accept(self, values):
         """Return the number of values which are accepted by this choice.
@@ -673,16 +681,18 @@ class Group(Indicator):
             item_kwargs = kwargs[name]
 
             result = []
-            sub_name = '_value_1' if self.child.accepts_multiple else None
+            sub_name = "_value_1" if self.child.accepts_multiple else None
             for sub_kwargs in max_occurs_iter(self.max_occurs, item_kwargs):
                 available_sub_kwargs = set(sub_kwargs.keys())
                 subresult = self.child.parse_kwargs(
-                    sub_kwargs, sub_name, available_sub_kwargs)
+                    sub_kwargs, sub_name, available_sub_kwargs
+                )
 
                 if available_sub_kwargs:
-                    raise TypeError((
-                        "%s() got an unexpected keyword argument %r."
-                    ) % (self, list(available_sub_kwargs)[0]))
+                    raise TypeError(
+                        ("%s() got an unexpected keyword argument %r.")
+                        % (self, list(available_sub_kwargs)[0])
+                    )
 
                 if subresult:
                     result.append(subresult)
@@ -710,8 +720,7 @@ class Group(Indicator):
 
         for _unused in max_occurs_iter(self.max_occurs):
             result.append(
-                self.child.parse_xmlelements(
-                    xmlelements, schema, name, context=context)
+                self.child.parse_xmlelements(xmlelements, schema, name, context=context)
             )
             if not xmlelements:
                 break
@@ -735,7 +744,6 @@ class Group(Indicator):
     def signature(self, schema=None, standalone=True):
         name = create_prefixed_name(self.qname, schema)
         if standalone:
-            return '%s(%s)' % (
-                name, self.child.signature(schema, standalone=False))
+            return "%s(%s)" % (name, self.child.signature(schema, standalone=False))
         else:
             return self.child.signature(schema, standalone=False)

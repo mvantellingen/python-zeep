@@ -20,9 +20,9 @@ def test_load(event_loop):
     transport = asyncio.AsyncTransport(loop=event_loop, cache=cache)
 
     with aioresponses() as m:
-        m.get('http://tests.python-zeep.org/test.xml', body='x')
-        result = transport.load('http://tests.python-zeep.org/test.xml')
-        assert result == b'x'
+        m.get("http://tests.python-zeep.org/test.xml", body="x")
+        result = transport.load("http://tests.python-zeep.org/test.xml")
+        assert result == b"x"
 
 
 @pytest.mark.requests
@@ -31,11 +31,11 @@ def test_load_cache(event_loop):
     transport = asyncio.AsyncTransport(loop=event_loop, cache=cache)
 
     with aioresponses() as m:
-        m.get('http://tests.python-zeep.org/test.xml', body='x')
-        result = transport.load('http://tests.python-zeep.org/test.xml')
-        assert result == b'x'
+        m.get("http://tests.python-zeep.org/test.xml", body="x")
+        result = transport.load("http://tests.python-zeep.org/test.xml")
+        assert result == b"x"
 
-    assert cache.get('http://tests.python-zeep.org/test.xml') == b'x'
+    assert cache.get("http://tests.python-zeep.org/test.xml") == b"x"
 
 
 def test_cache_checks_type():
@@ -45,7 +45,7 @@ def test_cache_checks_type():
         pass
 
     with pytest.raises(TypeError):
-        cache.add('x', foo())
+        cache.add("x", foo())
 
 
 @pytest.mark.requests
@@ -54,16 +54,15 @@ async def test_post(event_loop):
     cache = stub(get=lambda url: None, add=lambda url, content: None)
     transport = asyncio.AsyncTransport(loop=event_loop, cache=cache)
 
-    envelope = etree.Element('Envelope')
+    envelope = etree.Element("Envelope")
 
     with aioresponses() as m:
-        m.post('http://tests.python-zeep.org/test.xml', body='x')
+        m.post("http://tests.python-zeep.org/test.xml", body="x")
         result = await transport.post_xml(
-            'http://tests.python-zeep.org/test.xml',
-            envelope=envelope,
-            headers={})
+            "http://tests.python-zeep.org/test.xml", envelope=envelope, headers={}
+        )
 
-        assert result.content == b'x'
+        assert result.content == b"x"
 
 
 @pytest.mark.requests
@@ -89,12 +88,8 @@ def test_http_error(event_loop):
     transport = asyncio.AsyncTransport(loop=event_loop)
 
     with aioresponses() as m:
-        m.get(
-            'http://tests.python-zeep.org/test.xml',
-            body='x',
-            status=500,
-        )
+        m.get("http://tests.python-zeep.org/test.xml", body="x", status=500)
         with pytest.raises(exceptions.TransportError) as exc:
-            transport.load('http://tests.python-zeep.org/test.xml')
+            transport.load("http://tests.python-zeep.org/test.xml")
             assert exc.value.status_code == 500
             assert exc.value.message is None

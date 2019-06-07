@@ -21,10 +21,7 @@ from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
 from zeep.xsd import Schema
 
-
-NSMAP = {
-    'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
-}
+NSMAP = {"wsdl": "http://schemas.xmlsoap.org/wsdl/"}
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +74,8 @@ class Document(object):
             node=None,
             transport=self.transport,
             location=self.location,
-            settings=self.settings)
+            settings=self.settings,
+        )
 
         document = self._get_xml_document(location)
 
@@ -91,45 +89,47 @@ class Document(object):
         self.services = root_definitions.services
 
     def __repr__(self):
-        return '<WSDL(location=%r)>' % self.location
+        return "<WSDL(location=%r)>" % self.location
 
     def dump(self):
-        print('')
+        print("")
         print("Prefixes:")
         for prefix, namespace in self.types.prefix_map.items():
-            print(' ' * 4, '%s: %s' % (prefix, namespace))
+            print(" " * 4, "%s: %s" % (prefix, namespace))
 
-        print('')
+        print("")
         print("Global elements:")
         for elm_obj in sorted(self.types.elements, key=lambda k: k.qname):
             value = elm_obj.signature(schema=self.types)
-            print(' ' * 4, value)
+            print(" " * 4, value)
 
-        print('')
+        print("")
         print("Global types:")
-        for type_obj in sorted(self.types.types, key=lambda k: k.qname or ''):
+        for type_obj in sorted(self.types.types, key=lambda k: k.qname or ""):
             value = type_obj.signature(schema=self.types)
-            print(' ' * 4, value)
+            print(" " * 4, value)
 
-        print('')
+        print("")
         print("Bindings:")
-        for binding_obj in sorted(self.bindings.values(), key=lambda k: six.text_type(k)):
-            print(' ' * 4, six.text_type(binding_obj))
+        for binding_obj in sorted(
+            self.bindings.values(), key=lambda k: six.text_type(k)
+        ):
+            print(" " * 4, six.text_type(binding_obj))
 
-        print('')
+        print("")
         for service in self.services.values():
             print(six.text_type(service))
             for port in service.ports.values():
-                print(' ' * 4, six.text_type(port))
-                print(' ' * 8, 'Operations:')
+                print(" " * 4, six.text_type(port))
+                print(" " * 8, "Operations:")
 
                 operations = sorted(
-                    port.binding._operations.values(),
-                    key=operator.attrgetter('name'))
+                    port.binding._operations.values(), key=operator.attrgetter("name")
+                )
 
                 for operation in operations:
-                    print('%s%s' % (' ' * 12, six.text_type(operation)))
-                print('')
+                    print("%s%s" % (" " * 12, six.text_type(operation)))
+                print("")
 
     def _get_xml_document(self, location):
         """Load the XML content from the given location and return an
@@ -140,7 +140,8 @@ class Document(object):
 
         """
         return load_external(
-            location, self.transport, self.location, settings=self.settings)
+            location, self.transport, self.location, settings=self.settings
+        )
 
     def _add_definition(self, definition):
         key = (definition.target_namespace, definition.location)
@@ -173,7 +174,7 @@ class Definition(object):
         self.imports = {}
         self._resolved_imports = False
 
-        self.target_namespace = doc.get('targetNamespace')
+        self.target_namespace = doc.get("targetNamespace")
         self.wsdl._add_definition(self)
         self.nsmap = doc.nsmap
 
@@ -187,7 +188,7 @@ class Definition(object):
         self.services = self.parse_service(doc)
 
     def __repr__(self):
-        return '<Definition(location=%r)>' % self.location
+        return "<Definition(location=%r)>" % self.location
 
     def get(self, name, key, _processed=None):
         container = getattr(self, name)
@@ -256,13 +257,13 @@ class Definition(object):
 
         """
         for import_node in doc.findall("wsdl:import", namespaces=NSMAP):
-            namespace = import_node.get('namespace')
-            location = import_node.get('location')
+            namespace = import_node.get("namespace")
+            location = import_node.get("location")
 
             if not location:
                 logger.debug(
-                    "Skipping import for namespace %s (empty location)",
-                    namespace)
+                    "Skipping import for namespace %s (empty location)", namespace
+                )
                 continue
 
             location = absolute_location(location, self.location)
@@ -271,7 +272,7 @@ class Definition(object):
                 self.imports[key] = self.wsdl._definitions[key]
             else:
                 document = self.wsdl._get_xml_document(location)
-                if etree.QName(document.tag).localname == 'schema':
+                if etree.QName(document.tag).localname == "schema":
                     self.types.add_documents([document], location)
                 else:
                     wsdl = Definition(self.wsdl, document, location)
@@ -301,18 +302,17 @@ class Definition(object):
         """
         namespace_sets = [
             {
-                'xsd': 'http://www.w3.org/2001/XMLSchema',
-                'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
+                "xsd": "http://www.w3.org/2001/XMLSchema",
+                "wsdl": "http://schemas.xmlsoap.org/wsdl/",
             },
             {
-                'xsd': 'http://www.w3.org/1999/XMLSchema',
-                'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
+                "xsd": "http://www.w3.org/1999/XMLSchema",
+                "wsdl": "http://schemas.xmlsoap.org/wsdl/",
             },
         ]
 
         # Find xsd:schema elements (wsdl:types/xsd:schema)
-        schema_nodes = findall_multiple_ns(
-            doc, 'wsdl:types/xsd:schema', namespace_sets)
+        schema_nodes = findall_multiple_ns(doc, "wsdl:types/xsd:schema", namespace_sets)
         self.types.add_documents(schema_nodes, self.location)
 
     def parse_messages(self, doc):
@@ -357,7 +357,7 @@ class Definition(object):
 
         """
         result = {}
-        for port_node in doc.findall('wsdl:portType', namespaces=NSMAP):
+        for port_node in doc.findall("wsdl:portType", namespaces=NSMAP):
             port_type = parse.parse_port_type(self, port_node)
             result[port_type.name.text] = port_type
             logger.debug("Adding port: %s", port_type.name.text)
@@ -399,8 +399,9 @@ class Definition(object):
         """
         result = {}
 
-        if not getattr(self.wsdl.transport, 'binding_classes', None):
+        if not getattr(self.wsdl.transport, "binding_classes", None):
             from zeep.wsdl import bindings
+
             binding_classes = [
                 bindings.Soap11Binding,
                 bindings.Soap12Binding,
@@ -410,7 +411,7 @@ class Definition(object):
         else:
             binding_classes = self.wsdl.transport.binding_classes
 
-        for binding_node in doc.findall('wsdl:binding', namespaces=NSMAP):
+        for binding_node in doc.findall("wsdl:binding", namespaces=NSMAP):
             # Detect the binding type
             binding = None
             for binding_class in binding_classes:
@@ -445,7 +446,7 @@ class Definition(object):
 
         """
         result = OrderedDict()
-        for service_node in doc.findall('wsdl:service', namespaces=NSMAP):
+        for service_node in doc.findall("wsdl:service", namespaces=NSMAP):
             service = parse.parse_service(self, service_node)
             result[service.name] = service
             logger.debug("Adding service: %s", service.name)
