@@ -310,28 +310,29 @@ def _verify_envelope_with_key(envelope, key):
         raise SignatureVerificationFailed()
 
     security = header.find(QName(ns.WSSE, "Security"))
-    signature = security.find(QName(ns.DS, "Signature"))
+    if security:
+        signature = security.find(QName(ns.DS, "Signature"))
 
-    ctx = xmlsec.SignatureContext()
+        ctx = xmlsec.SignatureContext()
 
-    # Find each signed element and register its ID with the signing context.
-    refs = signature.xpath("ds:SignedInfo/ds:Reference", namespaces={"ds": ns.DS})
-    for ref in refs:
-        # Get the reference URI and cut off the initial '#'
-        referenced_id = ref.get("URI")[1:]
-        referenced = envelope.xpath(
-            "//*[@wsu:Id='%s']" % referenced_id, namespaces={"wsu": ns.WSU}
-        )[0]
-        ctx.register_id(referenced, "Id", ns.WSU)
+        # Find each signed element and register its ID with the signing context.
+        refs = signature.xpath("ds:SignedInfo/ds:Reference", namespaces={"ds": ns.DS})
+        for ref in refs:
+            # Get the reference URI and cut off the initial '#'
+            referenced_id = ref.get("URI")[1:]
+            referenced = envelope.xpath(
+                "//*[@wsu:Id='%s']" % referenced_id, namespaces={"wsu": ns.WSU}
+            )[0]
+            ctx.register_id(referenced, "Id", ns.WSU)
 
-    ctx.key = key
+        ctx.key = key
 
-    try:
-        ctx.verify(signature)
-    except xmlsec.Error:
-        # Sadly xmlsec gives us no details about the reason for the failure, so
-        # we have nothing to pass on except that verification failed.
-        raise SignatureVerificationFailed()
+        try:
+            ctx.verify(signature)
+        except xmlsec.Error:
+            # Sadly xmlsec gives us no details about the reason for the failure, so
+            # we have nothing to pass on except that verification failed.
+            raise SignatureVerificationFailed()
 
 
 def _sign_node(ctx, signature, target, digest_method=None):
