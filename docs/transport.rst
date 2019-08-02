@@ -60,7 +60,7 @@ See :class:`requests.Session` for further details.
 Session timeout
 ---------------
 
-To set a transport timeout use the `timeout` option. The default timeout is 300
+To set a transport timeout for loading wsdl sfn xsd documents, use the `timeout` option. The default timeout is 300
 seconds:
 
 .. code-block:: python
@@ -72,6 +72,8 @@ seconds:
     client = Client(
         'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
         transport=transport)
+        
+To pass a timeout to the underlying POST/GET requests, use ```operation_timeout```. This defaults to None.
 
 
 Using HTTP or SOCKS Proxy
