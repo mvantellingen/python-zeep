@@ -73,7 +73,7 @@ seconds:
         'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
         transport=transport)
         
-To pass a timeout to the underlying POST/GET requests, use ```operation_timeout```. This defaults to None.
+To pass a timeout to the underlying POST/GET requests, use `operation_timeout`. This defaults to None.
 
 
 Using HTTP or SOCKS Proxy
