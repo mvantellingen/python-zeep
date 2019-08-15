@@ -247,7 +247,17 @@ class ComplexType(AnyType):
 
         # Render attributes
         for name, attribute in self.attributes:
-            attr_value = value[name] if name in value else NotSet
+            import sys
+            if sys.version_info < (3, 4):
+                if isinstance(value, basestring):
+                    attr_value = NotSet
+                else:
+                    attr_value = value[name] if name in value else NotSet
+            else:
+                if isinstance(value, str):
+                    attr_value = NotSet
+                else:
+                    attr_value = value[name] if name in value else NotSet
             child_path = render_path + [name]
             attribute.render(parent, attr_value, child_path)
 
