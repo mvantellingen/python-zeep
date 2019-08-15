@@ -249,7 +249,7 @@ class ComplexType(AnyType):
         for name, attribute in self.attributes:
             import sys
             if sys.version_info < (3, 4):
-                if isinstance(value, basestring):
+                if isinstance(value, str) or isinstance(value, unicode):
                     attr_value = NotSet
                 else:
                     attr_value = value[name] if name in value else NotSet
