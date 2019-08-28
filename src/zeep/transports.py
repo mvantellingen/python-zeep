@@ -1,5 +1,6 @@
 import logging
 import os
+from abc import abstractmethod
 from contextlib import contextmanager
 
 import requests
@@ -9,8 +10,13 @@ from zeep.utils import get_media_type, get_version
 from zeep.wsdl.utils import etree_to_string
 
 
-class Transport(object):
-    """The transport object handles all communication to the SOAP server.
+class AbstractTransport(object):
+    """The abstract transport object handles all communication to the SOAP server.
+
+    This class contains two abstract methods:
+    - replace_custom_elements_in_log_request_message
+    - replace_custom_elements_in_log_response_message
+    Used's to change only log message. Very useful to share passwords.
 
     :param cache: The cache object to be used to cache GET requests
     :param timeout: The timeout for loading wsdl and xsd documents.
@@ -30,6 +36,26 @@ class Transport(object):
         self.session.headers["User-Agent"] = "Zeep/%s (www.python-zeep.org)" % (
             get_version()
         )
+
+    @abstractmethod
+    def replace_custom_elements_in_log_request_message(self, log_message):
+        """
+        By herency, modify request log_message to share passwords or etc.
+
+        :param log_message: request message to show in log
+        :return: modify request log message
+        """
+        pass
+
+    @abstractmethod
+    def replace_custom_elements_in_log_response_message(self, log_message):
+        """
+        By herency, modify response log_message to share passwords or etc.
+
+        :param log_message: response message to show in log
+        :return: modify response log message
+        """
+        pass
 
     def get(self, address, params, headers):
         """Proxy to requests.get()
@@ -56,6 +82,10 @@ class Transport(object):
             log_message = message
             if isinstance(log_message, bytes):
                 log_message = log_message.decode("utf-8")
+
+            # modify custom request, to share passwords, i.e.
+            log_message = self.replace_custom_elements_in_log_request_message(log_message)
+
             self.logger.debug("HTTP Post to %s:\n%s", address, log_message)
 
         response = self.session.post(
@@ -73,6 +103,9 @@ class Transport(object):
                 log_message = response.content
                 if isinstance(log_message, bytes):
                     log_message = log_message.decode(response.encoding or "utf-8")
+
+            # modify custom response, to share passwords, i.e.
+            log_message = self.replace_custom_elements_in_log_response_message(log_message)
 
             self.logger.debug(
                 "HTTP Response from %s (status: %d):\n%s",
@@ -145,3 +178,15 @@ class Transport(object):
         self.operation_timeout = timeout
         yield
         self.operation_timeout = old_timeout
+
+
+class Transport(AbstractTransport):
+    """
+    Default Transport not modificated log messages
+    """
+
+    def replace_custom_elements_in_log_request_message(self, log_message):
+        return log_message
+
+    def replace_custom_elements_in_log_response_message(self, log_message):
+        return log_message
