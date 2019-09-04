@@ -45,7 +45,7 @@ def apply_ingress(client, envelope, http_headers, operation):
     return envelope, http_headers
 
 
-class HistoryPlugin(object):
+class HistoryPlugin(Plugin):
     def __init__(self, maxlen=1):
         self._buffer = deque([], maxlen)
 
