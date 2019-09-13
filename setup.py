@@ -35,7 +35,7 @@ tests_require = [
     'mock==2.0.0',
     'pretend==1.0.8',
     'pytest-cov==2.5.1',
-    'pytest==3.1.3',
+    'pytest~=5.0',
     'requests_mock>=0.7.0',
     'pytest-tornado==0.4.5',
 

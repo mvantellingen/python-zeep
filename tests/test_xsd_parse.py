@@ -587,7 +587,7 @@ def test_xsd_choice_with_references():
 
     with pytest.raises(exceptions.XMLParseError) as exc:
         result = elm.parse(xml, schema)
-    assert "BAD_ELEMENT" in str(exc)
+    assert "BAD_ELEMENT" in str(exc.value)
 
     xml = load_xml(
         b"""
