@@ -31,20 +31,20 @@ xmlsec_require = [
 ]
 
 tests_require = [
-    'freezegun==0.3.8',
-    'mock==2.0.0',
-    'pretend==1.0.8',
-    'pytest-cov==2.5.1',
+    'freezegun~=0.3.8',
+    'mock~=2.0',
+    'pretend~=1.0',
+    'pytest-cov~=2.5',
     'pytest~=5.0',
     'requests_mock>=0.7.0',
-    'pytest-tornado==0.4.5',
+    'pytest-tornado~=0.8.0',
 
     # Linting
-    'isort==4.2.15',
-    'flake8==3.3.0',
-    'flake8-blind-except==0.1.1',
-    'flake8-debugger==1.4.0',
-    'flake8-imports==0.1.1',
+    'isort~=4.2',
+    'flake8~=3.3',
+    'flake8-blind-except~=0.1.1',
+    'flake8-debugger~=1.4',
+    'flake8-imports~=0.1.1',
 ]
 
 
