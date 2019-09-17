@@ -145,13 +145,26 @@ class Client(object):
 
         Example::
 
-            factory = client.type_factory('ns0')
-            user = factory.User(name='John')
+            types = client.type_factory('ns0')
+            user = types.User(name='John')
 
         :rtype: Factory
 
         """
         return Factory(self.wsdl.types, "type", namespace)
+
+    def element_factory(self, namespace):
+        """Return an element factory for the given namespace.
+
+        Example::
+
+            elements = client.element_factory('ns0')
+            item = elements.Item(title="The Item's Title")
+
+        :rtype: Factory
+
+        """
+        return Factory(self.wsdl.types, "element", namespace)
 
     def get_type(self, name):
         """Return the type for the given qualified name.
