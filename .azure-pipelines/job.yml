@@ -13,9 +13,6 @@ jobs:
       Python 2.7:
         python.version: "2.7"
         TOXENV: "py27-${{ parameters.os }}"
-      Python 3.4:
-        python.version: "3.4"
-        TOXENV: "py34-${{ parameters.os }}"
       Python 3.5:
         python.version: "3.5"
         TOXENV: "py35-${{ parameters.os }}"
