@@ -10,6 +10,7 @@ from zeep.utils import as_qname, qname_attr
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import types as xsd_types
 from zeep.xsd.const import AUTO_IMPORT_NAMESPACES, xsd_ns
+from zeep.xsd.constraining_facets import ConstrainingFacets
 from zeep.xsd.types.unresolved import UnresolvedCustomType, UnresolvedType
 
 logger = logging.getLogger(__name__)
@@ -544,7 +545,8 @@ class SchemaVisitor(object):
         child = items[0]
         if child.tag == tags.restriction:
             base_type = self.visit_restriction_simple_type(child, node)
-            xsd_type = UnresolvedCustomType(qname, base_type, self.schema)
+            constraints = ConstrainingFacets(child)
+            xsd_type = UnresolvedCustomType(qname, base_type, constraints, self.schema)
 
         elif child.tag == tags.list:
             xsd_type = self.visit_list(child, node)
