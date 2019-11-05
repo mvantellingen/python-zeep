@@ -171,6 +171,8 @@ class DateTime(BuiltinType):
         # lazy hack ;-)
         if len(value) == 10:
             value += "T00:00:00"
+        elif len(value) == 19 and value.endswith(' 00:00:00'):
+            value = "T".join(value.split(" "))
         return isodate.parse_datetime(value)
 
 
