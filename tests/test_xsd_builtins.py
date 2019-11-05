@@ -135,6 +135,9 @@ class TestDateTime:
         value = datetime.datetime(2016, 3, 4, 21, 14, 42)
         assert instance.pythonvalue("2016-03-04T21:14:42") == value
 
+        value = datetime.datetime(2016, 3, 4, 0, 0, 0)
+        assert instance.pythonvalue("2016-03-04 00:00:00") == value
+
         value = datetime.datetime(2016, 3, 4, 21, 14, 42, 123456)
         assert instance.pythonvalue("2016-03-04T21:14:42.123456") == value
 
