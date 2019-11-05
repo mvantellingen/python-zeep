@@ -43,8 +43,7 @@ def test_simpletype_parse():
 def test_simpletype_pythonvalue():
     item = types.AnySimpleType()
 
-    with pytest.raises(NotImplementedError):
-        item.pythonvalue(None)
+    assert item.pythonvalue("foobar") == "foobar"
 
 
 def test_simpletype_call_wrong_arg_count():
