@@ -109,6 +109,26 @@ binding you can use the ``bind()`` method on the client object:
     service2 = client.bind('SecondService', 'Port12')
     service2.someOperation(myArg=1)
 
+for example, if your wsdl contains these definitions
+
+.. code-block:: xml
+
+    <wsdl:service name="ServiceName">
+    <wsdl:port name="PortName" binding="tns:BasicHttpsBinding_IServiziPartner">
+    <soap:address location="https://aaa.bbb.ccc/ddd/eee.svc"/>
+    </wsdl:port>
+    <wsdl:port name="PortNameAdmin" binding="tns:BasicHttpsBinding_IServiziPartnerAdmin">
+    <soap:address location="https://aaa.bbb.ccc/ddd/eee.svc/admin"/>
+    </wsdl:port>
+    </wsdl:service>
+
+and you need to calls methods defined in **https://aaa.bbb.ccc/ddd/eee.svc/admin** you can do:
+
+.. code-block:: python
+
+    client = Client("https://www.my.wsdl") # this will use default binding
+    client_admin = client.bind('ServiceName', 'PortNameAdmin')
+    client_admin.method1() #this will call method1 defined in service name ServiceName and port PortNameAdmin
 
 Creating new ServiceProxy objects
 ---------------------------------
