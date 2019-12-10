@@ -1,11 +1,11 @@
 ========================
-Zeep: Python SOAP client 
+Zeep: Python SOAP client
 ========================
 
 A fast and modern Python SOAP client
 
 Highlights:
- * Compatible with Python 2.7, 3.5, 3.6, 3.7 and PyPy
+ * Compatible with Python 2.7, 3.5, 3.6, 3.7, 3.8 and PyPy
  * Build on top of lxml and requests
  * Support for Soap 1.1, Soap 1.2 and HTTP bindings
  * Support for WS-Addressing headers
@@ -26,11 +26,11 @@ Status
 
 .. image:: https://readthedocs.org/projects/python-zeep/badge/?version=latest
     :target: https://readthedocs.org/projects/python-zeep/
-   
+
 .. image:: https://dev.azure.com/mvantellingen/zeep/_apis/build/status/python-zeep?branchName=master
     :target: https://dev.azure.com/mvantellingen/zeep/_build?definitionId=1
 
-.. image:: http://codecov.io/github/mvantellingen/python-zeep/coverage.svg?branch=master 
+.. image:: http://codecov.io/github/mvantellingen/python-zeep/coverage.svg?branch=master
     :target: http://codecov.io/github/mvantellingen/python-zeep?branch=master
 
 .. image:: https://img.shields.io/pypi/v/zeep.svg
@@ -68,7 +68,7 @@ information.
 Support
 =======
 
-If you want to report a bug then please first read 
+If you want to report a bug then please first read
 http://docs.python-zeep.org/en/master/reporting_bugs.html
 
-Please only report bugs and not support requests to the GitHub issue tracker. 
+Please only report bugs and not support requests to the GitHub issue tracker.
