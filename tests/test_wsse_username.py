@@ -321,3 +321,56 @@ def test_timestamp_token():
             </soap-env:Envelope>
         """  # noqa
     assert_nodes_equal(envelope, expected)
+
+
+@freeze_time("2016-05-08 12:00:00")
+def test_bytes_like_password_digest(monkeypatch):
+    monkeypatch.setattr(os, "urandom", lambda x: b"mocked-random")
+
+    envelope = load_xml(
+        """
+        <soap-env:Envelope
+            xmlns:ns0="http://example.com/stockquote.xsd"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        >
+          <soap-env:Body>
+            <ns0:TradePriceRequest>
+              <tickerSymbol>foobar</tickerSymbol>
+              <ns0:country/>
+            </ns0:TradePriceRequest>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """
+    )
+
+    token = UsernameToken("michael", b"geheim", use_digest=True)
+    envelope, headers = token.apply(envelope, {})
+    expected = """
+        <soap-env:Envelope
+            xmlns:ns0="http://example.com/stockquote.xsd"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+            xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <soap-env:Header>
+            <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+              <wsse:UsernameToken>
+                <wsse:Username>michael</wsse:Username>
+                <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">hVicspAQSg70JNhe67OHqD9gexc=</wsse:Password>
+                <wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">bW9ja2VkLXJhbmRvbQ==</wsse:Nonce>
+                <wsu:Created xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">2016-05-08T12:00:00+00:00</wsu:Created>
+              </wsse:UsernameToken>
+            </wsse:Security>
+          </soap-env:Header>
+          <soap-env:Body>
+            <ns0:TradePriceRequest>
+              <tickerSymbol>foobar</tickerSymbol>
+              <ns0:country/>
+            </ns0:TradePriceRequest>
+          </soap-env:Body>
+        </soap-env:Envelope>
+    """  # noqa
+    assert_nodes_equal(envelope, expected)
