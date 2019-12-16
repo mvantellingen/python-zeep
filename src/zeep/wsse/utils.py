@@ -27,10 +27,12 @@ def get_security_header(doc):
     return security
 
 
-def get_timestamp(timestamp=None):
+def get_timestamp(timestamp=None, use_zulu_timestamp=None):
     timestamp = timestamp or datetime.datetime.utcnow()
     timestamp = timestamp.replace(tzinfo=pytz.utc, microsecond=0)
-    return timestamp.isoformat()
+    return timestamp.strftime("%Y-%m-%dT%H:%M:%SZ") \
+            if use_zulu_timestamp \
+            else timestamp.isoformat()
 
 
 def get_unique_id():

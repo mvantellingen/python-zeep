@@ -47,6 +47,7 @@ class UsernameToken(object):
         nonce=None,
         created=None,
         timestamp_token=None,
+        use_zulu_timestamp=None,
     ):
         self.username = username
         self.password = password
@@ -55,6 +56,7 @@ class UsernameToken(object):
         self.created = created
         self.use_digest = use_digest
         self.timestamp_token = timestamp_token
+        self.use_zulu_timestamp = use_zulu_timestamp
 
     def apply(self, envelope, headers):
         security = utils.get_security_header(envelope)
@@ -95,7 +97,7 @@ class UsernameToken(object):
             nonce = self.nonce.encode("utf-8")
         else:
             nonce = os.urandom(16)
-        timestamp = utils.get_timestamp(self.created)
+        timestamp = utils.get_timestamp(self.created, self.use_zulu_timestamp)
 
         # digest = Base64 ( SHA-1 ( nonce + created + password ) )
         if not self.password_digest:
