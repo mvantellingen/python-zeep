@@ -56,7 +56,7 @@ class UsernameToken(object):
         self.use_digest = use_digest
         self.timestamp_token = timestamp_token
 
-    def apply(self, envelope, headers):
+    def apply(self, envelope, headers, operation_obj=None):
         security = utils.get_security_header(envelope)
 
         # The token placeholder might already exists since it is specified in

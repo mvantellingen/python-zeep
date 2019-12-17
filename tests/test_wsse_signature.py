@@ -92,12 +92,133 @@ def test_sign(
     """
     )
 
+    # Force body signature
+    signatures = {"everything": False, "body": True, "header": []}
     signature.sign_envelope(
         envelope,
         KEY_FILE,
         KEY_FILE,
         signature_method=getattr(xmlsec_installed.Transform, signature_method),
         digest_method=getattr(xmlsec_installed.Transform, digest_method),
+        signatures=signatures,
+    )
+    signature.verify_envelope(envelope, KEY_FILE)
+
+    digests = envelope.xpath("//ds:DigestMethod", namespaces={"ds": ns.DS})
+    assert len(digests)
+    for digest in digests:
+        assert digest.get("Algorithm") == expected_digest_href
+    signatures = envelope.xpath("//ds:SignatureMethod", namespaces={"ds": ns.DS})
+    assert len(signatures)
+    for sig in signatures:
+        assert sig.get("Algorithm") == expected_signature_href
+
+
+@skip_if_no_xmlsec
+@pytest.mark.parametrize("digest_method,expected_digest_href", DIGEST_METHODS_TESTDATA)
+@pytest.mark.parametrize(
+    "signature_method,expected_signature_href", SIGNATURE_METHODS_TESTDATA
+)
+def test_sign_element(
+    digest_method, signature_method, expected_digest_href, expected_signature_href
+):
+    envelope = load_xml(
+        """
+        <soapenv:Envelope
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+            xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+          <soapenv:Header>
+            <wsse:Security mustUnderstand="true">
+              <wsu:Timestamp>
+                <wsu:Created>2015-06-25T21:53:25.246276+00:00</wsu:Created>
+                <wsu:Expires>2015-06-25T21:58:25.246276+00:00</wsu:Expires>
+              </wsu:Timestamp>
+            </wsse:Security>
+            <tns:Some>OK</tns:Some>
+          </soapenv:Header>
+          <soapenv:Body>
+            <tns:Function>
+              <tns:Argument>OK</tns:Argument>
+            </tns:Function>
+          </soapenv:Body>
+        </soapenv:Envelope>
+    """
+    )
+
+    # Force header element
+    signatures = {
+        "everything": False,
+        "body": False,
+        "header": [{"Namespace": "http://tests.python-zeep.org/", "Name": "Some"}],
+    }
+    signature.sign_envelope(
+        envelope,
+        KEY_FILE,
+        KEY_FILE,
+        signature_method=getattr(xmlsec_installed.Transform, signature_method),
+        digest_method=getattr(xmlsec_installed.Transform, digest_method),
+        signatures=signatures,
+    )
+    signature.verify_envelope(envelope, KEY_FILE)
+
+    digests = envelope.xpath("//ds:DigestMethod", namespaces={"ds": ns.DS})
+    assert len(digests)
+    for digest in digests:
+        assert digest.get("Algorithm") == expected_digest_href
+    signatures = envelope.xpath("//ds:SignatureMethod", namespaces={"ds": ns.DS})
+    assert len(signatures)
+    for sig in signatures:
+        assert sig.get("Algorithm") == expected_signature_href
+
+
+@skip_if_no_xmlsec
+@pytest.mark.parametrize("digest_method,expected_digest_href", DIGEST_METHODS_TESTDATA)
+@pytest.mark.parametrize(
+    "signature_method,expected_signature_href", SIGNATURE_METHODS_TESTDATA
+)
+def test_sign_everything(
+    digest_method, signature_method, expected_digest_href, expected_signature_href
+):
+    envelope = load_xml(
+        """
+        <soapenv:Envelope
+            xmlns:tns="http://tests.python-zeep.org/"
+            xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+            xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+          <soapenv:Header>
+            <wsse:Security mustUnderstand="true">
+              <wsu:Timestamp>
+                <wsu:Created>2015-06-25T21:53:25.246276+00:00</wsu:Created>
+                <wsu:Expires>2015-06-25T21:58:25.246276+00:00</wsu:Expires>
+              </wsu:Timestamp>
+            </wsse:Security>
+            <tns:Some>OK</tns:Some>
+          </soapenv:Header>
+          <soapenv:Body>
+            <tns:Function>
+              <tns:Argument>OK</tns:Argument>
+            </tns:Function>
+          </soapenv:Body>
+        </soapenv:Envelope>
+    """
+    )
+
+    # Force header element and body signature
+    signatures = {"everything": True, "body": True, "header": []}
+    signature.sign_envelope(
+        envelope,
+        KEY_FILE,
+        KEY_FILE,
+        signature_method=getattr(xmlsec_installed.Transform, signature_method),
+        digest_method=getattr(xmlsec_installed.Transform, digest_method),
+        signatures=signatures,
     )
     signature.verify_envelope(envelope, KEY_FILE)
 
@@ -130,7 +251,11 @@ def test_sign_pw():
     """
     )
 
-    signature.sign_envelope(envelope, KEY_FILE_PW, KEY_FILE_PW, "geheim")
+    # Force body signature
+    signatures = {"everything": False, "body": True, "header": []}
+    signature.sign_envelope(
+        envelope, KEY_FILE_PW, KEY_FILE_PW, "geheim", signatures=signatures
+    )
     signature.verify_envelope(envelope, KEY_FILE_PW)
 
 
@@ -153,7 +278,9 @@ def test_verify_error():
     """
     )
 
-    signature.sign_envelope(envelope, KEY_FILE, KEY_FILE)
+    # Force body signature
+    signatures = {"everything": False, "body": True, "header": []}
+    signature.sign_envelope(envelope, KEY_FILE, KEY_FILE, signatures=signatures)
     nsmap = {"tns": "http://tests.python-zeep.org/"}
 
     for elm in envelope.xpath("//tns:Argument", namespaces=nsmap):
@@ -182,8 +309,10 @@ def test_signature():
     """
     )
 
+    # Force body signature
+    signatures = {"everything": False, "body": True, "header": []}
     plugin = wsse.Signature(KEY_FILE_PW, KEY_FILE_PW, "geheim")
-    envelope, headers = plugin.apply(envelope, {})
+    envelope, headers = plugin.apply(envelope, {}, signatures=signatures)
     plugin.verify(envelope)
 
 
@@ -212,6 +341,8 @@ def test_signature_binary(
     """
     )
 
+    # Force body signature
+    signatures = {"everything": False, "body": True, "header": []}
     plugin = wsse.BinarySignature(
         KEY_FILE_PW,
         KEY_FILE_PW,
@@ -219,7 +350,7 @@ def test_signature_binary(
         signature_method=getattr(xmlsec_installed.Transform, signature_method),
         digest_method=getattr(xmlsec_installed.Transform, digest_method),
     )
-    envelope, headers = plugin.apply(envelope, {})
+    envelope, headers = plugin.apply(envelope, {}, signatures=signatures)
     plugin.verify(envelope)
     # Test the reference
     bintok = envelope.xpath(
