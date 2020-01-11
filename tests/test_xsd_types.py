@@ -71,13 +71,6 @@ def test_simpletype_pythonvalue_float():
     assert item.pythonvalue(value) == value
 
 
-def test_simpletype_pythonvalue_float():
-    item = types.AnySimpleType()
-    value = 3.14
-
-    assert item.pythonvalue(value) == value
-
-
 def test_simpletype_pythonvalue_duration():
     item = types.AnySimpleType()
     value = isodate.parse_duration("P1Y2M3DT4H5M6S")
