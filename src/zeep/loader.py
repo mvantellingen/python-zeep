@@ -1,6 +1,5 @@
 import os.path
 
-from defusedxml.lxml import fromstring
 from lxml import etree
 from six.moves.urllib.parse import urljoin, urlparse, urlunparse
 
@@ -46,7 +45,7 @@ def parse_xml(content, transport, base_url=None, settings=None):
     )
     parser.resolvers.add(ImportResolver(transport))
     try:
-        return fromstring(
+        return etree.fromstring(
             content,
             parser=parser,
             base_url=base_url,
