@@ -1,6 +1,5 @@
 import os.path
 
-from defusedxml.lxml import fromstring
 from lxml import etree
 from six.moves.urllib.parse import urljoin, urlparse, urlunparse
 
@@ -18,6 +17,27 @@ class ImportResolver(etree.Resolver):
         if urlparse(url).scheme in ("http", "https"):
             content = self.transport.load(url)
             return self.resolve_string(content, context)
+
+
+def check_docinfo(elementtree, forbid_dtd=False, forbid_entities=True):
+    """Check docinfo of an element tree for DTD and entity declarations
+    The check for entity declarations needs lxml 3 or newer. lxml 2.x does
+    not support dtd.iterentities().
+    """
+    docinfo = elementtree.docinfo
+    if docinfo.doctype:
+        if forbid_dtd:
+            raise DTDForbidden(docinfo.doctype, docinfo.system_url, docinfo.public_id)
+        if forbid_entities and not LXML3:
+            # lxml < 3 has no iterentities()
+            raise NotSupportedError("Unable to check for entity declarations " "in lxml 2.x")
+
+    if forbid_entities:
+        for dtd in docinfo.internalDTD, docinfo.externalDTD:
+            if dtd is None:
+                continue
+            for entity in dtd.iterentities():
+                raise EntitiesForbidden(entity.name, entity.content, None, None, None, None)
 
 
 def parse_xml(content, transport, base_url=None, settings=None):
@@ -46,13 +66,17 @@ def parse_xml(content, transport, base_url=None, settings=None):
     )
     parser.resolvers.add(ImportResolver(transport))
     try:
-        return fromstring(
+        xml_content = etree.fromstring(
             content,
             parser=parser,
             base_url=base_url,
+        )
+        check_docinfo(
+            xml_content.getroottree(),
             forbid_dtd=settings.forbid_dtd,
             forbid_entities=settings.forbid_entities,
         )
+        return xml_content
     except etree.XMLSyntaxError as exc:
         raise XMLSyntaxError(
             "Invalid XML content received (%s)" % exc.msg, content=content
