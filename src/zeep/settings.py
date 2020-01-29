@@ -74,7 +74,8 @@ class Settings(object):
             else:
                 setattr(self._tls, key, value)
 
-    def __getattribute__(self, key):
+    def __getattr__(self, key):
         if key != "_tls" and hasattr(self._tls, key):
             return getattr(self._tls, key)
-        return super(Settings, self).__getattribute__(key)
+
+        raise AttributeError(key)
