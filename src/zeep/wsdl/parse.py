@@ -114,15 +114,15 @@ def parse_abstract_operation(wsdl, xmlelement):
 
         if tag_name == "input":
             kwargs["input_message"] = param_value
+            wsa_action = msg_node.get(etree.QName(NSMAP["wsam"], "Action"))
+            if not wsa_action:
+                wsa_action = msg_node.get(etree.QName(NSMAP["wsaw"], "Action"))
+            if wsa_action:
+                kwargs["wsa_action"] = wsa_action
         elif tag_name == "output":
             kwargs["output_message"] = param_value
         else:
             kwargs["fault_messages"][param_name] = param_value
-
-        wsa_action = msg_node.get(etree.QName(NSMAP["wsam"], "Action"))
-        if not wsa_action:
-            wsa_action = msg_node.get(etree.QName(NSMAP["wsaw"], "Action"))
-        param_value.wsa_action = wsa_action
 
     kwargs["name"] = name
     kwargs["parameter_order"] = xmlelement.get("parameterOrder")
