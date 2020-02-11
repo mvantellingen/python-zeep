@@ -62,6 +62,7 @@ class AbstractOperation(object):
         output_message=None,
         fault_messages=None,
         parameter_order=None,
+        wsa_action=None,
     ):
         """Initialize the abstract operation.
 
@@ -80,6 +81,7 @@ class AbstractOperation(object):
         self.output_message = output_message
         self.fault_messages = fault_messages
         self.parameter_order = parameter_order
+        self.wsa_action = wsa_action
 
 
 class PortType(object):

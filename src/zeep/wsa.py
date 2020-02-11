@@ -16,7 +16,7 @@ class WsAddressingPlugin(Plugin):
     def egress(self, envelope, http_headers, operation, binding_options):
         """Apply the ws-addressing headers to the given envelope."""
 
-        wsa_action = operation.input.abstract.wsa_action
+        wsa_action = operation.abstract.wsa_action
         if not wsa_action:
             wsa_action = operation.soapaction
 
