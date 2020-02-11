@@ -1,7 +1,7 @@
 .PHONY: install clean test retest coverage docs
 
 install:
-	pip install -e .[docs,test,async]
+	pip install -e .[docs,test,async,tornado]
 	pip install bumpversion twine wheel
 
 lint:
@@ -21,6 +21,10 @@ retest:
 
 coverage:
 	py.test --cov=zeep --cov-report=term-missing --cov-report=html
+
+format:
+	black src/ tests/
+	isort --recursive src tests
 
 docs:
 	$(MAKE) -C docs html

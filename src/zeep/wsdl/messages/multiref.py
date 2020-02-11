@@ -10,9 +10,7 @@ def process_multiref(node):
     with the elements it's referencing to (which have an id attribute).abs
 
     """
-    multiref_objects = {
-        elm.attrib['id']: elm for elm in node.xpath('*[@id]')
-    }
+    multiref_objects = {elm.attrib["id"]: elm for elm in node.xpath("*[@id]")}
     if not multiref_objects:
         return
 
@@ -21,9 +19,9 @@ def process_multiref(node):
     def process(node):
         """Recursive"""
         # TODO (In Soap 1.2 this is 'ref')
-        href = node.attrib.get('href')
+        href = node.attrib.get("href")
 
-        if href and href.startswith('#'):
+        if href and href.startswith("#"):
             obj = multiref_objects.get(href[1:])
             if obj is not None:
                 used_nodes.append(obj)
@@ -49,9 +47,7 @@ def _dereference_element(source, target):
     :rtype target: lxml.etree._Element
 
     """
-    specific_nsmap = {
-        k: v for k, v in source.nsmap.items() if k not in target.nsmap
-    }
+    specific_nsmap = {k: v for k, v in source.nsmap.items() if k not in target.nsmap}
 
     new = _clone_element(source, target.tag, specific_nsmap)
 
@@ -116,15 +112,15 @@ def _prefix_node(node):
     """
     reverse_nsmap = {v: k for k, v in node.nsmap.items()}
 
-    prefix_re = re.compile('^{([^}]+)}(.*)')
+    prefix_re = re.compile("^{([^}]+)}(.*)")
 
     for key, value in node.attrib.items():
-        if value.startswith('{'):
+        if value.startswith("{"):
             match = prefix_re.match(value)
             namespace, localname = match.groups()
 
             if namespace in reverse_nsmap:
-                value = '%s:%s' % (reverse_nsmap.get(namespace), localname)
+                value = "%s:%s" % (reverse_nsmap.get(namespace), localname)
                 node.set(key, value)
 
 
@@ -148,11 +144,11 @@ def _get_attributes(node):
     result = {}
 
     for key, value in node.attrib.items():
-        if value.count(':') == 1:
-            prefix, localname = value.split(':')
+        if value.count(":") == 1:
+            prefix, localname = value.split(":")
 
             if prefix in nsmap:
                 namespace = nsmap[prefix]
-                value = '{%s}%s' % (namespace, localname)
+                value = "{%s}%s" % (namespace, localname)
         result[key] = value
     return list(result.items())

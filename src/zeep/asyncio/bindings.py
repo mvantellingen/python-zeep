@@ -1,18 +1,20 @@
 from zeep.wsdl import bindings
 
-__all__ = ['AsyncSoap11Binding', 'AsyncSoap12Binding']
+__all__ = ["AsyncSoap11Binding", "AsyncSoap12Binding"]
 
 
 class AsyncSoapBinding(object):
-
     async def send(self, client, options, operation, args, kwargs):
         envelope, http_headers = self._create(
-            operation, args, kwargs,
-            client=client,
-            options=options)
+            operation, args, kwargs, client=client, options=options
+        )
 
         response = await client.transport.post_xml(
-            options['address'], envelope, http_headers)
+            options["address"], envelope, http_headers
+        )
+
+        if client.settings.raw_response:
+            return response
 
         operation_obj = self.get(operation)
         return self.process_reply(client, operation_obj, response)

@@ -10,8 +10,9 @@ from zeep.utils import qname_attr
 from zeep.wsdl import definitions
 
 NSMAP = {
-    'wsdl': 'http://schemas.xmlsoap.org/wsdl/',
-    'wsaw': 'http://www.w3.org/2006/05/addressing/wsdl',
+    "wsdl": "http://schemas.xmlsoap.org/wsdl/",
+    "wsaw": "http://www.w3.org/2006/05/addressing/wsdl",
+    "wsam": "http://www.w3.org/2007/05/addressing/metadata",
 }
 
 
@@ -34,13 +35,13 @@ def parse_abstract_message(wsdl, xmlelement):
 
     """
     tns = wsdl.target_namespace
-    message_name = qname_attr(xmlelement, 'name', tns)
+    message_name = qname_attr(xmlelement, "name", tns)
     parts = []
 
-    for part in xmlelement.findall('wsdl:part', namespaces=NSMAP):
-        part_name = part.get('name')
-        part_element = qname_attr(part, 'element', tns)
-        part_type = qname_attr(part, 'type', tns)
+    for part in xmlelement.findall("wsdl:part", namespaces=NSMAP):
+        part_name = part.get("name")
+        part_element = qname_attr(part, "element")
+        part_type = qname_attr(part, "type")
 
         try:
             if part_element is not None:
@@ -49,10 +50,13 @@ def parse_abstract_message(wsdl, xmlelement):
                 part_type = wsdl.types.get_type(part_type)
 
         except (NamespaceError, LookupError):
-            raise IncompleteMessage((
-                "The wsdl:message for %r contains an invalid part (%r): "
-                "invalid xsd type or elements"
-            ) % (message_name.text, part_name))
+            raise IncompleteMessage(
+                (
+                    "The wsdl:message for %r contains an invalid part (%r): "
+                    "invalid xsd type or elements"
+                )
+                % (message_name.text, part_name)
+            )
 
         part = definitions.MessagePart(part_element, part_type)
         parts.append((part_name, part))
@@ -92,37 +96,36 @@ def parse_abstract_operation(wsdl, xmlelement):
     :rtype: zeep.wsdl.definitions.AbstractOperation
 
     """
-    name = xmlelement.get('name')
-    kwargs = {
-        'fault_messages': {}
-    }
+    name = xmlelement.get("name")
+    kwargs = {"fault_messages": {}}
 
-    for msg_node in xmlelement.getchildren():
+    for msg_node in xmlelement:
         tag_name = etree.QName(msg_node.tag).localname
-        if tag_name not in ('input', 'output', 'fault'):
+        if tag_name not in ("input", "output", "fault"):
             continue
 
-        param_msg = qname_attr(
-            msg_node, 'message', wsdl.target_namespace)
-        param_name = msg_node.get('name')
+        param_msg = qname_attr(msg_node, "message", wsdl.target_namespace)
+        param_name = msg_node.get("name")
 
         try:
-            param_value = wsdl.get('messages', param_msg.text)
+            param_value = wsdl.get("messages", param_msg.text)
         except IndexError:
             return
 
-        if tag_name == 'input':
-            kwargs['input_message'] = param_value
-        elif tag_name == 'output':
-            kwargs['output_message'] = param_value
+        if tag_name == "input":
+            kwargs["input_message"] = param_value
+        elif tag_name == "output":
+            kwargs["output_message"] = param_value
         else:
-            kwargs['fault_messages'][param_name] = param_value
+            kwargs["fault_messages"][param_name] = param_value
 
-        wsa_action = msg_node.get(etree.QName(NSMAP['wsaw'], 'Action'))
+        wsa_action = msg_node.get(etree.QName(NSMAP["wsam"], "Action"))
+        if not wsa_action:
+            wsa_action = msg_node.get(etree.QName(NSMAP["wsaw"], "Action"))
         param_value.wsa_action = wsa_action
 
-    kwargs['name'] = name
-    kwargs['parameter_order'] = xmlelement.get('parameterOrder')
+    kwargs["name"] = name
+    kwargs["parameter_order"] = xmlelement.get("parameterOrder")
     return definitions.AbstractOperation(**kwargs)
 
 
@@ -144,9 +147,9 @@ def parse_port_type(wsdl, xmlelement):
     :rtype: zeep.wsdl.definitions.PortType
 
     """
-    name = qname_attr(xmlelement, 'name', wsdl.target_namespace)
+    name = qname_attr(xmlelement, "name", wsdl.target_namespace)
     operations = {}
-    for elm in xmlelement.findall('wsdl:operation', namespaces=NSMAP):
+    for elm in xmlelement.findall("wsdl:operation", namespaces=NSMAP):
         operation = parse_abstract_operation(wsdl, elm)
         if operation:
             operations[operation.name] = operation
@@ -173,8 +176,8 @@ def parse_port(wsdl, xmlelement):
     :rtype: zeep.wsdl.definitions.Port
 
     """
-    name = xmlelement.get('name')
-    binding_name = qname_attr(xmlelement, 'binding', wsdl.target_namespace)
+    name = xmlelement.get("name")
+    binding_name = qname_attr(xmlelement, "binding", wsdl.target_namespace)
     return definitions.Port(name, binding_name=binding_name, xmlelement=xmlelement)
 
 
@@ -208,9 +211,9 @@ def parse_service(wsdl, xmlelement):
     :rtype: zeep.wsdl.definitions.Service
 
     """
-    name = xmlelement.get('name')
+    name = xmlelement.get("name")
     ports = []
-    for port_node in xmlelement.findall('wsdl:port', namespaces=NSMAP):
+    for port_node in xmlelement.findall("wsdl:port", namespaces=NSMAP):
         port = parse_port(wsdl, port_node)
         if port:
             ports.append(port)

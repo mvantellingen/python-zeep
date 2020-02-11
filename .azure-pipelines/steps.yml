@@ -1,0 +1,43 @@
+parameters:
+  os:
+
+steps:
+  - ${{ if eq(parameters.os, 'linux') }}:
+    - script: sudo apt-get update
+      displayName: "Apt update"
+    - script: sudo apt-get install -y
+        libssl-dev
+        libxmlsec1
+        libxmlsec1-dev
+        libxmlsec1-openssl
+        libxslt1-dev
+        pkg-config
+      displayName: "Apt install dependencies"
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "$(python.version)"
+  - script: |
+      python -m pip install --upgrade pip
+      pip install --upgrade setuptools
+      pip install --upgrade tox
+      pip install --upgrade codecov
+    displayName: "Install testing requirements"
+  - script: tox -e $(TOXENV) --
+      --junit-xml=junit.xml
+      --cov=zeep
+      --cov-report=xml:coverage.xml
+      --cov-report=html:coverage.html
+    displayName: "Run tox with TOXENV=$(TOXENV)"
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: "JUnit"
+      testResultsFiles: "$(System.DefaultWorkingDirectory)/junit.xml"
+      testRunTitle: "Python tests for TOXENV=$(TOXENV)"
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: "cobertura"
+      summaryFileLocation: "$(System.DefaultWorkingDirectory)/coverage.xml"
+      reportDirectory: "$(System.DefaultWorkingDirectory)/coverage.html/"
+  - script: codecov
+    condition: succeeded()
+    displayName: "Upload coverage information to codecov.io"

@@ -19,11 +19,9 @@ class _StaticIdentity(object):
         return self.__value__
 
 
-NotSet = _StaticIdentity('NotSet')
-SkipValue = _StaticIdentity('SkipValue')
-Nil = _StaticIdentity('Nil')
+NotSet = _StaticIdentity("NotSet")
+SkipValue = _StaticIdentity("SkipValue")
+Nil = _StaticIdentity("Nil")
 
 
-AUTO_IMPORT_NAMESPACES = [
-    'http://schemas.xmlsoap.org/soap/encoding/'
-]
+AUTO_IMPORT_NAMESPACES = ["http://schemas.xmlsoap.org/soap/encoding/"]

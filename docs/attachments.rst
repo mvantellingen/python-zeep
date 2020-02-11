@@ -3,7 +3,7 @@ SOAP Attachments (multipart)
 ============================
 
 If the server responds with a Content-type: multipart, a MessagePack object
-will be returned. It contains a root object and a number of attachments.
+will be returned. It contains a root object and some attachments.
 
 Example based on https://www.w3.org/TR/SOAP-attachments
 

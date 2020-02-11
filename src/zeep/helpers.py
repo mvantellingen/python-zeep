@@ -24,37 +24,30 @@ def serialize_object(obj, target_cls=OrderedDict):
 def create_xml_soap_map(values):
     """Create an http://xml.apache.org/xml-soap#Map value."""
     Map = xsd.ComplexType(
-        xsd.Sequence([
-            xsd.Element(
-                'item',
-                xsd.AnyType(),
-                min_occurs=1,
-                max_occurs="unbounded"),
-            ]),
-        qname=etree.QName('{http://xml.apache.org/xml-soap}Map'))
+        xsd.Sequence(
+            [xsd.Element("item", xsd.AnyType(), min_occurs=1, max_occurs="unbounded")]
+        ),
+        qname=etree.QName("{http://xml.apache.org/xml-soap}Map"),
+    )
 
     KeyValueData = xsd.Element(
-        '{http://xml.apache.org/xml-soap}KeyValueData',
+        "{http://xml.apache.org/xml-soap}KeyValueData",
         xsd.ComplexType(
-            xsd.Sequence([
-                xsd.Element(
-                    'key',
-                    xsd.AnyType(),
-                ),
-                xsd.Element(
-                    'value',
-                    xsd.AnyType(),
-                ),
-            ]),
+            xsd.Sequence(
+                [xsd.Element("key", xsd.AnyType()), xsd.Element("value", xsd.AnyType())]
+            )
         ),
     )
 
-    return Map(item=[
-        KeyValueData(
-            xsd.AnyObject(xsd.String(), key),
-            xsd.AnyObject(guess_xsd_type(value), value)
-        ) for key, value in values.items()
-    ])
+    return Map(
+        item=[
+            KeyValueData(
+                xsd.AnyObject(xsd.String(), key),
+                xsd.AnyObject(guess_xsd_type(value), value),
+            )
+            for key, value in values.items()
+        ]
+    )
 
 
 def guess_xsd_type(obj):
