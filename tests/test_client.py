@@ -1,4 +1,5 @@
 import os
+import sys
 
 import pytest
 import requests_mock
@@ -7,6 +8,13 @@ from tests.utils import load_xml
 from zeep import client, xsd
 from zeep.exceptions import Error, SignatureVerificationFailed
 from zeep.wsse import signature
+from zeep.wsse.signature import xmlsec as xmlsec_installed
+
+skip_if_no_xmlsec = pytest.mark.skipif(
+    sys.platform == "win32", reason="does not run on windows"
+) and pytest.mark.skipif(
+    xmlsec_installed is None, reason="xmlsec library not installed"
+)
 
 
 def test_bind():
@@ -286,6 +294,7 @@ def test_default_soap_headers_extra():
         assert len(list(header)) == 4
 
 
+@skip_if_no_xmlsec
 @pytest.mark.requests
 def test_skip_wsse_verify():
     key_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "cert_valid.pem")
