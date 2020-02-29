@@ -54,6 +54,7 @@ class Client(object):
         self,
         wsdl,
         wsse=None,
+        wsse_verify=True,
         transport=None,
         service_name=None,
         port_name=None,
@@ -66,7 +67,10 @@ class Client(object):
         self.settings = settings or Settings()
         self.transport = transport if transport is not None else Transport()
         self.wsdl = Document(wsdl, self.transport, settings=self.settings)
+
         self.wsse = wsse
+        self.wsse_verify = wsse_verify
+
         self.plugins = plugins if plugins is not None else []
 
         self._default_service = None

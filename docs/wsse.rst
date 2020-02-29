@@ -41,6 +41,23 @@ Example usage::
 .. _README: https://github.com/mehcode/python-xmlsec
 
 
+It is possible to skip incoming WSSE validation, by passing `wsse_verify=False` during client initialization.
+
+Example::
+
+    >>> from zeep import Client
+    >>> from zeep.wsse.signature import Signature
+    >>> client = Client(
+    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
+    ...     wsse=Signature(
+    ...         private_key_filename, public_key_filename, 
+    ...         optional_password),
+    ...     wsse_verify=False)
+
+
+Please keep in mind that it is discouraged, and should only be used when your API doesn't send signed responses.
+
+
 UsernameToken and Signature together
 ------------------------------------
 
