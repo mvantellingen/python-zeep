@@ -23,10 +23,10 @@ logger = logging.getLogger(__name__)
 
 class Base(object):
     def add(self, url, content):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get(self, url):
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 class InMemoryCache(Base):
