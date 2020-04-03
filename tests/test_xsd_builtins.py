@@ -380,6 +380,10 @@ class TestBase64Binary:
     def test_xmlvalue(self):
         instance = builtins.Base64Binary()
         assert instance.xmlvalue(b"hoi") == b"aG9p"
+        assert (
+            instance.xmlvalue("aG9p")
+            == "aG9p"
+        )
 
     def test_pythonvalue(self):
         instance = builtins.Base64Binary()
