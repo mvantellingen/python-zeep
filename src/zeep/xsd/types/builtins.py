@@ -372,6 +372,8 @@ class Base64Binary(BuiltinType):
 
     @check_no_collection
     def xmlvalue(self, value):
+        if isinstance(value, six.string_types):
+            return value
         return base64.b64encode(value)
 
     def pythonvalue(self, value):
