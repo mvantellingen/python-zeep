@@ -222,8 +222,8 @@ class TestgYearMonth:
 class TestgYear:
     def test_xmlvalue(self):
         instance = builtins.gYear()
-        instance.xmlvalue((2001, None)) == "2001"
-        instance.xmlvalue((2001, pytz.utc)) == "2001Z"
+        assert instance.xmlvalue((2001, None)) == "2001"
+        assert instance.xmlvalue((2001, pytz.utc)) == "2001Z"
 
     def test_pythonvalue(self):
         instance = builtins.gYear()
