@@ -182,7 +182,11 @@ class SoapBinding(Binding):
                 message_pack = None
 
         if client.wsse:
-            client.wsse.verify(doc)
+            if isinstance(client.wsse, list):
+                for wsse in client.wsse:
+                    wsse.verify(doc)
+            else:
+                client.wsse.verify(doc)
 
         doc, http_headers = plugins.apply_ingress(
             client, doc, response.headers, operation
