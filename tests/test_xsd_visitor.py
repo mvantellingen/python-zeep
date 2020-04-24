@@ -319,7 +319,7 @@ def test_complex_content_mixed():
 
     expected = """
       <document>
-        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/" bar="hoi">basetype</ns0:foo>
+        <ns0:foo xmlns:ns0="http://tests.python-zeep.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" bar="hoi" xsi:type="xs:string">basetype</ns0:foo>
       </document>
     """
     assert_nodes_equal(expected, node)

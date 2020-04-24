@@ -31,6 +31,9 @@ class AnyType(Type):
             parent.set(xsi_ns("type"), value._xsd_elm.qname)
         else:
             parent.text = self.xmlvalue(value)
+            xsd_type = self._guess_xsd_type(value)
+            xsd_type_value = xsd_type().qname if xsd_type is not None else "string"
+            parent.set(xsi_ns("type"), xsd_type_value)
 
     def parse_xmlelement(
         self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
@@ -94,8 +97,7 @@ class AnyType(Type):
     def resolve(self):
         return self
 
-    def xmlvalue(self, value):
-        """Guess the xsd:type for the value and use corresponding serializer"""
+    def _guess_xsd_type(self, value):
         from zeep.xsd.types import builtins
 
         available_types = [
@@ -109,7 +111,14 @@ class AnyType(Type):
         ]
         for xsd_type in available_types:
             if isinstance(value, xsd_type.accepted_types):  # type: ignore
-                return xsd_type().xmlvalue(value)
+                return xsd_type
+        return None
+
+    def xmlvalue(self, value):
+        """Guess the xsd:type for the value and use corresponding serializer"""
+        xsd_type = self._guess_xsd_type(value)
+        if xsd_type is not None:
+            return xsd_type().xmlvalue(value)
         return str(value)
 
     def pythonvalue(self, value, schema=None):
