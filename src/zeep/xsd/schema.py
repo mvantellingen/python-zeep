@@ -1,4 +1,5 @@
 import logging
+import typing
 from collections import OrderedDict
 
 from lxml import etree
@@ -242,7 +243,7 @@ class Schema:
         """Return an object from one of the SchemaDocument's"""
         qname = self._create_qname(qname)
         try:
-            last_exception = None
+            last_exception: typing.Optional[BaseException] = None
             for schema in self._get_schema_documents(qname.namespace):
                 method = getattr(schema, method_name)
                 try:
@@ -250,7 +251,8 @@ class Schema:
                 except exceptions.LookupError as exc:
                     last_exception = exc
                     continue
-            raise last_exception
+            if last_exception is not None:
+                raise last_exception
 
         except exceptions.NamespaceError:
             raise exceptions.NamespaceError(
