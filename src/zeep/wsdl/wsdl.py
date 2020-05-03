@@ -11,7 +11,6 @@ import os
 import warnings
 from collections import OrderedDict
 
-import six
 from lxml import etree
 
 from zeep.exceptions import IncompleteMessage
@@ -59,7 +58,7 @@ class Document(object):
         """
         self.settings = settings or Settings()
 
-        if isinstance(location, six.string_types):
+        if isinstance(location, str):
             if is_relative_path(location):
                 location = os.path.abspath(location)
             self.location = location
@@ -111,16 +110,14 @@ class Document(object):
 
         print("")
         print("Bindings:")
-        for binding_obj in sorted(
-            self.bindings.values(), key=lambda k: six.text_type(k)
-        ):
-            print(" " * 4, six.text_type(binding_obj))
+        for binding_obj in sorted(self.bindings.values(), key=lambda k: str(k)):
+            print(" " * 4, str(binding_obj))
 
         print("")
         for service in self.services.values():
-            print(six.text_type(service))
+            print(str(service))
             for port in service.ports.values():
-                print(" " * 4, six.text_type(port))
+                print(" " * 4, str(port))
                 print(" " * 8, "Operations:")
 
                 operations = sorted(
@@ -128,7 +125,7 @@ class Document(object):
                 )
 
                 for operation in operations:
-                    print("%s%s" % (" " * 12, six.text_type(operation)))
+                    print("%s%s" % (" " * 12, str(operation)))
                 print("")
 
     def _get_xml_document(self, location):

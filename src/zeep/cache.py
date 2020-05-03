@@ -8,7 +8,6 @@ from contextlib import contextmanager
 
 import appdirs
 import pytz
-import six
 
 # The sqlite3 is not available on Google App Engine so we handle the
 # ImportError here and set the sqlite3 var to None.
@@ -127,13 +126,9 @@ class SqliteCache(Base):
 
     def _encode_data(self, data):
         data = base64.b64encode(data)
-        if six.PY2:
-            return buffer(self._version_string + data)  # noqa
         return self._version_string + data
 
     def _decode_data(self, data):
-        if six.PY2:
-            data = str(data)
         if data.startswith(self._version_string):
             return base64.b64decode(data[len(self._version_string) :])
 

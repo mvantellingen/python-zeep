@@ -1,7 +1,7 @@
 import uuid
+from io import StringIO
 
 from pretend import stub
-from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
 from zeep import Client, wsa, wsdl

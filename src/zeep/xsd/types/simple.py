@@ -1,6 +1,5 @@
 import logging
 
-import six
 from lxml import etree
 
 from zeep.exceptions import ValidationError
@@ -12,7 +11,6 @@ logger = logging.getLogger(__name__)
 __all__ = ["AnySimpleType"]
 
 
-@six.python_2_unicode_compatible
 class AnySimpleType(AnyType):
     _default_qname = xsd_ns("anySimpleType")
 
@@ -45,7 +43,7 @@ class AnySimpleType(AnyType):
                     "%s() got an unexpected keyword argument %r. "
                     + "Simple types expect only a single value argument"
                 )
-                % (self.__class__.__name__, next(six.iterkeys(kwargs)))
+                % (self.__class__.__name__, next(kwargs.keys()))
             )
 
         value = args[0] if args else kwargs["value"]

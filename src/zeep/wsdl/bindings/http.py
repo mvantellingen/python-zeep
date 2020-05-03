@@ -1,6 +1,5 @@
 import logging
 
-import six
 from lxml import etree
 
 from zeep import ns
@@ -16,7 +15,7 @@ NSMAP = {"http": ns.HTTP, "wsdl": ns.WSDL, "mime": ns.MIME}
 
 class HttpBinding(Binding):
     def create_message(self, operation, *args, **kwargs):
-        if isinstance(operation, six.string_types):
+        if isinstance(operation, str):
             operation = self.get(operation)
             if not operation:
                 raise ValueError("Operation not found")

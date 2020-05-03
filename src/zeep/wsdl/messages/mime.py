@@ -3,7 +3,8 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-import six
+from urllib.parse import urlencode
+
 from defusedxml.lxml import fromstring
 from lxml import etree
 
@@ -103,7 +104,7 @@ class MimeContent(MimeMessage):
         data = ""
         if self.content_type == "application/x-www-form-urlencoded":
             items = serialize_object(value)
-            data = six.moves.urllib.parse.urlencode(items)
+            data = urlencode(items)
         elif self.content_type == "text/xml":
             document = etree.Element("root")
             self.body.render(document, value)

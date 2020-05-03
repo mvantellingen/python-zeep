@@ -1,5 +1,6 @@
+from io import StringIO
+
 from lxml import etree
-from six import StringIO
 
 from tests.utils import assert_nodes_equal, load_xml
 from zeep import xsd

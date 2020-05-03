@@ -1,11 +1,11 @@
 import io
+from io import StringIO
 
 import pytest
 import requests_mock
 from defusedxml import DTDForbidden, EntitiesForbidden
 from lxml import etree
 from pretend import stub
-from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
 from zeep import Client, Settings, wsdl

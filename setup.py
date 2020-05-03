@@ -12,7 +12,6 @@ install_requires = [
     "lxml>=3.1.0",
     "requests>=2.7.0",
     "requests-toolbelt>=0.7.1",
-    "six>=1.9.0",
     "pytz",
 ]
 
