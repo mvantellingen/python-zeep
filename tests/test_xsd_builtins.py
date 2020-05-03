@@ -4,7 +4,6 @@ from decimal import Decimal as D
 import isodate
 import pytest
 import pytz
-import six
 
 from zeep.xsd.types import builtins
 
@@ -63,10 +62,7 @@ class TestFloat:
         assert instance.xmlvalue(float(3.9999)) == "3.9999"
         assert instance.xmlvalue(float("inf")) == "INF"
         assert instance.xmlvalue(float(12.78e-2)) == "0.1278"
-        if six.PY2:
-            assert instance.xmlvalue(float("1267.43233E12")) == "1.26743233E+15"
-        else:
-            assert instance.xmlvalue(float("1267.43233E12")) == "1267432330000000.0"
+        assert instance.xmlvalue(float("1267.43233E12")) == "1267432330000000.0"
 
     def test_pythonvalue(self):
         instance = builtins.Float()

@@ -1,6 +1,5 @@
 from collections import OrderedDict
-
-from six import StringIO
+from io import StringIO
 
 
 class PrettyPrinter(object):

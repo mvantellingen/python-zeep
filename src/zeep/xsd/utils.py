@@ -1,5 +1,3 @@
-from six.moves import range
-
 from zeep import ns
 
 

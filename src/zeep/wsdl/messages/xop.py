@@ -1,6 +1,5 @@
 import base64
-
-from six.moves.urllib.parse import unquote
+from urllib.parse import unquote
 
 
 def process_xop(document, message_pack):

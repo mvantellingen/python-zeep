@@ -3,7 +3,6 @@ from decimal import Decimal
 
 import isodate
 import pytest
-import six
 from lxml import etree
 
 from zeep.xsd import types
@@ -117,7 +116,7 @@ def test_simpletype_call_wrong_kwarg():
 def test_simpletype_str():
     item = types.AnySimpleType()
     item.name = u"foobar"
-    assert six.text_type(item) == "AnySimpleType(value)"
+    assert str(item) == "AnySimpleType(value)"
 
 
 def test_complextype_parse_xmlelement_no_childs():

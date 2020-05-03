@@ -1,8 +1,8 @@
 import os.path
+from urllib.parse import urljoin, urlparse, urlunparse
 
 from defusedxml.lxml import fromstring
 from lxml import etree
-from six.moves.urllib.parse import urljoin, urlparse, urlunparse
 
 from zeep.exceptions import XMLSyntaxError
 from zeep.settings import Settings

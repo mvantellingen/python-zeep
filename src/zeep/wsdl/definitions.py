@@ -18,8 +18,6 @@
 import warnings
 from collections import OrderedDict, namedtuple
 
-from six import python_2_unicode_compatible
-
 from zeep.exceptions import IncompleteOperation
 
 MessagePart = namedtuple("MessagePart", ["element", "type"])
@@ -96,7 +94,6 @@ class PortType(object):
         pass
 
 
-@python_2_unicode_compatible
 class Binding(object):
     """Base class for the various bindings (SoapBinding / HttpBinding)
 
@@ -171,7 +168,6 @@ class Binding(object):
         raise NotImplementedError()
 
 
-@python_2_unicode_compatible
 class Operation(object):
     """Concrete operation
 
@@ -242,7 +238,6 @@ class Operation(object):
         raise NotImplementedError()
 
 
-@python_2_unicode_compatible
 class Port(object):
     """Specifies an address for a binding, thus defining a single communication
     endpoint.
@@ -291,7 +286,6 @@ class Port(object):
         return True
 
 
-@python_2_unicode_compatible
 class Service(object):
     """Used to aggregate a set of related ports.
 
