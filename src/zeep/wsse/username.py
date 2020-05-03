@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import os
+
 import six
 
 from zeep import ns
@@ -106,9 +107,7 @@ class UsernameToken(object):
         # digest = Base64 ( SHA-1 ( nonce + created + password ) )
         if not self.password_digest:
             digest = base64.b64encode(
-                hashlib.sha1(
-                    nonce + timestamp.encode("utf-8") + password
-                ).digest()
+                hashlib.sha1(nonce + timestamp.encode("utf-8") + password).digest()
             ).decode("ascii")
         else:
             digest = self.password_digest

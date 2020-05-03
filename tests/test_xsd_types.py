@@ -1,8 +1,9 @@
+from datetime import datetime, time
+from decimal import Decimal
+
 import isodate
 import pytest
 import six
-from datetime import datetime, time
-from decimal import Decimal
 from lxml import etree
 
 from zeep.xsd import types
