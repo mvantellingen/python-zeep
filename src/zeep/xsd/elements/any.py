@@ -172,7 +172,11 @@ class Any(Base):
                 raise exceptions.ValidationError(
                     "Expected at least %d items (minOccurs check)" % self.min_occurs
                 )
-            if self.max_occurs != "unbounded" and len(value) > self.max_occurs:
+            if (
+                self.max_occurs != "unbounded"
+                and isinstance(self.max_occurs, int)
+                and len(value) > self.max_occurs
+            ):
                 raise exceptions.ValidationError(
                     "Expected at most %d items (maxOccurs check)" % self.min_occurs
                 )
