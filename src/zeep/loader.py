@@ -86,12 +86,6 @@ def normalize_location(settings, url, base_url):
     enabled.
 
     """
-    # Python 2.7 doesn't accept None to urlparse() calls, but Python 3 does.
-    # So as a guard convert None to '' here so that we can't introduce errors in
-    # Python 2.7 like #930. Can be removed when we drop Python 2 support.
-    if url is None:
-        url = ""
-
     if base_url:
         url = absolute_location(url, base_url)
 
