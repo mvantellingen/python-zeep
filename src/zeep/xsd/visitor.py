@@ -190,7 +190,7 @@ class SchemaVisitor:
             raise XMLParseError(
                 "The attribute 'namespace' must be existent if the "
                 "importing schema has no target namespace.",
-                filename=self._document.location,
+                filename=self.document.location,
                 sourceline=node.sourceline,
             )
 
