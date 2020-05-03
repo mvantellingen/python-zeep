@@ -45,10 +45,13 @@ class ConcreteMessage:
             return self.body.type.signature(schema=self.wsdl.types, standalone=False)
 
         parts = [self.body.type.signature(schema=self.wsdl.types, standalone=False)]
+
+        # TODO: There was a bug in this part for a while, so wondering if this
+        # code is used
         if getattr(self, "header", None):
             parts.append(
-                "_soapheaders={%s}" % self.header.signature(schema=self.wsdl.types),
-                standalone=False,
+                "_soapheaders={%s}"
+                % self.header.signature(schema=self.wsdl.types, standalone=False)
             )
         return ", ".join(part for part in parts if part)
 
