@@ -8,7 +8,7 @@ from zeep import ns
 from zeep.wsse import utils
 
 
-class UsernameToken(object):
+class UsernameToken:
     """UsernameToken Profile 1.1
 
     https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-UsernameTokenProfile.pdf

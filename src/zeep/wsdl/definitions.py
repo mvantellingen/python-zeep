@@ -23,7 +23,7 @@ from zeep.exceptions import IncompleteOperation
 MessagePart = namedtuple("MessagePart", ["element", "type"])
 
 
-class AbstractMessage(object):
+class AbstractMessage:
     """Messages consist of one or more logical parts.
 
     Each part is associated with a type from some type system using a
@@ -50,7 +50,7 @@ class AbstractMessage(object):
         self.parts[name] = element
 
 
-class AbstractOperation(object):
+class AbstractOperation:
     """Abstract operations are defined in the wsdl's portType elements."""
 
     def __init__(
@@ -82,7 +82,7 @@ class AbstractOperation(object):
         self.wsa_action = wsa_action
 
 
-class PortType(object):
+class PortType:
     def __init__(self, name, operations):
         self.name = name
         self.operations = operations
@@ -94,7 +94,7 @@ class PortType(object):
         pass
 
 
-class Binding(object):
+class Binding:
     """Base class for the various bindings (SoapBinding / HttpBinding)
 
     .. raw:: ascii
@@ -168,7 +168,7 @@ class Binding(object):
         raise NotImplementedError()
 
 
-class Operation(object):
+class Operation:
     """Concrete operation
 
     Contains references to the concrete messages
@@ -238,7 +238,7 @@ class Operation(object):
         raise NotImplementedError()
 
 
-class Port(object):
+class Port:
     """Specifies an address for a binding, thus defining a single communication
     endpoint.
 
@@ -286,7 +286,7 @@ class Port(object):
         return True
 
 
-class Service(object):
+class Service:
     """Used to aggregate a set of related ports.
 
     """

@@ -29,7 +29,7 @@ def render_node(element, value):
     return node
 
 
-class DummyTransport(object):
+class DummyTransport:
     def __init__(self):
         self._items = {}
 

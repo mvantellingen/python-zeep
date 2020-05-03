@@ -1,4 +1,4 @@
-class Base(object):
+class Base:
     @property
     def accepts_multiple(self):
         return self.max_occurs != 1

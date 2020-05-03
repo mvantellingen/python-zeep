@@ -112,7 +112,7 @@ class HttpGetBinding(HttpBinding):
 
 class HttpOperation(Operation):
     def __init__(self, name, binding, location):
-        super(HttpOperation, self).__init__(name, binding)
+        super().__init__(name, binding)
         self.location = location
 
     def process_reply(self, envelope):
@@ -167,7 +167,7 @@ class HttpOperation(Operation):
         return obj
 
     def resolve(self, definitions):
-        super(HttpOperation, self).resolve(definitions)
+        super().resolve(definitions)
         if self.output:
             self.output.resolve(definitions, self.abstract.output_message)
         if self.input:

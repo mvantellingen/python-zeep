@@ -1,4 +1,4 @@
-class Compose(object):
+class Compose:
     def __init__(self, wsse_objects):
         self.wsse_objects = wsse_objects
 

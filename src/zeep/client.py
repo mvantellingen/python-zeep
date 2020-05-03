@@ -8,7 +8,7 @@ from zeep.wsdl import Document
 logger = logging.getLogger(__name__)
 
 
-class Factory(object):
+class Factory:
     def __init__(self, types, kind, namespace):
         self._method = getattr(types, "get_%s" % kind)
 
@@ -34,7 +34,7 @@ class Factory(object):
         return self._method("{%s}%s" % (self._ns, key))
 
 
-class Client(object):
+class Client:
     """The zeep Client.
 
     :param wsdl:
@@ -220,4 +220,4 @@ class CachingClient(Client):
 
         kwargs["transport"] = kwargs.get("transport") or Transport(cache=SqliteCache())
 
-        super(CachingClient, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)

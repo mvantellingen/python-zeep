@@ -15,7 +15,7 @@ from zeep.xsd.types.unresolved import UnresolvedCustomType, UnresolvedType
 logger = logging.getLogger(__name__)
 
 
-class tags(object):
+class tags:
     pass
 
 
@@ -47,7 +47,7 @@ for name in [
     setattr(tags, attr, xsd_ns(name))
 
 
-class SchemaVisitor(object):
+class SchemaVisitor:
     """Visitor which processes XSD files and registers global elements and
     types in the given schema.
 

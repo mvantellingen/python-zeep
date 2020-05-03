@@ -1,7 +1,7 @@
 from collections import deque
 
 
-class Plugin(object):
+class Plugin:
     """Base plugin"""
 
     def ingress(self, envelope, http_headers, operation):
@@ -45,7 +45,7 @@ def apply_ingress(client, envelope, http_headers, operation):
     return envelope, http_headers
 
 
-class HistoryPlugin(object):
+class HistoryPlugin:
     def __init__(self, maxlen=1):
         self._buffer = deque([], maxlen)
 

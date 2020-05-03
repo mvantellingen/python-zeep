@@ -10,7 +10,7 @@ from zeep import xsd
 SerializedMessage = namedtuple("SerializedMessage", ["path", "headers", "content"])
 
 
-class ConcreteMessage(object):
+class ConcreteMessage:
     """Represents the wsdl:binding -> wsdl:operation -> input/ouput node"""
 
     def __init__(self, wsdl, name, operation):

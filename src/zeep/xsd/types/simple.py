@@ -15,9 +15,7 @@ class AnySimpleType(AnyType):
     _default_qname = xsd_ns("anySimpleType")
 
     def __init__(self, qname=None, is_global=False):
-        super(AnySimpleType, self).__init__(
-            qname or etree.QName(self._default_qname), is_global
-        )
+        super().__init__(qname or etree.QName(self._default_qname), is_global)
 
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.

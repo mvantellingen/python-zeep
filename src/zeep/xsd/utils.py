@@ -1,7 +1,7 @@
 from zeep import ns
 
 
-class NamePrefixGenerator(object):
+class NamePrefixGenerator:
     def __init__(self, prefix="_value_"):
         self._num = 1
         self._prefix = prefix
@@ -12,7 +12,7 @@ class NamePrefixGenerator(object):
         return retval
 
 
-class UniqueNameGenerator(object):
+class UniqueNameGenerator:
     def __init__(self):
         self._unique_count = {}
 

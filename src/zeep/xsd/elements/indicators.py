@@ -35,7 +35,7 @@ class Indicator(Base):
     """Base class for the other indicators"""
 
     def __repr__(self):
-        return "<%s(%s)>" % (self.__class__.__name__, super(Indicator, self).__repr__())
+        return "<%s(%s)>" % (self.__class__.__name__, super().__repr__())
 
     @property
     def default_value(self):
@@ -59,7 +59,7 @@ class OrderIndicator(Indicator, list):
     def __init__(self, elements=None, min_occurs=1, max_occurs=1):
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs
-        super(OrderIndicator, self).__init__()
+        super().__init__()
         if elements is not None:
             self.extend(elements)
 
@@ -272,7 +272,7 @@ class All(OrderIndicator):
     """
 
     def __init__(self, elements=None, min_occurs=1, max_occurs=1, consume_other=False):
-        super(All, self).__init__(elements, min_occurs, max_occurs)
+        super().__init__(elements, min_occurs, max_occurs)
         self._consume_other = consume_other
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
@@ -639,7 +639,7 @@ class Group(Indicator):
     """
 
     def __init__(self, name, child, max_occurs=1, min_occurs=1):
-        super(Group, self).__init__()
+        super().__init__()
         self.child = child
         self.qname = name
         self.name = name.localname if name else None

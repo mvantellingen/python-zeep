@@ -29,7 +29,7 @@ class Any(Base):
         :type process_contents: str (strict, lax, skip)
 
         """
-        super(Any, self).__init__()
+        super().__init__()
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
         self.restrict = restrict

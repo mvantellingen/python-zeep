@@ -5,7 +5,7 @@ from zeep.wsdl import bindings
 __all__ = ["AsyncSoap11Binding", "AsyncSoap12Binding"]
 
 
-class AsyncSoapBinding(object):
+class AsyncSoapBinding:
     @gen.coroutine
     def send(self, client, options, operation, args, kwargs):
         envelope, http_headers = self._create(

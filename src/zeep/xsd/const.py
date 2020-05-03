@@ -11,7 +11,7 @@ def xsd_ns(localname):
     return etree.QName(ns.XSD, localname)
 
 
-class _StaticIdentity(object):
+class _StaticIdentity:
     def __init__(self, val):
         self.__value__ = val
 

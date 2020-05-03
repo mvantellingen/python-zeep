@@ -48,7 +48,7 @@ class ComplexType(AnyType):
         self._restriction = restriction
         self._extension = extension
         self._extension_types = tuple()
-        super(ComplexType, self).__init__(qname=qname, is_global=is_global)
+        super().__init__(qname=qname, is_global=is_global)
 
     def __call__(self, *args, **kwargs):
         if self._array_type:

@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class OperationProxy(object):
+class OperationProxy:
     def __init__(self, service_proxy, operation_name):
         self._proxy = service_proxy
         self._op_name = operation_name
@@ -46,7 +46,7 @@ class OperationProxy(object):
         )
 
 
-class ServiceProxy(object):
+class ServiceProxy:
     def __init__(self, client, binding, **binding_options):
         self._client = client
         self._binding_options = binding_options
@@ -80,4 +80,4 @@ class ServiceProxy(object):
 
     def __dir__(self):
         """ Return the names of the operations. """
-        return list(itertools.chain(dir(super(ServiceProxy, self)), self._operations))
+        return list(itertools.chain(dir(super()), self._operations))

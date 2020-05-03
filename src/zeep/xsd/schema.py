@@ -14,7 +14,7 @@ from zeep.xsd.visitor import SchemaVisitor
 logger = logging.getLogger(__name__)
 
 
-class Schema(object):
+class Schema:
     """A schema is a collection of schema documents."""
 
     def __init__(self, node=None, transport=None, location=None, settings=None):
@@ -310,7 +310,7 @@ class Schema(object):
         return self.documents.get_by_namespace(namespace, fail_silently)
 
 
-class _SchemaContainer(object):
+class _SchemaContainer:
     """Container instances to store multiple SchemaDocument objects per
     namespace.
 
@@ -373,7 +373,7 @@ class _SchemaContainer(object):
                 yield document
 
 
-class SchemaDocument(object):
+class SchemaDocument:
     """A Schema Document consists of a set of schema components for a
     specific target namespace.
 

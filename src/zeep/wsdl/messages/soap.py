@@ -34,7 +34,7 @@ class SoapMessage(ConcreteMessage):
     """
 
     def __init__(self, wsdl, name, operation, type, nsmap):
-        super(SoapMessage, self).__init__(wsdl, name, operation)
+        super().__init__(wsdl, name, operation)
         self.nsmap = nsmap
         self.abstract = None  # Set during resolve()
         self.type = type
@@ -411,7 +411,7 @@ class DocumentMessage(SoapMessage):
     """
 
     def __init__(self, *args, **kwargs):
-        super(DocumentMessage, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _deserialize_body(self, xmlelement):
 

@@ -16,9 +16,9 @@ class ParseError(ValueError):
     pass
 
 
-class BuiltinType(object):
+class BuiltinType:
     def __init__(self, qname=None, is_global=False):
-        super(BuiltinType, self).__init__(qname, is_global=True)
+        super().__init__(qname, is_global=True)
 
 
 def check_no_collection(func):

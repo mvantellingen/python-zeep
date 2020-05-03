@@ -34,7 +34,7 @@ class SoapBinding(Binding):
         :param default_style:
 
         """
-        super(SoapBinding, self).__init__(wsdl, name, port_name)
+        super().__init__(wsdl, name, port_name)
         self.transport = transport
         self.default_style = default_style
 
@@ -376,7 +376,7 @@ class SoapOperation(Operation):
     """Represent's an operation within a specific binding."""
 
     def __init__(self, name, binding, nsmap, soapaction, style):
-        super(SoapOperation, self).__init__(name, binding)
+        super().__init__(name, binding)
         self.nsmap = nsmap
         self.soapaction = soapaction
         self.style = style
@@ -467,7 +467,7 @@ class SoapOperation(Operation):
         return obj
 
     def resolve(self, definitions):
-        super(SoapOperation, self).resolve(definitions)
+        super().resolve(definitions)
         for name, fault in self.faults.items():
             if name in self.abstract.fault_messages:
                 fault.resolve(definitions, self.abstract.fault_messages[name])

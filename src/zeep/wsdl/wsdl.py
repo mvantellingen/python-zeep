@@ -25,7 +25,7 @@ NSMAP = {"wsdl": "http://schemas.xmlsoap.org/wsdl/"}
 logger = logging.getLogger(__name__)
 
 
-class Document(object):
+class Document:
     """A WSDL Document exists out of one or more definitions.
 
     There is always one 'root' definition which should be passed as the
@@ -145,7 +145,7 @@ class Document(object):
         self._definitions[key] = definition
 
 
-class Definition(object):
+class Definition:
     """The Definition represents one wsdl:definition within a Document.
 
     :param wsdl: The wsdl

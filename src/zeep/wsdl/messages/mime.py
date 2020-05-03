@@ -20,7 +20,7 @@ class MimeMessage(ConcreteMessage):
     _nsmap = {"mime": ns.MIME}
 
     def __init__(self, wsdl, name, operation, part_name):
-        super(MimeMessage, self).__init__(wsdl, name, operation)
+        super().__init__(wsdl, name, operation)
         self.part_name = part_name
 
     def resolve(self, definitions, abstract_message):
@@ -94,7 +94,7 @@ class MimeContent(MimeMessage):
     """
 
     def __init__(self, wsdl, name, operation, content_type, part_name):
-        super(MimeContent, self).__init__(wsdl, name, operation, part_name)
+        super().__init__(wsdl, name, operation, part_name)
         self.content_type = content_type
 
     def serialize(self, *args, **kwargs):

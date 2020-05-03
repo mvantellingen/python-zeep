@@ -2,7 +2,7 @@ from collections import OrderedDict
 from io import StringIO
 
 
-class PrettyPrinter(object):
+class PrettyPrinter:
     """Cleaner pprint output.
 
     Heavily inspired by the Python pprint module, but more basic for now.

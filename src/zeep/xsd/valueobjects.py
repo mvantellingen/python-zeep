@@ -6,7 +6,7 @@ from zeep.xsd.printer import PrettyPrinter
 __all__ = ["AnyObject", "CompoundValue"]
 
 
-class AnyObject(object):
+class AnyObject:
     """Create an any object
 
     :param xsd_object: the xsd type
@@ -53,7 +53,7 @@ def _unpickle_compound_value(name, values):
 
 class ArrayValue(list):
     def __init__(self, items):
-        super(ArrayValue, self).__init__(items)
+        super().__init__(items)
 
     def as_value_object(self):
         anon_type = type(
@@ -69,7 +69,7 @@ class ArrayValue(list):
         return cls(items or [])
 
 
-class CompoundValue(object):
+class CompoundValue:
     """Represents a data object for a specific xsd:complexType."""
 
     def __init__(self, *args, **kwargs):
@@ -133,12 +133,12 @@ class CompoundValue(object):
 
     def __setattr__(self, key, value):
         if key.startswith("__") or key in ("_xsd_type", "_xsd_elm"):
-            return super(CompoundValue, self).__setattr__(key, value)
+            return super().__setattr__(key, value)
         self.__values__[key] = value
 
     def __getattribute__(self, key):
         if key.startswith("__") or key in ("_xsd_type", "_xsd_elm"):
-            return super(CompoundValue, self).__getattribute__(key)
+            return super().__getattribute__(key)
         try:
             return self.__values__[key]
         except KeyError:
