@@ -21,7 +21,7 @@ docs_require = [
 
 tornado_require = ["tornado>=4.0.2,<5"]
 
-async_require = []  # see below
+async_require = ["aiohttp>=1.0"]
 
 xmlsec_require = [
     "xmlsec>=0.6.1",
@@ -41,13 +41,9 @@ tests_require = [
     "flake8==3.7.9",
     "flake8-blind-except==0.1.1",
     "flake8-debugger==3.2.1",
+    "aioresponses>=0.4.1",
     "flake8-imports==0.1.1",
 ]
-
-
-if sys.version_info > (3, 4, 2):
-    async_require.append("aiohttp>=1.0")
-    tests_require.append("aioresponses>=0.4.1")
 
 
 with open("README.rst") as fh:
