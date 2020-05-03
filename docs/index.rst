@@ -70,6 +70,7 @@ If you have installed pip then run::
 
     pip install zeep
 
+Note that the latest version to support Python 2.7 is Zeep 3.4, install via pip install zeep==3.4.0
 
 This assumes that there are wheel files available for the latest lxml release.
 If that is not the case (https://pypi.python.org/pypi/lxml/) then first
