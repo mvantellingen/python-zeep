@@ -8,7 +8,7 @@ source = ["zeep"]
 relative_files = true
 
 [tool.coverage.paths]
-source = ["src", "**/.tox/*/site-packages"]
+source = ["src", "*/site-packages/"]
 
 [tool.coverage.report]
 show_missing = true
