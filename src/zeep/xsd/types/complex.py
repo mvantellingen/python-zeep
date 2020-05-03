@@ -6,9 +6,16 @@ from itertools import chain
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
-from zeep.xsd.const import NotSet, SkipValue, Nil, xsi_ns
+from zeep.xsd.const import Nil, NotSet, SkipValue, xsi_ns
 from zeep.xsd.elements import (
-    Any, AnyAttribute, AttributeGroup, Choice, Element, Group, Sequence)
+    Any,
+    AnyAttribute,
+    AttributeGroup,
+    Choice,
+    Element,
+    Group,
+    Sequence,
+)
 from zeep.xsd.elements.indicators import OrderIndicator
 from zeep.xsd.types.any import AnyType
 from zeep.xsd.types.simple import AnySimpleType

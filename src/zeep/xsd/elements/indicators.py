@@ -22,8 +22,11 @@ from zeep.xsd.const import NotSet, SkipValue
 from zeep.xsd.elements import Any, Element
 from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import (
-    NamePrefixGenerator, UniqueNameGenerator, create_prefixed_name,
-    max_occurs_iter)
+    NamePrefixGenerator,
+    UniqueNameGenerator,
+    create_prefixed_name,
+    max_occurs_iter,
+)
 
 __all__ = ["All", "Choice", "Group", "Sequence"]
 

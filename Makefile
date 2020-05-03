@@ -23,8 +23,8 @@ coverage:
 	py.test --cov=zeep --cov-report=term-missing --cov-report=html
 
 format:
-	black src/ tests/
-	isort --recursive src tests
+	black src/ tests/ setup.py
+	isort --recursive src tests setup.py
 
 docs:
 	$(MAKE) -C docs html
