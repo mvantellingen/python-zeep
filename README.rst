@@ -27,8 +27,8 @@ Status
 .. image:: https://readthedocs.org/projects/python-zeep/badge/?version=latest
     :target: https://readthedocs.org/projects/python-zeep/
 
-.. image:: https://dev.azure.com/mvantellingen/zeep/_apis/build/status/python-zeep?branchName=master
-    :target: https://dev.azure.com/mvantellingen/zeep/_build?definitionId=1
+.. image:: https://github.com/mvantellingen/python-zeep/workflows/Python%20Tests/badge.svg
+    :target: https://github.com/mvantellingen/python-zeep/actions?query=workflow%3A%22Python+Tests%22
 
 .. image:: http://codecov.io/github/mvantellingen/python-zeep/coverage.svg?branch=master
     :target: http://codecov.io/github/mvantellingen/python-zeep?branch=master
