@@ -13,9 +13,11 @@ All, Choice, Group and Sequence.
 """
 import copy
 import operator
+import typing
 from collections import OrderedDict, defaultdict, deque
 
 from cached_property import threaded_cached_property
+from lxml import etree
 
 from zeep.exceptions import UnexpectedElementError, ValidationError
 from zeep.xsd.const import NotSet, SkipValue
@@ -46,6 +48,10 @@ class Indicator(Base):
         if self.accepts_multiple:
             return {"_value_1": values}
         return values
+
+    @property
+    def elements(self):
+        raise NotImplementedError()
 
     def clone(self, name, min_occurs=1, max_occurs=1):
         raise NotImplementedError()
@@ -82,7 +88,7 @@ class OrderIndicator(Indicator, list):
     @threaded_cached_property
     def elements_nested(self):
         """List of tuples containing the element name and the element"""
-        result = []
+        result: typing.List[typing.Tuple[typing.Optional[str], typing.Any]] = []
         generator = NamePrefixGenerator()
         generator_2 = UniqueNameGenerator()
 
@@ -293,7 +299,7 @@ class All(OrderIndicator):
         expected_tags = {element.qname for __, element in self.elements}
         consumed_tags = set()
 
-        values = defaultdict(deque)
+        values: typing.Dict[str, etree._Element] = defaultdict(deque)
         for i, elm in enumerate(xmlelements):
             if elm.tag in expected_tags:
                 consumed_tags.add(i)

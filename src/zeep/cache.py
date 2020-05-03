@@ -4,6 +4,7 @@ import errno
 import logging
 import os
 import threading
+import typing
 from contextlib import contextmanager
 
 import appdirs
@@ -15,7 +16,7 @@ import pytz
 try:
     import sqlite3
 except ImportError:
-    sqlite3 = None
+    sqlite3 = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,10 @@ class Base:
 class InMemoryCache(Base):
     """Simple in-memory caching using dict lookup with support for timeouts"""
 
-    _cache = {}  # global cache, thread-safe by default
+    #: global cache, thread-safe by default
+    _cache: typing.Dict[
+        str, typing.Tuple[datetime.datetime, typing.Union[bytes, str]]
+    ] = {}
 
     def __init__(self, timeout=3600):
         self._timeout = timeout

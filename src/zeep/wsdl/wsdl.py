@@ -8,6 +8,7 @@ from __future__ import print_function
 import logging
 import operator
 import os
+import typing
 import warnings
 from collections import OrderedDict
 
@@ -18,7 +19,11 @@ from zeep.loader import absolute_location, is_relative_path, load_external
 from zeep.settings import Settings
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
+from zeep.wsdl.definitions import Binding
 from zeep.xsd import Schema
+
+if typing.TYPE_CHECKING:
+    from zeep.transports import Transport
 
 NSMAP = {"wsdl": "http://schemas.xmlsoap.org/wsdl/"}
 
@@ -50,7 +55,9 @@ class Document:
 
     """
 
-    def __init__(self, location, transport, base=None, settings=None):
+    def __init__(
+        self, location, transport: typing.Type["Transport"], base=None, settings=None
+    ):
         """Initialize a WSDL document.
 
         The root definition properties are exposed as entry points.
@@ -68,7 +75,7 @@ class Document:
         self.transport = transport
 
         # Dict with all definition objects within this WSDL
-        self._definitions = {}
+        self._definitions: typing.Dict[typing.Tuple[str, str], "Definition"] = {}
         self.types = Schema(
             node=None,
             transport=self.transport,
@@ -140,7 +147,7 @@ class Document:
             location, self.transport, self.location, settings=self.settings
         )
 
-    def _add_definition(self, definition):
+    def _add_definition(self, definition: "Definition"):
         key = (definition.target_namespace, definition.location)
         self._definitions[key] = definition
 
@@ -312,7 +319,7 @@ class Definition:
         schema_nodes = findall_multiple_ns(doc, "wsdl:types/xsd:schema", namespace_sets)
         self.types.add_documents(schema_nodes, self.location)
 
-    def parse_messages(self, doc):
+    def parse_messages(self, doc: etree._Element):
         """
 
         Definition::
@@ -395,6 +402,7 @@ class Definition:
 
         """
         result = {}
+        binding_classes: typing.List[typing.Type[Binding]]
 
         if not getattr(self.wsdl.transport, "binding_classes", None):
             from zeep.wsdl import bindings

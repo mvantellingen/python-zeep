@@ -3,6 +3,8 @@
     ~~~~~~~~~~~~~~~
 
 """
+import typing
+
 from lxml import etree
 
 from zeep.exceptions import IncompleteMessage, LookupError, NamespaceError
@@ -16,7 +18,9 @@ NSMAP = {
 }
 
 
-def parse_abstract_message(wsdl, xmlelement):
+def parse_abstract_message(
+    wsdl, xmlelement: etree._Element
+) -> definitions.AbstractMessage:
     """Create an AbstractMessage object from a xml element.
 
     Definition::
@@ -68,7 +72,9 @@ def parse_abstract_message(wsdl, xmlelement):
     return msg
 
 
-def parse_abstract_operation(wsdl, xmlelement):
+def parse_abstract_operation(
+    wsdl, xmlelement: etree._Element
+) -> typing.Optional[definitions.AbstractOperation]:
     """Create an AbstractOperation object from a xml element.
 
     This is called from the parse_port_type function since the abstract
@@ -97,7 +103,7 @@ def parse_abstract_operation(wsdl, xmlelement):
 
     """
     name = xmlelement.get("name")
-    kwargs = {"fault_messages": {}}
+    kwargs: typing.Dict[str, typing.Any] = {"fault_messages": {}}
 
     for msg_node in xmlelement:
         tag_name = etree.QName(msg_node.tag).localname
@@ -110,7 +116,7 @@ def parse_abstract_operation(wsdl, xmlelement):
         try:
             param_value = wsdl.get("messages", param_msg.text)
         except IndexError:
-            return
+            return None
 
         if tag_name == "input":
             kwargs["input_message"] = param_value

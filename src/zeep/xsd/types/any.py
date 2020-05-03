@@ -1,5 +1,7 @@
 import logging
 
+from cached_property import threaded_cached_property
+
 from zeep.utils import qname_attr
 from zeep.xsd.const import xsd_ns, xsi_ns
 from zeep.xsd.types.base import Type
@@ -12,7 +14,6 @@ __all__ = ["AnyType"]
 
 class AnyType(Type):
     _default_qname = xsd_ns("anyType")
-    _attributes_unwrapped = []
     _element = None
 
     def __call__(self, value=None):
@@ -107,7 +108,7 @@ class AnyType(Type):
             builtins.Time,
         ]
         for xsd_type in available_types:
-            if isinstance(value, xsd_type.accepted_types):
+            if isinstance(value, xsd_type.accepted_types):  # type: ignore
                 return xsd_type().xmlvalue(value)
         return str(value)
 
@@ -116,3 +117,7 @@ class AnyType(Type):
 
     def signature(self, schema=None, standalone=True):
         return "xsd:anyType"
+
+    @threaded_cached_property
+    def _attributes_unwrapped(self):
+        return []

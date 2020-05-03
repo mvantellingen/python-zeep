@@ -1,7 +1,11 @@
 import copy
+import typing
 from collections import OrderedDict
 
 from zeep.xsd.printer import PrettyPrinter
+
+if typing.TYPE_CHECKING:
+    from zeep.xsd.types import ComplexType
 
 __all__ = ["AnyObject", "CompoundValue"]
 
@@ -52,6 +56,8 @@ def _unpickle_compound_value(name, values):
 
 
 class ArrayValue(list):
+    _xsd_type: "ComplexType"
+
     def __init__(self, items):
         super().__init__(items)
 

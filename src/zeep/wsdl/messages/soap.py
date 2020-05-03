@@ -4,6 +4,7 @@
 
 """
 import copy
+import typing
 from collections import OrderedDict
 
 from lxml import etree
@@ -32,6 +33,8 @@ class SoapMessage(ConcreteMessage):
     :type nsmap: dict
 
     """
+
+    _resolve_info: typing.Dict[str, typing.Any]
 
     def __init__(self, wsdl, name, operation, type, nsmap):
         super().__init__(wsdl, name, operation)
@@ -90,6 +93,8 @@ class SoapMessage(ConcreteMessage):
         if not self.envelope:
             return None
 
+        assert self.header
+
         body = envelope.find("soap-env:Body", namespaces=self.nsmap)
         body_result = self._deserialize_body(body)
 
@@ -143,6 +148,8 @@ class SoapMessage(ConcreteMessage):
             parts = [self.body.type.signature(schema=self.wsdl.types, standalone=False)]
         else:
             parts = []
+
+        assert self.header
         if self.header.type._element:
             parts.append(
                 "_soapheaders={%s}"
@@ -303,6 +310,7 @@ class SoapMessage(ConcreteMessage):
         """
         all_elements = xsd.Sequence([])
 
+        assert self.header
         if self.header.type._element:
             all_elements.append(
                 xsd.Element("{%s}header" % self.nsmap["soap-env"], self.header.type)
@@ -354,6 +362,9 @@ class SoapMessage(ConcreteMessage):
 
         return header
 
+    def _deserialize_body(self, xmlelement):
+        raise NotImplementedError()
+
     def _deserialize_headers(self, xmlelement):
         """Deserialize the values in the SOAP:Header element"""
         if not self.header or xmlelement is None:
@@ -388,6 +399,9 @@ class SoapMessage(ConcreteMessage):
                 element = xsd.Element(part_name, part.type)
             container.append(element)
         return xsd.Element(name, xsd.ComplexType(container))
+
+    def _resolve_body(self, info, definitions, parts):
+        raise NotImplementedError()
 
 
 class DocumentMessage(SoapMessage):

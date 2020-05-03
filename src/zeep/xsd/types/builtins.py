@@ -16,7 +16,7 @@ class ParseError(ValueError):
     pass
 
 
-class BuiltinType:
+class BuiltinType(AnySimpleType):
     def __init__(self, qname=None, is_global=False):
         super().__init__(qname, is_global=True)
 
@@ -36,7 +36,7 @@ def check_no_collection(func):
 
 ##
 # Primitive types
-class String(BuiltinType, AnySimpleType):
+class String(BuiltinType):
     _default_qname = xsd_ns("string")
     accepted_types = (str,)
 
@@ -50,7 +50,7 @@ class String(BuiltinType, AnySimpleType):
         return value
 
 
-class Boolean(BuiltinType, AnySimpleType):
+class Boolean(BuiltinType):
     _default_qname = xsd_ns("boolean")
     accepted_types = (bool,)
 
@@ -66,7 +66,7 @@ class Boolean(BuiltinType, AnySimpleType):
         return value in ("true", "1")
 
 
-class Decimal(BuiltinType, AnySimpleType):
+class Decimal(BuiltinType):
     _default_qname = xsd_ns("decimal")
     accepted_types = (_Decimal, float, str)
 
@@ -78,7 +78,7 @@ class Decimal(BuiltinType, AnySimpleType):
         return _Decimal(value)
 
 
-class Float(BuiltinType, AnySimpleType):
+class Float(BuiltinType):
     _default_qname = xsd_ns("float")
     accepted_types = (float, _Decimal, str)
 
@@ -89,7 +89,7 @@ class Float(BuiltinType, AnySimpleType):
         return float(value)
 
 
-class Double(BuiltinType, AnySimpleType):
+class Double(BuiltinType):
     _default_qname = xsd_ns("double")
     accepted_types = (_Decimal, float, str)
 
@@ -101,7 +101,7 @@ class Double(BuiltinType, AnySimpleType):
         return float(value)
 
 
-class Duration(BuiltinType, AnySimpleType):
+class Duration(BuiltinType):
     _default_qname = xsd_ns("duration")
     accepted_types = (isodate.duration.Duration, str)
 
@@ -118,7 +118,7 @@ class Duration(BuiltinType, AnySimpleType):
             return isodate.parse_duration(value)
 
 
-class DateTime(BuiltinType, AnySimpleType):
+class DateTime(BuiltinType):
     _default_qname = xsd_ns("dateTime")
     accepted_types = (datetime.datetime, str)
 
@@ -153,7 +153,7 @@ class DateTime(BuiltinType, AnySimpleType):
         return isodate.parse_datetime(value)
 
 
-class Time(BuiltinType, AnySimpleType):
+class Time(BuiltinType):
     _default_qname = xsd_ns("time")
     accepted_types = (datetime.time, str)
 
@@ -170,7 +170,7 @@ class Time(BuiltinType, AnySimpleType):
         return isodate.parse_time(value)
 
 
-class Date(BuiltinType, AnySimpleType):
+class Date(BuiltinType):
     _default_qname = xsd_ns("date")
     accepted_types = (datetime.date, str)
 
@@ -184,7 +184,7 @@ class Date(BuiltinType, AnySimpleType):
         return isodate.parse_date(value)
 
 
-class gYearMonth(BuiltinType, AnySimpleType):
+class gYearMonth(BuiltinType):
     """gYearMonth represents a specific gregorian month in a specific gregorian
     year.
 
@@ -215,7 +215,7 @@ class gYearMonth(BuiltinType, AnySimpleType):
         )
 
 
-class gYear(BuiltinType, AnySimpleType):
+class gYear(BuiltinType):
     """gYear represents a gregorian calendar year.
 
     Lexical representation: CCYY
@@ -239,7 +239,7 @@ class gYear(BuiltinType, AnySimpleType):
         return (int(group["year"]), _parse_timezone(group["timezone"]))
 
 
-class gMonthDay(BuiltinType, AnySimpleType):
+class gMonthDay(BuiltinType):
     """gMonthDay is a gregorian date that recurs, specifically a day of the
     year such as the third of May.
 
@@ -271,7 +271,7 @@ class gMonthDay(BuiltinType, AnySimpleType):
         )
 
 
-class gDay(BuiltinType, AnySimpleType):
+class gDay(BuiltinType):
     """gDay is a gregorian day that recurs, specifically a day of the month
     such as the 5th of the month
 
@@ -296,7 +296,7 @@ class gDay(BuiltinType, AnySimpleType):
         return (int(group["day"]), _parse_timezone(group["timezone"]))
 
 
-class gMonth(BuiltinType, AnySimpleType):
+class gMonth(BuiltinType):
     """gMonth is a gregorian month that recurs every year.
 
     Lexical representation: --MM
@@ -320,7 +320,7 @@ class gMonth(BuiltinType, AnySimpleType):
         return (int(group["month"]), _parse_timezone(group["timezone"]))
 
 
-class HexBinary(BuiltinType, AnySimpleType):
+class HexBinary(BuiltinType):
     accepted_types = (str,)
     _default_qname = xsd_ns("hexBinary")
 
@@ -332,7 +332,7 @@ class HexBinary(BuiltinType, AnySimpleType):
         return value
 
 
-class Base64Binary(BuiltinType, AnySimpleType):
+class Base64Binary(BuiltinType):
     accepted_types = (str,)
     _default_qname = xsd_ns("base64Binary")
 
@@ -344,7 +344,7 @@ class Base64Binary(BuiltinType, AnySimpleType):
         return base64.b64decode(value)
 
 
-class AnyURI(BuiltinType, AnySimpleType):
+class AnyURI(BuiltinType):
     accepted_types = (str,)
     _default_qname = xsd_ns("anyURI")
 
@@ -356,7 +356,7 @@ class AnyURI(BuiltinType, AnySimpleType):
         return value
 
 
-class QName(BuiltinType, AnySimpleType):
+class QName(BuiltinType):
     accepted_types = (str,)
     _default_qname = xsd_ns("QName")
 
@@ -368,7 +368,7 @@ class QName(BuiltinType, AnySimpleType):
         return value
 
 
-class Notation(BuiltinType, AnySimpleType):
+class Notation(BuiltinType):
     accepted_types = (str,)
     _default_qname = xsd_ns("NOTATION")
 

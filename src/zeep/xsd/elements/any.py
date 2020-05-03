@@ -238,6 +238,7 @@ class Any(Base):
 
 
 class AnyAttribute(Base):
+    # FIXME: should not inherit from Base
     name = None
     _ignore_attributes = [etree.QName(ns.XSI, "type")]
 

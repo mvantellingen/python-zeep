@@ -3,6 +3,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+import typing
 from collections import namedtuple
 
 from zeep import xsd
@@ -12,6 +13,9 @@ SerializedMessage = namedtuple("SerializedMessage", ["path", "headers", "content
 
 class ConcreteMessage:
     """Represents the wsdl:binding -> wsdl:operation -> input/ouput node"""
+
+    body: typing.Optional[xsd.Element]
+    header: typing.Optional[xsd.Element]
 
     def __init__(self, wsdl, name, operation):
         assert wsdl

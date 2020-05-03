@@ -16,35 +16,28 @@ logger = logging.getLogger(__name__)
 
 
 class tags:
-    pass
-
-
-for name in [
-    "schema",
-    "import",
-    "include",
-    "annotation",
-    "element",
-    "simpleType",
-    "complexType",
-    "simpleContent",
-    "complexContent",
-    "sequence",
-    "group",
-    "choice",
-    "all",
-    "list",
-    "union",
-    "attribute",
-    "any",
-    "anyAttribute",
-    "attributeGroup",
-    "restriction",
-    "extension",
-    "notation",
-]:
-    attr = name if name not in keyword.kwlist else name + "_"
-    setattr(tags, attr, xsd_ns(name))
+    schema: etree.QName = xsd_ns("schema")
+    import_: etree.QName = xsd_ns("import")
+    include: etree.QName = xsd_ns("include")
+    annotation: etree.QName = xsd_ns("annotation")
+    element: etree.QName = xsd_ns("element")
+    simpleType: etree.QName = xsd_ns("simpleType")
+    complexType: etree.QName = xsd_ns("complexType")
+    simpleContent: etree.QName = xsd_ns("simpleContent")
+    complexContent: etree.QName = xsd_ns("complexContent")
+    sequence: etree.QName = xsd_ns("sequence")
+    group: etree.QName = xsd_ns("group")
+    choice: etree.QName = xsd_ns("choice")
+    all: etree.QName = xsd_ns("all")
+    list: etree.QName = xsd_ns("list")
+    union: etree.QName = xsd_ns("union")
+    attribute: etree.QName = xsd_ns("attribute")
+    any: etree.QName = xsd_ns("any")
+    anyAttribute: etree.QName = xsd_ns("anyAttribute")
+    attributeGroup: etree.QName = xsd_ns("attributeGroup")
+    restriction: etree.QName = xsd_ns("restriction")
+    extension: etree.QName = xsd_ns("extension")
+    notation: etree.QName = xsd_ns("notations")
 
 
 class SchemaVisitor:

@@ -61,7 +61,7 @@ class TornadoAsyncTransport(Transport):
     @gen.coroutine
     def get(self, address, params, headers):
         if params:
-            address += "?" + urllib.urlencode(params)
+            address += "?" + urllib.parse.urlencode(params)
         response = yield self.fetch(address, "GET", headers)
 
         raise gen.Return(response)

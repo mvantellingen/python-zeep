@@ -15,6 +15,7 @@
     This module defines the definitions which occur within a WSDL document,
 
 """
+import typing
 import warnings
 from collections import OrderedDict, namedtuple
 
@@ -210,6 +211,7 @@ class Operation:
         return retval
 
     def create(self, *args, **kwargs):
+        assert self.input is not None
         return self.input.serialize(*args, **kwargs)
 
     def process_reply(self, envelope):
@@ -243,6 +245,8 @@ class Port:
     endpoint.
 
     """
+
+    _resolve_context: typing.Optional[typing.Dict[str, typing.Any]]
 
     def __init__(self, name, binding_name, xmlelement):
         self.name = name
