@@ -11,7 +11,7 @@ pytest.register_assert_rewrite("tests.utils")
 
 @pytest.fixture(autouse=True)
 def no_requests(request, monkeypatch):
-    if request.node.get_marker("requests"):
+    if request.node.get_closest_marker("requests"):
         return
 
     def func(*args, **kwargs):
