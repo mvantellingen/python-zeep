@@ -45,6 +45,8 @@ Installation
 
     pip install zeep
 
+Note that the latest version to support Python 2.7 is Zeep 3.4, install via `pip install zeep==3.4.0`
+  
 
 Usage
 -----
