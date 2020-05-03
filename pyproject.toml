@@ -5,9 +5,10 @@ build-backend = "setuptools.build_meta"
 [tool.coverage.run]
 branch = true
 source = ["zeep"]
+relative_files = true
 
 [tool.coverage.paths]
-source = ["src", ".tox/*/site-packages"]
+source = ["src", "**/.tox/*/site-packages"]
 
 [tool.coverage.report]
 show_missing = true
