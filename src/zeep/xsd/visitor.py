@@ -1,4 +1,3 @@
-import keyword
 import logging
 import re
 
@@ -16,28 +15,28 @@ logger = logging.getLogger(__name__)
 
 
 class tags:
-    schema: etree.QName = xsd_ns("schema")
-    import_: etree.QName = xsd_ns("import")
-    include: etree.QName = xsd_ns("include")
-    annotation: etree.QName = xsd_ns("annotation")
-    element: etree.QName = xsd_ns("element")
-    simpleType: etree.QName = xsd_ns("simpleType")
-    complexType: etree.QName = xsd_ns("complexType")
-    simpleContent: etree.QName = xsd_ns("simpleContent")
-    complexContent: etree.QName = xsd_ns("complexContent")
-    sequence: etree.QName = xsd_ns("sequence")
-    group: etree.QName = xsd_ns("group")
-    choice: etree.QName = xsd_ns("choice")
-    all: etree.QName = xsd_ns("all")
-    list: etree.QName = xsd_ns("list")
-    union: etree.QName = xsd_ns("union")
-    attribute: etree.QName = xsd_ns("attribute")
-    any: etree.QName = xsd_ns("any")
-    anyAttribute: etree.QName = xsd_ns("anyAttribute")
-    attributeGroup: etree.QName = xsd_ns("attributeGroup")
-    restriction: etree.QName = xsd_ns("restriction")
-    extension: etree.QName = xsd_ns("extension")
-    notation: etree.QName = xsd_ns("notations")
+    schema = xsd_ns("schema")
+    import_ = xsd_ns("import")
+    include = xsd_ns("include")
+    annotation = xsd_ns("annotation")
+    element = xsd_ns("element")
+    simpleType = xsd_ns("simpleType")
+    complexType = xsd_ns("complexType")
+    simpleContent = xsd_ns("simpleContent")
+    complexContent = xsd_ns("complexContent")
+    sequence = xsd_ns("sequence")
+    group = xsd_ns("group")
+    choice = xsd_ns("choice")
+    all = xsd_ns("all")
+    list = xsd_ns("list")
+    union = xsd_ns("union")
+    attribute = xsd_ns("attribute")
+    any = xsd_ns("any")
+    anyAttribute = xsd_ns("anyAttribute")
+    attributeGroup = xsd_ns("attributeGroup")
+    restriction = xsd_ns("restriction")
+    extension = xsd_ns("extension")
+    notation = xsd_ns("notations")
 
 
 class SchemaVisitor:

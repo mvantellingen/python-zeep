@@ -14,8 +14,9 @@ SerializedMessage = namedtuple("SerializedMessage", ["path", "headers", "content
 class ConcreteMessage:
     """Represents the wsdl:binding -> wsdl:operation -> input/ouput node"""
 
-    body: typing.Optional[xsd.Element]
-    header: typing.Optional[xsd.Element]
+    if typing.TYPE_CHECKING:
+        body = None  # type: typing.Optional[xsd.Element]
+        header = None  # type: typing.Optional[xsd.Element]
 
     def __init__(self, wsdl, name, operation):
         assert wsdl

@@ -34,7 +34,8 @@ class SoapMessage(ConcreteMessage):
 
     """
 
-    _resolve_info: typing.Dict[str, typing.Any]
+    if typing.TYPE_CHECKING:
+        _resolve_info = {}  # type: typing.Dict[str, typing.Any]
 
     def __init__(self, wsdl, name, operation, type, nsmap):
         super().__init__(wsdl, name, operation)

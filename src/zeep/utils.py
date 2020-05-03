@@ -8,7 +8,7 @@ from zeep.exceptions import XMLParseError
 from zeep.ns import XSD
 
 
-def qname_attr(node, attr_name, target_namespace=None) -> typing.Optional[etree.Qname]:
+def qname_attr(node, attr_name, target_namespace=None) -> typing.Optional[etree.QName]:
     value = node.get(attr_name)
     if value is not None:
         return as_qname(value, node.nsmap, target_namespace)

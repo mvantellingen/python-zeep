@@ -75,7 +75,9 @@ class Document:
         self.transport = transport
 
         # Dict with all definition objects within this WSDL
-        self._definitions: typing.Dict[typing.Tuple[str, str], "Definition"] = {}
+        self._definitions = (
+            {}
+        )  # type: typing.Dict[typing.Tuple[str, str], "Definition"]
         self.types = Schema(
             node=None,
             transport=self.transport,
@@ -402,7 +404,7 @@ class Definition:
 
         """
         result = {}
-        binding_classes: typing.List[typing.Type[Binding]]
+        binding_classes = []  # type: typing.List[typing.Type[Binding]]
 
         if not getattr(self.wsdl.transport, "binding_classes", None):
             from zeep.wsdl import bindings

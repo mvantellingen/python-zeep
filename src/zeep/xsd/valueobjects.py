@@ -56,7 +56,8 @@ def _unpickle_compound_value(name, values):
 
 
 class ArrayValue(list):
-    _xsd_type: "ComplexType"
+    if typing.TYPE_CHECKING:
+        _xsd_type = None  # type: "ComplexType"
 
     def __init__(self, items):
         super().__init__(items)

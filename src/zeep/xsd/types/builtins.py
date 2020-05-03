@@ -427,7 +427,7 @@ class Entities(Entity):
 
 class Integer(Decimal):
     _default_qname = xsd_ns("integer")
-    accepted_types = (int, float, str)
+    accepted_types = (int, float, str)  # type: ignore
 
     def xmlvalue(self, value):
         return str(value)
@@ -575,4 +575,4 @@ _types = [
     AnySimpleType,
 ]
 
-default_types = {cls._default_qname: cls(is_global=True) for cls in _types}
+default_types = {cls._default_qname: cls(is_global=True) for cls in _types}  # type: ignore

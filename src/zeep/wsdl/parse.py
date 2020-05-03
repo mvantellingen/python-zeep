@@ -40,6 +40,9 @@ def parse_abstract_message(
     """
     tns = wsdl.target_namespace
     message_name = qname_attr(xmlelement, "name", tns)
+    if not message_name:
+        raise IncompleteMessage("Message element is missing required name attribute")
+
     parts = []
 
     for part in xmlelement.findall("wsdl:part", namespaces=NSMAP):
@@ -103,7 +106,7 @@ def parse_abstract_operation(
 
     """
     name = xmlelement.get("name")
-    kwargs: typing.Dict[str, typing.Any] = {"fault_messages": {}}
+    kwargs = {"fault_messages": {}}  # type: typing.Dict[str, typing.Any]
 
     for msg_node in xmlelement:
         tag_name = etree.QName(msg_node.tag).localname
@@ -112,6 +115,11 @@ def parse_abstract_operation(
 
         param_msg = qname_attr(msg_node, "message", wsdl.target_namespace)
         param_name = msg_node.get("name")
+
+        if not param_msg:
+            raise IncompleteMessage(
+                "Operation/%s element is missing required name attribute" % tag_name
+            )
 
         try:
             param_value = wsdl.get("messages", param_msg.text)

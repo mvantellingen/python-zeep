@@ -243,7 +243,7 @@ class Schema:
         """Return an object from one of the SchemaDocument's"""
         qname = self._create_qname(qname)
         try:
-            last_exception: typing.Optional[BaseException] = None
+            last_exception = None  # type: typing.Optional[BaseException]
             for schema in self._get_schema_documents(qname.namespace):
                 method = getattr(schema, method_name)
                 try:

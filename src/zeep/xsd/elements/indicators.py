@@ -88,7 +88,7 @@ class OrderIndicator(Indicator, list):
     @threaded_cached_property
     def elements_nested(self):
         """List of tuples containing the element name and the element"""
-        result: typing.List[typing.Tuple[typing.Optional[str], typing.Any]] = []
+        result = []  # type: typing.List[typing.Tuple[typing.Optional[str], typing.Any]]
         generator = NamePrefixGenerator()
         generator_2 = UniqueNameGenerator()
 
@@ -299,7 +299,7 @@ class All(OrderIndicator):
         expected_tags = {element.qname for __, element in self.elements}
         consumed_tags = set()
 
-        values: typing.Dict[str, etree._Element] = defaultdict(deque)
+        values = defaultdict(deque)  # type: typing.Dict[str, etree._Element]
         for i, elm in enumerate(xmlelements):
             if elm.tag in expected_tags:
                 consumed_tags.add(i)

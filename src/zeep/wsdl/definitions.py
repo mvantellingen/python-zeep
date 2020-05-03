@@ -246,7 +246,8 @@ class Port:
 
     """
 
-    _resolve_context: typing.Optional[typing.Dict[str, typing.Any]]
+    if typing.TYPE_CHECKING:
+        _resolve_context = None  # type: typing.Optional[typing.Dict[str, typing.Any]]
 
     def __init__(self, name, binding_name, xmlelement):
         self.name = name

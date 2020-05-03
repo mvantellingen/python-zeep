@@ -2,9 +2,10 @@ import typing
 
 
 class Base:
-    attr_name: str
-    max_occurs: typing.Union[int, str]
-    min_occurs: int
+    if typing.TYPE_CHECKING:
+        attr_name = ""  # type: str
+        max_occurs = 0  # type: typing.Union[int, str]
+        min_occurs = 0  # type: int
 
     @property
     def accepts_multiple(self) -> bool:
@@ -19,7 +20,7 @@ class Base:
         return self.min_occurs == 0
 
     def parse_args(self, args, index=0):
-        result: typing.Dict[str, typing.Any] = {}
+        result = {}  #: typing.Dict[str, typing.Any]
         if not args:
             return result, args, index
 
