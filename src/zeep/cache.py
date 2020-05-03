@@ -33,7 +33,9 @@ class InMemoryCache(Base):
     """Simple in-memory caching using dict lookup with support for timeouts"""
 
     #: global cache, thread-safe by default
-    _cache = {}  # type: typing.Dict[str, typing.Tuple[datetime.datetime, typing.Union[bytes, str]]]
+    _cache = (
+        {}
+    )  # type: typing.Dict[str, typing.Tuple[datetime.datetime, typing.Union[bytes, str]]]
 
     def __init__(self, timeout=3600):
         self._timeout = timeout
