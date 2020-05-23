@@ -3,10 +3,21 @@ import os
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
+import aiohttp
 import requests
+from requests import Response
 
+from zeep.exceptions import TransportError
 from zeep.utils import get_media_type, get_version
 from zeep.wsdl.utils import etree_to_string
+
+try:
+    import httpx
+except ImportError:
+    httpx = None
+
+
+__all__ = ["AsyncTransport", "Transport"]
 
 
 class Transport:
@@ -145,3 +156,101 @@ class Transport:
         self.operation_timeout = timeout
         yield
         self.operation_timeout = old_timeout
+
+
+class AsyncTransport(Transport):
+    """Asynchronous Transport class using httpx.
+
+    Note that loading the wsdl is still a sync process since and only the
+    operations can be called via async.
+
+    """
+
+    def __init__(
+        self,
+        client=None,
+        wsdl_client=None,
+        cache=None,
+        timeout=300,
+        operation_timeout=None,
+        session=None,
+        verify_ssl=True,
+        proxy=None,
+    ):
+        if httpx is None:
+            raise RuntimeError("The AsyncTransport is based on the httpx module")
+
+        self.cache = cache
+        self.wsdl_client = wsdl_client or httpx.Client()
+        self.client = client or httpx.AsyncClient()
+        self.load_timeout = timeout
+        self.operation_timeout = operation_timeout
+        self.logger = logging.getLogger(__name__)
+
+        self.verify_ssl = verify_ssl
+        self.proxy = proxy
+        self.wsdl_client.headers = {
+            "User-Agent": "Zeep/%s (www.python-zeep.org)" % (get_version())
+        }
+        self.client.headers = {
+            "User-Agent": "Zeep/%s (www.python-zeep.org)" % (get_version())
+        }
+
+    async def aclose(self):
+        await self.client.aclose()
+
+    def _load_remote_data(self, url):
+        response = self.wsdl_client.get(url, timeout=self.load_timeout)
+        result = response.read()
+
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise TransportError(status_code=response.status_code)
+        return result
+
+    async def post(self, address, message, headers):
+        self.logger.debug("HTTP Post to %s:\n%s", address, message)
+        response = await self.client.post(
+            address,
+            data=message,
+            headers=headers,
+            # verify=self.verify_ssl,
+            # proxy=self.proxy,
+            timeout=self.operation_timeout,
+        )
+        self.logger.debug(
+            "HTTP Response from %s (status: %d):\n%s",
+            address,
+            response.status_code,
+            response.read(),
+        )
+        return response
+
+    async def post_xml(self, address, envelope, headers):
+        message = etree_to_string(envelope)
+        response = await self.post(address, message, headers)
+        return self.new_response(response)
+
+    async def get(self, address, params, headers):
+        response = await self.client.get(
+            address,
+            params=params,
+            headers=headers,
+            verify_ssl=self.verify_ssl,
+            proxy=self.proxy,
+            timeout=self.operation_timeout,
+        )
+        return self.new_response(response)
+
+    def new_response(self, response):
+        """Convert an aiohttp.Response object to a requests.Response object"""
+        body = response.read()
+
+        new = Response()
+        new._content = body
+        new.status_code = response.status_code
+        new.headers = response.headers
+        new.cookies = response.cookies
+        new.encoding = response.encoding
+        return new

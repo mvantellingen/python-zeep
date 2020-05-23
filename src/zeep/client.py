@@ -1,7 +1,7 @@
 import logging
 import typing
 
-from zeep.proxy import ServiceProxy
+from zeep.proxy import ServiceProxy, AsyncServiceProxy
 from zeep.settings import Settings
 from zeep.transports import Transport
 from zeep.wsdl import Document
@@ -50,7 +50,6 @@ class Client:
     :param settings: a zeep.Settings() object
 
     """
-
     def __init__(
         self,
         wsdl,
@@ -208,6 +207,31 @@ class Client:
         else:
             service = next(iter(self.wsdl.services.values()), None)
         return service
+
+
+class AsyncClient(Client):
+
+    def bind(
+        self,
+        service_name: typing.Optional[str] = None,
+        port_name: typing.Optional[str] = None,
+    ):
+        """Create a new ServiceProxy for the given service_name and port_name.
+
+        The default ServiceProxy instance (`self.service`) always referes to
+        the first service/port in the wsdl Document.  Use this when a specific
+        port is required.
+
+        """
+        if not self.wsdl.services:
+            return
+
+        service = self._get_service(service_name)
+        port = self._get_port(service, port_name)
+        return AsyncServiceProxy(self, port.binding, **port.binding_options)
+
+    async def __aexit__(self, exc_type=None, exc_value=None, traceback=None) -> None:
+        await self.transport.close()
 
 
 class CachingClient(Client):

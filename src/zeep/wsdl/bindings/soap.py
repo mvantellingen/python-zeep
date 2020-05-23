@@ -134,6 +134,35 @@ class SoapBinding(Binding):
 
         return self.process_reply(client, operation_obj, response)
 
+    async def send_async(self, client, options, operation, args, kwargs):
+        """Called from the async service
+
+        :param client: The client with which the operation was called
+        :type client: zeep.client.Client
+        :param options: The binding options
+        :type options: dict
+        :param operation: The operation object from which this is a reply
+        :type operation: zeep.wsdl.definitions.Operation
+        :param args: The args to pass to the operation
+        :type args: tuple
+        :param kwargs: The kwargs to pass to the operation
+        :type kwargs: dict
+
+        """
+        envelope, http_headers = self._create(
+            operation, args, kwargs, client=client, options=options
+        )
+
+        response = await client.transport.post_xml(
+            options["address"], envelope, http_headers
+        )
+
+        if client.settings.raw_response:
+            return response
+
+        operation_obj = self.get(operation)
+        return self.process_reply(client, operation_obj, response)
+
     def process_reply(self, client, operation, response):
         """Process the XML reply from the server.
 

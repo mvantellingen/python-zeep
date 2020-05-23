@@ -15,7 +15,7 @@ from collections import OrderedDict
 from lxml import etree
 
 from zeep.exceptions import IncompleteMessage
-from zeep.loader import absolute_location, is_relative_path, load_external
+from zeep.loader import absolute_location, is_relative_path, load_external, load_external_async
 from zeep.settings import Settings
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
@@ -84,7 +84,9 @@ class Document:
             location=self.location,
             settings=self.settings,
         )
+        self.load(location)
 
+    def load(self, location):
         document = self._get_xml_document(location)
 
         root_definitions = Definition(self, document, self.location)
@@ -154,6 +156,7 @@ class Document:
         self._definitions[key] = definition
 
 
+
 class Definition:
     """The Definition represents one wsdl:definition within a Document.
 
@@ -183,8 +186,9 @@ class Definition:
         self.target_namespace = doc.get("targetNamespace")
         self.wsdl._add_definition(self)
         self.nsmap = doc.nsmap
+        self._load(doc)
 
-        # Process the definitions
+    def _load(self, doc):
         self.parse_imports(doc)
 
         self.parse_types(doc)
@@ -194,7 +198,7 @@ class Definition:
         self.services = self.parse_service(doc)
 
     def __repr__(self):
-        return "<Definition(location=%r)>" % self.location
+        return "<%s(location=%r)>" % (self.__class__.__name__, self.location)
 
     def get(self, name, key, _processed=None):
         container = getattr(self, name)
