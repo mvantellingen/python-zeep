@@ -1,4 +1,5 @@
 import logging
+import typing
 
 from lxml import etree
 from requests_toolbelt.multipart.decoder import MultipartDecoder
@@ -12,6 +13,10 @@ from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
 from zeep.wsdl.messages.xop import process_xop
 from zeep.wsdl.utils import etree_to_string, url_http_to_https
+
+if typing.TYPE_CHECKING:
+    from zeep.wsdl.wsdl import Definition
+
 
 logger = logging.getLogger(__name__)
 
@@ -466,7 +471,7 @@ class SoapOperation(Operation):
 
         return obj
 
-    def resolve(self, definitions):
+    def resolve(self, definitions: "Definition"):
         super().resolve(definitions)
         for name, fault in self.faults.items():
             if name in self.abstract.fault_messages:

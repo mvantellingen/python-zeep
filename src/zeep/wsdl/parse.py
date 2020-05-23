@@ -11,6 +11,9 @@ from zeep.exceptions import IncompleteMessage, LookupError, NamespaceError
 from zeep.utils import qname_attr
 from zeep.wsdl import definitions
 
+if typing.TYPE_CHECKING:
+    from zeep.wsdl.wsdl import Definition
+
 NSMAP = {
     "wsdl": "http://schemas.xmlsoap.org/wsdl/",
     "wsaw": "http://www.w3.org/2006/05/addressing/wsdl",
@@ -19,7 +22,7 @@ NSMAP = {
 
 
 def parse_abstract_message(
-    wsdl, xmlelement: etree._Element
+    wsdl: "Definition", xmlelement: etree._Element
 ) -> definitions.AbstractMessage:
     """Create an AbstractMessage object from a xml element.
 
@@ -32,10 +35,7 @@ def parse_abstract_message(
         </definitions>
 
     :param wsdl: The parent definition instance
-    :type wsdl: zeep.wsdl.wsdl.Definition
     :param xmlelement: The XML node
-    :type xmlelement: lxml.etree._Element
-    :rtype: zeep.wsdl.definitions.AbstractMessage
 
     """
     tns = wsdl.target_namespace
@@ -76,7 +76,7 @@ def parse_abstract_message(
 
 
 def parse_abstract_operation(
-    wsdl, xmlelement: etree._Element
+    wsdl: "Definition", xmlelement: etree._Element
 ) -> typing.Optional[definitions.AbstractOperation]:
     """Create an AbstractOperation object from a xml element.
 
@@ -99,10 +99,7 @@ def parse_abstract_operation(
         </wsdl:operation>
 
     :param wsdl: The parent definition instance
-    :type wsdl: zeep.wsdl.wsdl.Definition
     :param xmlelement: The XML node
-    :type xmlelement: lxml.etree._Element
-    :rtype: zeep.wsdl.definitions.AbstractOperation
 
     """
     name = xmlelement.get("name")
@@ -143,7 +140,9 @@ def parse_abstract_operation(
     return definitions.AbstractOperation(**kwargs)
 
 
-def parse_port_type(wsdl, xmlelement):
+def parse_port_type(
+    wsdl: "Definition", xmlelement: etree._Element
+) -> definitions.PortType:
     """Create a PortType object from a xml element.
 
     Definition::
@@ -155,22 +154,20 @@ def parse_port_type(wsdl, xmlelement):
         </wsdl:definitions>
 
     :param wsdl: The parent definition instance
-    :type wsdl: zeep.wsdl.wsdl.Definition
     :param xmlelement: The XML node
-    :type xmlelement: lxml.etree._Element
-    :rtype: zeep.wsdl.definitions.PortType
 
     """
     name = qname_attr(xmlelement, "name", wsdl.target_namespace)
-    operations = {}
+    operations = {}  # type: typing.Dict[str, definitions.AbstractOperation]
     for elm in xmlelement.findall("wsdl:operation", namespaces=NSMAP):
         operation = parse_abstract_operation(wsdl, elm)
         if operation:
             operations[operation.name] = operation
+
     return definitions.PortType(name, operations)
 
 
-def parse_port(wsdl, xmlelement):
+def parse_port(wsdl: "Definition", xmlelement: etree._Element) -> definitions.Port:
     """Create a Port object from a xml element.
 
     This is called via the parse_service function since ports are part of the
@@ -184,10 +181,7 @@ def parse_port(wsdl, xmlelement):
         </wsdl:port>
 
     :param wsdl: The parent definition instance
-    :type wsdl: zeep.wsdl.wsdl.Definition
     :param xmlelement: The XML node
-    :type xmlelement: lxml.etree._Element
-    :rtype: zeep.wsdl.definitions.Port
 
     """
     name = xmlelement.get("name")
@@ -195,7 +189,9 @@ def parse_port(wsdl, xmlelement):
     return definitions.Port(name, binding_name=binding_name, xmlelement=xmlelement)
 
 
-def parse_service(wsdl, xmlelement):
+def parse_service(
+    wsdl: "Definition", xmlelement: etree._Element
+) -> definitions.Service:
     """
 
     Definition::
@@ -219,14 +215,11 @@ def parse_service(wsdl, xmlelement):
           </service>
 
     :param wsdl: The parent definition instance
-    :type wsdl: zeep.wsdl.wsdl.Definition
     :param xmlelement: The XML node
-    :type xmlelement: lxml.etree._Element
-    :rtype: zeep.wsdl.definitions.Service
 
     """
     name = xmlelement.get("name")
-    ports = []
+    ports = []  # type: typing.List[definitions.Port]
     for port_node in xmlelement.findall("wsdl:port", namespaces=NSMAP):
         port = parse_port(wsdl, port_node)
         if port:

@@ -19,7 +19,12 @@ import typing
 import warnings
 from collections import OrderedDict, namedtuple
 
+from lxml import etree
+
 from zeep.exceptions import IncompleteOperation
+
+if typing.TYPE_CHECKING:
+    from zeep.wsdl.wsdl import Definition
 
 MessagePart = namedtuple("MessagePart", ["element", "type"])
 
@@ -84,7 +89,9 @@ class AbstractOperation:
 
 
 class PortType:
-    def __init__(self, name, operations):
+    def __init__(
+        self, name: etree.QName, operations: typing.Dict[str, AbstractOperation]
+    ):
         self.name = name
         self.operations = operations
 
@@ -127,7 +134,7 @@ class Binding:
         self.wsdl = wsdl
         self._operations = {}
 
-    def resolve(self, definitions):
+    def resolve(self, definitions: "Definition") -> None:
         self.port_type = definitions.get("port_types", self.port_name.text)
 
         for name, operation in list(self._operations.items()):
@@ -327,5 +334,5 @@ class Service:
 
         self._is_resolved = True
 
-    def add_port(self, port):
+    def add_port(self, port: Port) -> None:
         self.ports[port.name] = port

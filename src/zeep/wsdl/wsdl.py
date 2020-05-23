@@ -19,7 +19,7 @@ from zeep.loader import absolute_location, is_relative_path, load_external
 from zeep.settings import Settings
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
-from zeep.wsdl.definitions import Binding
+from zeep.wsdl.definitions import Binding, PortType, Service
 from zeep.xsd import Schema
 
 if typing.TYPE_CHECKING:
@@ -137,7 +137,7 @@ class Document:
                     print("%s%s" % (" " * 12, str(operation)))
                 print("")
 
-    def _get_xml_document(self, location):
+    def _get_xml_document(self, location: typing.IO) -> etree._Element:
         """Load the XML content from the given location and return an
         lxml.Element object.
 
@@ -174,8 +174,8 @@ class Definition:
         self.types = wsdl.types
         self.port_types = {}
         self.messages = {}
-        self.bindings = {}
-        self.services = OrderedDict()
+        self.bindings = {}  # type: typing.Dict[str, typing.Type[Binding]]
+        self.services = OrderedDict()  # type: typing.Dict[str, Service]
 
         self.imports = {}
         self._resolved_imports = False
@@ -223,7 +223,7 @@ class Definition:
 
         raise IndexError("No definition %r in %r found" % (key, name))
 
-    def resolve_imports(self):
+    def resolve_imports(self) -> None:
         """Resolve all root elements (types, messages, etc)."""
 
         # Simple guard to protect against cyclic imports
@@ -347,7 +347,7 @@ class Definition:
                 logger.debug("Adding message: %s", msg.name.text)
         return result
 
-    def parse_ports(self, doc):
+    def parse_ports(self, doc: etree._Element) -> typing.Dict[str, PortType]:
         """Return dict with `PortType` instances as values
 
         Definition::
@@ -369,7 +369,9 @@ class Definition:
             logger.debug("Adding port: %s", port_type.name.text)
         return result
 
-    def parse_binding(self, doc):
+    def parse_binding(
+        self, doc: etree._Element
+    ) -> typing.Dict[str, typing.Type[Binding]]:
         """Parse the binding elements and return a dict of bindings.
 
         Currently supported bindings are Soap 1.1, Soap 1.2., HTTP Get and
@@ -435,7 +437,7 @@ class Definition:
                     break
         return result
 
-    def parse_service(self, doc):
+    def parse_service(self, doc: etree._Element) -> typing.Dict[str, Service]:
         """
 
         Definition::

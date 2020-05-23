@@ -8,7 +8,9 @@ from zeep.exceptions import XMLParseError
 from zeep.ns import XSD
 
 
-def qname_attr(node, attr_name, target_namespace=None) -> typing.Optional[etree.QName]:
+def qname_attr(
+    node: etree._Element, attr_name: str, target_namespace=None
+) -> typing.Optional[etree.QName]:
     value = node.get(attr_name)
     if value is not None:
         return as_qname(value, node.nsmap, target_namespace)
@@ -45,7 +47,7 @@ def as_qname(value: str, nsmap, target_namespace=None) -> etree.QName:
     return etree.QName(value)
 
 
-def findall_multiple_ns(node, name, namespace_sets):
+def findall_multiple_ns(node: etree._Element, name, namespace_sets):
     result = []
     for nsmap in namespace_sets:
         result.extend(node.findall(name, namespaces=nsmap))

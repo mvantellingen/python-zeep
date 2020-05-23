@@ -1,4 +1,5 @@
 import logging
+import typing
 
 from zeep.proxy import ServiceProxy
 from zeep.settings import Settings
@@ -98,7 +99,11 @@ class Client:
             )
         return self._default_service
 
-    def bind(self, service_name=None, port_name=None):
+    def bind(
+        self,
+        service_name: typing.Optional[str] = None,
+        port_name: typing.Optional[str] = None,
+    ):
         """Create a new ServiceProxy for the given service_name and port_name.
 
         The default ServiceProxy instance (`self.service`) always referes to
@@ -195,7 +200,7 @@ class Client:
             port = list(service.ports.values())[0]
         return port
 
-    def _get_service(self, name):
+    def _get_service(self, name: typing.Optional[str]) -> str:
         if name:
             service = self.wsdl.services.get(name)
             if not service:

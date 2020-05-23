@@ -1,4 +1,5 @@
 import os.path
+import typing
 from urllib.parse import urljoin, urlparse, urlunparse
 
 from defusedxml.lxml import fromstring
@@ -59,7 +60,7 @@ def parse_xml(content, transport, base_url=None, settings=None):
         )
 
 
-def load_external(url, transport, base_url=None, settings=None):
+def load_external(url: typing.IO, transport, base_url=None, settings=None):
     """Load an external XML document.
 
     :param url:
