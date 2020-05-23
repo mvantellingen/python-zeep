@@ -1,4 +1,4 @@
-from zeep.client import CachingClient, Client  # noqa
+from zeep.client import AsyncClient, CachingClient, Client  # noqa
 from zeep.plugins import Plugin  # noqa
 from zeep.settings import Settings  # noqa
 from zeep.transports import Transport  # noqa

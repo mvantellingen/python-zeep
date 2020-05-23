@@ -1,9 +1,10 @@
 import asyncio
+import httpx
 import time
 
 import zeep
 
-from zeep.asyncio import AsyncTransport
+from zeep.transports import AsyncTransport
 
 
 def run_async():
@@ -17,12 +18,12 @@ def run_async():
 
     loop = asyncio.get_event_loop()
 
-    transport = AsyncTransport(loop, cache=None)
-    client = zeep.Client('http://localhost:8000/?wsdl', transport=transport)
+    transport = AsyncTransport(cache=None)
+    client = zeep.AsyncClient("http://localhost:8000/?wsdl", transport=transport)
 
     tasks = [
-        client.service.slow_request('request-1'),  # takes 1 sec
-        client.service.slow_request('request-2'),  # takes 1 sec
+        client.service.slow_request("request-1"),  # takes 1 sec
+        client.service.slow_request("request-2"),  # takes 1 sec
     ]
     future = asyncio.gather(*tasks, return_exceptions=True)
 
@@ -31,23 +32,23 @@ def run_async():
 
     st = time.time()
     loop.run_until_complete(future)
-    loop.run_until_complete(transport.session.close())
+    loop.run_until_complete(transport.aclose())
     print("time: %.2f" % (time.time() - st))
     print("result: %s", result)
     print("")
-    return result
+    return future
 
 
 def run_sync():
     print("sync example")
     print("============")
     transport = zeep.Transport(cache=None)
-    client = zeep.Client('http://localhost:8000/?wsdl', transport=transport)
+    client = zeep.Client("http://localhost:8000/?wsdl", transport=transport)
 
     st = time.time()
     result = [
-        client.service.slow_request('request-1'),  # takes 1 sec
-        client.service.slow_request('request-2'),  # takes 1 sec
+        client.service.slow_request("request-1"),  # takes 1 sec
+        client.service.slow_request("request-2"),  # takes 1 sec
     ]
     print("Time: %.2f" % (time.time() - st))
     print("result: %s", result)
@@ -56,7 +57,8 @@ def run_sync():
     return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("")
+    #asyncio.run(run_async())
     run_async()
     run_sync()

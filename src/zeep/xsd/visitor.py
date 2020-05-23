@@ -44,6 +44,14 @@ class SchemaVisitor:
     """Visitor which processes XSD files and registers global elements and
     types in the given schema.
 
+    Notes:
+
+    TODO: include and import statements can reference other nodes. We need
+    to load these first. Always global.
+
+
+
+
     :param schema:
     :type schema: zeep.xsd.schema.Schema
     :param document:
@@ -227,12 +235,7 @@ class SchemaVisitor:
             return
 
         # Load the XML
-        schema_node = load_external(
-            location,
-            transport=self.schema._transport,
-            base_url=self.document._location,
-            settings=self.schema.settings,
-        )
+        schema_node = self._retrieve_data(location, base_url=self.document._location)
 
         # Check if the xsd:import namespace matches the targetNamespace. If
         # the xsd:import statement didn't specify a namespace then make sure
@@ -286,12 +289,7 @@ class SchemaVisitor:
         if location in self._includes:
             return
 
-        schema_node = load_external(
-            location,
-            self.schema._transport,
-            base_url=self.document._base_url,
-            settings=self.schema.settings,
-        )
+        schema_node = self._retrieve_data(location, base_url=self.document._base_url)
         self._includes.add(location)
 
         # When the included document has no default namespace defined but the
@@ -1195,6 +1193,11 @@ class SchemaVisitor:
 
         """
         pass
+
+    def _retrieve_data(self, url: typing.IO, base_url=None):
+        return load_external(
+            url, self.schema._transport, base_url, settings=self.schema.settings
+        )
 
     def _get_type(self, name):
         assert name is not None

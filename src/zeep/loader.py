@@ -80,6 +80,26 @@ def load_external(url: typing.IO, transport, base_url=None, settings=None):
     return parse_xml(content, transport, base_url, settings=settings)
 
 
+async def load_external_async(url: typing.IO, transport, base_url=None, settings=None):
+    """Load an external XML document.
+
+    :param url:
+    :param transport:
+    :param base_url:
+    :param settings: A zeep.settings.Settings object containing parse settings.
+    :type settings: zeep.settings.Settings
+
+    """
+    settings = settings or Settings()
+    if hasattr(url, "read"):
+        content = url.read()
+    else:
+        if base_url:
+            url = absolute_location(url, base_url)
+        content = await transport.load(url)
+    return parse_xml(content, transport, base_url, settings=settings)
+
+
 def normalize_location(settings, url, base_url):
     """Return a 'normalized' url for the given url.
 

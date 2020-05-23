@@ -18,7 +18,7 @@ docs_require = [
     "sphinx>=1.4.0",
 ]
 
-async_require = ["aiohttp>=1.0"]
+async_require = ["httpx"]
 
 xmlsec_require = [
     "xmlsec>=0.6.1",
@@ -30,6 +30,8 @@ tests_require = [
     "mock==2.0.0",
     "pretend==1.0.9",
     "pytest-cov==2.8.1",
+    "pytest-httpx",
+    "pytest-asyncio",
     "pytest==6.0.1",
     "requests_mock>=0.7.0",
     # Linting
@@ -37,7 +39,6 @@ tests_require = [
     "flake8==3.8.3",
     "flake8-blind-except==0.1.1",
     "flake8-debugger==3.2.1",
-    "aioresponses>=0.4.1",
     "flake8-imports==0.1.1",
 ]
 
