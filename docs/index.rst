@@ -10,7 +10,6 @@ Highlights:
  * Support for Soap 1.1, Soap 1.2 and HTTP bindings
  * Support for WS-Addressing headers
  * Support for WSSE (UserNameToken / x.509 signing)
- * Support for tornado async transport via gen.coroutine
  * Support for asyncio via aiohttp
  * Experimental support for XOP messages
 
@@ -89,12 +88,6 @@ For the asyncio support in Python 3.5+ the aiohttp module is required, this
 can be installed with the ``async`` extras::
 
     pip install zeep[async]
-
-
-For tornado support the tornado module is required, this can be installed
-with the ``tornado`` extras::
-
-    pip install zeep[tornado]
 
 
 Getting started

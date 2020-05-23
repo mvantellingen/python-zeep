@@ -10,7 +10,6 @@ Highlights:
  * Support for Soap 1.1, Soap 1.2 and HTTP bindings
  * Support for WS-Addressing headers
  * Support for WSSE (UserNameToken / x.509 signing)
- * Support for tornado async transport via gen.coroutine
  * Support for asyncio via aiohttp
  * Experimental support for XOP messages
 
@@ -46,7 +45,7 @@ Installation
     pip install zeep
 
 Note that the latest version to support Python 2.7 is Zeep 3.4, install via `pip install zeep==3.4.0`
-  
+
 
 Usage
 -----

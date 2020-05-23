@@ -18,8 +18,6 @@ docs_require = [
     "sphinx>=1.4.0",
 ]
 
-tornado_require = ["tornado>=4.0.2,<5"]
-
 async_require = ["aiohttp>=1.0"]
 
 xmlsec_require = [
@@ -34,7 +32,6 @@ tests_require = [
     "pytest-cov==2.8.1",
     "pytest==5.4.1",
     "requests_mock>=0.7.0",
-    "pytest-tornado==0.4.5",
     # Linting
     "isort[pyproject]==4.3.21",
     "flake8==3.7.9",
@@ -64,7 +61,6 @@ setup(
         "docs": docs_require,
         "test": tests_require,
         "async": async_require,
-        "tornado": tornado_require,
         "xmlsec": xmlsec_require,
     },
     entry_points={},
