@@ -289,13 +289,13 @@ def test_element_any_type():
     expected = """
         <document>
             <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
-                <ns0:something>18:29:59</ns0:something>
+                <ns0:something xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:time">18:29:59</ns0:something>
             </ns0:container>
         </document>
     """
     assert_nodes_equal(expected, node)
     item = container_elm.parse(list(node)[0], schema)
-    assert item.something == "18:29:59"
+    assert item.something == datetime.time(18, 29, 59)
 
 
 def test_element_any_type_unknown_type():
@@ -331,6 +331,48 @@ def test_element_any_type_unknown_type():
     )
     item = container_elm.parse(list(node)[0], schema)
     assert item.something == "bar"
+
+
+def test_element_any_type_unknown_type_render():
+    node = etree.fromstring(
+        """
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualifier   ">
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="something" type="anyType"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """.strip()
+    )
+    schema = xsd.Schema(node)
+
+    container_elm = schema.get_element("{http://tests.python-zeep.org/}container")
+
+    class Something(object):
+        def __repr__(self):
+            return "Something(Nothing)"
+
+    obj = container_elm(something=Something())
+
+    node = etree.Element("document")
+    container_elm.render(node, obj)
+    expected = """
+        <document>
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+                <something xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="string">Something(Nothing)</something>
+            </ns0:container>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+    item = container_elm.parse(list(node)[0], schema)
+    assert item.something == "Something(Nothing)"
 
 
 def test_element_any_type_elements():

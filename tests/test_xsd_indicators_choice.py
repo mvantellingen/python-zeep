@@ -399,7 +399,7 @@ def test_choice_element_with_any_max_occurs():
     expected = """
         <document>
           <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
-            <ns0:item_2>item-2</ns0:item_2>
+            <ns0:item_2 xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">item-2</ns0:item_2>
             <ns0:item_any>any-content</ns0:item_any>
           </ns0:container>
         </document>
