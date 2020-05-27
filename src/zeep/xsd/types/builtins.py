@@ -107,7 +107,10 @@ class Duration(BuiltinType):
 
     @check_no_collection
     def xmlvalue(self, value):
-        return isodate.duration_isoformat(value)
+        if isinstance(value, str):
+            return value
+        else:
+            return isodate.duration_isoformat(value)
 
     def pythonvalue(self, value):
         if value.startswith("PT-"):
