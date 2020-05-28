@@ -328,6 +328,9 @@ class ComplexType(AnyType):
         if value is None:
             return None
 
+        if value is Nil:
+            return Nil
+
         if isinstance(value, list) and not self._array_type:
             return [self._create_object(val, name) for val in value]
 
