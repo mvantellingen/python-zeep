@@ -454,8 +454,11 @@ class DocumentMessage(SoapMessage):
         else:
             sub_elements = []
             for part_name, part in parts.items():
-                element = part.element.clone()
-                element.attr_name = part_name or element.name
+                if part.element:
+                    element = part.element.clone()
+                    element.attr_name = part_name or element.name
+                else:
+                    element = xsd.Element(part_name, part.type)
                 sub_elements.append(element)
 
         if len(sub_elements) > 1:
