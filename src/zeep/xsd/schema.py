@@ -128,7 +128,7 @@ class Schema:
     def get_element(self, qname):
         """Return a global xsd.Element object with the given qname
 
-        :rtype: zeep.xsd.Group
+        :rtype: zeep.xsd.Element
 
         """
         qname = self._create_qname(qname)
