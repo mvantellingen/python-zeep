@@ -1,4 +1,5 @@
 import asyncio
+import ssl
 import time
 
 import zeep
@@ -17,7 +18,10 @@ def run_async():
 
     loop = asyncio.get_event_loop()
 
-    transport = AsyncTransport(loop, cache=None)
+    # Optionally, an SSLContext can be provided to customize SSL options
+    ssl_context = ssl.create_default_context()
+
+    transport = AsyncTransport(loop, cache=None, ssl_context=ssl_context)
     client = zeep.Client('http://localhost:8000/?wsdl', transport=transport)
 
     tasks = [

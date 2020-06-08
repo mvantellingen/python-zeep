@@ -37,6 +37,7 @@ class AsyncTransport(Transport):
         session=None,
         verify_ssl=True,
         proxy=None,
+        ssl_context=None
     ):
 
         self.loop = loop if loop else asyncio.get_event_loop()
@@ -47,6 +48,7 @@ class AsyncTransport(Transport):
 
         self.verify_ssl = verify_ssl
         self.proxy = proxy
+        self.ssl_context = ssl_context
         self.session = session or aiohttp.ClientSession(loop=self.loop)
         self._close_session = session is None
         self.session._default_headers[
@@ -93,6 +95,7 @@ class AsyncTransport(Transport):
                 headers=headers,
                 verify_ssl=self.verify_ssl,
                 proxy=self.proxy,
+                ssl_context=self.ssl_context
             )
             self.logger.debug(
                 "HTTP Response from %s (status: %d):\n%s",
@@ -115,6 +118,7 @@ class AsyncTransport(Transport):
                 headers=headers,
                 verify_ssl=self.verify_ssl,
                 proxy=self.proxy,
+                ssl_context=self.ssl_context
             )
 
             return await self.new_response(response)
