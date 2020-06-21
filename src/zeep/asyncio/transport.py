@@ -71,7 +71,7 @@ class AsyncTransport(Transport):
         async def _load_remote_data_async():
             nonlocal result
             with aio_timeout(self.load_timeout):
-                response = await self.session.get(url)
+                response = await self.session.get(url, verify_ssl=self.verify_ssl)
                 result = await response.read()
                 try:
                     response.raise_for_status()
