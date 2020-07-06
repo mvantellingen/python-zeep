@@ -17,8 +17,12 @@ from zeep.wsdl.utils import etree_to_string
 try:
     from async_timeout import timeout as aio_timeout  # Python 3.6+
 except ImportError:
-    from aiohttp import Timeout as aio_timeout  # Python 3.5, aiohttp < 3
-
+    import aiohttp
+    if tuple([int(s) for s in aiohttp.__version__.split('.')]) < (3,3,0) :
+        from aiohttp import Timeout as aio_timeout  # Python 3.5, aiohttp < 3
+    else :
+        from aiohttp import ClientTimeout as aio_timeout
+    del aiohttp
 
 __all__ = ["AsyncTransport"]
 
