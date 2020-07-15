@@ -29,7 +29,7 @@ class Any(Base):
         :type process_contents: str (strict, lax, skip)
 
         """
-        super(Any, self).__init__()
+        super().__init__()
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
         self.restrict = restrict
@@ -172,7 +172,11 @@ class Any(Base):
                 raise exceptions.ValidationError(
                     "Expected at least %d items (minOccurs check)" % self.min_occurs
                 )
-            if self.max_occurs != "unbounded" and len(value) > self.max_occurs:
+            if (
+                self.max_occurs != "unbounded"
+                and isinstance(self.max_occurs, int)
+                and len(value) > self.max_occurs
+            ):
                 raise exceptions.ValidationError(
                     "Expected at most %d items (maxOccurs check)" % self.min_occurs
                 )
@@ -234,6 +238,7 @@ class Any(Base):
 
 
 class AnyAttribute(Base):
+    # FIXME: should not inherit from Base
     name = None
     _ignore_attributes = [etree.QName(ns.XSI, "type")]
 

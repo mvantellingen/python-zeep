@@ -129,7 +129,7 @@ def test_create_message():
     data = client_obj.create_message(
         client_obj.service, "GetLastTradePrice", tickerSymbol="ZEEP"
     )
-    assert data
+    assert data is not None
 
 
 def test_load_wsdl_with_file_prefix():

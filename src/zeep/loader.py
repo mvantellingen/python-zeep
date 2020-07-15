@@ -1,8 +1,9 @@
 import os.path
+import typing
+from urllib.parse import urljoin, urlparse, urlunparse
 
 from defusedxml.lxml import fromstring
 from lxml import etree
-from six.moves.urllib.parse import urljoin, urlparse, urlunparse
 
 from zeep.exceptions import XMLSyntaxError
 from zeep.settings import Settings
@@ -59,7 +60,7 @@ def parse_xml(content, transport, base_url=None, settings=None):
         )
 
 
-def load_external(url, transport, base_url=None, settings=None):
+def load_external(url: typing.IO, transport, base_url=None, settings=None):
     """Load an external XML document.
 
     :param url:
@@ -86,12 +87,6 @@ def normalize_location(settings, url, base_url):
     enabled.
 
     """
-    # Python 2.7 doesn't accept None to urlparse() calls, but Python 3 does.
-    # So as a guard convert None to '' here so that we can't introduce errors in
-    # Python 2.7 like #930. Can be removed when we drop Python 2 support.
-    if url is None:
-        url = ""
-
     if base_url:
         url = absolute_location(url, base_url)
 

@@ -2,11 +2,13 @@ import base64
 import hashlib
 import os
 
+import six
+
 from zeep import ns
 from zeep.wsse import utils
 
 
-class UsernameToken(object):
+class UsernameToken:
     """UsernameToken Profile 1.1
 
     https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-UsernameTokenProfile.pdf
@@ -97,12 +99,15 @@ class UsernameToken(object):
             nonce = os.urandom(16)
         timestamp = utils.get_timestamp(self.created)
 
+        if isinstance(self.password, six.string_types):
+            password = self.password.encode("utf-8")
+        else:
+            password = self.password
+
         # digest = Base64 ( SHA-1 ( nonce + created + password ) )
         if not self.password_digest:
             digest = base64.b64encode(
-                hashlib.sha1(
-                    nonce + timestamp.encode("utf-8") + self.password.encode("utf-8")
-                ).digest()
+                hashlib.sha1(nonce + timestamp.encode("utf-8") + password).digest()
             ).decode("ascii")
         else:
             digest = self.password_digest

@@ -9,7 +9,7 @@ class ListType(AnySimpleType):
 
     def __init__(self, item_type):
         self.item_type = item_type
-        super(ListType, self).__init__()
+        super().__init__()
 
     def __call__(self, value):
         return value
@@ -43,7 +43,7 @@ class UnionType(AnySimpleType):
         self.item_types = item_types
         self.item_class = None
         assert item_types
-        super(UnionType, self).__init__(None)
+        super().__init__(None)
 
     def resolve(self):
         self.item_types = [item.resolve() for item in self.item_types]

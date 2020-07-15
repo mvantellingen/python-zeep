@@ -1,6 +1,5 @@
 import logging
 
-import six
 from lxml import etree
 
 from zeep.exceptions import ValidationError
@@ -12,14 +11,11 @@ logger = logging.getLogger(__name__)
 __all__ = ["AnySimpleType"]
 
 
-@six.python_2_unicode_compatible
 class AnySimpleType(AnyType):
     _default_qname = xsd_ns("anySimpleType")
 
     def __init__(self, qname=None, is_global=False):
-        super(AnySimpleType, self).__init__(
-            qname or etree.QName(self._default_qname), is_global
-        )
+        super().__init__(qname or etree.QName(self._default_qname), is_global)
 
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.
@@ -45,7 +41,7 @@ class AnySimpleType(AnyType):
                     "%s() got an unexpected keyword argument %r. "
                     + "Simple types expect only a single value argument"
                 )
-                % (self.__class__.__name__, next(six.iterkeys(kwargs)))
+                % (self.__class__.__name__, next(kwargs.keys()))
             )
 
         value = args[0] if args else kwargs["value"]
@@ -71,11 +67,6 @@ class AnySimpleType(AnyType):
         except (TypeError, ValueError):
             logger.exception("Error during xml -> python translation")
             return None
-
-    def pythonvalue(self, xmlvalue):
-        raise NotImplementedError(
-            "%s.pytonvalue() not implemented" % self.__class__.__name__
-        )
 
     def render(self, parent, value, xsd_type=None, render_path=None):
         if value is Nil:

@@ -1,4 +1,3 @@
-import keyword
 import logging
 import re
 
@@ -15,39 +14,32 @@ from zeep.xsd.types.unresolved import UnresolvedCustomType, UnresolvedType
 logger = logging.getLogger(__name__)
 
 
-class tags(object):
-    pass
+class tags:
+    schema = xsd_ns("schema")
+    import_ = xsd_ns("import")
+    include = xsd_ns("include")
+    annotation = xsd_ns("annotation")
+    element = xsd_ns("element")
+    simpleType = xsd_ns("simpleType")
+    complexType = xsd_ns("complexType")
+    simpleContent = xsd_ns("simpleContent")
+    complexContent = xsd_ns("complexContent")
+    sequence = xsd_ns("sequence")
+    group = xsd_ns("group")
+    choice = xsd_ns("choice")
+    all = xsd_ns("all")
+    list = xsd_ns("list")
+    union = xsd_ns("union")
+    attribute = xsd_ns("attribute")
+    any = xsd_ns("any")
+    anyAttribute = xsd_ns("anyAttribute")
+    attributeGroup = xsd_ns("attributeGroup")
+    restriction = xsd_ns("restriction")
+    extension = xsd_ns("extension")
+    notation = xsd_ns("notations")
 
 
-for name in [
-    "schema",
-    "import",
-    "include",
-    "annotation",
-    "element",
-    "simpleType",
-    "complexType",
-    "simpleContent",
-    "complexContent",
-    "sequence",
-    "group",
-    "choice",
-    "all",
-    "list",
-    "union",
-    "attribute",
-    "any",
-    "anyAttribute",
-    "attributeGroup",
-    "restriction",
-    "extension",
-    "notation",
-]:
-    attr = name if name not in keyword.kwlist else name + "_"
-    setattr(tags, attr, xsd_ns(name))
-
-
-class SchemaVisitor(object):
+class SchemaVisitor:
     """Visitor which processes XSD files and registers global elements and
     types in the given schema.
 
@@ -190,7 +182,7 @@ class SchemaVisitor(object):
             raise XMLParseError(
                 "The attribute 'namespace' must be existent if the "
                 "importing schema has no target namespace.",
-                filename=self._document.location,
+                filename=self.document.location,
                 sourceline=node.sourceline,
             )
 

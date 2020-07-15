@@ -3,6 +3,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+import typing
 from collections import namedtuple
 
 from zeep import xsd
@@ -10,8 +11,12 @@ from zeep import xsd
 SerializedMessage = namedtuple("SerializedMessage", ["path", "headers", "content"])
 
 
-class ConcreteMessage(object):
+class ConcreteMessage:
     """Represents the wsdl:binding -> wsdl:operation -> input/ouput node"""
+
+    if typing.TYPE_CHECKING:
+        body = None  # type: typing.Optional[xsd.Element]
+        header = None  # type: typing.Optional[xsd.Element]
 
     def __init__(self, wsdl, name, operation):
         assert wsdl
@@ -45,10 +50,13 @@ class ConcreteMessage(object):
             return self.body.type.signature(schema=self.wsdl.types, standalone=False)
 
         parts = [self.body.type.signature(schema=self.wsdl.types, standalone=False)]
+
+        # TODO: There was a bug in this part for a while, so wondering if this
+        # code is used
         if getattr(self, "header", None):
             parts.append(
-                "_soapheaders={%s}" % self.header.signature(schema=self.wsdl.types),
-                standalone=False,
+                "_soapheaders={%s}"
+                % self.header.signature(schema=self.wsdl.types, standalone=False)
             )
         return ", ".join(part for part in parts if part)
 

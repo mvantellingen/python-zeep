@@ -6,9 +6,16 @@ from itertools import chain
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
-from zeep.xsd.const import NotSet, SkipValue, Nil, xsi_ns
+from zeep.xsd.const import Nil, NotSet, SkipValue, xsi_ns
 from zeep.xsd.elements import (
-    Any, AnyAttribute, AttributeGroup, Choice, Element, Group, Sequence)
+    Any,
+    AnyAttribute,
+    AttributeGroup,
+    Choice,
+    Element,
+    Group,
+    Sequence,
+)
 from zeep.xsd.elements.indicators import OrderIndicator
 from zeep.xsd.types.any import AnyType
 from zeep.xsd.types.simple import AnySimpleType
@@ -41,7 +48,7 @@ class ComplexType(AnyType):
         self._restriction = restriction
         self._extension = extension
         self._extension_types = tuple()
-        super(ComplexType, self).__init__(qname=qname, is_global=is_global)
+        super().__init__(qname=qname, is_global=is_global)
 
     def __call__(self, *args, **kwargs):
         if self._array_type:

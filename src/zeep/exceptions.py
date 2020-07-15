@@ -10,14 +10,14 @@ class Error(Exception):
 class XMLSyntaxError(Error):
     def __init__(self, *args, **kwargs):
         self.content = kwargs.pop("content", None)
-        super(XMLSyntaxError, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class XMLParseError(Error):
     def __init__(self, *args, **kwargs):
         self.filename = kwargs.pop("filename", None)
         self.sourceline = kwargs.pop("sourceline", None)
-        super(XMLParseError, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __str__(self):
         location = None
@@ -38,7 +38,7 @@ class WsdlSyntaxError(Error):
 
 class TransportError(Error):
     def __init__(self, message="", status_code=0, content=None):
-        super(TransportError, self).__init__(message)
+        super().__init__(message)
         self.status_code = status_code
         self.content = content
 
@@ -48,7 +48,7 @@ class LookupError(Error):
         self.qname = kwargs.pop("qname", None)
         self.item_name = kwargs.pop("item_name", None)
         self.location = kwargs.pop("location", None)
-        super(LookupError, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class NamespaceError(Error):
@@ -57,7 +57,7 @@ class NamespaceError(Error):
 
 class Fault(Error):
     def __init__(self, message, code=None, actor=None, detail=None, subcodes=None):
-        super(Fault, self).__init__(message)
+        super().__init__(message)
         self.message = message
         self.code = code
         self.actor = actor
@@ -72,7 +72,7 @@ class ZeepWarning(RuntimeWarning):
 class ValidationError(Error):
     def __init__(self, *args, **kwargs):
         self.path = kwargs.pop("path", [])
-        super(ValidationError, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __str__(self):
         if self.path:

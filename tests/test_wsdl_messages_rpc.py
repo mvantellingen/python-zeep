@@ -1,6 +1,5 @@
 import io
-
-from six import StringIO
+from io import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal, load_xml
 from zeep.wsdl import wsdl

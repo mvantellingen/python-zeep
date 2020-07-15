@@ -3,7 +3,7 @@ from zeep.xsd.utils import create_prefixed_name
 __all__ = ["Type"]
 
 
-class Type(object):
+class Type:
     def __init__(self, qname=None, is_global=False):
         self.qname = qname
         self.name = qname.localname if qname else None

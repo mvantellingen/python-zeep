@@ -1,15 +1,15 @@
 import logging
 import os
 from contextlib import contextmanager
+from urllib.parse import urlparse
 
 import requests
-from six.moves.urllib.parse import urlparse
 
 from zeep.utils import get_media_type, get_version
 from zeep.wsdl.utils import etree_to_string
 
 
-class Transport(object):
+class Transport:
     """The transport object handles all communication to the SOAP server.
 
     :param cache: The cache object to be used to cache GET requests

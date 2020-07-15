@@ -265,7 +265,11 @@ class Element(Base):
                     % (self.min_occurs, len(value)),
                     path=render_path,
                 )
-            elif self.max_occurs != "unbounded" and len(value) > self.max_occurs:
+            elif (
+                self.max_occurs != "unbounded"
+                and isinstance(self.max_occurs, int)
+                and len(value) > self.max_occurs
+            ):
                 raise exceptions.ValidationError(
                     "Expected at most %d items (maxOccurs check) %d items found."
                     % (self.max_occurs, len(value)),

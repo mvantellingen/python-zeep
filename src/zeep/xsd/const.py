@@ -3,15 +3,15 @@ from lxml import etree
 from zeep import ns
 
 
-def xsi_ns(localname):
+def xsi_ns(localname: str) -> etree.QName:
     return etree.QName(ns.XSI, localname)
 
 
-def xsd_ns(localname):
+def xsd_ns(localname: str) -> etree.QName:
     return etree.QName(ns.XSD, localname)
 
 
-class _StaticIdentity(object):
+class _StaticIdentity:
     def __init__(self, val):
         self.__value__ = val
 

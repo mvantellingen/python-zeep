@@ -117,6 +117,8 @@ def _prefix_node(node):
     for key, value in node.attrib.items():
         if value.startswith("{"):
             match = prefix_re.match(value)
+            if not match:
+                continue
             namespace, localname = match.groups()
 
             if namespace in reverse_nsmap:

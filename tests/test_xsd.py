@@ -155,7 +155,7 @@ def test_nil_elements():
                                         nillable=False,
                                     )
                                 ],
-                                min_occurs=0
+                                min_occurs=0,
                             )
                         ),
                     ),

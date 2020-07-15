@@ -13,17 +13,22 @@ All, Choice, Group and Sequence.
 """
 import copy
 import operator
+import typing
 from collections import OrderedDict, defaultdict, deque
 
 from cached_property import threaded_cached_property
+from lxml import etree
 
 from zeep.exceptions import UnexpectedElementError, ValidationError
 from zeep.xsd.const import NotSet, SkipValue
 from zeep.xsd.elements import Any, Element
 from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import (
-    NamePrefixGenerator, UniqueNameGenerator, create_prefixed_name,
-    max_occurs_iter)
+    NamePrefixGenerator,
+    UniqueNameGenerator,
+    create_prefixed_name,
+    max_occurs_iter,
+)
 
 __all__ = ["All", "Choice", "Group", "Sequence"]
 
@@ -32,7 +37,7 @@ class Indicator(Base):
     """Base class for the other indicators"""
 
     def __repr__(self):
-        return "<%s(%s)>" % (self.__class__.__name__, super(Indicator, self).__repr__())
+        return "<%s(%s)>" % (self.__class__.__name__, super().__repr__())
 
     @property
     def default_value(self):
@@ -43,6 +48,10 @@ class Indicator(Base):
         if self.accepts_multiple:
             return {"_value_1": values}
         return values
+
+    @property
+    def elements(self):
+        raise NotImplementedError()
 
     def clone(self, name, min_occurs=1, max_occurs=1):
         raise NotImplementedError()
@@ -56,7 +65,7 @@ class OrderIndicator(Indicator, list):
     def __init__(self, elements=None, min_occurs=1, max_occurs=1):
         self.min_occurs = min_occurs
         self.max_occurs = max_occurs
-        super(OrderIndicator, self).__init__()
+        super().__init__()
         if elements is not None:
             self.extend(elements)
 
@@ -79,7 +88,7 @@ class OrderIndicator(Indicator, list):
     @threaded_cached_property
     def elements_nested(self):
         """List of tuples containing the element name and the element"""
-        result = []
+        result = []  # type: typing.List[typing.Tuple[typing.Optional[str], typing.Any]]
         generator = NamePrefixGenerator()
         generator_2 = UniqueNameGenerator()
 
@@ -269,7 +278,7 @@ class All(OrderIndicator):
     """
 
     def __init__(self, elements=None, min_occurs=1, max_occurs=1, consume_other=False):
-        super(All, self).__init__(elements, min_occurs, max_occurs)
+        super().__init__(elements, min_occurs, max_occurs)
         self._consume_other = consume_other
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
@@ -290,7 +299,7 @@ class All(OrderIndicator):
         expected_tags = {element.qname for __, element in self.elements}
         consumed_tags = set()
 
-        values = defaultdict(deque)
+        values = defaultdict(deque)  # type: typing.Dict[str, etree._Element]
         for i, elm in enumerate(xmlelements):
             if elm.tag in expected_tags:
                 consumed_tags.add(i)
@@ -636,7 +645,7 @@ class Group(Indicator):
     """
 
     def __init__(self, name, child, max_occurs=1, min_occurs=1):
-        super(Group, self).__init__()
+        super().__init__()
         self.child = child
         self.qname = name
         self.name = name.localname if name else None

@@ -1,4 +1,5 @@
 import logging
+import typing
 from collections import OrderedDict
 
 from lxml import etree
@@ -14,7 +15,7 @@ from zeep.xsd.visitor import SchemaVisitor
 logger = logging.getLogger(__name__)
 
 
-class Schema(object):
+class Schema:
     """A schema is a collection of schema documents."""
 
     def __init__(self, node=None, transport=None, location=None, settings=None):
@@ -242,7 +243,7 @@ class Schema(object):
         """Return an object from one of the SchemaDocument's"""
         qname = self._create_qname(qname)
         try:
-            last_exception = None
+            last_exception = None  # type: typing.Optional[BaseException]
             for schema in self._get_schema_documents(qname.namespace):
                 method = getattr(schema, method_name)
                 try:
@@ -250,7 +251,8 @@ class Schema(object):
                 except exceptions.LookupError as exc:
                     last_exception = exc
                     continue
-            raise last_exception
+            if last_exception is not None:
+                raise last_exception
 
         except exceptions.NamespaceError:
             raise exceptions.NamespaceError(
@@ -310,7 +312,7 @@ class Schema(object):
         return self.documents.get_by_namespace(namespace, fail_silently)
 
 
-class _SchemaContainer(object):
+class _SchemaContainer:
     """Container instances to store multiple SchemaDocument objects per
     namespace.
 
@@ -373,7 +375,7 @@ class _SchemaContainer(object):
                 yield document
 
 
-class SchemaDocument(object):
+class SchemaDocument:
     """A Schema Document consists of a set of schema components for a
     specific target namespace.
 

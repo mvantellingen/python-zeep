@@ -6,7 +6,6 @@ from decimal import Decimal as _Decimal
 
 import isodate
 import pytz
-import six
 
 from zeep.xsd.const import xsd_ns
 from zeep.xsd.types.any import AnyType
@@ -17,9 +16,9 @@ class ParseError(ValueError):
     pass
 
 
-class BuiltinType(object):
+class BuiltinType(AnySimpleType):
     def __init__(self, qname=None, is_global=False):
-        super(BuiltinType, self).__init__(qname, is_global=True)
+        super().__init__(qname, is_global=True)
 
 
 def check_no_collection(func):
@@ -37,21 +36,21 @@ def check_no_collection(func):
 
 ##
 # Primitive types
-class String(BuiltinType, AnySimpleType):
+class String(BuiltinType):
     _default_qname = xsd_ns("string")
-    accepted_types = six.string_types
+    accepted_types = (str,)
 
     @check_no_collection
     def xmlvalue(self, value):
         if isinstance(value, bytes):
             return value.decode("utf-8")
-        return six.text_type(value if value is not None else "")
+        return str(value if value is not None else "")
 
     def pythonvalue(self, value):
         return value
 
 
-class Boolean(BuiltinType, AnySimpleType):
+class Boolean(BuiltinType):
     _default_qname = xsd_ns("boolean")
     accepted_types = (bool,)
 
@@ -67,9 +66,9 @@ class Boolean(BuiltinType, AnySimpleType):
         return value in ("true", "1")
 
 
-class Decimal(BuiltinType, AnySimpleType):
+class Decimal(BuiltinType):
     _default_qname = xsd_ns("decimal")
-    accepted_types = (_Decimal, float) + six.string_types
+    accepted_types = (_Decimal, float, str)
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -79,9 +78,9 @@ class Decimal(BuiltinType, AnySimpleType):
         return _Decimal(value)
 
 
-class Float(BuiltinType, AnySimpleType):
+class Float(BuiltinType):
     _default_qname = xsd_ns("float")
-    accepted_types = (float, _Decimal) + six.string_types
+    accepted_types = (float, _Decimal, str)
 
     def xmlvalue(self, value):
         return str(value).upper()
@@ -90,9 +89,9 @@ class Float(BuiltinType, AnySimpleType):
         return float(value)
 
 
-class Double(BuiltinType, AnySimpleType):
+class Double(BuiltinType):
     _default_qname = xsd_ns("double")
-    accepted_types = (_Decimal, float) + six.string_types
+    accepted_types = (_Decimal, float, str)
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -102,9 +101,9 @@ class Double(BuiltinType, AnySimpleType):
         return float(value)
 
 
-class Duration(BuiltinType, AnySimpleType):
+class Duration(BuiltinType):
     _default_qname = xsd_ns("duration")
-    accepted_types = (isodate.duration.Duration,) + six.string_types
+    accepted_types = (isodate.duration.Duration, str)
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -119,13 +118,13 @@ class Duration(BuiltinType, AnySimpleType):
             return isodate.parse_duration(value)
 
 
-class DateTime(BuiltinType, AnySimpleType):
+class DateTime(BuiltinType):
     _default_qname = xsd_ns("dateTime")
-    accepted_types = (datetime.datetime,) + six.string_types
+    accepted_types = (datetime.datetime, str)
 
     @check_no_collection
     def xmlvalue(self, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             return value
 
         # Bit of a hack, since datetime is a subclass of date we can't just
@@ -154,13 +153,13 @@ class DateTime(BuiltinType, AnySimpleType):
         return isodate.parse_datetime(value)
 
 
-class Time(BuiltinType, AnySimpleType):
+class Time(BuiltinType):
     _default_qname = xsd_ns("time")
-    accepted_types = (datetime.time,) + six.string_types
+    accepted_types = (datetime.time, str)
 
     @check_no_collection
     def xmlvalue(self, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             return value
 
         if value.microsecond:
@@ -171,13 +170,13 @@ class Time(BuiltinType, AnySimpleType):
         return isodate.parse_time(value)
 
 
-class Date(BuiltinType, AnySimpleType):
+class Date(BuiltinType):
     _default_qname = xsd_ns("date")
-    accepted_types = (datetime.date,) + six.string_types
+    accepted_types = (datetime.date, str)
 
     @check_no_collection
     def xmlvalue(self, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             return value
         return isodate.isostrf.strftime(value, "%Y-%m-%d")
 
@@ -185,7 +184,7 @@ class Date(BuiltinType, AnySimpleType):
         return isodate.parse_date(value)
 
 
-class gYearMonth(BuiltinType, AnySimpleType):
+class gYearMonth(BuiltinType):
     """gYearMonth represents a specific gregorian month in a specific gregorian
     year.
 
@@ -193,7 +192,7 @@ class gYearMonth(BuiltinType, AnySimpleType):
 
     """
 
-    accepted_types = (datetime.date,) + six.string_types
+    accepted_types = (datetime.date, str)
     _default_qname = xsd_ns("gYearMonth")
     _pattern = re.compile(
         r"^(?P<year>-?\d{4,})-(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$"
@@ -216,14 +215,14 @@ class gYearMonth(BuiltinType, AnySimpleType):
         )
 
 
-class gYear(BuiltinType, AnySimpleType):
+class gYear(BuiltinType):
     """gYear represents a gregorian calendar year.
 
     Lexical representation: CCYY
 
     """
 
-    accepted_types = (datetime.date,) + six.string_types
+    accepted_types = (datetime.date, str)
     _default_qname = xsd_ns("gYear")
     _pattern = re.compile(r"^(?P<year>-?\d{4,})(?P<timezone>Z|[-+]\d\d:?\d\d)?$")
 
@@ -240,7 +239,7 @@ class gYear(BuiltinType, AnySimpleType):
         return (int(group["year"]), _parse_timezone(group["timezone"]))
 
 
-class gMonthDay(BuiltinType, AnySimpleType):
+class gMonthDay(BuiltinType):
     """gMonthDay is a gregorian date that recurs, specifically a day of the
     year such as the third of May.
 
@@ -248,7 +247,7 @@ class gMonthDay(BuiltinType, AnySimpleType):
 
     """
 
-    accepted_types = (datetime.date,) + six.string_types
+    accepted_types = (datetime.date, str)
     _default_qname = xsd_ns("gMonthDay")
     _pattern = re.compile(
         r"^--(?P<month>\d\d)-(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$"
@@ -272,7 +271,7 @@ class gMonthDay(BuiltinType, AnySimpleType):
         )
 
 
-class gDay(BuiltinType, AnySimpleType):
+class gDay(BuiltinType):
     """gDay is a gregorian day that recurs, specifically a day of the month
     such as the 5th of the month
 
@@ -280,7 +279,7 @@ class gDay(BuiltinType, AnySimpleType):
 
     """
 
-    accepted_types = (datetime.date,) + six.string_types
+    accepted_types = (datetime.date, str)
     _default_qname = xsd_ns("gDay")
     _pattern = re.compile(r"^---(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$")
 
@@ -297,14 +296,14 @@ class gDay(BuiltinType, AnySimpleType):
         return (int(group["day"]), _parse_timezone(group["timezone"]))
 
 
-class gMonth(BuiltinType, AnySimpleType):
+class gMonth(BuiltinType):
     """gMonth is a gregorian month that recurs every year.
 
     Lexical representation: --MM
 
     """
 
-    accepted_types = (datetime.date,) + six.string_types
+    accepted_types = (datetime.date, str)
     _default_qname = xsd_ns("gMonth")
     _pattern = re.compile(r"^--(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$")
 
@@ -321,8 +320,8 @@ class gMonth(BuiltinType, AnySimpleType):
         return (int(group["month"]), _parse_timezone(group["timezone"]))
 
 
-class HexBinary(BuiltinType, AnySimpleType):
-    accepted_types = six.string_types
+class HexBinary(BuiltinType):
+    accepted_types = (str,)
     _default_qname = xsd_ns("hexBinary")
 
     @check_no_collection
@@ -333,8 +332,8 @@ class HexBinary(BuiltinType, AnySimpleType):
         return value
 
 
-class Base64Binary(BuiltinType, AnySimpleType):
-    accepted_types = six.string_types
+class Base64Binary(BuiltinType):
+    accepted_types = (str,)
     _default_qname = xsd_ns("base64Binary")
 
     @check_no_collection
@@ -345,8 +344,8 @@ class Base64Binary(BuiltinType, AnySimpleType):
         return base64.b64decode(value)
 
 
-class AnyURI(BuiltinType, AnySimpleType):
-    accepted_types = six.string_types
+class AnyURI(BuiltinType):
+    accepted_types = (str,)
     _default_qname = xsd_ns("anyURI")
 
     @check_no_collection
@@ -357,8 +356,8 @@ class AnyURI(BuiltinType, AnySimpleType):
         return value
 
 
-class QName(BuiltinType, AnySimpleType):
-    accepted_types = six.string_types
+class QName(BuiltinType):
+    accepted_types = (str,)
     _default_qname = xsd_ns("QName")
 
     @check_no_collection
@@ -369,8 +368,8 @@ class QName(BuiltinType, AnySimpleType):
         return value
 
 
-class Notation(BuiltinType, AnySimpleType):
-    accepted_types = six.string_types
+class Notation(BuiltinType):
+    accepted_types = (str,)
     _default_qname = xsd_ns("NOTATION")
 
 
@@ -428,7 +427,7 @@ class Entities(Entity):
 
 class Integer(Decimal):
     _default_qname = xsd_ns("integer")
-    accepted_types = (int, float) + six.string_types
+    accepted_types = (int, float, str)  # type: ignore
 
     def xmlvalue(self, value):
         return str(value)
@@ -449,7 +448,7 @@ class Long(Integer):
     _default_qname = xsd_ns("long")
 
     def pythonvalue(self, value):
-        return long(value) if six.PY2 else int(value)  # noqa
+        return int(value)
 
 
 class Int(Long):
@@ -576,4 +575,4 @@ _types = [
     AnySimpleType,
 ]
 
-default_types = {cls._default_qname: cls(is_global=True) for cls in _types}
+default_types = {cls._default_qname: cls(is_global=True) for cls in _types}  # type: ignore

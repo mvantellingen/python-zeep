@@ -4,11 +4,11 @@ import errno
 import logging
 import os
 import threading
+import typing
 from contextlib import contextmanager
 
 import appdirs
 import pytz
-import six
 
 # The sqlite3 is not available on Google App Engine so we handle the
 # ImportError here and set the sqlite3 var to None.
@@ -16,23 +16,26 @@ import six
 try:
     import sqlite3
 except ImportError:
-    sqlite3 = None
+    sqlite3 = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
 
-class Base(object):
+class Base:
     def add(self, url, content):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get(self, url):
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 class InMemoryCache(Base):
     """Simple in-memory caching using dict lookup with support for timeouts"""
 
-    _cache = {}  # global cache, thread-safe by default
+    #: global cache, thread-safe by default
+    _cache = (
+        {}
+    )  # type: typing.Dict[str, typing.Tuple[datetime.datetime, typing.Union[bytes, str]]]
 
     def __init__(self, timeout=3600):
         self._timeout = timeout
@@ -127,13 +130,9 @@ class SqliteCache(Base):
 
     def _encode_data(self, data):
         data = base64.b64encode(data)
-        if six.PY2:
-            return buffer(self._version_string + data)  # noqa
         return self._version_string + data
 
     def _decode_data(self, data):
-        if six.PY2:
-            data = str(data)
         if data.startswith(self._version_string):
             return base64.b64decode(data[len(self._version_string) :])
 

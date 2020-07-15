@@ -3,8 +3,9 @@
     ~~~~~~~~~~~~~~~
 
 """
+from urllib.parse import urlparse, urlunparse
+
 from lxml import etree
-from six.moves.urllib.parse import urlparse, urlunparse
 
 from zeep.utils import detect_soap_env
 

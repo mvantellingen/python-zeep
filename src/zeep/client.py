@@ -1,4 +1,5 @@
 import logging
+import typing
 
 from zeep.proxy import ServiceProxy
 from zeep.settings import Settings
@@ -8,7 +9,7 @@ from zeep.wsdl import Document
 logger = logging.getLogger(__name__)
 
 
-class Factory(object):
+class Factory:
     def __init__(self, types, kind, namespace):
         self._method = getattr(types, "get_%s" % kind)
 
@@ -34,7 +35,7 @@ class Factory(object):
         return self._method("{%s}%s" % (self._ns, key))
 
 
-class Client(object):
+class Client:
     """The zeep Client.
 
     :param wsdl:
@@ -98,7 +99,11 @@ class Client(object):
             )
         return self._default_service
 
-    def bind(self, service_name=None, port_name=None):
+    def bind(
+        self,
+        service_name: typing.Optional[str] = None,
+        port_name: typing.Optional[str] = None,
+    ):
         """Create a new ServiceProxy for the given service_name and port_name.
 
         The default ServiceProxy instance (`self.service`) always referes to
@@ -195,7 +200,7 @@ class Client(object):
             port = list(service.ports.values())[0]
         return port
 
-    def _get_service(self, name):
+    def _get_service(self, name: typing.Optional[str]) -> str:
         if name:
             service = self.wsdl.services.get(name)
             if not service:
@@ -220,4 +225,4 @@ class CachingClient(Client):
 
         kwargs["transport"] = kwargs.get("transport") or Transport(cache=SqliteCache())
 
-        super(CachingClient, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)

@@ -5,7 +5,7 @@ import attr
 
 
 @attr.s(slots=True)
-class Settings(object):
+class Settings:
     """
 
     :param strict: boolean to indicate if the lxml should be parsed a 'strict'.
@@ -77,4 +77,4 @@ class Settings(object):
     def __getattribute__(self, key):
         if key != "_tls" and hasattr(self._tls, key):
             return getattr(self._tls, key)
-        return super(Settings, self).__getattribute__(key)
+        return super().__getattribute__(key)

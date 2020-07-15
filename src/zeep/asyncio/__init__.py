@@ -1,2 +1,2 @@
-from .transport import *  # noqa
 from .bindings import *  # noqa
+from .transport import *  # noqa

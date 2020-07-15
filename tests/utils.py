@@ -1,6 +1,4 @@
-import six
 from lxml import etree
-from six import binary_type, string_types
 
 
 def load_xml(xml):
@@ -12,7 +10,7 @@ def load_xml(xml):
 
 def assert_nodes_equal(result, expected):
     def _convert_node(node):
-        if isinstance(node, (string_types, binary_type)):
+        if isinstance(node, (str, bytes)):
             return load_xml(node)
         return node
 
@@ -20,9 +18,8 @@ def assert_nodes_equal(result, expected):
     result = etree.tostring(_convert_node(result), pretty_print=True)
     expected = etree.tostring(_convert_node(expected), pretty_print=True)
 
-    if six.PY3:
-        result = result.decode("utf-8")
-        expected = expected.decode("utf-8")
+    result = result.decode("utf-8")
+    expected = expected.decode("utf-8")
     assert result == expected
 
 
@@ -32,7 +29,7 @@ def render_node(element, value):
     return node
 
 
-class DummyTransport(object):
+class DummyTransport:
     def __init__(self):
         self._items = {}
 
@@ -41,6 +38,6 @@ class DummyTransport(object):
 
     def load(self, url):
         data = self._items[url]
-        if isinstance(data, (binary_type, string_types)):
+        if isinstance(data, (bytes, str)):
             return data
         return etree.tostring(data)

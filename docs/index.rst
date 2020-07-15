@@ -5,13 +5,12 @@ Zeep: Python SOAP client
 A fast and modern Python SOAP client
 
 Highlights:
- * Compatible with Python 2.7, 3.3, 3.4, 3.5, 3.6, 3.7 and PyPy
+ * Compatible with Python 3.5, 3.6, 3.7, 3.8 and PyPy
  * Build on top of lxml and requests
  * Support for Soap 1.1, Soap 1.2 and HTTP bindings
  * Support for WS-Addressing headers
  * Support for WSSE (UserNameToken / x.509 signing)
- * Support for tornado async transport via gen.coroutine (Python 2.7+)
- * Support for asyncio via aiohttp (Python 3.5+)
+ * Support for asyncio via aiohttp
  * Experimental support for XOP messages
 
 
@@ -70,6 +69,7 @@ If you have installed pip then run::
 
     pip install zeep
 
+Note that the latest version to support Python 2.7 is Zeep 3.4, install via pip install zeep==3.4.0
 
 This assumes that there are wheel files available for the latest lxml release.
 If that is not the case (https://pypi.python.org/pypi/lxml/) then first
@@ -88,12 +88,6 @@ For the asyncio support in Python 3.5+ the aiohttp module is required, this
 can be installed with the ``async`` extras::
 
     pip install zeep[async]
-
-
-For the tornado support in Python 2.7+ the tornado module is required, this
-can be installed with the ``tornado`` extras::
-
-    pip install zeep[tornado]
 
 
 Getting started

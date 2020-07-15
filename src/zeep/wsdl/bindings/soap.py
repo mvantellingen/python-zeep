@@ -1,4 +1,5 @@
 import logging
+import typing
 
 from lxml import etree
 from requests_toolbelt.multipart.decoder import MultipartDecoder
@@ -12,6 +13,10 @@ from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
 from zeep.wsdl.messages.xop import process_xop
 from zeep.wsdl.utils import etree_to_string, url_http_to_https
+
+if typing.TYPE_CHECKING:
+    from zeep.wsdl.wsdl import Definition
+
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +39,7 @@ class SoapBinding(Binding):
         :param default_style:
 
         """
-        super(SoapBinding, self).__init__(wsdl, name, port_name)
+        super().__init__(wsdl, name, port_name)
         self.transport = transport
         self.default_style = default_style
 
@@ -76,7 +81,7 @@ class SoapBinding(Binding):
             if not options:
                 options = client.service._binding_options
 
-            if operation_obj.abstract.input_message.wsa_action:
+            if operation_obj.abstract.wsa_action:
                 envelope, http_headers = wsa.WsAddressingPlugin().egress(
                     envelope, http_headers, operation_obj, options
                 )
@@ -376,7 +381,7 @@ class SoapOperation(Operation):
     """Represent's an operation within a specific binding."""
 
     def __init__(self, name, binding, nsmap, soapaction, style):
-        super(SoapOperation, self).__init__(name, binding)
+        super().__init__(name, binding)
         self.nsmap = nsmap
         self.soapaction = soapaction
         self.style = style
@@ -466,8 +471,8 @@ class SoapOperation(Operation):
 
         return obj
 
-    def resolve(self, definitions):
-        super(SoapOperation, self).resolve(definitions)
+    def resolve(self, definitions: "Definition"):
+        super().resolve(definitions)
         for name, fault in self.faults.items():
             if name in self.abstract.fault_messages:
                 fault.resolve(definitions, self.abstract.fault_messages[name])

@@ -187,7 +187,7 @@ def test_signature():
     plugin.verify(envelope)
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
+@skip_if_no_xmlsec
 @pytest.mark.parametrize("digest_method,expected_digest_href", DIGEST_METHODS_TESTDATA)
 @pytest.mark.parametrize(
     "signature_method,expected_signature_href", SIGNATURE_METHODS_TESTDATA
