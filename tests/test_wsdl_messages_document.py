@@ -1326,6 +1326,75 @@ def test_deserialize_with_headers():
     assert serialized.header.header_1.username == "mvantellingen"
 
 
+def test_deserialize_part_no_element():
+  wsdl_content = StringIO(
+    """
+    <wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+        targetNamespace="http://tests.python-zeep.org/tns"
+        xmlns:tns="http://tests.python-zeep.org/tns">
+        <wsdl:types>
+            <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                targetNamespace="http://tests.python-zeep.org/tns"
+                elementFormDefault="qualified"
+                attributeFormDefault="qualified">
+                <xsd:element name="RequestElement">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="id" type="xsd:normalizedString" />
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:schema>
+        </wsdl:types>
+        <wsdl:message name="Request">
+            <wsdl:part name="parameters" element="tns:RequestElement" />
+        </wsdl:message>
+        <wsdl:message name="Response">
+            <wsdl:part name="text" type="xsd:string" />
+        </wsdl:message>
+        <wsdl:portType name="Port1">
+            <wsdl:operation name="Operation1">
+                <wsdl:input message="Request" />
+                <wsdl:output message="Response" />
+            </wsdl:operation>
+        </wsdl:portType>
+        <wsdl:binding name="Binding" type="Port1">
+            <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+            <wsdl:operation name="Operation1">
+                <soap:operation soapAction="http://tests.python-zeep.org/tns/Request"/>
+                <wsdl:input>
+                    <soap:body use="literal"/>
+                </wsdl:input>
+                <wsdl:output>
+                    <soap:body use="literal"/>
+                </wsdl:output>
+            </wsdl:operation>
+        </wsdl:binding>
+    </wsdl:definitions>
+    """
+  )
+  root = wsdl.Document(wsdl_content, None)
+
+  binding = root.bindings["{http://tests.python-zeep.org/tns}Binding"]
+  operation = binding.get("Operation1")
+
+  response = load_xml(
+    """
+    <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+        <s:Header />
+        <s:Body>
+            <text>Some kind of interesting text</text>
+        </s:Body>
+    </s:Envelope>
+    """
+  )
+
+  serialized = operation.process_reply(response)
+  assert serialized == 'Some kind of interesting text'
+
+
 def test_serialize_any_type():
     wsdl_content = StringIO(
         """
