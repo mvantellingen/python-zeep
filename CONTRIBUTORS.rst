@@ -50,5 +50,6 @@ Contributors
 * Raymond Piller
 * Zoltan Benedek
 * Øyvind Heddeland Instefjord
+* Gil Obradors
 
 
