@@ -56,3 +56,28 @@ to the client in a list
     >>> client = Client(
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
     ...     wsse=[user_name_token, signature])
+
+
+UsernameToken with Timestamp token
+------------------------------------
+
+To use UsernameToken with Timestamp token, first you need an instance of `WSU.Timestamp()`, then extend it with a list
+containing `WSU.Created()` and `WSU.Expired()` elements, finally pass it as `timestamp_token` keyword argument
+to `UsernameToken()`.
+
+    >>> import datetime
+    >>> from zeep import Client
+    >>> from zeep.wsse.username import UsernameToken
+    >>> from zeep.wsse.utils import WSU
+    >>> timestamp_token = WSU.Timestamp()
+    >>> today_datetime = datetime.datetime.today()
+    >>> expires_datetime = today_datetime + datetime.timedelta(minutes=10)
+    >>> timestamp_elements = [
+    ...         WSU.Created(today_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")),
+    ...         WSU.Expires(expires_datetime.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    ...]
+    >>> timestamp_token.extend(timestamp_elements)
+    >>> user_name_token = UsernameToken('username', 'password', timestamp_token=timestamp_token)
+    >>> client = Client(
+    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', wsse=user_name_token
+    ...)
