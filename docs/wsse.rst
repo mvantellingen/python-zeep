@@ -37,6 +37,11 @@ Example usage A::
     ...         optional_password))
 
 
+To skip response signature verification set `verify_reply_signature=False`
+
+To configure different certificate for response verify proces set `response_key_file` or
+and `response_certfile`.
+
 .. _xmlsec: https://pypi.python.org/pypi/xmlsec
 .. _README: https://github.com/mehcode/python-xmlsec
 
