@@ -143,6 +143,14 @@ class Client:
         envelope, http_headers = service._binding._create(
             operation_name, args, kwargs, client=self
         )
+
+        if "attachments" in kwargs:
+            multipart_request, http_headers = self._create_multipart(
+                operation, envelope, http_headers, args, kwargs
+            )
+
+            return multipart_request
+
         return envelope
 
     def type_factory(self, namespace):
