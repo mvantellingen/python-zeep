@@ -20,9 +20,6 @@ balanced_wrapping = true
 default_section = "THIRDPARTY"
 known_first_party = ["zeep", "tests"]
 use_parentheses = true
-indent_style = "space"
-indent_size = 4
-tab_width = 4
 
 [tool.pytest.ini_options]
 minversion = "6.0"
