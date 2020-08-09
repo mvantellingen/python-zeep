@@ -1327,8 +1327,8 @@ def test_deserialize_with_headers():
 
 
 def test_deserialize_part_no_element():
-  wsdl_content = StringIO(
-    """
+    wsdl_content = StringIO(
+        """
     <wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
         xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
         xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
@@ -1374,14 +1374,14 @@ def test_deserialize_part_no_element():
         </wsdl:binding>
     </wsdl:definitions>
     """
-  )
-  root = wsdl.Document(wsdl_content, None)
+    )
+    root = wsdl.Document(wsdl_content, None)
 
-  binding = root.bindings["{http://tests.python-zeep.org/tns}Binding"]
-  operation = binding.get("Operation1")
+    binding = root.bindings["{http://tests.python-zeep.org/tns}Binding"]
+    operation = binding.get("Operation1")
 
-  response = load_xml(
-    """
+    response = load_xml(
+        """
     <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
         <s:Header />
         <s:Body>
@@ -1389,10 +1389,10 @@ def test_deserialize_part_no_element():
         </s:Body>
     </s:Envelope>
     """
-  )
+    )
 
-  serialized = operation.process_reply(response)
-  assert serialized == 'Some kind of interesting text'
+    serialized = operation.process_reply(response)
+    assert serialized == "Some kind of interesting text"
 
 
 def test_serialize_any_type():
