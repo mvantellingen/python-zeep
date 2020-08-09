@@ -25,7 +25,7 @@ xmlsec_require = [
 ]
 
 tests_require = [
-    "coverage[toml]==5.1",
+    "coverage[toml]==5.2.1",
     "freezegun==0.3.15",
     "mock==2.0.0",
     "pretend==1.0.9",
@@ -33,8 +33,8 @@ tests_require = [
     "pytest==6.0.1",
     "requests_mock>=0.7.0",
     # Linting
-    "isort[pyproject]==4.3.21",
-    "flake8==3.7.9",
+    "isort==5.3.2",
+    "flake8==3.8.3",
     "flake8-blind-except==0.1.1",
     "flake8-debugger==3.2.1",
     "aioresponses>=0.4.1",
