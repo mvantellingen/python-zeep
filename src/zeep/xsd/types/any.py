@@ -2,13 +2,16 @@ import logging
 import typing
 
 from cached_property import threaded_cached_property
+from lxml import etree
 
 from zeep.utils import qname_attr
 from zeep.xsd.const import xsd_ns, xsi_ns
+from zeep.xsd.context import XmlParserContext
 from zeep.xsd.types.base import Type
 from zeep.xsd.valueobjects import AnyObject, CompoundValue
 
 if typing.TYPE_CHECKING:
+    from zeep.xsd.schema import Schema
     from zeep.xsd.types.complex import ComplexType
 
 logger = logging.getLogger(__name__)
@@ -45,21 +48,20 @@ class AnyType(Type):
             node.text = self.xmlvalue(value)
 
     def parse_xmlelement(
-        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
-    ):
+        self,
+        xmlelement: etree._Element,
+        schema: "Schema" = None,
+        allow_none: bool = True,
+        context: XmlParserContext = None,
+        schema_type: "Type" = None,
+    ) -> typing.Optional[CompoundValue]:
         """Consume matching xmlelements and call parse() on each
 
         :param xmlelement: XML element objects
-        :type xmlelement: lxml.etree._Element
         :param schema: The parent XML schema
-        :type schema: zeep.xsd.Schema
         :param allow_none: Allow none
-        :type allow_none: bool
         :param context: Optional parsing context (for inline schemas)
-        :type context: zeep.xsd.context.XmlParserContext
         :param schema_type: The original type (not overriden via xsi:type)
-        :type schema_type: zeep.xsd.types.base.Type
-        :rtype: dict or None
 
         """
         xsi_type = qname_attr(xmlelement, xsi_ns("type"))

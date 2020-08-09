@@ -155,18 +155,20 @@ class ComplexType(AnyType):
         return array_type
 
     def parse_xmlelement(
-        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
-    ):
+        self,
+        xmlelement: etree._Element,
+        schema: "Schema" = None,
+        allow_none: bool = True,
+        context: XmlParserContext = None,
+        schema_type: "Type" = None,
+    ) -> typing.Optional[CompoundValue]:
         """Consume matching xmlelements and call parse() on each
 
         :param xmlelement: XML element objects
-        :type xmlelement: lxml.etree._Element
         :param schema: The parent XML schema
-        :type schema: zeep.xsd.Schema
         :param allow_none: Allow none
         :type allow_none: bool
         :param context: Optional parsing context (for inline schemas)
-        :type context: zeep.xsd.context.XmlParserContext
         :param schema_type: The original type (not overriden via xsi:type)
         :type schema_type: zeep.xsd.types.base.Type
         :rtype: dict or None
@@ -220,15 +222,15 @@ class ComplexType(AnyType):
             for name, attribute in self.attributes:
                 if attribute.name:
                     if attribute.qname.text in attributes:
-                        value = attributes.pop(attribute.qname.text)
-                        init_kwargs[name] = attribute.parse(value)
+                        attr_value = attributes.pop(attribute.qname.text)
+                        init_kwargs[name] = attribute.parse(attr_value)
                 else:
                     init_kwargs[name] = attribute.parse(attributes)
 
-        value = self._value_class(**init_kwargs)
+        value: CompoundValue = self._value_class(**init_kwargs)
         schema_type = schema_type or self
         if schema_type and getattr(schema_type, "_array_type", None):
-            value = schema_type._array_class.from_value_object(value)
+            return schema_type._array_class.from_value_object(value)
         return value
 
     def render(

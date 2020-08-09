@@ -5,10 +5,12 @@ from lxml import etree
 
 from zeep.exceptions import ValidationError
 from zeep.xsd.const import Nil, xsd_ns, xsi_ns
+from zeep.xsd.context import XmlParserContext
 from zeep.xsd.types.any import AnyType
 from zeep.xsd.valueobjects import CompoundValue
 
 if typing.TYPE_CHECKING:
+    from zeep.xsd.schema import Schema
     from zeep.xsd.types.complex import ComplexType
 
 logger = logging.getLogger(__name__)
@@ -63,10 +65,15 @@ class AnySimpleType(AnyType):
         return "%s(value)" % (self.__class__.__name__)
 
     def parse_xmlelement(
-        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
-    ):
+        self,
+        xmlelement: etree._Element,
+        schema: "Schema" = None,
+        allow_none: bool = True,
+        context: XmlParserContext = None,
+        schema_type: "Type" = None,
+    ) -> typing.Optional[CompoundValue]:
         if xmlelement.text is None:
-            return
+            return None
         try:
             return self.pythonvalue(xmlelement.text)
         except (TypeError, ValueError):

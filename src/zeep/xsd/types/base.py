@@ -2,10 +2,12 @@ import typing
 
 from lxml import etree
 
+from zeep.xsd.context import XmlParserContext
 from zeep.xsd.utils import create_prefixed_name
 from zeep.xsd.valueobjects import CompoundValue
 
 if typing.TYPE_CHECKING:
+    from zeep.xsd.schema import Schema
     from zeep.xsd.types.complex import ComplexType
 
 __all__ = ["Type"]
@@ -42,8 +44,13 @@ class Type:
         return {}
 
     def parse_xmlelement(
-        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
-    ):
+        self,
+        xmlelement: etree._Element,
+        schema: "Schema" = None,
+        allow_none: bool = True,
+        context: XmlParserContext = None,
+        schema_type: "Type" = None,
+    ) -> typing.Optional[CompoundValue]:
         raise NotImplementedError(
             "%s.parse_xmlelement() is not implemented" % self.__class__.__name__
         )
