@@ -1,4 +1,12 @@
+import typing
+
+from lxml import etree
+
 from zeep.xsd.utils import create_prefixed_name
+from zeep.xsd.valueobjects import CompoundValue
+
+if typing.TYPE_CHECKING:
+    from zeep.xsd.types.complex import ComplexType
 
 __all__ = ["Type"]
 
@@ -43,7 +51,13 @@ class Type:
     def parsexml(self, xml, schema=None):
         raise NotImplementedError
 
-    def render(self, parent, value, xsd_type=None, render_path=None):
+    def render(
+        self,
+        node: etree._Element,
+        value: typing.Union[list, dict, CompoundValue],
+        xsd_type: "ComplexType" = None,
+        render_path=None,
+    ) -> None:
         raise NotImplementedError(
             "%s.render() is not implemented" % self.__class__.__name__
         )

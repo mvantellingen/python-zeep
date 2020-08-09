@@ -1,5 +1,13 @@
+import typing
+
+from lxml import etree
+
 from zeep.utils import get_base_class
 from zeep.xsd.types.simple import AnySimpleType
+
+if typing.TYPE_CHECKING:
+    from zeep.xsd.types.complex import ComplexType
+    from zeep.xsd.valueobjects import CompoundValue
 
 __all__ = ["ListType", "UnionType"]
 
@@ -14,8 +22,15 @@ class ListType(AnySimpleType):
     def __call__(self, value):
         return value
 
-    def render(self, parent, value, xsd_type=None, render_path=None):
-        parent.text = self.xmlvalue(value)
+    def render(
+        self,
+        node: etree._Element,
+        value: typing.Union[list, dict, "CompoundValue"],
+        xsd_type: "ComplexType" = None,
+        render_path=None,
+    ) -> None:
+        assert xsd_type is None
+        node.text = self.xmlvalue(value)
 
     def resolve(self):
         self.item_type = self.item_type.resolve()

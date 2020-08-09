@@ -1,6 +1,14 @@
+import typing
+
+from lxml import etree
+
 from zeep.xsd.types.base import Type
 from zeep.xsd.types.collection import UnionType  # FIXME
 from zeep.xsd.types.simple import AnySimpleType  # FIXME
+
+if typing.TYPE_CHECKING:
+    from zeep.xsd.types.complex import ComplexType
+    from zeep.xsd.valueobjects import CompoundValue
 
 
 class UnresolvedType(Type):
@@ -12,7 +20,13 @@ class UnresolvedType(Type):
     def __repr__(self):
         return "<%s(qname=%r)>" % (self.__class__.__name__, self.qname.text)
 
-    def render(self, parent, value, xsd_type=None, render_path=None):
+    def render(
+        self,
+        node: etree._Element,
+        value: typing.Union[list, dict, "CompoundValue"],
+        xsd_type: "ComplexType" = None,
+        render_path=None,
+    ) -> None:
         raise RuntimeError(
             "Unable to render unresolved type %s. This is probably a bug."
             % (self.qname)

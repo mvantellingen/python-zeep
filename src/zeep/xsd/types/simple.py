@@ -1,10 +1,15 @@
 import logging
+import typing
 
 from lxml import etree
 
 from zeep.exceptions import ValidationError
 from zeep.xsd.const import Nil, xsd_ns, xsi_ns
 from zeep.xsd.types.any import AnyType
+from zeep.xsd.valueobjects import CompoundValue
+
+if typing.TYPE_CHECKING:
+    from zeep.xsd.types.complex import ComplexType
 
 logger = logging.getLogger(__name__)
 
@@ -68,11 +73,19 @@ class AnySimpleType(AnyType):
             logger.exception("Error during xml -> python translation")
             return None
 
-    def render(self, parent, value, xsd_type=None, render_path=None):
+    def render(
+        self,
+        node: etree._Element,
+        value: typing.Union[list, dict, CompoundValue],
+        xsd_type: "ComplexType" = None,
+        render_path=None,
+    ) -> None:
+        assert xsd_type is None
+
         if value is Nil:
-            parent.set(xsi_ns("nil"), "true")
+            node.set(xsi_ns("nil"), "true")
             return
-        parent.text = self.xmlvalue(value)
+        node.text = self.xmlvalue(value)
 
     def signature(self, schema=None, standalone=True):
         return self.get_prefixed_name(schema)

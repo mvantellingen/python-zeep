@@ -1,11 +1,15 @@
 import logging
+import typing
 
 from cached_property import threaded_cached_property
 
 from zeep.utils import qname_attr
 from zeep.xsd.const import xsd_ns, xsi_ns
 from zeep.xsd.types.base import Type
-from zeep.xsd.valueobjects import AnyObject
+from zeep.xsd.valueobjects import AnyObject, CompoundValue
+
+if typing.TYPE_CHECKING:
+    from zeep.xsd.types.complex import ComplexType
 
 logger = logging.getLogger(__name__)
 
@@ -19,18 +23,26 @@ class AnyType(Type):
     def __call__(self, value=None):
         return value or ""
 
-    def render(self, parent, value, xsd_type=None, render_path=None):
+    def render(
+        self,
+        node: etree._Element,
+        value: typing.Union[list, dict, CompoundValue],
+        xsd_type: "ComplexType" = None,
+        render_path=None,
+    ) -> None:
+        assert xsd_type is None
+
         if isinstance(value, AnyObject):
             if value.xsd_type is None:
-                parent.set(xsi_ns("nil"), "true")
+                node.set(xsi_ns("nil"), "true")
             else:
-                value.xsd_type.render(parent, value.value, None, render_path)
-                parent.set(xsi_ns("type"), value.xsd_type.qname)
-        elif hasattr(value, "_xsd_elm"):
-            value._xsd_elm.render(parent, value, render_path)
-            parent.set(xsi_ns("type"), value._xsd_elm.qname)
+                value.xsd_type.render(node, value.value, None, render_path)
+                node.set(xsi_ns("type"), value.xsd_type.qname)
+        elif isinstance(value, CompoundValue):
+            value._xsd_elm.render(node, value, render_path)
+            node.set(xsi_ns("type"), value._xsd_elm.qname)
         else:
-            parent.text = self.xmlvalue(value)
+            node.text = self.xmlvalue(value)
 
     def parse_xmlelement(
         self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None

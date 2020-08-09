@@ -1,9 +1,11 @@
 import copy
 import logging
+import typing
 from collections import OrderedDict, deque
 from itertools import chain
 
 from cached_property import threaded_cached_property
+from lxml import etree
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
 from zeep.xsd.const import Nil, NotSet, SkipValue, xsi_ns
@@ -229,13 +231,16 @@ class ComplexType(AnyType):
             value = schema_type._array_class.from_value_object(value)
         return value
 
-    def render(self, parent, value, xsd_type=None, render_path=None):
-        """Serialize the given value lxml.Element subelements on the parent
+    def render(
+        self,
+        node: etree._Element,
+        value: typing.Union[list, dict, CompoundValue],
+        xsd_type: "ComplexType" = None,
+        render_path=None,
+    ) -> None:
+        """Serialize the given value lxml.Element subelements on the node
         element.
 
-        :type parent: lxml.etree._Element
-        :type value: Union[list, dict, zeep.xsd.valueobjects.CompoundValue]
-        :type xsd_type: zeep.xsd.types.base.Type
         :param render_path: list
 
         """
@@ -256,7 +261,7 @@ class ComplexType(AnyType):
         for name, attribute in self.attributes:
             attr_value = value[name] if name in value else NotSet
             child_path = render_path + [name]
-            attribute.render(parent, attr_value, child_path)
+            attribute.render(node, attr_value, child_path)
 
         if (
             len(self.elements_nested) == 1
@@ -264,7 +269,7 @@ class ComplexType(AnyType):
             and not isinstance(value, (list, dict, CompoundValue))
         ):
             element = self.elements_nested[0][1]
-            element.type.render(parent, value, None, child_path)
+            element.type.render(node, value, None, child_path)
             return
 
         # Render sub elements
@@ -281,15 +286,15 @@ class ComplexType(AnyType):
                 continue
 
             if isinstance(element, Element):
-                element.type.render(parent, element_value, None, child_path)
+                element.type.render(node, element_value, None, child_path)
             else:
-                element.render(parent, element_value, child_path)
+                element.render(node, element_value, child_path)
 
         if xsd_type:
             if xsd_type._xsd_name:
-                parent.set(xsi_ns("type"), xsd_type._xsd_name)
+                node.set(xsi_ns("type"), xsd_type._xsd_name)
             if xsd_type.qname:
-                parent.set(xsi_ns("type"), xsd_type.qname)
+                node.set(xsi_ns("type"), xsd_type.qname)
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
         """Parse the kwargs for this type and return the accepted data as
