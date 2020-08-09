@@ -15,6 +15,7 @@ from zeep.utils import as_qname
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
 from zeep.wsdl.messages.multiref import process_multiref
 from zeep.xsd.context import XmlParserContext
+from zeep.xsd.valueobjects import CompoundValue
 
 __all__ = ["DocumentMessage", "RpcMessage"]
 
@@ -338,10 +339,11 @@ class SoapMessage(ConcreteMessage):
         header = soap.Header()
         if isinstance(headers_value, list):
             for header_value in headers_value:
-                if hasattr(header_value, "_xsd_elm"):
-                    header_value._xsd_elm.render(header, header_value)
-                elif hasattr(header_value, "_xsd_type"):
-                    header_value._xsd_type.render(header, header_value)
+                if isinstance(header_value, CompoundValue):
+                    if hasattr(header_value, "_xsd_elm"):
+                        header_value._xsd_elm.render(header, header_value)
+                    else:
+                        header_value._xsd_type.render(header, header_value)
                 elif isinstance(header_value, etree._Element):
                     header.append(header_value)
                 else:

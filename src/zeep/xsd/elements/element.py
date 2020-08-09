@@ -10,6 +10,7 @@ from zeep.xsd.const import Nil, NotSet, xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import create_prefixed_name, max_occurs_iter
+from zeep.xsd.valueobjects import CompoundValue
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class Element(Base):
 
     def __call__(self, *args, **kwargs):
         instance = self.type(*args, **kwargs)
-        if hasattr(instance, "_xsd_type"):
+        if isinstance(instance, CompoundValue):
             instance._xsd_elm = self
         return instance
 
