@@ -65,13 +65,13 @@ def parse_abstract_message(
                 % (message_name.text, part_name)
             )
 
-        part = definitions.MessagePart(part_element, part_type)
-        parts.append((part_name, part))
+        message_part = definitions.MessagePart(part_element, part_type)
+        parts.append((part_name, message_part))
 
     # Create the object, add the parts and return it
     msg = definitions.AbstractMessage(message_name)
-    for part_name, part in parts:
-        msg.add_part(part_name, part)
+    for part_name, part_value in parts:
+        msg.add_part(part_name, part_value)
     return msg
 
 
@@ -158,6 +158,7 @@ def parse_port_type(
 
     """
     name = qname_attr(xmlelement, "name", wsdl.target_namespace)
+    assert name is not None
     operations = {}  # type: typing.Dict[str, definitions.AbstractOperation]
     for elm in xmlelement.findall("wsdl:operation", namespaces=NSMAP):
         operation = parse_abstract_operation(wsdl, elm)

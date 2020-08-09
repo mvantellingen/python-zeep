@@ -1,5 +1,6 @@
 import logging
 import re
+import typing
 
 from lxml import etree
 
@@ -55,19 +56,23 @@ class SchemaVisitor:
         self.schema = schema
         self._includes = set()
 
-    def register_element(self, qname, instance):
+    def register_element(self, qname: etree.QName, instance: xsd_elements.Element):
         self.document.register_element(qname, instance)
 
-    def register_attribute(self, name, instance):
+    def register_attribute(
+        self, name: etree.QName, instance: xsd_elements.Attribute
+    ) -> None:
         self.document.register_attribute(name, instance)
 
-    def register_type(self, qname, instance):
+    def register_type(self, qname: etree.QName, instance) -> None:
         self.document.register_type(qname, instance)
 
-    def register_group(self, qname, instance):
+    def register_group(self, qname: etree.QName, instance: xsd_elements.Group):
         self.document.register_group(qname, instance)
 
-    def register_attribute_group(self, qname, instance):
+    def register_attribute_group(
+        self, qname: etree.QName, instance: xsd_elements.AttributeGroup
+    ) -> None:
         self.document.register_attribute_group(qname, instance)
 
     def register_import(self, namespace, document):
@@ -432,7 +437,9 @@ class SchemaVisitor:
             self.register_element(qname, element)
         return element
 
-    def visit_attribute(self, node, parent):
+    def visit_attribute(
+        self, node: etree._Element, parent: etree._Element
+    ) -> typing.Union[xsd_elements.Attribute, xsd_elements.RefAttribute]:
         """Declares an attribute.
 
         Definition::
@@ -501,6 +508,7 @@ class SchemaVisitor:
 
         # Only register global elements
         if is_global:
+            assert name is not None
             self.register_attribute(name, attr)
         return attr
 

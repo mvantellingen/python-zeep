@@ -21,7 +21,7 @@ class ImportResolver(etree.Resolver):
             return self.resolve_string(content, context)
 
 
-def parse_xml(content, transport, base_url=None, settings=None):
+def parse_xml(content: str, transport, base_url=None, settings=None):
     """Parse an XML string and return the root Element.
 
     :param content: The XML string
