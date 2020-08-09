@@ -23,3 +23,14 @@ use_parentheses = true
 indent_style = "space"
 indent_size = 4
 tab_width = 4
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+strict = true
+testpaths = [
+    "tests",
+]
+markers = [
+    # mark a test to allow socket usage
+    "requests"
+]

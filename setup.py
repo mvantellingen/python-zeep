@@ -30,7 +30,7 @@ tests_require = [
     "mock==2.0.0",
     "pretend==1.0.9",
     "pytest-cov==2.8.1",
-    "pytest==5.4.1",
+    "pytest==6.0.1",
     "requests_mock>=0.7.0",
     # Linting
     "isort[pyproject]==4.3.21",
