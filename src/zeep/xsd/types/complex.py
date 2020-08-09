@@ -9,6 +9,7 @@ from lxml import etree
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
 from zeep.xsd.const import Nil, NotSet, SkipValue, xsi_ns
+from zeep.xsd.context import XmlParserContext
 from zeep.xsd.elements import (
     Any,
     AnyAttribute,
@@ -24,13 +25,17 @@ from zeep.xsd.types.simple import AnySimpleType
 from zeep.xsd.utils import NamePrefixGenerator
 from zeep.xsd.valueobjects import ArrayValue, CompoundValue
 
+if typing.TYPE_CHECKING:
+    from zeep.xsd.schema import Schema
+    from zeep.xsd.types.base import Type
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["ComplexType"]
 
 
 class ComplexType(AnyType):
-    _xsd_name = None
+    _xsd_name: typing.Optional[str] = None
 
     def __init__(
         self,
@@ -39,7 +44,7 @@ class ComplexType(AnyType):
         restriction=None,
         extension=None,
         qname=None,
-        is_global=False,
+        is_global: bool = False,
     ):
         if element and type(element) == list:
             element = Sequence(element)
@@ -58,11 +63,11 @@ class ComplexType(AnyType):
         return self._value_class(*args, **kwargs)
 
     @property
-    def accepted_types(self):
+    def accepted_types(self) -> typing.Tuple[typing.Type]:
         return (self._value_class,) + self._extension_types
 
     @threaded_cached_property
-    def _array_class(self):
+    def _array_class(self) -> typing.Type[ArrayValue]:
         assert self._array_type
         return type(
             self.__class__.__name__,
@@ -71,7 +76,7 @@ class ComplexType(AnyType):
         )
 
     @threaded_cached_property
-    def _value_class(self):
+    def _value_class(self) -> typing.Type[CompoundValue]:
         return type(
             self.__class__.__name__,
             (CompoundValue,),
@@ -298,18 +303,19 @@ class ComplexType(AnyType):
             if xsd_type.qname:
                 node.set(xsi_ns("type"), xsd_type.qname)
 
-    def parse_kwargs(self, kwargs, name, available_kwargs):
+    def parse_kwargs(
+        self,
+        kwargs: typing.Dict[str, typing.Any],
+        name: str,
+        available_kwargs: typing.Set[str],
+    ) -> typing.Dict[str, typing.Any]:
         """Parse the kwargs for this type and return the accepted data as
         a dict.
 
         :param kwargs: The kwargs
-        :type kwargs: dict
         :param name: The name as which this type is registered in the parent
-        :type name: str
         :param available_kwargs: The kwargs keys which are still available,
          modified in place
-        :type available_kwargs: set
-        :rtype: dict
 
         """
         value = None
@@ -325,7 +331,9 @@ class ComplexType(AnyType):
             return {name: value}
         return {}
 
-    def _create_object(self, value, name):
+    def _create_object(
+        self, value: typing.Union[list, dict, CompoundValue], name: str
+    ) -> typing.Optional[CompoundValue]:
         """Return the value as a CompoundValue object
 
         :type value: str

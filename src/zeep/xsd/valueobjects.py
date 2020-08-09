@@ -5,6 +5,7 @@ from collections import OrderedDict
 from zeep.xsd.printer import PrettyPrinter
 
 if typing.TYPE_CHECKING:
+    from zeep.xsd.elements import Element
     from zeep.xsd.types import ComplexType
 
 __all__ = ["AnyObject", "CompoundValue"]
@@ -78,6 +79,9 @@ class ArrayValue(list):
 
 class CompoundValue:
     """Represents a data object for a specific xsd:complexType."""
+
+    _xsd_type: "ComplexType"
+    _xsd_elm: "Element"
 
     def __init__(self, *args, **kwargs):
         values = OrderedDict()
