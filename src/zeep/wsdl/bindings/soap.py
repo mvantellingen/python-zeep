@@ -72,13 +72,17 @@ class SoapBinding(Binding):
 
         """
         attachments = kwargs.pop("attachments", None)
+
         multipart_opts = None
 
         if attachments:
             if not isinstance(attachments, AttachmentCollection):
-                raise TypeError(
-                    "The `attachments' kwarg MUST be an AttachmentCollection"
-                )
+                if isinstance(attachments, list):
+                    attachments = AttachmentCollection(*attachments)
+                else:
+                    raise TypeError(
+                        "The `attachments' kwarg MUST be a list or an AttachmentCollection"
+                    )
 
             is_mime_multipart = True
             multipart_opts = self._pop_multipart_kwargs(kwargs)
