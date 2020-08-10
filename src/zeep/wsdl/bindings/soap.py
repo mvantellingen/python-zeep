@@ -168,8 +168,8 @@ class SoapBinding(Binding):
         envelope_headers["Content-ID"] = f"<{root_name}>"
         envelope_field = (None, etree_to_string(envelope), "text/xml", envelope_headers)
 
-        fields = attachments.to_multipart_field_defs()
         fields[root_name] = envelope_field
+        attachments.to_multipart_field_defs(fields_dict=fields)
 
         encoder = MessageMultipartEncoder(fields, boundary=boundary, encoding=encoding)
 
@@ -177,7 +177,6 @@ class SoapBinding(Binding):
             encoder.to_string(),
             {
                 "MIME-Version": "1.0",
-                "Content-Transfer-Encoding": f"binary",
                 "Content-Type": f'multipart/related; boundary={boundary}; start="<{root_name}>"',
             },
         )

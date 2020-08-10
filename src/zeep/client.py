@@ -140,16 +140,9 @@ class Client:
         :rtype: lxml.etree._Element
 
         """
-        envelope, http_headers = service._binding._create(
+        envelope, http_headers, is_mime_multipart = service._binding._create(
             operation_name, args, kwargs, client=self
         )
-
-        if "attachments" in kwargs:
-            multipart_request, http_headers = self._create_multipart(
-                operation, envelope, http_headers, args, kwargs
-            )
-
-            return multipart_request
 
         return envelope
 

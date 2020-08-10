@@ -106,6 +106,7 @@ class AttachmentEncodable:
         name: str = None,
         data: Union[io.IOBase, bytes] = b"",
         content_type: str = None,
+        transfer_encoding: str = "binary",
     ):
         """
         data can be a stream or a bytes object.
@@ -115,6 +116,11 @@ class AttachmentEncodable:
 
         # What follows are best-guess heuristics for determining name and content type.
         if isinstance(data, (io.TextIOWrapper, io.BufferedReader)):
+            if isinstance(data, io.TextIOWrapper):
+                self.transfer_encoding = "8bit"
+            elif isinstance(data, io.BufferedReader):
+                self.transfer_encoding = "binary"
+
             file_path = pathlib.Path(data.name)
 
             if name is None:
@@ -137,7 +143,15 @@ class AttachmentEncodable:
         self.content_type = content_type
 
     def to_multipart_field_def(self):
-        return (None, self.data, self.content_type, {"Content-ID": f"<{self.name}>"})
+        return (
+            None,
+            self.data,
+            self.content_type,
+            {
+                "Content-ID": f"<{self.name}>",
+                "Content-Transfer-Encoding": self.transfer_encoding,
+            },
+        )
 
     def __repr__(self):
         return f"AttachmentEncodable(name={self.name}, data={repr(self.data)}, content_type={self.content_type}"
@@ -163,7 +177,11 @@ class AttachmentCollection(list):
 
         super().__init__(args, **kwargs)
 
-    def to_multipart_field_defs(self):
-        return {
-            attachment.name: attachment.to_multipart_field_def() for attachment in self
-        }
+    def to_multipart_field_defs(self, fields_dict=None):
+        if fields_dict is None:
+            fields_dict = {}
+
+        for attachment in self:
+            fields_dict[attachment.name] = attachment.to_multipart_field_def()
+
+        return fields_dict
