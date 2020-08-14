@@ -182,6 +182,7 @@ class SoapBinding(Binding):
             {
                 "MIME-Version": "1.0",
                 "Content-Type": f'multipart/related; boundary={boundary}; start="<{root_name}>"',
+                "SOAPAction": "",
             },
         )
 

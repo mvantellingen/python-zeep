@@ -113,6 +113,7 @@ class AttachmentEncodable:
         """
 
         self.data = data
+        self.transfer_encoding = transfer_encoding
 
         # What follows are best-guess heuristics for determining name and content type.
         if isinstance(data, (io.TextIOWrapper, io.BufferedReader)):
