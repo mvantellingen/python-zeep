@@ -140,9 +140,10 @@ class Client:
         :rtype: lxml.etree._Element
 
         """
-        envelope, http_headers = service._binding._create(
+        envelope, http_headers, is_mime_multipart = service._binding._create(
             operation_name, args, kwargs, client=self
         )
+
         return envelope
 
     def type_factory(self, namespace):

@@ -5,9 +5,29 @@ See https://www.w3.org/TR/SOAP-attachments
 """
 
 import base64
+import pathlib
+import io
+import mimetypes
+
+from typing import Union
 
 from cached_property import cached_property
 from requests.structures import CaseInsensitiveDict
+
+from requests_toolbelt.multipart.encoder import MultipartEncoder, Part
+
+
+class MessageMultipartEncoder(MultipartEncoder):
+    def _prepare_parts(self):
+        self.parts = []
+
+        for field in self._iter_fields():
+            if "Content-Disposition" in field.headers:
+                del field.headers["Content-Disposition"]
+
+            self.parts.append(Part.from_field(field, self.encoding))
+
+        self._iter_parts = iter(self.parts)
 
 
 class MessagePack:
@@ -78,3 +98,91 @@ class Attachment:
             return content.strip(b"\r\n")
         else:
             return content
+
+
+class AttachmentEncodable:
+    def __init__(
+        self,
+        name: str = None,
+        data: Union[io.IOBase, bytes] = b"",
+        content_type: str = None,
+        transfer_encoding: str = "binary",
+    ):
+        """
+        data can be a stream or a bytes object.
+        """
+
+        self.data = data
+        self.transfer_encoding = transfer_encoding
+
+        # What follows are best-guess heuristics for determining name and content type.
+        if isinstance(data, (io.TextIOWrapper, io.BufferedReader)):
+            if isinstance(data, io.TextIOWrapper):
+                self.transfer_encoding = "8bit"
+            elif isinstance(data, io.BufferedReader):
+                self.transfer_encoding = "binary"
+
+            file_path = pathlib.Path(data.name)
+
+            if name is None:
+                name = file_path.name
+
+            if content_type is None:
+                content_type, encoding = mimetypes.guess_type(name)
+
+                if content_type is None:
+                    if isinstance(data, io.TextIOWrapper):
+                        content_type = "text/plain"
+                    else:
+                        content_type = "application/octet-stream"
+        else:
+            if name is None:
+                name = "attachment"
+
+        self.name = name
+        self.data = data
+        self.content_type = content_type
+
+    def to_multipart_field_def(self):
+        return (
+            None,
+            self.data,
+            self.content_type,
+            {
+                "Content-ID": f"<{self.name}>",
+                "Content-Transfer-Encoding": self.transfer_encoding,
+            },
+        )
+
+    def __repr__(self):
+        return f"AttachmentEncodable(name={self.name}, data={repr(self.data)}, content_type={self.content_type}"
+
+    def __str__(self):
+        return repr(self)
+
+
+class AttachmentCollection(list):
+    def __init__(self, *args, **kwargs):
+        args = list(args)
+
+        for i, arg in enumerate(args):
+            if isinstance(arg, (io.TextIOWrapper, io.BufferedReader)):
+                args[i] = AttachmentEncodable(data=arg)
+            if isinstance(arg, tuple):
+                if len(arg) == 2:
+                    args[i] = AttachmentEncodable(name=arg[0], data=arg[1])
+                elif len(arg) == 3:
+                    args[i] = AttachmentEncodable(
+                        name=arg[0], data=arg[1], content_type=arg[2]
+                    )
+
+        super().__init__(args, **kwargs)
+
+    def to_multipart_field_defs(self, fields_dict=None):
+        if fields_dict is None:
+            fields_dict = {}
+
+        for attachment in self:
+            fields_dict[attachment.name] = attachment.to_multipart_field_def()
+
+        return fields_dict

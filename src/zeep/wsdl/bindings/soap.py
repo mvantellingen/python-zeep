@@ -1,5 +1,6 @@
 import logging
 import typing
+import uuid
 
 from lxml import etree
 from requests_toolbelt.multipart.decoder import MultipartDecoder
@@ -8,7 +9,12 @@ from zeep import ns, plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.loader import parse_xml
 from zeep.utils import as_qname, get_media_type, qname_attr
-from zeep.wsdl.attachments import MessagePack
+from zeep.wsdl.attachments import (
+    MessagePack,
+    MessageMultipartEncoder,
+    AttachmentEncodable,
+    AttachmentCollection,
+)
 from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
 from zeep.wsdl.messages.xop import process_xop
@@ -65,6 +71,24 @@ class SoapBinding(Binding):
         Note that this generates the soap envelope without the wsse applied.
 
         """
+        attachments = kwargs.pop("attachments", None)
+
+        multipart_opts = None
+
+        if attachments:
+            if not isinstance(attachments, AttachmentCollection):
+                if isinstance(attachments, list):
+                    attachments = AttachmentCollection(*attachments)
+                else:
+                    raise TypeError(
+                        "The `attachments' kwarg MUST be a list or an AttachmentCollection"
+                    )
+
+            is_mime_multipart = True
+            multipart_opts = self._pop_multipart_kwargs(kwargs)
+        else:
+            is_mime_multipart = False
+
         operation_obj = self.get(operation)
         if not operation_obj:
             raise ValueError("Operation %r not found" % operation)
@@ -99,11 +123,68 @@ class SoapBinding(Binding):
                 else:
                     envelope, http_headers = client.wsse.apply(envelope, http_headers)
 
+        if is_mime_multipart:
+            multipart_request, multipart_headers = self._create_multipart(
+                operation,
+                envelope,
+                http_headers,
+                args,
+                kwargs,
+                attachments,
+                multipart_opts,
+            )
+
+            envelope = multipart_request
+            http_headers = multipart_headers
+
         # Add extra http headers from the setings object
         if client.settings.extra_http_headers:
             http_headers.update(client.settings.extra_http_headers)
 
-        return envelope, http_headers
+        return envelope, http_headers, is_mime_multipart
+
+    def _random_boundary(self):
+        return f"Multipart-{uuid.uuid4()}"
+
+    def _pop_multipart_kwargs(self, kwargs):
+        return {
+            "root_id": kwargs.pop("root_id", "root"),
+            "boundary": kwargs.pop("boundary", self._random_boundary()),
+            "encoding": kwargs.pop("encoding", "utf-8"),
+        }
+
+    def _create_multipart(
+        self,
+        operation,
+        envelope,
+        envelope_headers,
+        args,
+        kwargs,
+        attachments,
+        multipart_opts,
+    ):
+        root_name = multipart_opts.get("root_id")
+        boundary = multipart_opts.get("boundary")
+        encoding = multipart_opts.get("encoding")
+
+        fields = {}
+
+        envelope_headers["Content-ID"] = f"<{root_name}>"
+        envelope_field = (None, etree_to_string(envelope), "text/xml", envelope_headers)
+
+        fields[root_name] = envelope_field
+        attachments.to_multipart_field_defs(fields_dict=fields)
+
+        encoder = MessageMultipartEncoder(fields, boundary=boundary, encoding=encoding)
+
+        return (
+            encoder.to_string(),
+            {
+                "MIME-Version": "1.0",
+                "Content-Type": f'multipart/related; boundary={boundary}; start="<{root_name}>"',
+                "SOAPAction": "",
+            },
+        )
 
     def send(self, client, options, operation, args, kwargs):
         """Called from the service
@@ -120,11 +201,19 @@ class SoapBinding(Binding):
         :type kwargs: dict
 
         """
-        envelope, http_headers = self._create(
+        envelope, http_headers, is_mime_multipart = self._create(
             operation, args, kwargs, client=client, options=options
         )
 
-        response = client.transport.post_xml(options["address"], envelope, http_headers)
+        if not is_mime_multipart:
+            response = client.transport.post_xml(
+                options["address"], envelope, http_headers
+            )
+        else:
+            multipart_request = envelope
+            response = client.transport.post(
+                options["address"], multipart_request, http_headers
+            )
 
         operation_obj = self.get(operation)
 
@@ -150,7 +239,7 @@ class SoapBinding(Binding):
 
         elif response.status_code != 200 and not response.content:
             raise TransportError(
-                u"Server returned HTTP status %d (no content available)"
+                "Server returned HTTP status %d (no content available)"
                 % response.status_code,
                 status_code=response.status_code,
             )
