@@ -22,11 +22,46 @@ logger = logging.getLogger(__name__)
 
 
 class Base:
+    """Base class for caching backends."""
+
     def add(self, url, content):
         raise NotImplementedError()
 
     def get(self, url):
         raise NotImplementedError()
+
+
+class VersionedCacheBase(Base):
+    """Versioned base class for caching backends.
+    Note when subclassing a version class attribute must be provided.
+    """
+
+    def _encode_data(self, data):
+        """Helper function for encoding cacheable content as base64.
+        :param data: Content to be encoded.
+        :rtype: bytes
+        """
+        data = base64.b64encode(data)
+        return self._version_string + data
+
+    def _decode_data(self, data):
+        """Helper function for decoding base64 cached content.
+        :param data: Content to be decoded.
+        :rtype: bytes
+        """
+        if data.startswith(self._version_string):
+            return base64.b64decode(data[len(self._version_string) :])
+
+    @property
+    def _version_string(self):
+        """Expose the version prefix to be used in content serialization.
+        :rtype: bytes
+        """
+        assert (
+            getattr(self, "_version", None) is not None
+        ), "A version must be provided in order to use the VersionedCacheBase backend."
+        prefix = u"$ZEEP:%s$" % self._version
+        return bytes(prefix.encode("ascii"))
 
 
 class InMemoryCache(Base):
@@ -61,8 +96,8 @@ class InMemoryCache(Base):
         return None
 
 
-class SqliteCache(Base):
-    """Cache contents via an sqlite database on the filesystem"""
+class SqliteCache(VersionedCacheBase):
+    """Cache contents via a sqlite database on the filesystem."""
 
     _version = "1"
 
@@ -127,19 +162,6 @@ class SqliteCache(Base):
                 logger.debug("Cache HIT for %s", url)
                 return self._decode_data(data)
         logger.debug("Cache MISS for %s", url)
-
-    def _encode_data(self, data):
-        data = base64.b64encode(data)
-        return self._version_string + data
-
-    def _decode_data(self, data):
-        if data.startswith(self._version_string):
-            return base64.b64decode(data[len(self._version_string) :])
-
-    @property
-    def _version_string(self):
-        prefix = u"$ZEEP:%s$" % self._version
-        return bytes(prefix.encode("ascii"))
 
 
 def _is_expired(value, timeout):
