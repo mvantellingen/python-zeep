@@ -18,6 +18,12 @@ try:
 except ImportError:
     sqlite3 = None  # type: ignore
 
+# Add support for memcache if running from the App Engine SDK
+try:
+    from google.appengine.api import memcache
+except ImportError:
+    memcache = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,6 +65,30 @@ class InMemoryCache(Base):
                 return content
         logger.debug("Cache MISS for %s", url)
         return None
+
+
+class AppEngineMemcacheCache(Base):
+    """App Engine Memcache caching with timeout support."""
+
+    def __init__(self, timeout=3600, namespace='zeep'):
+        self._timeout = timeout
+        self._namespace = namespace
+
+    def add(self, url, content):
+        logger.debug('Caching contents of %s', url)
+        if not isinstance(content, (str, bytes)):
+            raise TypeError(
+                'a bytes-like object is required, not {}'.format(type(content).__name__))
+        memcache.set(url, content, time=self._timeout, namespace=self._namespace)
+
+    def get(self, url):
+        content = memcache.get(url, namespace=self._namespace)
+        if content:
+            logger.debug('Cache HIT for %s', url)
+            return content
+        else:
+            logger.debug('Cache MISS for %s', url)
+            return None
 
 
 class SqliteCache(Base):
