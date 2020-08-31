@@ -1,6 +1,8 @@
+import os
 import pytest
 import requests_mock
 from pretend import stub
+from unittest.mock import patch, mock_open
 
 from zeep import cache, transports
 
@@ -17,7 +19,6 @@ def test_custom_cache():
     assert isinstance(transport.cache, cache.SqliteCache)
 
 
-@pytest.mark.requests
 def test_load():
     cache = stub(get=lambda url: None, add=lambda url, content: None)
     transport = transports.Transport(cache=cache)
@@ -27,6 +28,36 @@ def test_load():
         result = transport.load("http://tests.python-zeep.org/test.xml")
 
         assert result == b"x"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="test valid for windows platform only")
+def test_load_file():
+    cache = stub(get=lambda url: None, add=lambda url, content: None)
+    transport = transports.Transport(cache=cache)
+    with patch("io.open", mock_open(read_data=b"x")) as m_open:
+        result = transport.load("file://localhost/c:/local/example/example.wsdl")
+        assert result == b"x"
+        m_open.assert_called_once_with("c:\\local\\example\\example.wsdl", "rb")
+
+
+@pytest.mark.skipif(os.name == "nt", reason="test valid for unix platform only")
+def test_load_file():
+    cache = stub(get=lambda url: None, add=lambda url, content: None)
+    transport = transports.Transport(cache=cache)
+    with patch("io.open", mock_open(read_data=b"x")) as m_open:
+        result = transport.load("file:///usr/local/bin/example.wsdl")
+        assert result == b"x"
+        m_open.assert_called_once_with("/usr/local/bin/example.wsdl", "rb")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="test valid for windows platform only")
+def test_load_file_local():
+    cache = stub(get=lambda url: None, add=lambda url, content: None)
+    transport = transports.Transport(cache=cache)
+    with patch("io.open", mock_open(read_data=b"x")) as m_open:
+        result = transport.load("file:///c:/local/example/example.wsdl")
+        assert result == b"x"
+        m_open.assert_called_once_with("c:\\local\\example\\example.wsdl", "rb")
 
 
 def test_settings_set_context_timeout():

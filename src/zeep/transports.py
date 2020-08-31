@@ -2,6 +2,7 @@ import logging
 import os
 from contextlib import contextmanager
 from urllib.parse import urlparse
+from requests_file import FileAdapter
 
 import requests
 
@@ -27,6 +28,7 @@ class Transport:
         self.logger = logging.getLogger(__name__)
 
         self.session = session or requests.Session()
+        self.session.mount("file://", FileAdapter())
         self.session.headers["User-Agent"] = "Zeep/%s (www.python-zeep.org)" % (
             get_version()
         )
@@ -100,7 +102,7 @@ class Transport:
             raise ValueError("No url given to load")
 
         scheme = urlparse(url).scheme
-        if scheme in ("http", "https"):
+        if scheme in ("http", "https", "file"):
 
             if self.cache:
                 response = self.cache.get(url)
@@ -113,13 +115,9 @@ class Transport:
                 self.cache.add(url, content)
 
             return content
-
-        elif scheme == "file":
-            if url.startswith("file://"):
-                url = url[7:]
-
-        with open(os.path.expanduser(url), "rb") as fh:
-            return fh.read()
+        else:
+            with open(os.path.expanduser(url), "rb") as fh:
+                return fh.read()
 
     def _load_remote_data(self, url):
         self.logger.debug("Loading remote data from: %s", url)
