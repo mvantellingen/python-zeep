@@ -132,9 +132,18 @@ def test_create_message():
     assert data is not None
 
 
-def test_load_wsdl_with_file_prefix():
+@pytest.mark.skipif(os.name == "nt", reason="test valid for unix platforms only")
+def test_load_wsdl_with_file_prefix_unix():
     cwd = os.path.dirname(__file__)
     client.Client("file://" + os.path.join(cwd, "wsdl_files/soap.wsdl"))
+
+
+@pytest.mark.skipif(os.name != "nt", reason="test valid for windows platform only")
+def test_load_wsdl_with_file_prefix():
+    cwd = os.path.dirname(__file__)
+    # RFC 8089 REQUIRES that separators in file uris use forward slashes
+    uri = ("file:///" + os.path.join(cwd, "wsdl_files/soap.wsdl")).replace("\\", "/")
+    client.Client(uri)
 
 
 @pytest.mark.requests
