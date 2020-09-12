@@ -22,7 +22,7 @@ class Settings:
     :param forbid_external: disallow any access to remote or local resources
       in external entities or DTD and raising an ExternalReferenceForbidden
       exception when a DTD or entity references an external resource.
-    :type forbid_entities: bool
+    :type forbid_external: bool
     :param xml_huge_tree: disable lxml/libxml2 security restrictions and
                           support very deep trees and very long text content
 
