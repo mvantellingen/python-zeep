@@ -390,6 +390,146 @@ def test_wsdl_imports_xsd(recwarn):
     wsdl.Document(content, transport, "http://tests.python-zeep.org/content.wsdl")
 
 
+def test_wsdl_no_prefix_includes_xsd(recwarn):
+    content = StringIO(
+        """
+    <?xml version="1.0"?>
+    <definitions
+      xmlns="http://schemas.xmlsoap.org/wsdl/"
+      xmlns:xs="http://www.w3.org/2001/XMLSchema"
+      xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+      targetNamespace="http://tests.python-zeep.org/x">
+      <types>
+        <xs:schema
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified"
+            targetNamespace="http://tests.python-zeep.org/x">
+          <xs:include schemaLocation="a.xsd"/>
+        </xs:schema>
+      </types>
+    </definitions>
+    """.strip()
+    )
+
+    schema_node_a = etree.fromstring(
+        """
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified">
+          <xs:include schemaLocation="b.xsd"/>
+        </xs:schema>
+    """.strip()
+    )
+
+    schema_node_b = etree.fromstring(
+        """
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified">
+          <xs:element name="BLIST">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="B" type="AHOLDER" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:complexType name="AHOLDER">
+            <xs:sequence>
+              <xs:element name="A" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>The A</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:schema>
+    """.strip()
+    )
+
+    transport = DummyTransport()
+    transport.bind("http://tests.python-zeep.org/a.xsd", schema_node_a)
+    transport.bind("http://tests.python-zeep.org/b.xsd", schema_node_b)
+
+    doc = wsdl.Document(content, transport, "http://tests.python-zeep.org/content.wsdl")
+
+
+def test_wsdl_with_prefix_includes_xsd(recwarn):
+    content = StringIO(
+        """
+    <?xml version="1.0"?>
+    <wsdl:definitions
+      xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+      xmlns:xs="http://www.w3.org/2001/XMLSchema"
+      xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+      targetNamespace="http://tests.python-zeep.org/x">
+      <wsdl:types>
+        <xs:schema
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified"
+            targetNamespace="http://tests.python-zeep.org/x">
+          <xs:include schemaLocation="a.xsd"/>
+        </xs:schema>
+      </wsdl:types>
+    </wsdl:definitions>
+    """.strip()
+    )
+
+    schema_node_a = etree.fromstring(
+        """
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified">
+          <xs:include schemaLocation="b.xsd"/>
+        </xs:schema>
+    """.strip()
+    )
+
+    schema_node_b = etree.fromstring(
+        """
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified">
+          <xs:element name="BLIST">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="B" type="AHOLDER" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:complexType name="AHOLDER">
+            <xs:sequence>
+              <xs:element name="A" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>The A</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:schema>
+    """.strip()
+    )
+
+    transport = DummyTransport()
+    transport.bind("http://tests.python-zeep.org/a.xsd", schema_node_a)
+    transport.bind("http://tests.python-zeep.org/b.xsd", schema_node_b)
+
+    doc = wsdl.Document(content, transport, "http://tests.python-zeep.org/content.wsdl")
+
+
 def test_import_schema_without_location(recwarn):
     content = StringIO(
         """
