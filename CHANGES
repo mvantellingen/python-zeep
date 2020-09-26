@@ -1,8 +1,12 @@
 4.0.0 (unreleased)
 ------------------
- - Drop support for Python 2.7, 3.3 and 3.4
- - Remove the Tornado transport class from Zeep. This can be moved to it's own
-   Python package if anyone is interested.
+ - Drop support for Python 2.7, 3.3, 3.4 and 3.5
+ - Remove both the aiohttp and the tornado transport class from Zeep. These
+   can be moved to their own Python package if anyone is interested.
+ - Add `zeep.transports.AsyncTransport` which is based on `httpx`. Note that
+   loading wsdl files is still a sync process but operations can be executed via
+   async.
+ - Start adding more typehints to the package
 
 
 3.4.0 (2019-06-05)
