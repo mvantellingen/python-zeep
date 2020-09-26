@@ -5,10 +5,9 @@ from lxml import etree
 from pretend import stub
 from pytest_httpx import HTTPXMock
 
-
 from zeep import exceptions
-from zeep.transports import AsyncTransport
 from zeep.cache import InMemoryCache
+from zeep.transports import AsyncTransport
 
 
 @pytest.mark.requests
@@ -69,7 +68,9 @@ async def test_session_close(httpx_mock: HTTPXMock):
 async def test_http_error(httpx_mock: HTTPXMock):
     transport = AsyncTransport()
 
-    httpx_mock.add_response(url="http://tests.python-zeep.org/test.xml", data="x", status_code=500)
+    httpx_mock.add_response(
+        url="http://tests.python-zeep.org/test.xml", data="x", status_code=500
+    )
     with pytest.raises(exceptions.TransportError) as exc:
         transport.load("http://tests.python-zeep.org/test.xml")
         assert exc.value.status_code == 500

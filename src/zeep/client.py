@@ -1,7 +1,7 @@
 import logging
 import typing
 
-from zeep.proxy import ServiceProxy, AsyncServiceProxy
+from zeep.proxy import AsyncServiceProxy, ServiceProxy
 from zeep.settings import Settings
 from zeep.transports import AsyncTransport, Transport
 from zeep.wsdl import Document
@@ -50,6 +50,7 @@ class Client:
     :param settings: a zeep.Settings() object
 
     """
+
     _default_transport = Transport
 
     def __init__(
@@ -66,7 +67,9 @@ class Client:
             raise ValueError("No URL given for the wsdl")
 
         self.settings = settings or Settings()
-        self.transport = transport if transport is not None else self._default_transport()
+        self.transport = (
+            transport if transport is not None else self._default_transport()
+        )
         self.wsdl = Document(wsdl, self.transport, settings=self.settings)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []

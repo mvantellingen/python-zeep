@@ -7,10 +7,10 @@ from zeep.xsd.context import XmlParserContext
 from zeep.xsd.types.simple import AnySimpleType
 
 if typing.TYPE_CHECKING:
+    from zeep.xsd.schema import Schema
     from zeep.xsd.types.base import Type
     from zeep.xsd.types.complex import ComplexType
     from zeep.xsd.valueobjects import CompoundValue
-    from zeep.xsd.schema import Schema
 
 __all__ = ["ListType", "UnionType"]
 
@@ -80,7 +80,9 @@ class UnionType(AnySimpleType):
         allow_none: bool = True,
         context: XmlParserContext = None,
         schema_type: "Type" = None,
-    ) -> typing.Optional[typing.Union[str, "CompoundValue", typing.List[etree._Element]]]:
+    ) -> typing.Optional[
+        typing.Union[str, "CompoundValue", typing.List[etree._Element]]
+    ]:
         if self.item_class:
             return self.item_class().parse_xmlelement(
                 xmlelement, schema, allow_none, context

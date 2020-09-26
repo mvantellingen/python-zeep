@@ -15,7 +15,12 @@ from collections import OrderedDict
 from lxml import etree
 
 from zeep.exceptions import IncompleteMessage
-from zeep.loader import absolute_location, is_relative_path, load_external, load_external_async
+from zeep.loader import (
+    absolute_location,
+    is_relative_path,
+    load_external,
+    load_external_async,
+)
 from zeep.settings import Settings
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
@@ -154,7 +159,6 @@ class Document:
     def _add_definition(self, definition: "Definition"):
         key = (definition.target_namespace, definition.location)
         self._definitions[key] = definition
-
 
 
 class Definition:

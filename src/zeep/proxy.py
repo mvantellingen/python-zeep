@@ -41,7 +41,7 @@ class OperationProxy:
         """
         soap_headers = self._merge_soap_headers(kwargs.get("_soapheaders"))
         if soap_headers:
-            kwargs['_soapheaders'] = soap_headers
+            kwargs["_soapheaders"] = soap_headers
 
         return self._proxy._binding.send(
             self._proxy._client,
@@ -53,14 +53,13 @@ class OperationProxy:
 
 
 class AsyncOperationProxy(OperationProxy):
-
     async def __call__(self, *args, **kwargs):
         """Call the operation with the given args and kwargs.
 
         :rtype: zeep.xsd.CompoundValue
 
         """
-        kwargs['_soapheaders'] = self._merge_soap_headers(kwargs.get("_soapheaders"))
+        kwargs["_soapheaders"] = self._merge_soap_headers(kwargs.get("_soapheaders"))
 
         return await self._proxy._binding.send_async(
             self._proxy._client,

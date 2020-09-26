@@ -280,7 +280,10 @@ class TestgYear:
         assert instance.pythonvalue("2001+00:00") == (2001, pytz.utc)
         assert instance.pythonvalue("-2001") == (-2001, None)
         assert instance.pythonvalue("-20000") == (-20000, None)
-        assert instance.pythonvalue("  \t2001+02:00\r\n ") == (2001, pytz.FixedOffset(120))
+        assert instance.pythonvalue("  \t2001+02:00\r\n ") == (
+            2001,
+            pytz.FixedOffset(120),
+        )
 
         with pytest.raises(builtins.ParseError):
             assert instance.pythonvalue("99")

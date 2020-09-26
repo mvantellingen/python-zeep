@@ -52,11 +52,11 @@ class UsernameToken:
         zulu_timestamp=None,
         hash_password=None,
     ):
-        '''
+        """
         Some SOAP services want zulu timestamps with Z in timestamps and
         in password digests they may want password to be hashed before
         adding it to nonce and created.
-        '''
+        """
         self.username = username
         self.password = password
         self.password_digest = password_digest
@@ -66,7 +66,6 @@ class UsernameToken:
         self.timestamp_token = timestamp_token
         self.zulu_timestamp = zulu_timestamp
         self.hash_password = hash_password
-
 
     def apply(self, envelope, headers):
         security = utils.get_security_header(envelope)
@@ -117,7 +116,9 @@ class UsernameToken:
         # digest = Base64 ( SHA-1 ( nonce + created + password ) )
         if not self.password_digest and self.hash_password:
             digest = base64.b64encode(
-                hashlib.sha1(nonce + timestamp.encode("utf-8") + hashlib.sha1(password).digest()).digest()
+                hashlib.sha1(
+                    nonce + timestamp.encode("utf-8") + hashlib.sha1(password).digest()
+                ).digest()
             ).decode("ascii")
         elif not self.password_digest:
             digest = base64.b64encode(
