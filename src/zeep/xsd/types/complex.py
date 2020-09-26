@@ -166,17 +166,14 @@ class ComplexType(AnyType):
         allow_none: bool = True,
         context: XmlParserContext = None,
         schema_type: "Type" = None,
-    ) -> typing.Optional[CompoundValue]:
+    ) -> typing.Optional[typing.Union[str, CompoundValue, typing.List[etree._Element]]]:
         """Consume matching xmlelements and call parse() on each
 
         :param xmlelement: XML element objects
         :param schema: The parent XML schema
         :param allow_none: Allow none
-        :type allow_none: bool
         :param context: Optional parsing context (for inline schemas)
         :param schema_type: The original type (not overriden via xsi:type)
-        :type schema_type: zeep.xsd.types.base.Type
-        :rtype: dict or None
 
         """
         # If this is an empty complexType (<xsd:complexType name="x"/>)
@@ -199,7 +196,7 @@ class ComplexType(AnyType):
         else:
             elements = deque(xmlelement.iterchildren())
             if allow_none and len(elements) == 0 and len(attributes) == 0:
-                return
+                return None
 
             # Parse elements. These are always indicator elements (all, choice,
             # group, sequence)

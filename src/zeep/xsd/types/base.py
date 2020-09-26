@@ -50,7 +50,7 @@ class Type:
         allow_none: bool = True,
         context: XmlParserContext = None,
         schema_type: "Type" = None,
-    ) -> typing.Optional[CompoundValue]:
+    ) -> typing.Optional[typing.Union[str, CompoundValue, typing.List[etree._Element]]]:
         raise NotImplementedError(
             "%s.parse_xmlelement() is not implemented" % self.__class__.__name__
         )

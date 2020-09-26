@@ -11,6 +11,7 @@ from zeep.xsd.valueobjects import CompoundValue
 
 if typing.TYPE_CHECKING:
     from zeep.xsd.schema import Schema
+    from zeep.xsd.types.base import Type
     from zeep.xsd.types.complex import ComplexType
 
 logger = logging.getLogger(__name__)
@@ -71,7 +72,7 @@ class AnySimpleType(AnyType):
         allow_none: bool = True,
         context: XmlParserContext = None,
         schema_type: "Type" = None,
-    ) -> typing.Optional[CompoundValue]:
+    ) -> typing.Optional[typing.Union[str, CompoundValue, typing.List[etree._Element]]]:
         if xmlelement.text is None:
             return None
         try:

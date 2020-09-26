@@ -9,7 +9,9 @@ from zeep.ns import XSD
 
 
 def qname_attr(
-    node: etree._Element, attr_name: str, target_namespace=None
+    node: etree._Element,
+    attr_name: typing.Union[str, etree.QName],
+    target_namespace=None,
 ) -> typing.Optional[etree.QName]:
     value = node.get(attr_name)
     if value is not None:

@@ -54,8 +54,11 @@ class AnyType(Type):
         allow_none: bool = True,
         context: XmlParserContext = None,
         schema_type: "Type" = None,
-    ) -> typing.Optional[CompoundValue]:
-        """Consume matching xmlelements and call parse() on each
+    ) -> typing.Optional[typing.Union[str, CompoundValue, typing.List[etree._Element]]]:
+        """Try to parse the xml element and return a value for it.
+
+        There is a big chance that we cannot parse this value since it is an
+        Any. In that case we just return the raw lxml Element nodes.
 
         :param xmlelement: XML element objects
         :param schema: The parent XML schema
