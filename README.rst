@@ -10,7 +10,7 @@ Highlights:
  * Support for Soap 1.1, Soap 1.2 and HTTP bindings
  * Support for WS-Addressing headers
  * Support for WSSE (UserNameToken / x.509 signing)
- * Support for asyncio via aiohttp
+ * Support for asyncio using the httpx module
  * Experimental support for XOP messages
 
 
