@@ -18,8 +18,7 @@ def run_async():
 
     loop = asyncio.get_event_loop()
 
-    transport = AsyncTransport(cache=None)
-    client = zeep.AsyncClient("http://localhost:8000/?wsdl", transport=transport)
+    client = zeep.AsyncClient("http://localhost:8000/?wsdl")
 
     tasks = [
         client.service.slow_request("request-1"),  # takes 1 sec
@@ -32,7 +31,7 @@ def run_async():
 
     st = time.time()
     loop.run_until_complete(future)
-    loop.run_until_complete(transport.aclose())
+    loop.run_until_complete(client.transport.aclose())
     print("time: %.2f" % (time.time() - st))
     print("result: %s", result)
     print("")
