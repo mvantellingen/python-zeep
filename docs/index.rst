@@ -10,7 +10,7 @@ Highlights:
  * Support for Soap 1.1, Soap 1.2 and HTTP bindings
  * Support for WS-Addressing headers
  * Support for WSSE (UserNameToken / x.509 signing)
- * Support for asyncio via aiohttp
+ * Support for asyncio via httpx
  * Experimental support for XOP messages
 
 
@@ -85,7 +85,7 @@ xmlsec module. This can be done by installing the ``xmlsec`` extras::
 
     pip install zeep[xmlsec]
 
-For the asyncio support in Python 3.5+ the aiohttp module is required, this
+For the asyncio support in Python 3.6+ the httpx module is required, this
 can be installed with the ``async`` extras::
 
     pip install zeep[async]

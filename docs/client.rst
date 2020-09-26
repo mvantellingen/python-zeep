@@ -51,6 +51,29 @@ The settings object is always accessible via the client using
 Please see :ref:`settings` for more information.
 
 
+The AsyncClient
+~~~~~~~~~~~~~~~
+
+The `AsyncClient` allows you to execute operations in an asynchronous
+fashion. There is one big caveat however: the wsdl documents are still loaded
+using synchronous methods. The reason for this is that the codebase was
+originally not written for asynchronous usage and support that is quite a lot
+of work.
+
+To use async operations you need to use the `AsyncClient()` and the
+corresponding `AsyncTransport()` (this is the default transport for the
+`AsyncClient`)
+
+.. code-block:: python
+
+    client = zeep.AsyncClient("http://localhost:8000/?wsdl")
+
+    response = await client.service.myoperation()
+
+
+.. versionadded:: 4.0.0
+
+
 Strict mode
 ~~~~~~~~~~~
 By default zeep will operate in 'strict' mode. This can be disabled if you
