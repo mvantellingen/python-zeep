@@ -15,20 +15,23 @@ class OperationProxy:
         return str(self._proxy._binding._operations[self._op_name])
 
     def _merge_soap_headers(self, operation_soap_headers):
-        # Merge the default _soapheaders with the passed _soapheaders
-        if self._proxy._client._default_soapheaders:
-            if operation_soap_headers:
-                soap_headers = copy.deepcopy(self._proxy._client._default_soapheaders)
-                if type(soap_headers) != type(operation_soap_headers):
-                    raise ValueError("Incompatible soapheaders definition")
+        default_headers = self._proxy._client._default_soapheaders
 
-                if isinstance(operation_soap_headers, list):
-                    soap_headers.extend(operation_soap_headers)
-                else:
-                    soap_headers.update(operation_soap_headers)
+        # Merge the default _soapheaders with the passed _soapheaders
+        if default_headers and operation_soap_headers:
+            merged = copy.deepcopy(default_headers)
+            if type(merged) != type(operation_soap_headers):
+                raise ValueError("Incompatible soapheaders definition")
+
+            if isinstance(operation_soap_headers, list):
+                merged.extend(operation_soap_headers)
             else:
-                soap_headers = self._proxy._client._default_soapheaders
-            return soap_headers
+                merged.update(operation_soap_headers)
+            return merged
+        elif default_headers:
+            return default_headers
+        else:
+            return operation_soap_headers
 
     def __call__(self, *args, **kwargs):
         """Call the operation with the given args and kwargs.
@@ -36,7 +39,9 @@ class OperationProxy:
         :rtype: zeep.xsd.CompoundValue
 
         """
-        kwargs['_soapheaders'] = self._merge_soap_headers(kwargs.get("_soapheaders"))
+        soap_headers = self._merge_soap_headers(kwargs.get("_soapheaders"))
+        if soap_headers:
+            kwargs['_soapheaders'] = soap_headers
 
         return self._proxy._binding.send(
             self._proxy._client,
