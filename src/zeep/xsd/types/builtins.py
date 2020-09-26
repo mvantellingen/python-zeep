@@ -34,6 +34,19 @@ def check_no_collection(func):
     return _wrapper
 
 
+def treat_whitespace(behaviour):
+    def _treat_whitespace(func):
+        def _wrapper(self, value):
+            assert behaviour in ["replace", "collapse", "preserve"]
+            if behaviour == "replace":
+                return func(self, re.sub(r'[\n\r\t]', ' ', value))
+            elif behaviour == "collapse":
+                return func(self, re.sub(r'[\n\r\t ]', ' ', value).strip())
+            return func(self, value)
+        return _wrapper
+    return _treat_whitespace
+
+
 ##
 # Primitive types
 class String(BuiltinType):
@@ -58,6 +71,7 @@ class Boolean(BuiltinType):
     def xmlvalue(self, value):
         return "true" if value and value not in ("false", "0") else "false"
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         """Return True if the 'true' or '1'. 'false' and '0' are legal false
         values, but we consider everything not true as false.
@@ -74,6 +88,7 @@ class Decimal(BuiltinType):
     def xmlvalue(self, value):
         return str(value)
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         return _Decimal(value)
 
@@ -85,6 +100,7 @@ class Float(BuiltinType):
     def xmlvalue(self, value):
         return str(value).upper()
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         return float(value)
 
@@ -97,6 +113,7 @@ class Double(BuiltinType):
     def xmlvalue(self, value):
         return str(value)
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         return float(value)
 
@@ -109,6 +126,7 @@ class Duration(BuiltinType):
     def xmlvalue(self, value):
         return isodate.duration_isoformat(value)
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         if value.startswith("PT-"):
             value = value.replace("PT-", "PT")
@@ -144,6 +162,7 @@ class DateTime(BuiltinType):
             return isodate.isostrf.strftime(value, "%Y-%m-%dT%H:%M:%S.%f%Z")
         return isodate.isostrf.strftime(value, "%Y-%m-%dT%H:%M:%S%Z")
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
 
         # Determine based on the length of the value if it only contains a date
@@ -166,6 +185,7 @@ class Time(BuiltinType):
             return isodate.isostrf.strftime(value, "%H:%M:%S.%f%Z")
         return isodate.isostrf.strftime(value, "%H:%M:%S%Z")
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         return isodate.parse_time(value)
 
@@ -180,6 +200,7 @@ class Date(BuiltinType):
             return value
         return isodate.isostrf.strftime(value, "%Y-%m-%d")
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         return isodate.parse_date(value)
 
@@ -203,6 +224,7 @@ class gYearMonth(BuiltinType):
         year, month, tzinfo = value
         return "%04d-%02d%s" % (year, month, _unparse_timezone(tzinfo))
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         match = self._pattern.match(value)
         if not match:
@@ -231,6 +253,7 @@ class gYear(BuiltinType):
         year, tzinfo = value
         return "%04d%s" % (year, _unparse_timezone(tzinfo))
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         match = self._pattern.match(value)
         if not match:
@@ -258,6 +281,7 @@ class gMonthDay(BuiltinType):
         month, day, tzinfo = value
         return "--%02d-%02d%s" % (month, day, _unparse_timezone(tzinfo))
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         match = self._pattern.match(value)
         if not match:
@@ -288,6 +312,7 @@ class gDay(BuiltinType):
         day, tzinfo = value
         return "---%02d%s" % (day, _unparse_timezone(tzinfo))
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         match = self._pattern.match(value)
         if not match:
@@ -312,6 +337,7 @@ class gMonth(BuiltinType):
         month, tzinfo = value
         return "--%d%s" % (month, _unparse_timezone(tzinfo))
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         match = self._pattern.match(value)
         if not match:
@@ -352,6 +378,7 @@ class AnyURI(BuiltinType):
     def xmlvalue(self, value):
         return value
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         return value
 
@@ -364,6 +391,7 @@ class QName(BuiltinType):
     def xmlvalue(self, value):
         return value
 
+    @treat_whitespace('collapse')
     def pythonvalue(self, value):
         return value
 
@@ -380,9 +408,17 @@ class Notation(BuiltinType):
 class NormalizedString(String):
     _default_qname = xsd_ns("normalizedString")
 
+    @treat_whitespace('replace')
+    def pythonvalue(self, value):
+        return value
+
 
 class Token(NormalizedString):
     _default_qname = xsd_ns("token")
+
+    @treat_whitespace('collapse')
+    def pythonvalue(self, value):
+        return value
 
 
 class Language(Token):
