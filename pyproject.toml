@@ -23,7 +23,6 @@ use_parentheses = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-strict = true
 testpaths = [
     "tests",
 ]
