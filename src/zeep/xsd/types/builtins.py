@@ -38,7 +38,7 @@ def check_no_collection(func):
 # Primitive types
 class String(BuiltinType):
     _default_qname = xsd_ns("string")
-    accepted_types = (str,)
+    accepted_types = [str]
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -52,7 +52,7 @@ class String(BuiltinType):
 
 class Boolean(BuiltinType):
     _default_qname = xsd_ns("boolean")
-    accepted_types = (bool,)
+    accepted_types = [bool]
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -68,7 +68,7 @@ class Boolean(BuiltinType):
 
 class Decimal(BuiltinType):
     _default_qname = xsd_ns("decimal")
-    accepted_types = (_Decimal, float, str)
+    accepted_types = [_Decimal, float, str]
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -80,7 +80,7 @@ class Decimal(BuiltinType):
 
 class Float(BuiltinType):
     _default_qname = xsd_ns("float")
-    accepted_types = (float, _Decimal, str)
+    accepted_types = [float, _Decimal, str]
 
     def xmlvalue(self, value):
         return str(value).upper()
@@ -91,7 +91,7 @@ class Float(BuiltinType):
 
 class Double(BuiltinType):
     _default_qname = xsd_ns("double")
-    accepted_types = (_Decimal, float, str)
+    accepted_types = [_Decimal, float, str]
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -103,7 +103,7 @@ class Double(BuiltinType):
 
 class Duration(BuiltinType):
     _default_qname = xsd_ns("duration")
-    accepted_types = (isodate.duration.Duration, str)
+    accepted_types = [isodate.duration.Duration, str]
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -120,7 +120,7 @@ class Duration(BuiltinType):
 
 class DateTime(BuiltinType):
     _default_qname = xsd_ns("dateTime")
-    accepted_types = (datetime.datetime, str)
+    accepted_types = [datetime.datetime, str]
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -155,7 +155,7 @@ class DateTime(BuiltinType):
 
 class Time(BuiltinType):
     _default_qname = xsd_ns("time")
-    accepted_types = (datetime.time, str)
+    accepted_types = [datetime.time, str]
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -172,7 +172,7 @@ class Time(BuiltinType):
 
 class Date(BuiltinType):
     _default_qname = xsd_ns("date")
-    accepted_types = (datetime.date, str)
+    accepted_types = [datetime.date, str]
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -192,7 +192,7 @@ class gYearMonth(BuiltinType):
 
     """
 
-    accepted_types = (datetime.date, str)
+    accepted_types = [datetime.date, str]
     _default_qname = xsd_ns("gYearMonth")
     _pattern = re.compile(
         r"^(?P<year>-?\d{4,})-(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$"
@@ -222,7 +222,7 @@ class gYear(BuiltinType):
 
     """
 
-    accepted_types = (datetime.date, str)
+    accepted_types = [datetime.date, str]
     _default_qname = xsd_ns("gYear")
     _pattern = re.compile(r"^(?P<year>-?\d{4,})(?P<timezone>Z|[-+]\d\d:?\d\d)?$")
 
@@ -247,7 +247,7 @@ class gMonthDay(BuiltinType):
 
     """
 
-    accepted_types = (datetime.date, str)
+    accepted_types = [datetime.date, str]
     _default_qname = xsd_ns("gMonthDay")
     _pattern = re.compile(
         r"^--(?P<month>\d\d)-(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$"
@@ -279,7 +279,7 @@ class gDay(BuiltinType):
 
     """
 
-    accepted_types = (datetime.date, str)
+    accepted_types = [datetime.date, str]
     _default_qname = xsd_ns("gDay")
     _pattern = re.compile(r"^---(?P<day>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$")
 
@@ -303,7 +303,7 @@ class gMonth(BuiltinType):
 
     """
 
-    accepted_types = (datetime.date, str)
+    accepted_types = [datetime.date, str]
     _default_qname = xsd_ns("gMonth")
     _pattern = re.compile(r"^--(?P<month>\d\d)(?P<timezone>Z|[-+]\d\d:?\d\d)?$")
 
@@ -321,7 +321,7 @@ class gMonth(BuiltinType):
 
 
 class HexBinary(BuiltinType):
-    accepted_types = (str,)
+    accepted_types = [str]
     _default_qname = xsd_ns("hexBinary")
 
     @check_no_collection
@@ -333,7 +333,7 @@ class HexBinary(BuiltinType):
 
 
 class Base64Binary(BuiltinType):
-    accepted_types = (str,)
+    accepted_types = [str]
     _default_qname = xsd_ns("base64Binary")
 
     @check_no_collection
@@ -345,7 +345,7 @@ class Base64Binary(BuiltinType):
 
 
 class AnyURI(BuiltinType):
-    accepted_types = (str,)
+    accepted_types = [str]
     _default_qname = xsd_ns("anyURI")
 
     @check_no_collection
@@ -357,7 +357,7 @@ class AnyURI(BuiltinType):
 
 
 class QName(BuiltinType):
-    accepted_types = (str,)
+    accepted_types = [str]
     _default_qname = xsd_ns("QName")
 
     @check_no_collection
@@ -369,7 +369,7 @@ class QName(BuiltinType):
 
 
 class Notation(BuiltinType):
-    accepted_types = (str,)
+    accepted_types = [str]
     _default_qname = xsd_ns("NOTATION")
 
 
@@ -427,7 +427,7 @@ class Entities(Entity):
 
 class Integer(Decimal):
     _default_qname = xsd_ns("integer")
-    accepted_types = (int, float, str)  # type: ignore
+    accepted_types = [int, float, str]
 
     def xmlvalue(self, value):
         return str(value)

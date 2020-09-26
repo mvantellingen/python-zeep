@@ -196,9 +196,9 @@ class Any(Base):
         # Check if we received a proper value object. If we receive the wrong
         # type then return a nice error message
         if self.restrict:
-            expected_types = (etree._Element, dict) + self.restrict.accepted_types
+            expected_types = [etree._Element, dict] + self.restrict.accepted_types
         else:
-            expected_types = (etree._Element, dict, AnyObject)
+            expected_types = [etree._Element, dict, AnyObject]
 
         if value in (None, NotSet):
             if not self.is_optional:
@@ -206,7 +206,7 @@ class Any(Base):
                     "Missing element %s" % (self.name), path=render_path
                 )
 
-        elif not isinstance(value, expected_types):
+        elif not isinstance(value, tuple(expected_types)):
             type_names = ["%s.%s" % (t.__module__, t.__name__) for t in expected_types]
             err_message = "Any element received object of type %r, expected %s" % (
                 type(value).__name__,

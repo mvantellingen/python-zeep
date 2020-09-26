@@ -85,7 +85,7 @@ class UnionType(AnySimpleType):
             return self.item_class().parse_xmlelement(
                 xmlelement, schema, allow_none, context
             )
-        return xmlelement.text
+        return str(xmlelement.text) or None
 
     def pythonvalue(self, value):
         if self.item_class:

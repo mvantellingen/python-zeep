@@ -54,7 +54,7 @@ class ComplexType(AnyType):
         self._attributes = attributes or []
         self._restriction = restriction
         self._extension = extension
-        self._extension_types = tuple()
+        self._extension_types: typing.List[typing.Type] = []
         super().__init__(qname=qname, is_global=is_global)
 
     def __call__(self, *args, **kwargs):
@@ -63,8 +63,8 @@ class ComplexType(AnyType):
         return self._value_class(*args, **kwargs)
 
     @property
-    def accepted_types(self) -> typing.Tuple[typing.Type]:
-        return (self._value_class,) + self._extension_types
+    def accepted_types(self) -> typing.List[typing.Type]:
+        return [self._value_class] + self._extension_types
 
     @threaded_cached_property
     def _array_class(self) -> typing.Type[ArrayValue]:
@@ -269,7 +269,7 @@ class ComplexType(AnyType):
 
         if (
             len(self.elements_nested) == 1
-            and isinstance(value, self.accepted_types)
+            and isinstance(value, tuple(self.accepted_types))
             and not isinstance(value, (list, dict, CompoundValue))
         ):
             element = self.elements_nested[0][1]

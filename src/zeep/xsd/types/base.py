@@ -27,8 +27,8 @@ class Type:
         raise NotImplementedError
 
     @property
-    def accepted_types(self):
-        return tuple()
+    def accepted_types(self) -> typing.List[typing.Type]:
+        return []
 
     def validate(self, value, required=False):
         return

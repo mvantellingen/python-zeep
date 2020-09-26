@@ -88,13 +88,13 @@ class AnyType(Type):
                 )
 
                 if xmlelement.text:
-                    return xmlelement.text
+                    return self.pythonvalue(xmlelement.text)
                 return children
 
             # If the xsd_type is xsd:anyType then we will recurs so ignore
             # that.
             if isinstance(xsd_type, self.__class__):
-                return xmlelement.text or None
+                return self.pythonvalue(xmlelement.text) or None
 
             return xsd_type.parse_xmlelement(xmlelement, schema, context=context)
 
@@ -125,12 +125,12 @@ class AnyType(Type):
             builtins.Time,
         ]
         for xsd_type in available_types:
-            if isinstance(value, xsd_type.accepted_types):  # type: ignore
+            if isinstance(value, tuple(xsd_type.accepted_types)):
                 return xsd_type().xmlvalue(value)
         return str(value)
 
-    def pythonvalue(self, value, schema=None):
-        return value
+    def pythonvalue(self, value, schema=None) -> typing.Optional[str]:
+        return value if value is not None else None
 
     def signature(self, schema=None, standalone=True):
         return "xsd:anyType"
