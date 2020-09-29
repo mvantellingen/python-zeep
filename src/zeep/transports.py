@@ -2,11 +2,11 @@ import logging
 import os
 from contextlib import contextmanager
 from urllib.parse import urlparse
-from requests_file import FileAdapter
 
 import aiohttp
 import requests
 from requests import Response
+from requests_file import FileAdapter
 
 from zeep.exceptions import TransportError
 from zeep.utils import get_media_type, get_version

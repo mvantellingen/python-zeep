@@ -179,9 +179,7 @@ class Client:
         return self.wsdl.types.get_element(name)
 
     def set_ns_prefix(self, prefix, namespace):
-        """Set a shortcut for the given namespace.
-
-        """
+        """Set a shortcut for the given namespace."""
         self.wsdl.types.set_ns_prefix(prefix, namespace)
 
     def set_default_soapheaders(self, headers):

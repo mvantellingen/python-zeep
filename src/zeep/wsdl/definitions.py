@@ -299,9 +299,7 @@ class Port:
 
 
 class Service:
-    """Used to aggregate a set of related ports.
-
-    """
+    """Used to aggregate a set of related ports."""
 
     def __init__(self, name):
         self.ports = OrderedDict()

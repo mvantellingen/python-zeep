@@ -214,8 +214,8 @@ class SoapMessage(ConcreteMessage):
     def _parse_body(cls, xmlelement):
         """Parse soap:body and return a dict with data to resolve it.
 
-            <soap:body parts="nmtokens"? use="literal|encoded"?
-                       encodingStyle="uri-list"? namespace="uri"?>
+        <soap:body parts="nmtokens"? use="literal|encoded"?
+                   encodingStyle="uri-list"? namespace="uri"?>
 
         """
         return {
