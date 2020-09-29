@@ -122,15 +122,15 @@ class HttpOperation(Operation):
     def parse(cls, definitions, xmlelement, binding):
         """
 
-            <wsdl:operation name="GetLastTradePrice">
-              <http:operation location="GetLastTradePrice"/>
-              <wsdl:input>
-                <mime:content type="application/x-www-form-urlencoded"/>
-              </wsdl:input>
-              <wsdl:output>
-                <mime:mimeXml/>
-              </wsdl:output>
-            </wsdl:operation>
+        <wsdl:operation name="GetLastTradePrice">
+          <http:operation location="GetLastTradePrice"/>
+          <wsdl:input>
+            <mime:content type="application/x-www-form-urlencoded"/>
+          </wsdl:input>
+          <wsdl:output>
+            <mime:mimeXml/>
+          </wsdl:output>
+        </wsdl:operation>
 
         """
         name = xmlelement.get("name")

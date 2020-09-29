@@ -1,8 +1,9 @@
 import os
+from unittest.mock import mock_open, patch
+
 import pytest
 import requests_mock
 from pretend import stub
-from unittest.mock import patch, mock_open
 
 from zeep import cache, transports
 
