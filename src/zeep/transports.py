@@ -3,7 +3,6 @@ import os
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
-import aiohttp
 import requests
 from requests import Response
 from requests_file import FileAdapter
