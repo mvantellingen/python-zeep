@@ -178,14 +178,18 @@ class AsyncTransport(Transport):
             raise RuntimeError("The AsyncTransport is based on the httpx module")
 
         self.cache = cache
-        self.wsdl_client = wsdl_client or httpx.Client()
-        self.client = client or httpx.AsyncClient()
-        self.load_timeout = timeout
-        self.operation_timeout = operation_timeout
+        self.wsdl_client = wsdl_client or httpx.Client(
+            verify=verify_ssl,
+            proxies=proxy,
+            timeout=timeout,
+        )
+        self.client = client or httpx.AsyncClient(
+            verify=verify_ssl,
+            proxies=proxy,
+            timeout=operation_timeout,
+        )
         self.logger = logging.getLogger(__name__)
 
-        self.verify_ssl = verify_ssl
-        self.proxy = proxy
         self.wsdl_client.headers = {
             "User-Agent": "Zeep/%s (www.python-zeep.org)" % (get_version())
         }
@@ -197,7 +201,7 @@ class AsyncTransport(Transport):
         await self.client.aclose()
 
     def _load_remote_data(self, url):
-        response = self.wsdl_client.get(url, timeout=self.load_timeout)
+        response = self.wsdl_client.get(url)
         result = response.read()
 
         try:
@@ -212,9 +216,6 @@ class AsyncTransport(Transport):
             address,
             data=message,
             headers=headers,
-            # verify=self.verify_ssl,
-            # proxy=self.proxy,
-            timeout=self.operation_timeout,
         )
         self.logger.debug(
             "HTTP Response from %s (status: %d):\n%s",
@@ -234,9 +235,6 @@ class AsyncTransport(Transport):
             address,
             params=params,
             headers=headers,
-            verify_ssl=self.verify_ssl,
-            proxy=self.proxy,
-            timeout=self.operation_timeout,
         )
         return self.new_response(response)
 
