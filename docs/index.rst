@@ -69,8 +69,8 @@ If you have installed pip then run::
 
     pip install zeep
 
-Note that the latest version to support Python 2.7 and Python 3.5 is Zeep 3.4,
-install via pip install zeep==3.4.0
+Note that the latest version to support Python 2.7 and Python 3.5 is Zeep 4.0,
+install via pip install zeep==4.0.0b1
 
 This assumes that there are wheel files available for the latest lxml release.
 If that is not the case (https://pypi.python.org/pypi/lxml/) then first
@@ -105,7 +105,7 @@ See ``python -mzeep --help`` for more information about this command.
 
 .. note:: Zeep follows `semver`_ for versioning, however bugs can always occur.
           So as always pin the version of zeep you tested with
-          (e.g. ``zeep==3.4.0``').
+          (e.g. ``zeep==4.0.0b1``').
 
 
 .. _semver: http://semver.org/
