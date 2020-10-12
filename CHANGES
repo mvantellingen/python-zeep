@@ -1,4 +1,4 @@
-4.0.0 (unreleased)
+4.0.0 (2020-10-12)
 ------------------
  - Drop support for Python 2.7, 3.3, 3.4 and 3.5
  - Remove both the aiohttp and the tornado transport class from Zeep. These
