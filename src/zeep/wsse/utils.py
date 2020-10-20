@@ -27,8 +27,8 @@ def get_security_header(doc):
     return security
 
 
-def get_timestamp(timestamp=None, zulu_timestamp=None):
-    timestamp = timestamp or datetime.datetime.utcnow()
+def get_timestamp(timestamp=None, zulu_timestamp=None, seconds=0):
+    timestamp = timestamp or (datetime.datetime.utcnow() + datetime.timedelta(seconds=seconds))
     timestamp = timestamp.replace(tzinfo=pytz.utc, microsecond=0)
     if zulu_timestamp:
         return timestamp.isoformat().replace("+00:00", "Z")

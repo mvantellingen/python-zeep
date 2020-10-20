@@ -11,24 +11,26 @@ module.
 from lxml import etree
 from lxml.etree import QName
 
-from zeep import ns
+from zeep import ns, utils
 from zeep.exceptions import SignatureVerificationFailed
 from zeep.utils import detect_soap_env
-from zeep.wsse.utils import ensure_id, get_security_header
+from zeep.wsse.utils import ensure_id, get_security_header, get_timestamp
 
 try:
     import xmlsec
 except ImportError:
     xmlsec = None
 
-
 # SOAP envelope
 SOAP_NS = "http://schemas.xmlsoap.org/soap/envelope/"
 
 
-def _read_file(f_name):
-    with open(f_name, "rb") as f:
-        return f.read()
+def _read_cert_data(file_or_str):
+    try:
+        with open(file_or_str, "rb") as f:
+            return f.read()
+    except TypeError:
+        return file_or_str
 
 
 def _make_sign_key(key_data, cert_data, password):
@@ -46,17 +48,19 @@ class MemorySignature:
     """Sign given SOAP envelope with WSSE sig using given key and cert."""
 
     def __init__(
-        self,
-        key_data,
-        cert_data,
-        password=None,
-        signature_method=None,
-        digest_method=None,
+            self,
+            key_data,
+            cert_data,
+            verify_cert_data=None,
+            password=None,
+            signature_method=None,
+            digest_method=None,
     ):
         check_xmlsec_import()
 
         self.key_data = key_data
         self.cert_data = cert_data
+        self.verify_cert_data = verify_cert_data
         self.password = password
         self.digest_method = digest_method
         self.signature_method = signature_method
@@ -69,7 +73,10 @@ class MemorySignature:
         return envelope, headers
 
     def verify(self, envelope):
-        key = _make_verify_key(self.cert_data)
+        if self.verify_cert_data:
+            key = _make_verify_key(self.verify_cert_data)
+        else:
+            key = _make_verify_key(self.cert_data)
         _verify_envelope_with_key(envelope, key)
         return envelope
 
@@ -78,19 +85,21 @@ class Signature(MemorySignature):
     """Sign given SOAP envelope with WSSE sig using given key file and cert file."""
 
     def __init__(
-        self,
-        key_file,
-        certfile,
-        password=None,
-        signature_method=None,
-        digest_method=None,
+            self,
+            key_file,
+            cert_file,
+            verify_cert_file,
+            password=None,
+            signature_method=None,
+            digest_method=None,
     ):
         super().__init__(
-            _read_file(key_file),
-            _read_file(certfile),
+            _read_cert_data(key_file),
+            _read_cert_data(cert_file),
+            _read_cert_data(verify_cert_file),
             password,
             signature_method,
-            digest_method,
+            digest_method
         )
 
 
@@ -107,6 +116,27 @@ class BinarySignature(Signature):
         return envelope, headers
 
 
+class BinarySignatureTimestamp(BinarySignature):
+    """Sign given SOAP envelope with WSSE BinarySignature with a timestamp defined by lifetime
+
+        Default lifeitme is 60 seconds."""
+
+    def apply(self, envelope, headers):
+        security = utils.get_security_header(envelope)
+
+        created = get_timestamp(zulu_timestamp=True)
+        expired = get_timestamp(zulu_timestamp=True, seconds=60)
+
+        timestamp = utils.WSU('Timestamp')
+        timestamp.append(utils.WSU('Created', created.replace(microsecond=0).isoformat() + 'Z'))
+        timestamp.append(utils.WSU('Expires', expired.replace(microsecond=0).isoformat() + 'Z'))
+
+        security.append(timestamp)
+
+        super().apply(envelope, headers)
+        return envelope, headers
+
+
 def check_xmlsec_import():
     if xmlsec is None:
         raise ImportError(
@@ -117,12 +147,12 @@ def check_xmlsec_import():
 
 
 def sign_envelope(
-    envelope,
-    keyfile,
-    certfile,
-    password=None,
-    signature_method=None,
-    digest_method=None,
+        envelope,
+        keyfile,
+        certfile,
+        password=None,
+        signature_method=None,
+        digest_method=None,
 ):
     """Sign given SOAP envelope with WSSE sig using given key and cert.
 
@@ -212,7 +242,7 @@ def sign_envelope(
 
     """
     # Load the signing key and certificate.
-    key = _make_sign_key(_read_file(keyfile), _read_file(certfile), password)
+    key = _make_sign_key(_read_cert_data(keyfile), _read_cert_data(certfile), password)
     return _sign_envelope_with_key(envelope, key, signature_method, digest_method)
 
 
@@ -243,7 +273,7 @@ def _signature_prepare(envelope, key, signature_method, digest_method):
     ctx.key = key
     _sign_node(ctx, signature, envelope.find(QName(soap_env, "Body")), digest_method)
     timestamp = security.find(QName(ns.WSU, "Timestamp"))
-    if timestamp != None:
+    if timestamp is not None:
         _sign_node(ctx, signature, timestamp)
     ctx.sign(signature)
 
@@ -271,16 +301,16 @@ def _sign_envelope_with_key_binary(envelope, key, signature_method, digest_metho
         QName(ns.WSSE, "Reference"),
         {
             "ValueType": "http://docs.oasis-open.org/wss/2004/01/"
-            "oasis-200401-wss-x509-token-profile-1.0#X509v3"
+                         "oasis-200401-wss-x509-token-profile-1.0#X509v3"
         },
     )
     bintok = etree.Element(
         QName(ns.WSSE, "BinarySecurityToken"),
         {
             "ValueType": "http://docs.oasis-open.org/wss/2004/01/"
-            "oasis-200401-wss-x509-token-profile-1.0#X509v3",
+                         "oasis-200401-wss-x509-token-profile-1.0#X509v3",
             "EncodingType": "http://docs.oasis-open.org/wss/2004/01/"
-            "oasis-200401-wss-soap-message-security-1.0#Base64Binary",
+                            "oasis-200401-wss-soap-message-security-1.0#Base64Binary",
         },
     )
     ref.attrib["URI"] = "#" + ensure_id(bintok)
@@ -298,7 +328,7 @@ def verify_envelope(envelope, certfile):
     Raise SignatureVerificationFailed on failure, silent on success.
 
     """
-    key = _make_verify_key(_read_file(certfile))
+    key = _make_verify_key(_read_cert_data(certfile))
     return _verify_envelope_with_key(envelope, key)
 
 
