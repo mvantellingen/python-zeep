@@ -33,7 +33,7 @@ def run_async():
     loop.run_until_complete(future)
     loop.run_until_complete(client.transport.aclose())
     print("time: %.2f" % (time.time() - st))
-    print("result: %s", result)
+    print("result:", result)
     print("")
     return future
 
@@ -50,7 +50,7 @@ def run_sync():
         client.service.slow_request("request-2"),  # takes 1 sec
     ]
     print("Time: %.2f" % (time.time() - st))
-    print("result: %s", result)
+    print("result:", result)
     print("\n")
 
     return result
