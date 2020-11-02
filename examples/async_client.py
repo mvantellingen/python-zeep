@@ -11,11 +11,6 @@ def run_async():
     print("async example")
     print("=============")
 
-    result = []
-
-    def handle_future(future):
-        result.extend(future.result())
-
     loop = asyncio.get_event_loop()
 
     client = zeep.AsyncClient("http://localhost:8000/?wsdl")
@@ -26,14 +21,11 @@ def run_async():
     ]
     future = asyncio.gather(*tasks, return_exceptions=True)
 
-    result = []
-    future.add_done_callback(handle_future)
-
     st = time.time()
     loop.run_until_complete(future)
     loop.run_until_complete(client.transport.aclose())
     print("time: %.2f" % (time.time() - st))
-    print("result:", result)
+    print("result:", future.result())
     print("")
     return future
 
