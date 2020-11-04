@@ -234,8 +234,11 @@ class AsyncClient(Client):
         port = self._get_port(service, port_name)
         return AsyncServiceProxy(self, port.binding, **port.binding_options)
 
+    async def __aenter__(self):
+        return self
+
     async def __aexit__(self, exc_type=None, exc_value=None, traceback=None) -> None:
-        await self.transport.close()
+        await self.transport.aclose()
 
 
 class CachingClient(Client):
