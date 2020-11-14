@@ -52,6 +52,11 @@ def test_service_proxy_non_existing():
         assert client_obj.service.NonExisting
 
 
+def test_context_manager():
+    with client.Client("tests/wsdl_files/soap.wsdl") as client:
+        assert client
+
+
 def test_service_proxy_dir_operations():
     client_obj = client.Client("tests/wsdl_files/soap.wsdl")
     operations = [op for op in dir(client_obj.service) if not op.startswith("_")]
