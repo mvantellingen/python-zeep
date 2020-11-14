@@ -214,6 +214,12 @@ class Client:
             service = next(iter(self.wsdl.services.values()), None)
         return service
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type=None, exc_value=None, traceback=None):
+        self.transport.close()
+
 
 class AsyncClient(Client):
     _default_transport = AsyncTransport
