@@ -122,10 +122,12 @@ class Double(BuiltinType):
 
 class Duration(BuiltinType):
     _default_qname = xsd_ns("duration")
-    accepted_types = [isodate.duration.Duration, str]
+    accepted_types = [isodate.duration.Duration, datetime.timedelta, str]
 
     @check_no_collection
     def xmlvalue(self, value):
+        if isinstance(value, str):
+            value = isodate.parse_duration(value)
         return isodate.duration_isoformat(value)
 
     @treat_whitespace("collapse")
