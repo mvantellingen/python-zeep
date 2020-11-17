@@ -139,6 +139,10 @@ class TestDuration:
         instance = builtins.Duration()
         value = isodate.parse_duration("P0Y1347M0D")
         assert instance.xmlvalue(value) == "P1347M"
+        assert instance.xmlvalue("P0Y1347M0D") == "P1347M"
+        assert instance.xmlvalue(datetime.timedelta(days=1347)) == "P1347D"
+        with pytest.raises(ValueError):
+            instance.xmlvalue("P15T")
 
     def test_pythonvalue(self):
         instance = builtins.Duration()
