@@ -324,7 +324,7 @@ class Soap11Binding(SoapBinding):
         def get_text(name):
             child = fault_node.find(name, namespaces=fault_node.nsmap)
             if child is not None:
-                return child.text             
+                return child.text
 
         raise Fault(
             message=get_text("faultstring"),
