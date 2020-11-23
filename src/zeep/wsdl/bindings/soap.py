@@ -322,15 +322,15 @@ class Soap11Binding(SoapBinding):
             )
 
         def get_text(name):
-            child = fault_node.find(name)
+            child = fault_node.find(name, namespaces=fault_node.nsmap)
             if child is not None:
-                return child.text
+                return child.text             
 
         raise Fault(
             message=get_text("faultstring"),
             code=get_text("faultcode"),
             actor=get_text("faultactor"),
-            detail=fault_node.find("detail"),
+            detail=fault_node.find("detail", namespaces=fault_node.nsmap),
         )
 
     def _set_http_headers(self, serialized, operation):
