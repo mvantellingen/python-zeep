@@ -62,6 +62,37 @@ def test_soap11_process_error():
         assert exc.subcodes is None
         assert "detail-message" in etree.tostring(exc.detail).decode("utf-8")
 
+    responseWithNamespaceInFault = load_xml(
+        """
+        <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:stoc="http://example.com/stockquote.xsd">
+          <soapenv:Body>
+            <soapenv:Fault xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+              <faultcode>fault-code-withNamespace</faultcode>
+              <faultstring>fault-string-withNamespace</faultstring>
+              <detail>
+                <e:myFaultDetails xmlns:e="http://myexample.org/faults">
+                  <e:message>detail-message-withNamespace</e:message>
+                  <e:errorcode>detail-code-withNamespace</e:errorcode>
+                </e:myFaultDetails>
+              </detail>
+            </soapenv:Fault>
+          </soapenv:Body>
+        </soapenv:Envelope>
+    """
+    )
+
+    try:
+        binding.process_error(responseWithNamespaceInFault, None)
+        assert False
+    except Fault as exc:
+        assert exc.message == "fault-string-withNamespace"
+        assert exc.code == "fault-code-withNamespace"
+        assert exc.actor is None
+        assert exc.subcodes is None
+        assert "detail-message-withNamespace" in etree.tostring(exc.detail).decode("utf-8")
+
 
 def test_soap12_process_error():
     response = """
