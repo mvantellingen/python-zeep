@@ -310,6 +310,17 @@ class Soap11Binding(SoapBinding):
         "xsd": ns.XSD,
     }
 
+    def get_text(self, fault_node, name):
+        child = self.get_child_node(fault_node, name)
+        if child is not None:
+            return child.text
+
+    def get_child_node(self, fault_node, name):
+        child = fault_node.find(name)
+        if child is None:
+            child = fault_node.find(f"soap-env:{name}", namespaces=self.nsmap)
+        return child
+
     def process_error(self, doc, operation):
         fault_node = doc.find("soap-env:Body/soap-env:Fault", namespaces=self.nsmap)
 
@@ -321,16 +332,11 @@ class Soap11Binding(SoapBinding):
                 detail=etree_to_string(doc),
             )
 
-        def get_text(name):
-            child = fault_node.find(name)
-            if child is not None:
-                return child.text
-
         raise Fault(
-            message=get_text("faultstring"),
-            code=get_text("faultcode"),
-            actor=get_text("faultactor"),
-            detail=fault_node.find("detail"),
+            message=self.get_text(fault_node, "faultstring"),
+            code=self.get_text(fault_node, "faultcode"),
+            actor=self.get_text(fault_node, "faultactor"),
+            detail=self.get_child_node(fault_node, "detail"),
         )
 
     def _set_http_headers(self, serialized, operation):
