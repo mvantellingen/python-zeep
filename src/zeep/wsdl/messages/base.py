@@ -12,7 +12,7 @@ SerializedMessage = namedtuple("SerializedMessage", ["path", "headers", "content
 
 
 class ConcreteMessage:
-    """Represents the wsdl:binding -> wsdl:operation -> input/ouput node"""
+    """Represents the wsdl:binding -> wsdl:operation -> input/output node"""
 
     if typing.TYPE_CHECKING:
         body = None  # type: typing.Optional[xsd.Element]
