@@ -7,6 +7,7 @@ from zeep.exceptions import Fault
 from zeep.utils import qname_attr
 from zeep.wsdl import messages
 from zeep.wsdl.definitions import Binding, Operation
+from zeep.wsdl.utils import url_http_to_https
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +29,10 @@ class HttpBinding(Binding):
 
         # Force the usage of HTTPS when the force_https boolean is true
         location = address_node.get("location")
-        if force_https and location and location.startswith("http://"):
-            logger.warning("Forcing http:address location to HTTPS")
-            location = "https://" + location[8:]
+        if force_https and location:
+            location = url_http_to_https(location)
+            if location != address_node.get("location"):
+                logger.warning("Forcing http:address location to HTTPS")
 
         return {"address": location}
 
