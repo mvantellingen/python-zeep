@@ -1,5 +1,5 @@
 import pytest
-from defusedxml import DTDForbidden, EntitiesForbidden
+from exceptions import DTDForbidden, EntitiesForbidden
 from pytest import raises as assert_raises
 
 from tests.utils import DummyTransport
