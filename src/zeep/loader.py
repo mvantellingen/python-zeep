@@ -53,12 +53,12 @@ def parse_xml(content: str, transport, base_url=None, settings=None):
         if docinfo.doctype:
             if settings.forbid_dtd:
                 raise DTDForbidden(docinfo.doctype, docinfo.system_url, docinfo.public_id)
-            if settings.forbid_entities:
-                for dtd in docinfo.internalDTD, docinfo.externalDTD:
-                    if dtd is None:
-                        continue
-                    for entity in dtd.iterentities():
-                        raise EntitiesForbidden(entity.name, entity.content)
+        if settings.forbid_entities:
+            for dtd in docinfo.internalDTD, docinfo.externalDTD:
+                if dtd is None:
+                    continue
+                for entity in dtd.iterentities():
+                    raise EntitiesForbidden(entity.name, entity.content)
 
 
         return elementtree
