@@ -24,9 +24,9 @@ SOFTWARE.
 --
 
 Parts of the XSD handling are heavily inspired by soapfish, see:
-https://github.com/FlightDataServices/soapfish
+https://github.com/soapteam/soapfish
 
-Copyright (c) 2011-2014, soapfish contributors
+Copyright (c) 2011-2021, Soapfish Contributors
 All rights reserved.
 For the exact contribution history, see the git revision log.
 
