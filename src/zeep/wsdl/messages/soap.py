@@ -13,11 +13,9 @@ from zeep import exceptions, xsd
 from zeep.utils import as_qname
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
 from zeep.wsdl.messages.multiref import process_multiref
+from zeep.xsd.context import XmlParserContext
 
-__all__ = [
-    'DocumentMessage',
-    'RpcMessage',
-]
+__all__ = ["DocumentMessage", "RpcMessage"]
 
 
 class SoapMessage(ConcreteMessage):
@@ -34,49 +32,55 @@ class SoapMessage(ConcreteMessage):
     :type nsmap: dict
 
     """
+
     def __init__(self, wsdl, name, operation, type, nsmap):
         super(SoapMessage, self).__init__(wsdl, name, operation)
         self.nsmap = nsmap
         self.abstract = None  # Set during resolve()
         self.type = type
 
+        self._is_body_wrapped = False
         self.body = None
         self.header = None
         self.envelope = None
 
     def serialize(self, *args, **kwargs):
         """Create a SerializedMessage for this message"""
-        nsmap = {
-            'soap-env': self.nsmap['soap-env']
-        }
+        nsmap = {"soap-env": self.nsmap["soap-env"]}
         nsmap.update(self.wsdl.types._prefix_map_custom)
 
-        soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=nsmap)
-
-        # Create the soap:header element
-        headers_value = kwargs.pop('_soapheaders', None)
-        header = self._serialize_header(headers_value, nsmap)
-
-        # Create the soap:body element
-        body = soap.Body()
-        if self.body:
-            body_value = self.body(*args, **kwargs)
-            self.body.render(body, body_value)
+        soap = ElementMaker(namespace=self.nsmap["soap-env"], nsmap=nsmap)
 
         # Create the soap:envelope
         envelope = soap.Envelope()
+
+        # Create the soap:header element
+        headers_value = kwargs.pop("_soapheaders", None)
+        header = self._serialize_header(headers_value, nsmap)
         if header is not None:
             envelope.append(header)
-        envelope.append(body)
+
+        # Create the soap:body element. The _is_body_wrapped attribute signals
+        # that the self.body element is of type soap:body, so we don't have to
+        # create it in that case. Otherwise we create a Element soap:body and
+        # render the content into this.
+        if self.body:
+            body_value = self.body(*args, **kwargs)
+            if self._is_body_wrapped:
+                self.body.render(envelope, body_value)
+            else:
+                body = soap.Body()
+                envelope.append(body)
+                self.body.render(body, body_value)
+        else:
+            body = soap.Body()
+            envelope.append(body)
 
         # XXX: This is only used in Soap 1.1 so should be moved to the the
         # Soap11Binding._set_http_headers(). But let's keep it like this for
         # now.
-        headers = {
-            'SOAPAction': '"%s"' % self.operation.soapaction
-        }
-        return SerializedMessage(
-            path=None, headers=headers, content=envelope)
+        headers = {"SOAPAction": '"%s"' % self.operation.soapaction}
+        return SerializedMessage(path=None, headers=headers, content=envelope)
 
     def deserialize(self, envelope):
         """Deserialize the SOAP:Envelope and return a CompoundValue with the
@@ -86,10 +90,10 @@ class SoapMessage(ConcreteMessage):
         if not self.envelope:
             return None
 
-        body = envelope.find('soap-env:Body', namespaces=self.nsmap)
+        body = envelope.find("soap-env:Body", namespaces=self.nsmap)
         body_result = self._deserialize_body(body)
 
-        header = envelope.find('soap-env:Header', namespaces=self.nsmap)
+        header = envelope.find("soap-env:Header", namespaces=self.nsmap)
         headers_result = self._deserialize_headers(header)
 
         kwargs = body_result
@@ -127,19 +131,24 @@ class SoapMessage(ConcreteMessage):
                 try:
                     if len(self.envelope.type.elements) == 1:
                         return self.envelope.type.elements[0][1].type.signature(
-                            schema=self.wsdl.types, standalone=False)
+                            schema=self.wsdl.types, standalone=False
+                        )
                 except AttributeError:
                     return None
-            return self.envelope.type.signature(schema=self.wsdl.types, standalone=False)
+            return self.envelope.type.signature(
+                schema=self.wsdl.types, standalone=False
+            )
 
         if self.body:
             parts = [self.body.type.signature(schema=self.wsdl.types, standalone=False)]
         else:
             parts = []
         if self.header.type._element:
-            parts.append('_soapheaders={%s}' % self.header.type.signature(
-                schema=self.wsdl.types, standalone=False))
-        return ', '.join(part for part in parts if part)
+            parts.append(
+                "_soapheaders={%s}"
+                % self.header.type.signature(schema=self.wsdl.types, standalone=False)
+            )
+        return ", ".join(part for part in parts if part)
 
     @classmethod
     def parse(cls, definitions, xmlelement, operation, type, nsmap):
@@ -171,7 +180,7 @@ class SoapMessage(ConcreteMessage):
                        encodingStyle="uri-list"? namespace="uri"?>
 
         """
-        name = xmlelement.get('name')
+        name = xmlelement.get("name")
         obj = cls(definitions.wsdl, name, operation, nsmap=nsmap, type=type)
 
         body_data = None
@@ -179,20 +188,17 @@ class SoapMessage(ConcreteMessage):
 
         # After some profiling it turns out that .find() and .findall() in this
         # case are twice as fast as the xpath method
-        body = xmlelement.find('soap:body', namespaces=operation.binding.nsmap)
+        body = xmlelement.find("soap:body", namespaces=operation.binding.nsmap)
         if body is not None:
             body_data = cls._parse_body(body)
 
         # Parse soap:header (multiple)
-        elements = xmlelement.findall(
-            'soap:header', namespaces=operation.binding.nsmap)
+        elements = xmlelement.findall("soap:header", namespaces=operation.binding.nsmap)
         header_data = cls._parse_header(
-            elements, definitions.target_namespace, operation)
+            elements, definitions.target_namespace, operation
+        )
 
-        obj._resolve_info = {
-            'body': body_data,
-            'header': header_data
-        }
+        obj._resolve_info = {"body": body_data, "header": header_data}
         return obj
 
     @classmethod
@@ -204,10 +210,10 @@ class SoapMessage(ConcreteMessage):
 
         """
         return {
-            'part': xmlelement.get('part'),
-            'use': xmlelement.get('use', 'literal'),
-            'encodingStyle': xmlelement.get('encodingStyle'),
-            'namespace': xmlelement.get('namespace'),
+            "part": xmlelement.get("part"),
+            "use": xmlelement.get("use", "literal"),
+            "encodingStyle": xmlelement.get("encodingStyle"),
+            "namespace": xmlelement.get("namespace"),
         }
 
     @classmethod
@@ -234,12 +240,13 @@ class SoapMessage(ConcreteMessage):
             data = cls._parse_header_element(xmlelement, tns)
 
             # Add optional soap:headerfault elements
-            data['faults'] = []
+            data["faults"] = []
             fault_elements = xmlelement.findall(
-                'soap:headerfault', namespaces=operation.binding.nsmap)
+                "soap:headerfault", namespaces=operation.binding.nsmap
+            )
             for fault_element in fault_elements:
                 fault_data = cls._parse_header_element(fault_element, tns)
-                data['faults'].append(fault_data)
+                data["faults"].append(fault_data)
 
             result.append(data)
         return result
@@ -247,16 +254,15 @@ class SoapMessage(ConcreteMessage):
     @classmethod
     def _parse_header_element(cls, xmlelement, tns):
         attributes = xmlelement.attrib
-        message_qname = as_qname(
-            attributes['message'], xmlelement.nsmap, tns)
+        message_qname = as_qname(attributes["message"], xmlelement.nsmap, tns)
 
         try:
             return {
-                'message': message_qname,
-                'part': attributes['part'],
-                'use': attributes['use'],
-                'encodingStyle': attributes.get('encodingStyle'),
-                'namespace': attributes.get('namespace'),
+                "message": message_qname,
+                "part": attributes["part"],
+                "use": attributes["use"],
+                "encodingStyle": attributes.get("encodingStyle"),
+                "namespace": attributes.get("namespace"),
             }
         except KeyError:
             raise exceptions.WsdlSyntaxError("Invalid soap:header(fault)")
@@ -278,14 +284,16 @@ class SoapMessage(ConcreteMessage):
 
         # If this message has no parts then we have nothing to do. This might
         # happen for output messages which don't return anything.
-        if not abstract_message.parts and self.type != 'input':
+        if (
+            abstract_message is None or not abstract_message.parts
+        ) and self.type != "input":
             return
 
         self.abstract = abstract_message
         parts = OrderedDict(self.abstract.parts)
 
-        self.header = self._resolve_header(info['header'], definitions, parts)
-        self.body = self._resolve_body(info['body'], definitions, parts)
+        self.header = self._resolve_header(info["header"], definitions, parts)
+        self.body = self._resolve_body(info["body"], definitions, parts)
         self.envelope = self._create_envelope_element()
 
     def _create_envelope_element(self):
@@ -297,14 +305,19 @@ class SoapMessage(ConcreteMessage):
 
         if self.header.type._element:
             all_elements.append(
-                xsd.Element('{%s}header' % self.nsmap['soap-env'], self.header.type))
+                xsd.Element("{%s}header" % self.nsmap["soap-env"], self.header.type)
+            )
 
         all_elements.append(
             xsd.Element(
-                '{%s}body' % self.nsmap['soap-env'],
-                self.body.type if self.body else None))
+                "{%s}body" % self.nsmap["soap-env"],
+                self.body.type if self.body else None,
+            )
+        )
 
-        return xsd.Element('{%s}envelope' % self.nsmap['soap-env'], xsd.ComplexType(all_elements))
+        return xsd.Element(
+            "{%s}envelope" % self.nsmap["soap-env"], xsd.ComplexType(all_elements)
+        )
 
     def _serialize_header(self, headers_value, nsmap):
         if not headers_value:
@@ -312,13 +325,13 @@ class SoapMessage(ConcreteMessage):
 
         headers_value = copy.deepcopy(headers_value)
 
-        soap = ElementMaker(namespace=self.nsmap['soap-env'], nsmap=nsmap)
+        soap = ElementMaker(namespace=self.nsmap["soap-env"], nsmap=nsmap)
         header = soap.Header()
         if isinstance(headers_value, list):
             for header_value in headers_value:
-                if hasattr(header_value, '_xsd_elm'):
+                if hasattr(header_value, "_xsd_elm"):
                     header_value._xsd_elm.render(header, header_value)
-                elif hasattr(header_value, '_xsd_type'):
+                elif hasattr(header_value, "_xsd_type"):
                     header_value._xsd_type.render(header, header_value)
                 elif isinstance(header_value, etree._Element):
                     header.append(header_value)
@@ -328,13 +341,14 @@ class SoapMessage(ConcreteMessage):
             if not self.header:
                 raise ValueError(
                     "_soapheaders only accepts a dictionary if the wsdl "
-                    "defines the headers.")
+                    "defines the headers."
+                )
 
             # Only render headers for which we have a value
             headers_value = self.header(**headers_value)
             for name, elm in self.header.type.elements:
                 if name in headers_value and headers_value[name] is not None:
-                    elm.render(header, headers_value[name], ['header', name])
+                    elm.render(header, headers_value[name], ["header", name])
         else:
             raise ValueError("Invalid value given to _soapheaders")
 
@@ -345,24 +359,25 @@ class SoapMessage(ConcreteMessage):
         if not self.header or xmlelement is None:
             return {}
 
-        result = self.header.parse(xmlelement, self.wsdl.types)
+        context = XmlParserContext(settings=self.wsdl.settings)
+        result = self.header.parse(xmlelement, self.wsdl.types, context=context)
         if result is not None:
-            return {'header': result}
+            return {"header": result}
         return {}
 
     def _resolve_header(self, info, definitions, parts):
-        name = etree.QName(self.nsmap['soap-env'], 'Header')
+        name = etree.QName(self.nsmap["soap-env"], "Header")
 
         container = xsd.All(consume_other=True)
         if not info:
             return xsd.Element(name, xsd.ComplexType(container))
 
         for item in info:
-            message_name = item['message'].text
-            part_name = item['part']
+            message_name = item["message"].text
+            part_name = item["part"]
 
-            message = definitions.get('messages', message_name)
-            if message == self.abstract:
+            message = definitions.get("messages", message_name)
+            if message == self.abstract and part_name in parts:
                 del parts[part_name]
 
             part = message.parts[part_name]
@@ -397,30 +412,29 @@ class DocumentMessage(SoapMessage):
 
     def __init__(self, *args, **kwargs):
         super(DocumentMessage, self).__init__(*args, **kwargs)
-        self._is_body_wrapped = False
 
     def _deserialize_body(self, xmlelement):
-        if self._is_body_wrapped:
-            result = self.body.parse(xmlelement, self.wsdl.types)
-        else:
-            # For now we assume that the body only has one child since only
-            # one part is specified in the wsdl. This should be handled way
-            # better
-            # XXX
-            xmlelement = xmlelement.getchildren()[0]
-            result = self.body.parse(xmlelement, self.wsdl.types)
-        return {'body': result}
+
+        if not self._is_body_wrapped:
+            # TODO: For now we assume that the body only has one child since
+            # only one part is specified in the wsdl. This should be handled
+            # way better
+            xmlelement = list(xmlelement)[0]
+
+        context = XmlParserContext(settings=self.wsdl.settings)
+        result = self.body.parse(xmlelement, self.wsdl.types, context=context)
+        return {"body": result}
 
     def _resolve_body(self, info, definitions, parts):
-        name = etree.QName(self.nsmap['soap-env'], 'Body')
+        name = etree.QName(self.nsmap["soap-env"], "Body")
 
         if not info or not parts:
             return None
 
         # If the part name is omitted then all parts are available under
         # the soap:body tag. Otherwise only the part with the given name.
-        if info['part']:
-            part_name = info['part']
+        if info["part"]:
+            part_name = info["part"]
             sub_elements = [parts[part_name].element]
         else:
             sub_elements = []
@@ -474,8 +488,8 @@ class RpcMessage(SoapMessage):
         if not info:
             return None
 
-        namespace = info['namespace']
-        if self.type == 'input':
+        namespace = info["namespace"]
+        if self.type == "input":
             tag_name = etree.QName(namespace, self.operation.name)
         else:
             tag_name = etree.QName(namespace, self.abstract.name.localname)
@@ -499,8 +513,9 @@ class RpcMessage(SoapMessage):
         """
         process_multiref(body_element)
 
-        response_element = body_element.getchildren()[0]
+        response_element = list(body_element)[0]
         if self.body:
-            result = self.body.parse(response_element, self.wsdl.types)
-            return {'body': result}
-        return {'body': None}
+            context = XmlParserContext(self.wsdl.settings)
+            result = self.body.parse(response_element, self.wsdl.types, context=context)
+            return {"body": result}
+        return {"body": None}

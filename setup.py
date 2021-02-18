@@ -5,10 +5,11 @@ from setuptools import find_packages, setup
 
 install_requires = [
     'appdirs>=1.4.0',
+    'attrs>=17.2.0',
     'cached-property>=1.3.0',
     'defusedxml==0.5.0',
     'isodate>=0.5.4',
-    'lxml>=3.0.0',
+    'lxml>=3.1.0',
     'requests>=2.7.0',
     'requests-toolbelt>=0.7.1',
     'six>=1.9.0',
@@ -20,7 +21,7 @@ docs_require = [
 ]
 
 tornado_require = [
-    'tornado>=4.0.2'
+    'tornado>=4.0.2,<5'
 ]
 
 async_require = []  # see below
@@ -39,7 +40,7 @@ tests_require = [
     'pytest-tornado==0.4.5',
 
     # Linting
-    'isort==4.2.5',
+    'isort==4.2.15',
     'flake8==3.3.0',
     'flake8-blind-except==0.1.1',
     'flake8-debugger==1.4.0',
@@ -49,7 +50,7 @@ tests_require = [
 
 if sys.version_info > (3, 4, 2):
     async_require.append('aiohttp>=1.0')
-    tests_require.append('aioresponses>=0.1.3')
+    tests_require.append('aioresponses>=0.4.1')
 
 
 with open('README.rst') as fh:
@@ -58,7 +59,7 @@ with open('README.rst') as fh:
 
 setup(
     name='zeep',
-    version='2.4.0',
+    version='3.4.0',
     description='A modern/fast Python SOAP client based on lxml / requests',
     long_description=long_description,
     author="Michael van Tellingen",
@@ -78,7 +79,6 @@ setup(
     package_dir={'': 'src'},
     packages=['zeep'],
     include_package_data=True,
-
     license='MIT',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
@@ -86,10 +86,10 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],

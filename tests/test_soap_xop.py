@@ -1,16 +1,20 @@
-import io
-from requests_toolbelt.multipart.decoder import MultipartDecoder
-from pretend import stub
+import requests_mock
 from lxml import etree
-from tests.utils import load_xml, assert_nodes_equal
+from pretend import stub
+from requests_toolbelt.multipart.decoder import MultipartDecoder
+from six import StringIO
+
+from tests.utils import assert_nodes_equal
+from zeep import Client
+from zeep.transports import Transport
 from zeep.wsdl.attachments import MessagePack
-
-
 from zeep.wsdl.messages import xop
 
 
 def test_rebuild_xml():
-    data = '\r\n'.join(line.strip() for line in """
+    data = "\r\n".join(
+        line.strip()
+        for line in """
         --MIME_boundary
         Content-Type: application/soap+xml; charset=UTF-8
         Content-Transfer-Encoding: 8bit
@@ -37,24 +41,21 @@ def test_rebuild_xml():
         ...binary JPG image...
 
         --MIME_boundary--
-    """.splitlines()).encode('utf-8')
+    """.splitlines()
+    ).encode("utf-8")
 
     response = stub(
         status_code=200,
         content=data,
         encoding=None,
         headers={
-            'Content-Type': 'multipart/related; boundary=MIME_boundary; type="application/soap+xml"; start="<claim@insurance.com>" 1'
-        }
+            "Content-Type": 'multipart/related; boundary=MIME_boundary; type="application/soap+xml"; start="<claim@insurance.com>" 1'
+        },
     )
-    client = stub(
-        transport=None,
-        wsdl=stub(strict=True),
-        xml_huge_tree=False)
-
 
     decoder = MultipartDecoder(
-        response.content, response.headers['Content-Type'], 'utf-8')
+        response.content, response.headers["Content-Type"], "utf-8"
+    )
 
     document = etree.fromstring(decoder.parts[0].content)
     message_pack = MessagePack(parts=decoder.parts[1:])
@@ -74,18 +75,9 @@ def test_rebuild_xml():
     assert_nodes_equal(etree.tostring(document), expected)
 
 
-
-import pytest
-import requests_mock
-
-from six import StringIO
-
-from zeep import Client
-from zeep.transports import Transport
-
-
-def test_xop():
-    wsdl_main = StringIO("""
+def get_client_service():
+    wsdl_main = StringIO(
+        """
         <?xml version="1.0"?>
         <wsdl:definitions
           xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -171,16 +163,25 @@ def test_xop():
             </wsdl:port>
           </wsdl:service>
         </wsdl:definitions>
-    """.strip())
+    """.strip()
+    )
 
     client = Client(wsdl_main, transport=Transport())
     service = client.create_service(
         "{http://tests.python-zeep.org/xsd-main}TestBinding",
-        "http://tests.python-zeep.org/test")
+        "http://tests.python-zeep.org/test",
+    )
 
+    return service
+
+
+def test_xop():
+    service = get_client_service()
     content_type = 'multipart/related; boundary="boundary"; type="application/xop+xml"; start="<soap:Envelope>"; start-info="application/soap+xml; charset=utf-8"'
 
-    response1 = '\r\n'.join(line.strip() for line in """
+    response1 = "\r\n".join(
+        line.strip()
+        for line in """
         Content-Type: application/xop+xml; charset=utf-8; type="application/soap+xml"
         Content-Transfer-Encoding: binary
         Content-ID: <soap:Envelope>
@@ -205,9 +206,12 @@ def test_xop():
 
         BINARYDATA
         --boundary--
-    """.splitlines())
+    """.splitlines()
+    )
 
-    response2 = '\r\n'.join(line.strip() for line in """
+    response2 = "\r\n".join(
+        line.strip()
+        for line in """
         Content-Type: application/xop+xml; charset=utf-8; type="application/soap+xml"
         Content-Transfer-Encoding: binary
         Content-ID: <soap:Envelope>
@@ -233,21 +237,68 @@ def test_xop():
         BINARYDATA
 
         --boundary--
-    """.splitlines())
+    """.splitlines()
+    )
 
     print(response1)
     with requests_mock.mock() as m:
-        m.post('http://tests.python-zeep.org/test',
+        m.post(
+            "http://tests.python-zeep.org/test",
             content=response2.encode("utf-8"),
-            headers={"Content-Type": content_type})
+            headers={"Content-Type": content_type},
+        )
         result = service.TestOperation2("")
         assert result["_value_1"] == "BINARYDATA".encode()
 
         m.post(
-            'http://tests.python-zeep.org/test',
+            "http://tests.python-zeep.org/test",
             content=response1.encode("utf-8"),
-            headers={"Content-Type": content_type})
+            headers={"Content-Type": content_type},
+        )
         result = service.TestOperation1("")
         assert result == "BINARYDATA".encode()
 
 
+def test_xop_cid_encoded():
+    service = get_client_service()
+    content_type = 'multipart/related; boundary="boundary"; type="application/xop+xml"; start="<soap:Envelope>"; start-info="application/soap+xml; charset=utf-8"'
+
+    response_encoded_cid = "\r\n".join(
+        line.strip()
+        for line in """
+            Content-Type: application/xop+xml; charset=utf-8; type="application/soap+xml"
+            Content-Transfer-Encoding: binary
+            Content-ID: <soap:Envelope>
+
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope
+                xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                xmlns:xop="http://www.w3.org/2004/08/xop/include"
+                xmlns:test="http://tests.python-zeep.org/xsd-main">
+                <soap:Body>
+                    <test:resultComplex>
+                        <test:BinaryData>
+                            <xop:Include href="cid:test_encoding%20cid%25%24%7D%40"/>
+                        </test:BinaryData>
+                    </test:resultComplex>
+                </soap:Body>
+            </soap:Envelope>
+            --boundary
+            Content-Type: application/binary
+            Content-Transfer-Encoding: binary
+            Content-ID: <test_encoding cid%$}@>
+
+            BINARYDATA
+
+            --boundary--
+        """.splitlines()
+    )
+
+    with requests_mock.mock() as m:
+        m.post(
+            "http://tests.python-zeep.org/test",
+            content=response_encoded_cid.encode("utf-8"),
+            headers={"Content-Type": content_type},
+        )
+        result = service.TestOperation2("")
+        assert result["_value_1"] == "BINARYDATA".encode()

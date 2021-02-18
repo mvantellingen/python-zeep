@@ -1,5 +1,4 @@
 class Base(object):
-
     @property
     def accepts_multiple(self):
         return self.max_occurs != 1
@@ -41,4 +40,4 @@ class Base(object):
         raise NotImplementedError()
 
     def signature(self, schema=None, standalone=False):
-        return ''
+        return ""

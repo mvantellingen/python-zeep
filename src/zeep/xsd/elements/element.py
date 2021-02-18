@@ -13,12 +13,21 @@ from zeep.xsd.utils import create_prefixed_name, max_occurs_iter
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['Element']
+__all__ = ["Element"]
 
 
 class Element(Base):
-    def __init__(self, name, type_=None, min_occurs=1, max_occurs=1,
-                 nillable=False, default=None, is_global=False, attr_name=None):
+    def __init__(
+        self,
+        name,
+        type_=None,
+        min_occurs=1,
+        max_occurs=1,
+        nillable=False,
+        default=None,
+        is_global=False,
+        attr_name=None,
+    ):
 
         if name is None:
             raise ValueError("name cannot be None", self.__class__)
@@ -39,26 +48,30 @@ class Element(Base):
     def __str__(self):
         if self.type:
             if self.type.is_global:
-                return '%s(%s)' % (self.name, self.type.qname)
+                return "%s(%s)" % (self.name, self.type.qname)
             else:
-                return '%s(%s)' % (self.name, self.type.signature())
-        return '%s()' % self.name
+                return "%s(%s)" % (self.name, self.type.signature())
+        return "%s()" % self.name
 
     def __call__(self, *args, **kwargs):
         instance = self.type(*args, **kwargs)
-        if hasattr(instance, '_xsd_type'):
+        if hasattr(instance, "_xsd_type"):
             instance._xsd_elm = self
         return instance
 
     def __repr__(self):
-        return '<%s(name=%r, type=%r)>' % (
-            self.__class__.__name__, self.name, self.type)
+        return "<%s(name=%r, type=%r)>" % (
+            self.__class__.__name__,
+            self.name,
+            self.type,
+        )
 
     def __eq__(self, other):
         return (
-            other is not None and
-            self.__class__ == other.__class__ and
-            self.__dict__ == other.__dict__)
+            other is not None
+            and self.__class__ == other.__class__
+            and self.__dict__ == other.__dict__
+        )
 
     def get_prefixed_name(self, schema):
         return create_prefixed_name(self.qname, schema)
@@ -104,18 +117,21 @@ class Element(Base):
 
         """
         context = context or XmlParserContext()
-        instance_type = qname_attr(xmlelement, xsi_ns('type'))
+        instance_type = qname_attr(xmlelement, xsi_ns("type"))
         xsd_type = None
         if instance_type:
             xsd_type = schema.get_type(instance_type, fail_silently=True)
         xsd_type = xsd_type or self.type
         return xsd_type.parse_xmlelement(
-            xmlelement, schema, allow_none=allow_none, context=context,
-            schema_type=self.type)
+            xmlelement,
+            schema,
+            allow_none=allow_none,
+            context=context,
+            schema_type=self.type,
+        )
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
-        return self.type.parse_kwargs(
-            kwargs, name or self.attr_name, available_kwargs)
+        return self.type.parse_kwargs(kwargs, name or self.attr_name, available_kwargs)
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
         """Consume matching xmlelements and call parse() on each of them
@@ -146,9 +162,10 @@ class Element(Base):
             # If both elements have a namespace and they don't match then skip
             element_tag = etree.QName(xmlelements[0].tag)
             if (
-                element_tag.namespace and self.qname.namespace and
-                element_tag.namespace != self.qname.namespace and
-                schema.strict
+                element_tag.namespace
+                and self.qname.namespace
+                and element_tag.namespace != self.qname.namespace
+                and schema.settings.strict
             ):
                 break
 
@@ -156,16 +173,39 @@ class Element(Base):
             if element_tag.localname == self.qname.localname:
                 xmlelement = xmlelements.popleft()
                 num_matches += 1
-                item = self.parse(
-                    xmlelement, schema, allow_none=True, context=context)
+                item = self.parse(xmlelement, schema, allow_none=True, context=context)
+                result.append(item)
+            elif (
+                schema is not None
+                and schema.settings.xsd_ignore_sequence_order
+                and list(
+                    filter(
+                        lambda elem: etree.QName(elem.tag).localname
+                        == self.qname.localname,
+                        xmlelements,
+                    )
+                )
+            ):
+                # Search for the field in remaining elements, not only the leftmost
+                xmlelement = list(
+                    filter(
+                        lambda elem: etree.QName(elem.tag).localname
+                        == self.qname.localname,
+                        xmlelements,
+                    )
+                )[0]
+                xmlelements.remove(xmlelement)
+                num_matches += 1
+                item = self.parse(xmlelement, schema, allow_none=True, context=context)
                 result.append(item)
             else:
                 # If the element passed doesn't match and the current one is
                 # not optional then throw an error
                 if num_matches == 0 and not self.is_optional:
                     raise UnexpectedElementError(
-                        "Unexpected element %r, expected %r" % (
-                            element_tag.text, self.qname.text))
+                        "Unexpected element %r, expected %r"
+                        % (element_tag.text, self.qname.text)
+                    )
                 break
 
         if not self.accepts_multiple:
@@ -195,7 +235,7 @@ class Element(Base):
 
         if value is Nil:
             elm = etree.SubElement(parent, self.qname)
-            elm.set(xsi_ns('nil'), 'true')
+            elm.set(xsi_ns("nil"), "true")
             return
 
         if value is None or value is NotSet:
@@ -204,11 +244,11 @@ class Element(Base):
 
             elm = etree.SubElement(parent, self.qname)
             if self.nillable:
-                elm.set(xsi_ns('nil'), 'true')
+                elm.set(xsi_ns("nil"), "true")
             return
 
         node = etree.SubElement(parent, self.qname)
-        xsd_type = getattr(value, '_xsd_type', self.type)
+        xsd_type = getattr(value, "_xsd_type", self.type)
 
         if xsd_type != self.type:
             return value._xsd_type.render(node, value, xsd_type, render_path)
@@ -221,19 +261,24 @@ class Element(Base):
             # Validate bounds
             if len(value) < self.min_occurs:
                 raise exceptions.ValidationError(
-                    "Expected at least %d items (minOccurs check)" % self.min_occurs,
-                    path=render_path)
-            elif self.max_occurs != 'unbounded' and len(value) > self.max_occurs:
+                    "Expected at least %d items (minOccurs check) %d items found."
+                    % (self.min_occurs, len(value)),
+                    path=render_path,
+                )
+            elif self.max_occurs != "unbounded" and len(value) > self.max_occurs:
                 raise exceptions.ValidationError(
-                    "Expected at most %d items (maxOccurs check)" % self.max_occurs,
-                    path=render_path)
+                    "Expected at most %d items (maxOccurs check) %d items found."
+                    % (self.max_occurs, len(value)),
+                    path=render_path,
+                )
 
             for val in value:
                 self._validate_item(val, render_path)
         else:
             if not self.is_optional and not self.nillable and value in (None, NotSet):
                 raise exceptions.ValidationError(
-                    "Missing element %s" % (self.name), path=render_path)
+                    "Missing element %s" % (self.name), path=render_path
+                )
 
             self._validate_item(value, render_path)
 
@@ -246,7 +291,8 @@ class Element(Base):
         except exceptions.ValidationError as exc:
             raise exceptions.ValidationError(
                 "The element %s is not valid: %s" % (self.qname, exc.message),
-                path=render_path)
+                path=render_path,
+            )
 
     def resolve_type(self):
         self.type = self.type.resolve()
@@ -257,17 +303,18 @@ class Element(Base):
 
     def signature(self, schema=None, standalone=True):
         from zeep.xsd import ComplexType
+
         if self.type.is_global or (not standalone and self.is_global):
             value = self.type.get_prefixed_name(schema)
         else:
             value = self.type.signature(schema, standalone=False)
 
             if not standalone and isinstance(self.type, ComplexType):
-                value = '{%s}' % value
+                value = "{%s}" % value
 
         if standalone:
-            value = '%s(%s)' % (self.get_prefixed_name(schema), value)
+            value = "%s(%s)" % (self.get_prefixed_name(schema), value)
 
         if self.accepts_multiple:
-            return '%s[]' % value
+            return "%s[]" % value
         return value

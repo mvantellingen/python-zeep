@@ -1,11 +1,12 @@
 .PHONY: install clean test retest coverage docs
 
 install:
-	pip install -e .[docs,test,async]
+	pip install -e .[docs,test,async,tornado]
 	pip install bumpversion twine wheel
 
 lint:
-	flake8 src/ tests/
+	flake8 src/ 
+	flake8 --ignore=E501 tests/ 
 	isort --recursive --check-only --diff src tests
 
 clean:
@@ -21,11 +22,15 @@ retest:
 coverage:
 	py.test --cov=zeep --cov-report=term-missing --cov-report=html
 
+format:
+	black src/ tests/
+	isort --recursive src tests
+
 docs:
 	$(MAKE) -C docs html
 
 release:
 	pip install twine wheel
-	rm -rf dist/*
+	rm -rf build/* dist/*
 	python setup.py sdist bdist_wheel
 	twine upload -s dist/*

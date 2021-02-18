@@ -8,7 +8,7 @@ from zeep.xsd.elements.element import Element
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['Attribute', 'AttributeGroup']
+__all__ = ["Attribute", "AttributeGroup"]
 
 
 class Attribute(Element):
@@ -39,10 +39,11 @@ class Attribute(Element):
         except exceptions.ValidationError as exc:
             raise exceptions.ValidationError(
                 "The attribute %s is not valid: %s" % (self.qname, exc.message),
-                path=render_path)
+                path=render_path,
+            )
 
     def clone(self, *args, **kwargs):
-        array_type = kwargs.pop('array_type', None)
+        array_type = kwargs.pop("array_type", None)
         new = super(Attribute, self).clone(*args, **kwargs)
         new.array_type = array_type
         return new
@@ -89,4 +90,4 @@ class AttributeGroup(object):
         return self
 
     def signature(self, schema=None, standalone=True):
-        return ', '.join(attr.signature(schema) for attr in self._attributes)
+        return ", ".join(attr.signature(schema) for attr in self._attributes)

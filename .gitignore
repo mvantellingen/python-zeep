@@ -14,6 +14,7 @@ __pycache__
 /test_clients/
 /docs/_build/
 /frutsels/
+/issues/
 /server/
 /htmlcov/
 

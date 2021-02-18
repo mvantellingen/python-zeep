@@ -47,7 +47,7 @@ class SoapBinding(Binding):
         :type node: lxml.etree._Element
 
         """
-        soap_node = node.find('soap:binding', namespaces=cls.nsmap)
+        soap_node = node.find("soap:binding", namespaces=cls.nsmap)
         return soap_node is not None
 
     def create_message(self, operation, *args, **kwargs):
@@ -78,15 +78,26 @@ class SoapBinding(Binding):
 
             if operation_obj.abstract.input_message.wsa_action:
                 envelope, http_headers = wsa.WsAddressingPlugin().egress(
-                    envelope, http_headers, operation_obj, options)
+                    envelope, http_headers, operation_obj, options
+                )
 
             # Apply plugins
             envelope, http_headers = plugins.apply_egress(
-                client, envelope, http_headers, operation_obj, options)
+                client, envelope, http_headers, operation_obj, options
+            )
 
             # Apply WSSE
             if client.wsse:
-                envelope, http_headers = client.wsse.apply(envelope, http_headers)
+                if isinstance(client.wsse, list):
+                    for wsse in client.wsse:
+                        envelope, http_headers = wsse.apply(envelope, http_headers)
+                else:
+                    envelope, http_headers = client.wsse.apply(envelope, http_headers)
+
+        # Add extra http headers from the setings object
+        if client.settings.extra_http_headers:
+            http_headers.update(client.settings.extra_http_headers)
+
         return envelope, http_headers
 
     def send(self, client, options, operation, args, kwargs):
@@ -105,17 +116,15 @@ class SoapBinding(Binding):
 
         """
         envelope, http_headers = self._create(
-            operation, args, kwargs,
-            client=client,
-            options=options)
+            operation, args, kwargs, client=client, options=options
+        )
 
-        response = client.transport.post_xml(
-            options['address'], envelope, http_headers)
+        response = client.transport.post_xml(options["address"], envelope, http_headers)
 
         operation_obj = self.get(operation)
 
         # If the client wants to return the raw data then let's do that.
-        if client.raw_response:
+        if client.settings.raw_response:
             return response
 
         return self.process_reply(client, operation_obj, response)
@@ -131,21 +140,26 @@ class SoapBinding(Binding):
         :type response: requests.Response
 
         """
-        if response.status_code != 200 and not response.content:
-            raise TransportError(
-                u'Server returned HTTP status %d (no content available)'
-                % response.status_code,
-                status_code=response.status_code)
+        if response.status_code in (201, 202) and not response.content:
+            return None
 
-        content_type = response.headers.get('Content-Type', 'text/xml')
+        elif response.status_code != 200 and not response.content:
+            raise TransportError(
+                u"Server returned HTTP status %d (no content available)"
+                % response.status_code,
+                status_code=response.status_code,
+            )
+
+        content_type = response.headers.get("Content-Type", "text/xml")
         media_type = get_media_type(content_type)
         message_pack = None
 
         # If the reply is a multipart/related then we need to retrieve all the
         # parts
-        if media_type == 'multipart/related':
+        if media_type == "multipart/related":
             decoder = MultipartDecoder(
-                response.content, content_type, response.encoding or 'utf-8')
+                response.content, content_type, response.encoding or "utf-8"
+            )
             content = decoder.parts[0].content
             if len(decoder.parts) > 1:
                 message_pack = MessagePack(parts=decoder.parts[1:])
@@ -155,16 +169,14 @@ class SoapBinding(Binding):
         content = plugins.apply_content_interceptors(client, content)
 
         try:
-            doc = parse_xml(
-                content, self.transport,
-                strict=client.wsdl.strict,
-                xml_huge_tree=client.xml_huge_tree)
-        except XMLSyntaxError:
+            doc = parse_xml(content, self.transport, settings=client.settings)
+        except XMLSyntaxError as exc:
             raise TransportError(
-                'Server returned HTTP status %d (%s)'
-                % (response.status_code, response.content),
+                "Server returned response (%s) with invalid XML: %s.\nContent: %r"
+                % (response.status_code, exc, response.content),
                 status_code=response.status_code,
-                content=response.content)
+                content=response.content,
+            )
 
         # Check if this is an XOP message which we need to decode first
         if message_pack:
@@ -175,12 +187,12 @@ class SoapBinding(Binding):
             client.wsse.verify(doc)
 
         doc, http_headers = plugins.apply_ingress(
-            client, doc, response.headers, operation)
+            client, doc, response.headers, operation
+        )
 
         # If the response code is not 200 or if there is a Fault node available
         # then assume that an error occured.
-        fault_node = doc.find(
-            'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
+        fault_node = doc.find("soap-env:Body/soap-env:Fault", namespaces=self.nsmap)
         if response.status_code != 200 or fault_node is not None:
             return self.process_error(doc, operation)
 
@@ -195,21 +207,19 @@ class SoapBinding(Binding):
         raise NotImplementedError
 
     def process_service_port(self, xmlelement, force_https=False):
-        address_node = xmlelement.find('soap:address', namespaces=self.nsmap)
+        address_node = xmlelement.find("soap:address", namespaces=self.nsmap)
         if address_node is None:
             logger.debug("No valid soap:address found for service")
             return
 
         # Force the usage of HTTPS when the force_https boolean is true
-        location = address_node.get('location')
+        location = address_node.get("location")
         if force_https and location:
             location = url_http_to_https(location)
-            if location != address_node.get('location'):
+            if location != address_node.get("location"):
                 logger.warning("Forcing soap:address location to HTTPS")
 
-        return {
-            'address': location
-        }
+        return {"address": location}
 
     @classmethod
     def parse(cls, definitions, xmlelement):
@@ -233,27 +243,28 @@ class SoapBinding(Binding):
                 </wsdl:operation>
             </wsdl:binding>
         """
-        name = qname_attr(xmlelement, 'name', definitions.target_namespace)
-        port_name = qname_attr(xmlelement, 'type', definitions.target_namespace)
+        name = qname_attr(xmlelement, "name", definitions.target_namespace)
+        port_name = qname_attr(xmlelement, "type", definitions.target_namespace)
 
         # The soap:binding element contains the transport method and
         # default style attribute for the operations.
-        soap_node = xmlelement.find('soap:binding', namespaces=cls.nsmap)
-        transport = soap_node.get('transport')
+        soap_node = xmlelement.find("soap:binding", namespaces=cls.nsmap)
+        transport = soap_node.get("transport")
 
         supported_transports = [
-            'http://schemas.xmlsoap.org/soap/http',
-            'http://www.w3.org/2003/05/soap/bindings/HTTP/',
+            "http://schemas.xmlsoap.org/soap/http",
+            "http://www.w3.org/2003/05/soap/bindings/HTTP/",
         ]
 
         if transport not in supported_transports:
             raise NotImplementedError(
-                "The binding transport %s is not supported (only soap/http)" % (
-                    transport))
-        default_style = soap_node.get('style', 'document')
+                "The binding transport %s is not supported (only soap/http)"
+                % (transport)
+            )
+        default_style = soap_node.get("style", "document")
 
         obj = cls(definitions.wsdl, name, port_name, transport, default_style)
-        for node in xmlelement.findall('wsdl:operation', namespaces=cls.nsmap):
+        for node in xmlelement.findall("wsdl:operation", namespaces=cls.nsmap):
             operation = SoapOperation.parse(definitions, node, obj, nsmap=cls.nsmap)
             obj._operation_add(operation)
         return obj
@@ -261,22 +272,22 @@ class SoapBinding(Binding):
 
 class Soap11Binding(SoapBinding):
     nsmap = {
-        'soap': ns.SOAP_11,
-        'soap-env': ns.SOAP_ENV_11,
-        'wsdl': ns.WSDL,
-        'xsd': ns.XSD,
+        "soap": ns.SOAP_11,
+        "soap-env": ns.SOAP_ENV_11,
+        "wsdl": ns.WSDL,
+        "xsd": ns.XSD,
     }
 
     def process_error(self, doc, operation):
-        fault_node = doc.find(
-            'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
+        fault_node = doc.find("soap-env:Body/soap-env:Fault", namespaces=self.nsmap)
 
         if fault_node is None:
             raise Fault(
-                message='Unknown fault occured',
+                message="Unknown fault occured",
                 code=None,
                 actor=None,
-                detail=etree_to_string(doc))
+                detail=etree_to_string(doc),
+            )
 
         def get_text(name):
             child = fault_node.find(name)
@@ -284,67 +295,83 @@ class Soap11Binding(SoapBinding):
                 return child.text
 
         raise Fault(
-            message=get_text('faultstring'),
-            code=get_text('faultcode'),
-            actor=get_text('faultactor'),
-            detail=fault_node.find('detail'))
+            message=get_text("faultstring"),
+            code=get_text("faultcode"),
+            actor=get_text("faultactor"),
+            detail=fault_node.find("detail"),
+        )
 
     def _set_http_headers(self, serialized, operation):
-        serialized.headers['Content-Type'] = 'text/xml; charset=utf-8'
+        serialized.headers["Content-Type"] = "text/xml; charset=utf-8"
 
 
 class Soap12Binding(SoapBinding):
     nsmap = {
-        'soap': ns.SOAP_12,
-        'soap-env': ns.SOAP_ENV_12,
-        'wsdl': ns.WSDL,
-        'xsd': ns.XSD,
+        "soap": ns.SOAP_12,
+        "soap-env": ns.SOAP_ENV_12,
+        "wsdl": ns.WSDL,
+        "xsd": ns.XSD,
     }
 
     def process_error(self, doc, operation):
-        fault_node = doc.find(
-            'soap-env:Body/soap-env:Fault', namespaces=self.nsmap)
+        fault_node = doc.find("soap-env:Body/soap-env:Fault", namespaces=self.nsmap)
 
         if fault_node is None:
             raise Fault(
-                message='Unknown fault occured',
+                message="Unknown fault occured",
                 code=None,
                 actor=None,
-                detail=etree_to_string(doc))
+                detail=etree_to_string(doc),
+            )
 
         def get_text(name):
             child = fault_node.find(name)
             if child is not None:
                 return child.text
 
-        message = fault_node.findtext('soap-env:Reason/soap-env:Text', namespaces=self.nsmap)
-        code = fault_node.findtext('soap-env:Code/soap-env:Value', namespaces=self.nsmap)
+        message = fault_node.findtext(
+            "soap-env:Reason/soap-env:Text", namespaces=self.nsmap
+        )
+        code = fault_node.findtext(
+            "soap-env:Code/soap-env:Value", namespaces=self.nsmap
+        )
 
         # Extract the fault subcodes. These can be nested, as in subcodes can
         # also contain other subcodes.
         subcodes = []
-        subcode_element = fault_node.find('soap-env:Code/soap-env:Subcode', namespaces=self.nsmap)
+        subcode_element = fault_node.find(
+            "soap-env:Code/soap-env:Subcode", namespaces=self.nsmap
+        )
         while subcode_element is not None:
-            subcode_value_element = subcode_element.find('soap-env:Value', namespaces=self.nsmap)
-            subcode_qname = as_qname(subcode_value_element.text, subcode_value_element.nsmap, None)
+            subcode_value_element = subcode_element.find(
+                "soap-env:Value", namespaces=self.nsmap
+            )
+            subcode_qname = as_qname(
+                subcode_value_element.text, subcode_value_element.nsmap, None
+            )
             subcodes.append(subcode_qname)
-            subcode_element = subcode_element.find('soap-env:Subcode', namespaces=self.nsmap)
+            subcode_element = subcode_element.find(
+                "soap-env:Subcode", namespaces=self.nsmap
+            )
 
         # TODO: We should use the fault message as defined in the wsdl.
-        detail_node = fault_node.find('soap-env:Detail', namespaces=self.nsmap)
+        detail_node = fault_node.find("soap-env:Detail", namespaces=self.nsmap)
         raise Fault(
             message=message,
             code=code,
             actor=None,
             detail=detail_node,
-            subcodes=subcodes)
+            subcodes=subcodes,
+        )
 
     def _set_http_headers(self, serialized, operation):
-        serialized.headers['Content-Type'] = '; '.join([
-            'application/soap+xml',
-            'charset=utf-8',
-            'action="%s"' % operation.soapaction
-        ])
+        serialized.headers["Content-Type"] = "; ".join(
+            [
+                "application/soap+xml",
+                "charset=utf-8",
+                'action="%s"' % operation.soapaction,
+            ]
+        )
 
 
 class SoapOperation(Operation):
@@ -357,12 +384,15 @@ class SoapOperation(Operation):
         self.style = style
 
     def process_reply(self, envelope):
-        envelope_qname = etree.QName(self.nsmap['soap-env'], 'Envelope')
+        envelope_qname = etree.QName(self.nsmap["soap-env"], "Envelope")
         if envelope.tag != envelope_qname:
-            raise XMLSyntaxError((
-                "The XML returned by the server does not contain a valid " +
-                "{%s}Envelope root element. The root element found is %s "
-            ) % (envelope_qname.namespace, envelope.tag))
+            raise XMLSyntaxError(
+                (
+                    "The XML returned by the server does not contain a valid "
+                    + "{%s}Envelope root element. The root element found is %s "
+                )
+                % (envelope_qname.namespace, envelope.tag)
+            )
 
         if self.output:
             return self.output.deserialize(envelope)
@@ -401,33 +431,37 @@ class SoapOperation(Operation):
             </operation>
 
         """
-        name = xmlelement.get('name')
+        name = xmlelement.get("name")
 
         # The soap:operation element is required for soap/http bindings
         # and may be omitted for other bindings.
-        soap_node = xmlelement.find('soap:operation', namespaces=binding.nsmap)
+        soap_node = xmlelement.find("soap:operation", namespaces=binding.nsmap)
         action = None
         if soap_node is not None:
-            action = soap_node.get('soapAction')
-            style = soap_node.get('style', binding.default_style)
+            action = soap_node.get("soapAction")
+            style = soap_node.get("style", binding.default_style)
         else:
             style = binding.default_style
 
         obj = cls(name, binding, nsmap, action, style)
 
-        if style == 'rpc':
+        if style == "rpc":
             message_class = RpcMessage
         else:
             message_class = DocumentMessage
 
-        for node in xmlelement.getchildren():
+        for node in xmlelement:
             tag_name = etree.QName(node.tag).localname
-            if tag_name not in ('input', 'output', 'fault'):
+            if tag_name not in ("input", "output", "fault"):
                 continue
             msg = message_class.parse(
-                definitions=definitions, xmlelement=node,
-                operation=obj, nsmap=nsmap, type=tag_name)
-            if tag_name == 'fault':
+                definitions=definitions,
+                xmlelement=node,
+                operation=obj,
+                nsmap=nsmap,
+                type=tag_name,
+            )
+            if tag_name == "fault":
                 obj.faults[msg.name] = msg
             else:
                 setattr(obj, tag_name, msg)

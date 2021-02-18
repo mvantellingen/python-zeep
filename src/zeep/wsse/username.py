@@ -34,32 +34,43 @@ class UsernameToken(object):
         </wsse:Security>
 
     """
-    username_token_profile_ns = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0'  # noqa
-    soap_message_secutity_ns = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0'    # noqa
 
-    def __init__(self, username, password=None, password_digest=None,
-                 use_digest=False, nonce=None, created=None):
+    username_token_profile_ns = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0"  # noqa
+    soap_message_secutity_ns = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0"  # noqa
+
+    def __init__(
+        self,
+        username,
+        password=None,
+        password_digest=None,
+        use_digest=False,
+        nonce=None,
+        created=None,
+        timestamp_token=None,
+    ):
         self.username = username
         self.password = password
         self.password_digest = password_digest
         self.nonce = nonce
         self.created = created
         self.use_digest = use_digest
+        self.timestamp_token = timestamp_token
 
     def apply(self, envelope, headers):
         security = utils.get_security_header(envelope)
 
         # The token placeholder might already exists since it is specified in
         # the WSDL.
-        token = security.find('{%s}UsernameToken' % ns.WSSE)
+        token = security.find("{%s}UsernameToken" % ns.WSSE)
         if token is None:
             token = utils.WSSE.UsernameToken()
             security.append(token)
 
+        if self.timestamp_token is not None:
+            security.append(self.timestamp_token)
+
         # Create the sub elements of the UsernameToken element
-        elements = [
-            utils.WSSE.Username(self.username)
-        ]
+        elements = [utils.WSSE.Username(self.username)]
         if self.password is not None or self.password_digest is not None:
             if self.use_digest:
                 elements.extend(self._create_password_digest())
@@ -75,13 +86,13 @@ class UsernameToken(object):
     def _create_password_text(self):
         return [
             utils.WSSE.Password(
-                self.password,
-                Type='%s#PasswordText' % self.username_token_profile_ns)
+                self.password, Type="%s#PasswordText" % self.username_token_profile_ns
+            )
         ]
 
     def _create_password_digest(self):
         if self.nonce:
-            nonce = self.nonce.encode('utf-8')
+            nonce = self.nonce.encode("utf-8")
         else:
             nonce = os.urandom(16)
         timestamp = utils.get_timestamp(self.created)
@@ -90,21 +101,19 @@ class UsernameToken(object):
         if not self.password_digest:
             digest = base64.b64encode(
                 hashlib.sha1(
-                    nonce + timestamp.encode('utf-8') +
-                    self.password.encode('utf-8')
+                    nonce + timestamp.encode("utf-8") + self.password.encode("utf-8")
                 ).digest()
-            ).decode('ascii')
+            ).decode("ascii")
         else:
             digest = self.password_digest
 
         return [
             utils.WSSE.Password(
-                digest,
-                Type='%s#PasswordDigest' % self.username_token_profile_ns
+                digest, Type="%s#PasswordDigest" % self.username_token_profile_ns
             ),
             utils.WSSE.Nonce(
-                base64.b64encode(nonce).decode('utf-8'),
-                EncodingType='%s#Base64Binary' % self.soap_message_secutity_ns
+                base64.b64encode(nonce).decode("utf-8"),
+                EncodingType="%s#Base64Binary" % self.soap_message_secutity_ns,
             ),
-            utils.WSU.Created(timestamp)
+            utils.WSU.Created(timestamp),
         ]

@@ -5,9 +5,9 @@ from zeep.xsd.elements.base import Base
 
 
 class Schema(Base):
-    name = 'schema'
-    attr_name = 'schema'
-    qname = xsd_ns('schema')
+    name = "schema"
+    attr_name = "schema"
+    qname = xsd_ns("schema")
 
     def clone(self, qname, min_occurs=1, max_occurs=1):
         return self.__class__()
@@ -21,6 +21,7 @@ class Schema(Base):
 
     def parse(self, xmlelement, schema, context=None):
         from zeep.xsd.schema import Schema
+
         schema = Schema(xmlelement, schema._transport)
         context.schemas.append(schema)
         return schema
@@ -35,6 +36,4 @@ class Schema(Base):
         return self
 
 
-_elements = [
-    Schema
-]
+_elements = [Schema]

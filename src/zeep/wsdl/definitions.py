@@ -22,7 +22,7 @@ from six import python_2_unicode_compatible
 
 from zeep.exceptions import IncompleteOperation
 
-MessagePart = namedtuple('MessagePart', ['element', 'type'])
+MessagePart = namedtuple("MessagePart", ["element", "type"])
 
 
 class AbstractMessage(object):
@@ -37,12 +37,13 @@ class AbstractMessage(object):
         - type: Refers to an XSD simpleType or complexType using a QName.
 
     """
+
     def __init__(self, name):
         self.name = name
         self.parts = OrderedDict()
 
     def __repr__(self):
-        return '<%s(name=%r)>' % (self.__class__.__name__, self.name.text)
+        return "<%s(name=%r)>" % (self.__class__.__name__, self.name.text)
 
     def resolve(self, definitions):
         pass
@@ -54,8 +55,14 @@ class AbstractMessage(object):
 class AbstractOperation(object):
     """Abstract operations are defined in the wsdl's portType elements."""
 
-    def __init__(self, name, input_message=None, output_message=None,
-                 fault_messages=None, parameter_order=None):
+    def __init__(
+        self,
+        name,
+        input_message=None,
+        output_message=None,
+        fault_messages=None,
+        parameter_order=None,
+    ):
         """Initialize the abstract operation.
 
         :param name: The name of the operation
@@ -81,8 +88,7 @@ class PortType(object):
         self.operations = operations
 
     def __repr__(self):
-        return '<%s(name=%r)>' % (
-            self.__class__.__name__, self.name.text)
+        return "<%s(name=%r)>" % (self.__class__.__name__, self.name.text)
 
     def resolve(self, definitions):
         pass
@@ -103,6 +109,7 @@ class Binding(object):
                              +-> AbstractMessage
 
     """
+
     def __init__(self, wsdl, name, port_name):
         """Binding
 
@@ -121,7 +128,7 @@ class Binding(object):
         self._operations = {}
 
     def resolve(self, definitions):
-        self.port_type = definitions.get('port_types', self.port_name.text)
+        self.port_type = definitions.get("port_types", self.port_name.text)
 
         for name, operation in list(self._operations.items()):
             try:
@@ -135,11 +142,17 @@ class Binding(object):
         self._operations[operation.name] = operation
 
     def __str__(self):
-        return '%s: %s' % (self.__class__.__name__, self.name.text)
+        return "%s: %s" % (self.__class__.__name__, self.name.text)
 
     def __repr__(self):
-        return '<%s(name=%r, port_type=%r)>' % (
-            self.__class__.__name__, self.name.text, self.port_type)
+        return "<%s(name=%r, port_type=%r)>" % (
+            self.__class__.__name__,
+            self.name.text,
+            self.port_type,
+        )
+
+    def all(self):
+        return self._operations
 
     def get(self, key):
         try:
@@ -163,6 +176,7 @@ class Operation(object):
     Contains references to the concrete messages
 
     """
+
     def __init__(self, name, binding):
         self.name = name
         self.binding = binding
@@ -177,20 +191,24 @@ class Operation(object):
             self.abstract = self.binding.port_type.operations[self.name]
         except KeyError:
             raise IncompleteOperation(
-                "The wsdl:operation %r was not found in the wsdl:portType %r" % (
-                    self.name, self.binding.port_type.name.text))
+                "The wsdl:operation %r was not found in the wsdl:portType %r"
+                % (self.name, self.binding.port_type.name.text)
+            )
 
     def __repr__(self):
-        return '<%s(name=%r, style=%r)>' % (
-            self.__class__.__name__, self.name, self.style)
+        return "<%s(name=%r, style=%r)>" % (
+            self.__class__.__name__,
+            self.name,
+            self.style,
+        )
 
     def __str__(self):
         if not self.input:
-            return u'%s(missing input message)' % (self.name)
+            return u"%s(missing input message)" % (self.name)
 
-        retval = u'%s(%s)' % (self.name, self.input.signature())
+        retval = u"%s(%s)" % (self.name, self.input.signature())
         if self.output:
-            retval += u' -> %s' % (self.output.signature(as_output=True))
+            retval += u" -> %s" % (self.output.signature(as_output=True))
         return retval
 
     def create(self, *args, **kwargs):
@@ -228,24 +246,25 @@ class Port(object):
     endpoint.
 
     """
+
     def __init__(self, name, binding_name, xmlelement):
         self.name = name
-        self._resolve_context = {
-            'binding_name': binding_name,
-            'xmlelement': xmlelement,
-        }
+        self._resolve_context = {"binding_name": binding_name, "xmlelement": xmlelement}
 
         # Set during resolve()
         self.binding = None
-        self.binding_options = None
+        self.binding_options = {}
 
     def __repr__(self):
-        return '<%s(name=%r, binding=%r, %r)>' % (
-            self.__class__.__name__, self.name, self.binding,
-            self.binding_options)
+        return "<%s(name=%r, binding=%r, %r)>" % (
+            self.__class__.__name__,
+            self.name,
+            self.binding,
+            self.binding_options,
+        )
 
     def __str__(self):
-        return u'Port: %s (%s)' % (self.name, self.binding)
+        return u"Port: %s (%s)" % (self.name, self.binding)
 
     def resolve(self, definitions):
         if self._resolve_context is None:
@@ -253,18 +272,19 @@ class Port(object):
 
         try:
             self.binding = definitions.get(
-                'bindings', self._resolve_context['binding_name'].text)
+                "bindings", self._resolve_context["binding_name"].text
+            )
         except IndexError:
             return False
 
-        if definitions.location:
-            force_https = definitions.location.startswith('https')
+        if definitions.location and self.binding.wsdl.settings.force_https:
+            force_https = definitions.location.startswith("https")
         else:
             force_https = False
 
         self.binding_options = self.binding.process_service_port(
-            self._resolve_context['xmlelement'],
-            force_https)
+            self._resolve_context["xmlelement"], force_https
+        )
         self._resolve_context = None
         return True
 
@@ -274,17 +294,21 @@ class Service(object):
     """Used to aggregate a set of related ports.
 
     """
+
     def __init__(self, name):
         self.ports = OrderedDict()
         self.name = name
         self._is_resolved = False
 
     def __str__(self):
-        return u'Service: %s' % self.name
+        return u"Service: %s" % self.name
 
     def __repr__(self):
-        return '<%s(name=%r, ports=%r)>' % (
-            self.__class__.__name__, self.name, self.ports)
+        return "<%s(name=%r, ports=%r)>" % (
+            self.__class__.__name__,
+            self.name,
+            self.ports,
+        )
 
     def resolve(self, definitions):
         if self._is_resolved:

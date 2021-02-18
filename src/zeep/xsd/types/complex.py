@@ -6,7 +6,7 @@ from itertools import chain
 from cached_property import threaded_cached_property
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
-from zeep.xsd.const import NotSet, SkipValue, xsi_ns
+from zeep.xsd.const import NotSet, SkipValue, Nil, xsi_ns
 from zeep.xsd.elements import (
     Any, AnyAttribute, AttributeGroup, Choice, Element, Group, Sequence)
 from zeep.xsd.elements.indicators import OrderIndicator
@@ -17,14 +17,21 @@ from zeep.xsd.valueobjects import ArrayValue, CompoundValue
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['ComplexType']
+__all__ = ["ComplexType"]
 
 
 class ComplexType(AnyType):
     _xsd_name = None
 
-    def __init__(self, element=None, attributes=None,
-                 restriction=None, extension=None, qname=None, is_global=False):
+    def __init__(
+        self,
+        element=None,
+        attributes=None,
+        restriction=None,
+        extension=None,
+        qname=None,
+        is_global=False,
+    ):
         if element and type(element) == list:
             element = Sequence(element)
 
@@ -49,28 +56,32 @@ class ComplexType(AnyType):
     def _array_class(self):
         assert self._array_type
         return type(
-            self.__class__.__name__, (ArrayValue,),
-            {'_xsd_type': self, '__module__': 'zeep.objects'})
+            self.__class__.__name__,
+            (ArrayValue,),
+            {"_xsd_type": self, "__module__": "zeep.objects"},
+        )
 
     @threaded_cached_property
     def _value_class(self):
         return type(
-            self.__class__.__name__, (CompoundValue,),
-            {'_xsd_type': self, '__module__': 'zeep.objects'})
+            self.__class__.__name__,
+            (CompoundValue,),
+            {"_xsd_type": self, "__module__": "zeep.objects"},
+        )
 
     def __str__(self):
-        return '%s(%s)' % (self.__class__.__name__, self.signature())
+        return "%s(%s)" % (self.__class__.__name__, self.signature())
 
     @threaded_cached_property
     def attributes(self):
-        generator = NamePrefixGenerator(prefix='_attr_')
+        generator = NamePrefixGenerator(prefix="_attr_")
         result = []
         elm_names = {name for name, elm in self.elements if name is not None}
         for attr in self._attributes_unwrapped:
             if attr.name is None:
                 name = generator.get_name()
             elif attr.name in elm_names:
-                name = 'attr__%s' % attr.name
+                name = "attr__%s" % attr.name
             else:
                 name = attr.name
             result.append((name, attr))
@@ -107,9 +118,19 @@ class ComplexType(AnyType):
         if self._array_type:
             name = generator.get_name()
             if isinstance(self._element, Group):
-                result = [(name, Sequence([
-                    Any(max_occurs='unbounded', restrict=self._array_type.array_type)
-                ]))]
+                result = [
+                    (
+                        name,
+                        Sequence(
+                            [
+                                Any(
+                                    max_occurs="unbounded",
+                                    restrict=self._array_type.array_type,
+                                )
+                            ]
+                        ),
+                    )
+                ]
             else:
                 result = [(name, self._element)]
         else:
@@ -121,11 +142,12 @@ class ComplexType(AnyType):
     @property
     def _array_type(self):
         attrs = {attr.qname.text: attr for attr in self._attributes if attr.qname}
-        array_type = attrs.get('{http://schemas.xmlsoap.org/soap/encoding/}arrayType')
+        array_type = attrs.get("{http://schemas.xmlsoap.org/soap/encoding/}arrayType")
         return array_type
 
-    def parse_xmlelement(self, xmlelement, schema=None, allow_none=True,
-                         context=None, schema_type=None):
+    def parse_xmlelement(
+        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
+    ):
         """Consume matching xmlelements and call parse() on each
 
         :param xmlelement: XML element objects
@@ -151,10 +173,13 @@ class ComplexType(AnyType):
         # If this complexType extends a simpleType then we have no nested
         # elements. Parse it directly via the type object. This is the case
         # for xsd:simpleContent
-        if isinstance(self._element, Element) and isinstance(self._element.type, AnySimpleType):
+        if isinstance(self._element, Element) and isinstance(
+            self._element.type, AnySimpleType
+        ):
             name, element = self.elements_nested[0]
             init_kwargs[name] = element.type.parse_xmlelement(
-                xmlelement, schema, name, context=context)
+                xmlelement, schema, name, context=context
+            )
         else:
             elements = deque(xmlelement.iterchildren())
             if allow_none and len(elements) == 0 and len(attributes) == 0:
@@ -166,7 +191,8 @@ class ComplexType(AnyType):
             for name, element in self.elements_nested:
                 try:
                     result = element.parse_xmlelements(
-                        elements, schema, name, context=context)
+                        elements, schema, name, context=context
+                    )
                     if result:
                         init_kwargs.update(result)
                 except UnexpectedElementError as exc:
@@ -174,10 +200,10 @@ class ComplexType(AnyType):
 
             # Check if all children are consumed (parsed)
             if elements:
-                if schema.strict:
+                if schema.settings.strict:
                     raise XMLParseError("Unexpected element %r" % elements[0].tag)
                 else:
-                    init_kwargs['_raw_elements'] = elements
+                    init_kwargs["_raw_elements"] = elements
 
         # Parse attributes
         if attributes:
@@ -192,7 +218,7 @@ class ComplexType(AnyType):
 
         value = self._value_class(**init_kwargs)
         schema_type = schema_type or self
-        if schema_type and getattr(schema_type, '_array_type', None):
+        if schema_type and getattr(schema_type, "_array_type", None):
             value = schema_type._array_class.from_value_object(value)
         return value
 
@@ -254,9 +280,9 @@ class ComplexType(AnyType):
 
         if xsd_type:
             if xsd_type._xsd_name:
-                parent.set(xsi_ns('type'), xsd_type._xsd_name)
+                parent.set(xsi_ns("type"), xsd_type._xsd_name)
             if xsd_type.qname:
-                parent.set(xsi_ns('type'), xsd_type.qname)
+                parent.set(xsi_ns("type"), xsd_type.qname)
 
     def parse_kwargs(self, kwargs, name, available_kwargs):
         """Parse the kwargs for this type and return the accepted data as
@@ -279,7 +305,9 @@ class ComplexType(AnyType):
             value = kwargs[name]
             available_kwargs.remove(name)
 
-            value = self._create_object(value, name)
+            if value is not Nil:
+                value = self._create_object(value, name)
+
             return {name: value}
         return {}
 
@@ -360,7 +388,7 @@ class ComplexType(AnyType):
             new_attributes = OrderedDict()
             for attr in attributes:
                 if isinstance(attr, AnyAttribute):
-                    new_attributes['##any'] = attr
+                    new_attributes["##any"] = attr
                 else:
                     new_attributes[attr.qname.text] = attr
             attributes = new_attributes.values()
@@ -375,7 +403,9 @@ class ComplexType(AnyType):
 
             element = self._element.clone(self._element.name)
             if isinstance(base_element, OrderIndicator):
-                if isinstance(self._element, Choice):
+                if isinstance(base_element, Choice):
+                    element.insert(0, base_element)
+                elif isinstance(self._element, Choice):
                     element = base_element.clone(self._element.name)
                     element.append(self._element)
                 elif isinstance(element, OrderIndicator):
@@ -386,20 +416,21 @@ class ComplexType(AnyType):
                         element.child.insert(0, item)
 
             elif isinstance(self._element, Group):
-                raise NotImplementedError('TODO')
+                raise NotImplementedError("TODO")
             else:
                 pass  # Element (ignore for now)
 
         elif self._element or base_element:
             element = self._element or base_element
         else:
-            element = Element('_value_1', base)
+            element = Element("_value_1", base)
 
         new = self.__class__(
             element=element,
             attributes=attributes,
             qname=self.qname,
-            is_global=self.is_global)
+            is_global=self.is_global,
+        )
 
         new._extension_types = base.accepted_types
         return new
@@ -415,15 +446,14 @@ class ComplexType(AnyType):
 
 
         """
-        attributes = list(
-            chain(base._attributes_unwrapped, self._attributes_unwrapped))
+        attributes = list(chain(base._attributes_unwrapped, self._attributes_unwrapped))
 
         # Make sure we don't have duplicate (self is leading)
         if base._attributes_unwrapped and self._attributes_unwrapped:
             new_attributes = OrderedDict()
             for attr in attributes:
                 if isinstance(attr, AnyAttribute):
-                    new_attributes['##any'] = attr
+                    new_attributes["##any"] = attr
                 else:
                     new_attributes[attr.qname.text] = attr
             attributes = list(new_attributes.values())
@@ -435,7 +465,8 @@ class ComplexType(AnyType):
             element=self._element or base._element,
             attributes=attributes,
             qname=self.qname,
-            is_global=self.is_global)
+            is_global=self.is_global,
+        )
         return new.resolve()
 
     def signature(self, schema=None, standalone=True):
@@ -445,11 +476,11 @@ class ComplexType(AnyType):
             parts.append(part)
 
         for name, attribute in self.attributes:
-            part = '%s: %s' % (name, attribute.signature(schema, standalone=False))
+            part = "%s: %s" % (name, attribute.signature(schema, standalone=False))
             parts.append(part)
 
-        value = ', '.join(parts)
+        value = ", ".join(parts)
         if standalone:
-            return '%s(%s)' % (self.get_prefixed_name(schema), value)
+            return "%s(%s)" % (self.get_prefixed_name(schema), value)
         else:
             return value
