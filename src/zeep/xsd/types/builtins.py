@@ -126,7 +126,10 @@ class Duration(BuiltinType):
 
     @check_no_collection
     def xmlvalue(self, value):
-        return isodate.duration_isoformat(value)
+        if isinstance(value, str):
+            return value
+        else:
+            return isodate.duration_isoformat(value)
 
     @treat_whitespace("collapse")
     def pythonvalue(self, value):
