@@ -83,6 +83,9 @@ class TestDecimal:
         assert instance.xmlvalue(D("10.000002")) == "10.000002"
         assert instance.xmlvalue(D("10")) == "10"
         assert instance.xmlvalue(D("-10")) == "-10"
+        assert instance.xmlvalue(D("1.1E-3")) == "0.0011"
+        assert instance.xmlvalue(D("1.1E+3")) == "1100"
+        assert instance.xmlvalue(D("1.100000000000002E-3")) == "0.001100000000000002"
 
     def test_pythonvalue(self):
         instance = builtins.Decimal()
