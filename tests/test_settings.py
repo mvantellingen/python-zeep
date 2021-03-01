@@ -13,3 +13,17 @@ def test_settings_set_context_raw_response():
             assert settings.raw_response is True
     # Check that the original value returned
     assert settings.raw_response is False
+
+
+def test_settings_set_context_with_exception():
+    settings = Settings()
+
+    assert settings.raw_response is False
+    try:
+        with settings(raw_response=True):
+            assert settings.raw_response is True
+            raise RuntimeError
+    except RuntimeError:
+        pass
+    # Check that the original value returned
+    assert settings.raw_response is False
