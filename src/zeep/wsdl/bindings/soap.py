@@ -186,9 +186,6 @@ class SoapBinding(Binding):
             if process_xop(doc, message_pack):
                 message_pack = None
 
-        if client.wsse:
-            client.wsse.verify(doc)
-
         doc, http_headers = plugins.apply_ingress(
             client, doc, response.headers, operation
         )
@@ -198,6 +195,9 @@ class SoapBinding(Binding):
         fault_node = doc.find("soap-env:Body/soap-env:Fault", namespaces=self.nsmap)
         if response.status_code != 200 or fault_node is not None:
             return self.process_error(doc, operation)
+
+        if client.wsse:
+            client.wsse.verify(doc)
 
         result = operation.process_reply(doc)
 
