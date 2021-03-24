@@ -61,7 +61,11 @@ class Document:
     """
 
     def __init__(
-        self, location, transport: typing.Type["Transport"], base=None, settings=None
+        self,
+        location: typing.Union[typing.IO, str],
+        transport: typing.Type["Transport"],
+        base=None,
+        settings=None
     ):
         """Initialize a WSDL document.
 
