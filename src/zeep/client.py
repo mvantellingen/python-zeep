@@ -55,13 +55,13 @@ class Client:
 
     def __init__(
         self,
-        wsdl,
+        wsdl: typing.Union[typing.IO, str],
         wsse=None,
         transport=None,
         service_name=None,
         port_name=None,
         plugins=None,
-        settings=None,
+        settings: typing.Optional[Settings] = None,
     ):
         if not wsdl:
             raise ValueError("No URL given for the wsdl")
