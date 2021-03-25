@@ -35,7 +35,16 @@ skip_if_no_xmlsec = pytest.mark.skipif(
 
 
 @skip_if_no_xmlsec
-def test_sign_timestamp_if_present():
+@pytest.mark.parametrize("digest_method,expected_digest_href", DIGEST_METHODS_TESTDATA)
+@pytest.mark.parametrize(
+    "signature_method,expected_signature_href", SIGNATURE_METHODS_TESTDATA
+)
+def test_sign_timestamp_if_present(
+        digest_method,
+        signature_method,
+        expected_digest_href,
+        expected_signature_href,
+):
     envelope = load_xml(
         """
         <soap-env:Envelope
@@ -63,8 +72,23 @@ def test_sign_timestamp_if_present():
     """
     )
 
-    signature.sign_envelope(envelope, KEY_FILE, KEY_FILE)
+    signature.sign_envelope(
+        envelope,
+        KEY_FILE,
+        KEY_FILE,
+        None,
+        signature_method=getattr(xmlsec_installed.Transform, signature_method),
+        digest_method=getattr(xmlsec_installed.Transform, digest_method),
+    )
     signature.verify_envelope(envelope, KEY_FILE)
+    digests = envelope.xpath("//ds:DigestMethod", namespaces={"ds": ns.DS})
+    assert len(digests)
+    for digest in digests:
+        assert digest.get("Algorithm") == expected_digest_href
+    signatures = envelope.xpath("//ds:SignatureMethod", namespaces={"ds": ns.DS})
+    assert len(signatures)
+    for sig in signatures:
+        assert sig.get("Algorithm") == expected_signature_href
 
 
 @skip_if_no_xmlsec
