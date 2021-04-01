@@ -81,7 +81,7 @@ class SoapBinding(Binding):
             if not options:
                 options = client.service._binding_options
 
-            if operation_obj.abstract.wsa_action:
+            if operation_obj.abstract.wsa_action or operation_obj.soapaction:
                 envelope, http_headers = wsa.WsAddressingPlugin().egress(
                     envelope, http_headers, operation_obj, options
                 )
