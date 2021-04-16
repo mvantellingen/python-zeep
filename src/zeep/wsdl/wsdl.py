@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import logging
 import operator
+import sys
 import os
 import typing
 import warnings
@@ -106,43 +107,43 @@ class Document:
     def __repr__(self):
         return "<WSDL(location=%r)>" % self.location
 
-    def dump(self):
-        print("")
-        print("Prefixes:")
+    def dump(self, output=sys.stdout):
+        print("", file=output)
+        print("Prefixes:", file=output)
         for prefix, namespace in self.types.prefix_map.items():
-            print(" " * 4, "%s: %s" % (prefix, namespace))
+            print(" " * 4, "%s: %s" % (prefix, namespace), file=output)
 
-        print("")
-        print("Global elements:")
+        print("", file=output)
+        print("Global elements:", file=output)
         for elm_obj in sorted(self.types.elements, key=lambda k: k.qname):
             value = elm_obj.signature(schema=self.types)
-            print(" " * 4, value)
+            print(" " * 4, value, file=output)
 
-        print("")
-        print("Global types:")
+        print("", file=output)
+        print("Global types:", file=output)
         for type_obj in sorted(self.types.types, key=lambda k: k.qname or ""):
             value = type_obj.signature(schema=self.types)
-            print(" " * 4, value)
+            print(" " * 4, value, file=output)
 
-        print("")
-        print("Bindings:")
+        print("", file=output)
+        print("Bindings:", file=output)
         for binding_obj in sorted(self.bindings.values(), key=lambda k: str(k)):
-            print(" " * 4, str(binding_obj))
+            print(" " * 4, str(binding_obj), file=output)
 
-        print("")
+        print("", file=output)
         for service in self.services.values():
-            print(str(service))
+            print(str(service), file=output)
             for port in service.ports.values():
-                print(" " * 4, str(port))
-                print(" " * 8, "Operations:")
+                print(" " * 4, str(port), file=output)
+                print(" " * 8, "Operations:", file=output)
 
                 operations = sorted(
                     port.binding._operations.values(), key=operator.attrgetter("name")
                 )
 
                 for operation in operations:
-                    print("%s%s" % (" " * 12, str(operation)))
-                print("")
+                    print("%s%s" % (" " * 12, str(operation)), file=output)
+                print("", file=output)
 
     def _get_xml_document(self, location: typing.IO) -> etree._Element:
         """Load the XML content from the given location and return an
