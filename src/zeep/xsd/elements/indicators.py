@@ -466,7 +466,7 @@ class Choice(OrderIndicator):
                 subresult = choice.parse_kwargs(kwargs, name, temp_kwargs)
 
                 if subresult:
-                    if not any(subresult.values()):
+                    if all(v in (None, [], {}) for v in subresult.values()):
                         available_kwargs.intersection_update(temp_kwargs)
                         result.update(subresult)
                     elif not found:
