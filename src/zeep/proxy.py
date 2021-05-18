@@ -99,11 +99,11 @@ class ServiceProxy:
             raise AttributeError("Service has no operation %r" % key)
 
     def __iter__(self):
-        """ Return iterator over the services and their callables. """
+        """Return iterator over the services and their callables."""
         return iter(self._operations.items())
 
     def __dir__(self):
-        """ Return the names of the operations. """
+        """Return the names of the operations."""
         return list(itertools.chain(dir(super()), self._operations))
 
 

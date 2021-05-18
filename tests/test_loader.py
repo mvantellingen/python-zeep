@@ -1,8 +1,8 @@
 import pytest
-from exceptions import DTDForbidden, EntitiesForbidden
 from pytest import raises as assert_raises
 
 from tests.utils import DummyTransport
+from zeep.exceptions import DTDForbidden, EntitiesForbidden
 from zeep.loader import parse_xml
 from zeep.settings import Settings
 
