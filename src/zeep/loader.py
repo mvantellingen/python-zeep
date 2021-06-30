@@ -2,7 +2,7 @@ import os.path
 import typing
 from urllib.parse import urljoin, urlparse, urlunparse
 
-from exceptions import DTDForbidden, EntitiesForbidden
+from .exceptions import DTDForbidden, EntitiesForbidden
 from lxml import etree
 from lxml.etree import fromstring, XMLParser, XMLSyntaxError, Resolver
 
