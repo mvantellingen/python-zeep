@@ -3,11 +3,11 @@ import re
 from setuptools import setup
 
 install_requires = [
-    "appdirs>=1.4.0",
     "attrs>=17.2.0",
     "cached-property>=1.3.0",
     "isodate>=0.5.4",
     "lxml>=4.6.0",
+    "platformdirs>=1.4.0",
     "requests>=2.7.0",
     "requests-toolbelt>=0.7.1",
     "requests-file>=1.5.1",
