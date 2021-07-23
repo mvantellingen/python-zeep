@@ -21,7 +21,7 @@ class ImportResolver(etree.Resolver):
             return self.resolve_string(content, context)
 
 
-def parse_xml(content: str, transport, base_url=None, settings=None):
+def parse_xml(content: str, transport, base_url=None, settings=None, encoding="utf-8"):
     """Parse an XML string and return the root Element.
 
     :param content: The XML string
@@ -44,6 +44,7 @@ def parse_xml(content: str, transport, base_url=None, settings=None):
         resolve_entities=False,
         recover=recover,
         huge_tree=settings.xml_huge_tree,
+        encoding=encoding,
     )
     parser.resolvers.add(ImportResolver(transport))
     try:
