@@ -2,11 +2,10 @@ import os.path
 import typing
 from urllib.parse import urljoin, urlparse, urlunparse
 
-from .exceptions import DTDForbidden, EntitiesForbidden
 from lxml import etree
-from lxml.etree import fromstring, XMLParser, XMLSyntaxError, Resolver
+from lxml.etree import Resolver, XMLParser, XMLSyntaxError, fromstring
 
-from zeep.exceptions import XMLSyntaxError
+from .exceptions import DTDForbidden, EntitiesForbidden, XMLSyntaxError
 from zeep.settings import Settings
 
 
@@ -48,18 +47,19 @@ def parse_xml(content: str, transport, base_url=None, settings=None):
     )
     parser.resolvers.add(ImportResolver(transport))
     try:
-        elementtree = fromstring(content, parser=parser,base_url=base_url)
+        elementtree = fromstring(content, parser=parser, base_url=base_url)
         docinfo = elementtree.getroottree().docinfo
         if docinfo.doctype:
             if settings.forbid_dtd:
-                raise DTDForbidden(docinfo.doctype, docinfo.system_url, docinfo.public_id)
+                raise DTDForbidden(
+                    docinfo.doctype, docinfo.system_url, docinfo.public_id
+                )
         if settings.forbid_entities:
             for dtd in docinfo.internalDTD, docinfo.externalDTD:
                 if dtd is None:
                     continue
                 for entity in dtd.iterentities():
                     raise EntitiesForbidden(entity.name, entity.content)
-
 
         return elementtree
     except etree.XMLSyntaxError as exc:
