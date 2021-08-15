@@ -5,7 +5,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 from lxml import etree
 from lxml.etree import Resolver, XMLParser, XMLSyntaxError, fromstring
 
-from zeep.exceptions import DTDForbidden, EntitiesForbidden, XMLSyntaxError
+from .exceptions import DTDForbidden, EntitiesForbidden, XMLSyntaxError
 from zeep.settings import Settings
 
 
