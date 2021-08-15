@@ -2,9 +2,11 @@
 ------------------
  - Remove last dependency on `six` (#1250)
  - Use `platformdirs` instead of the `appsdirs` dependency (#1244)
+ - Pass digest method when signing timestamp node(#1201)
  - Fix settings context manager when an exception is raised (#1193)
  - Don't render decimals using scientific notation (#1191)
  - Remove dependency on `defusedxml` (deprecated) (#1179)
+ - Improve handling of str values for Duration (#1165)
 
 
 4.0.0 (2020-10-12)
