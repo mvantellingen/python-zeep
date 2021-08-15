@@ -40,10 +40,10 @@ skip_if_no_xmlsec = pytest.mark.skipif(
     "signature_method,expected_signature_href", SIGNATURE_METHODS_TESTDATA
 )
 def test_sign_timestamp_if_present(
-        digest_method,
-        signature_method,
-        expected_digest_href,
-        expected_signature_href,
+    digest_method,
+    signature_method,
+    expected_digest_href,
+    expected_signature_href,
 ):
     envelope = load_xml(
         """
