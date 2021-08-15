@@ -4,4 +4,4 @@ from zeep.settings import Settings  # noqa
 from zeep.transports import Transport  # noqa
 from zeep.xsd.valueobjects import AnyObject  # noqa
 
-__version__ = "4.0.0"
+__version__ = "4.1.0"
