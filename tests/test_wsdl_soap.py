@@ -91,7 +91,9 @@ def test_soap11_process_error():
         assert exc.code == "fault-code-withNamespace"
         assert exc.actor is None
         assert exc.subcodes is None
-        assert "detail-message-withNamespace" in etree.tostring(exc.detail).decode("utf-8")
+        assert "detail-message-withNamespace" in etree.tostring(exc.detail).decode(
+            "utf-8"
+        )
 
 
 def test_soap12_process_error():
