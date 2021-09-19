@@ -1,4 +1,5 @@
-from mock import patch
+from unittest.mock import patch
+
 from pretend import stub
 
 from zeep import __main__, client
