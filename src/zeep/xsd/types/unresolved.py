@@ -27,7 +27,7 @@ class UnresolvedCustomType(Type):
     def __init__(self, qname, base_type, schema):
         assert qname is not None
         self.qname = qname
-        self.name = qname.localname.encode('utf-8')
+        self.name = str(qname.localname)
         self.schema = schema
         self.base_type = base_type
 
