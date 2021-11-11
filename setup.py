@@ -4,7 +4,7 @@ from setuptools import setup
 
 install_requires = [
     "attrs>=17.2.0",
-    "cached-property>=1.3.0",
+    "cached-property>=1.3.0; python_version<'3.8'",
     "isodate>=0.5.4",
     "lxml>=4.6.0",
     "platformdirs>=1.4.0",
