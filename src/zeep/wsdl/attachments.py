@@ -6,7 +6,11 @@ See https://www.w3.org/TR/SOAP-attachments
 
 import base64
 
-from cached_property import cached_property
+try:
+    from functools import cached_property
+except ImportError:
+    from cached_property import cached_property
+
 from requests.structures import CaseInsensitiveDict
 
 
