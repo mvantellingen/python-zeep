@@ -4,7 +4,11 @@ import typing
 from collections import OrderedDict, deque
 from itertools import chain
 
-from cached_property import threaded_cached_property
+try:
+    from functools import cached_property as threaded_cached_property
+except ImportError:
+    from cached_property import threaded_cached_property
+
 from lxml import etree
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
