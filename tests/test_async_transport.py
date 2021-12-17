@@ -1,6 +1,4 @@
-import aiohttp
 import pytest
-from aioresponses import aioresponses
 from lxml import etree
 from pretend import stub
 from pytest_httpx import HTTPXMock

@@ -175,7 +175,6 @@ class AsyncTransport(Transport):
         cache=None,
         timeout=300,
         operation_timeout=None,
-        session=None,
         verify_ssl=True,
         proxy=None,
     ):
