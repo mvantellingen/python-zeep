@@ -432,7 +432,7 @@ class DocumentMessage(SoapMessage):
 
     def _deserialize_body(self, xmlelement):
 
-        if not self._is_body_wrapped:
+        if not self._is_body_wrapped and len(xmlelement):
             # TODO: For now we assume that the body only has one child since
             # only one part is specified in the wsdl. This should be handled
             # way better
