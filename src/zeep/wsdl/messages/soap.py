@@ -202,7 +202,7 @@ class SoapMessage(ConcreteMessage):
             body_data = cls._parse_body(body)
 
         # Parse soap:header (multiple)
-        elements = xmlelement.findall("soap:header", namespaces=operation.binding.nsmap)
+        elements = xmlelement.findall(".//soap:header", namespaces=operation.binding.nsmap)
         header_data = cls._parse_header(
             elements, definitions.target_namespace, operation
         )
