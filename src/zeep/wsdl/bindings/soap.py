@@ -215,7 +215,7 @@ class SoapBinding(Binding):
             if process_xop(doc, message_pack):
                 message_pack = None
 
-        if client.wsse:
+        if client.wsse and client.wsse_verify:
             client.wsse.verify(doc)
 
         doc, http_headers = plugins.apply_ingress(

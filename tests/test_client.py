@@ -1,11 +1,20 @@
 import os
+import sys
 
 import pytest
 import requests_mock
 
 from tests.utils import load_xml
 from zeep import client, xsd
-from zeep.exceptions import Error
+from zeep.exceptions import Error, SignatureVerificationFailed
+from zeep.wsse import signature
+from zeep.wsse.signature import xmlsec as xmlsec_installed
+
+skip_if_no_xmlsec = pytest.mark.skipif(
+    sys.platform == "win32", reason="does not run on windows"
+) and pytest.mark.skipif(
+    xmlsec_installed is None, reason="xmlsec library not installed"
+)
 
 
 def test_bind():
@@ -305,3 +314,33 @@ def test_default_soap_headers_extra():
         header = doc.find("{http://schemas.xmlsoap.org/soap/envelope/}Header")
         assert header is not None
         assert len(list(header)) == 4
+
+
+@skip_if_no_xmlsec
+@pytest.mark.requests
+def test_skip_wsse_verify():
+    key_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "cert_valid.pem")
+    client_sig = signature.Signature(key_file, key_file)
+    client_obj = client.Client("tests/wsdl_files/soap.wsdl", wsse=client_sig, wsse_verify=False)
+
+    response = """
+    <?xml version="1.0"?>
+    <soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:stoc="http://example.com/stockquote.xsd">
+       <soapenv:Header />
+       <soapenv:Body>
+          <stoc:TradePrice>
+             <price>120.123</price>
+          </stoc:TradePrice>
+       </soapenv:Body>
+    </soapenv:Envelope>
+    """.strip()
+
+    with requests_mock.mock() as m:
+        m.post("http://example.com/stockquote", text=response)
+
+        try:
+            client_obj.service.GetLastTradePrice("foobar")
+        except SignatureVerificationFailed:
+            pytest.fail("Incoming signature should not be verified.")
