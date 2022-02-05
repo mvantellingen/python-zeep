@@ -19,7 +19,7 @@ def test_load(httpx_mock):
     cache = stub(get=lambda url: None, add=lambda url, content: None)
     transport = AsyncTransport(cache=cache)
 
-    httpx_mock.add_response(url="http://tests.python-zeep.org/test.xml", data="x")
+    httpx_mock.add_response(url="http://tests.python-zeep.org/test.xml", text="x")
     result = transport.load("http://tests.python-zeep.org/test.xml")
     assert result == b"x"
 
@@ -30,7 +30,7 @@ def test_load_cache(httpx_mock):
     cache = InMemoryCache()
     transport = AsyncTransport(cache=cache)
 
-    httpx_mock.add_response(url="http://tests.python-zeep.org/test.xml", data="x")
+    httpx_mock.add_response(url="http://tests.python-zeep.org/test.xml", text="x")
     result = transport.load("http://tests.python-zeep.org/test.xml")
     assert result == b"x"
 
@@ -45,7 +45,7 @@ async def test_post(httpx_mock: HTTPXMock):
 
     envelope = etree.Element("Envelope")
 
-    httpx_mock.add_response(url="http://tests.python-zeep.org/test.xml", data="x")
+    httpx_mock.add_response(url="http://tests.python-zeep.org/test.xml", text="x")
     result = await transport.post_xml(
         "http://tests.python-zeep.org/test.xml", envelope=envelope, headers={}
     )
@@ -67,7 +67,7 @@ async def test_http_error(httpx_mock: HTTPXMock):
     transport = AsyncTransport()
 
     httpx_mock.add_response(
-        url="http://tests.python-zeep.org/test.xml", data="x", status_code=500
+        url="http://tests.python-zeep.org/test.xml", text="x", status_code=500
     )
     with pytest.raises(exceptions.TransportError) as exc:
         transport.load("http://tests.python-zeep.org/test.xml")
