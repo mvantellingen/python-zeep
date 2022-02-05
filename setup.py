@@ -29,7 +29,7 @@ tests_require = [
     "freezegun==0.3.15",
     "pretend==1.0.9",
     "pytest-cov==2.8.1",
-    "pytest-httpx",
+    "pytest-httpx>=0.14",
     "pytest-asyncio",
     "pytest==6.2.5",
     "requests_mock>=0.7.0",
