@@ -55,6 +55,9 @@ setup(
     author="Michael van Tellingen",
     author_email="michaelvantellingen@gmail.com",
     url="https://docs.python-zeep.org",
+    project_urls={
+        "Source": "https://github.com/mvantellingen/python-zeep",
+    },
     python_requires=">=3.6",
     install_requires=install_requires,
     tests_require=tests_require,
