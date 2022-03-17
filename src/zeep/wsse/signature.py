@@ -94,17 +94,25 @@ class Signature(MemorySignature):
         )
 
 
-class BinarySignature(Signature):
-    """Sign given SOAP envelope with WSSE sig using given key file and cert file.
-
-    Place the key information into BinarySecurityElement."""
-
+class _BinarySignatureMixin:
     def apply(self, envelope, headers):
         key = _make_sign_key(self.key_data, self.cert_data, self.password)
         _sign_envelope_with_key_binary(
             envelope, key, self.signature_method, self.digest_method
         )
         return envelope, headers
+
+
+class BinaryMemorySignature(_BinarySignatureMixin, MemorySignature):
+    """Sign given SOAP envelope with WSSE sig using given key and cert.
+
+    Place the key information into BinarySecurityElement."""
+
+
+class BinarySignature(_BinarySignatureMixin, Signature):
+    """Sign given SOAP envelope with WSSE sig using given key file and cert file.
+
+    Place the key information into BinarySecurityElement."""
 
 
 def check_xmlsec_import():
