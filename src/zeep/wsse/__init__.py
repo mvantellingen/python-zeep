@@ -1,3 +1,5 @@
-from .compose import Compose  # noqa
-from .signature import BinarySignature, MemorySignature, Signature  # noqa
-from .username import UsernameToken  # noqa
+from .compose import Compose as Compose  # noqa
+from .signature import BinarySignature as BinarySignature  # noqa
+from .signature import MemorySignature as MemorySignature  # noqa
+from .signature import Signature as Signature  # noqa
+from .username import UsernameToken as UsernameToken  # noqa

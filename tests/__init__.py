@@ -1,2 +1,2 @@
-from zeep.client import Client  # noqa
-from zeep.exceptions import Fault  # noqa
+from zeep.client import Client as Client  # noqa
+from zeep.exceptions import Fault as Fault  # noqa
