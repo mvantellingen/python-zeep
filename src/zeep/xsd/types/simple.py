@@ -7,6 +7,7 @@ from zeep.exceptions import ValidationError
 from zeep.xsd.const import Nil, xsd_ns, xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.types.any import AnyType
+from zeep.xsd.types.facets import Facets
 from zeep.xsd.valueobjects import CompoundValue
 
 if typing.TYPE_CHECKING:
@@ -21,6 +22,8 @@ __all__ = ["AnySimpleType"]
 
 class AnySimpleType(AnyType):
     _default_qname = xsd_ns("anySimpleType")
+
+    facets = Facets()
 
     def __init__(self, qname=None, is_global=False):
         super().__init__(qname or etree.QName(self._default_qname), is_global)
