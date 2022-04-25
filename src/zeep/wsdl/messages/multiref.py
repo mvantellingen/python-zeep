@@ -10,7 +10,7 @@ def process_multiref(node):
     with the elements it's referencing to (which have an id attribute).abs
 
     """
-    multiref_objects = {elm.attrib["id"]: elm for elm in node.xpath("*[@id]")}
+    multiref_objects = {elm.attrib["id"]: elm for elm in node.xpath("//*[@id]")}
     if not multiref_objects:
         return
 
@@ -20,7 +20,6 @@ def process_multiref(node):
         """Recursive"""
         # TODO (In Soap 1.2 this is 'ref')
         href = node.attrib.get("href")
-
         if href and href.startswith("#"):
             obj = multiref_objects.get(href[1:])
             if obj is not None:
@@ -36,7 +35,8 @@ def process_multiref(node):
     for node in used_nodes:
         parent = node.getparent()
         if parent is not None:
-            parent.remove(node)
+            # parent.remove(node)
+            continue
 
 
 def _dereference_element(source, target):
