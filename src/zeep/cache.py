@@ -60,7 +60,7 @@ class VersionedCacheBase(Base):
         assert (
             getattr(self, "_version", None) is not None
         ), "A version must be provided in order to use the VersionedCacheBase backend."
-        prefix = u"$ZEEP:%s$" % self._version
+        prefix = "$ZEEP:%s$" % self._version
         return bytes(prefix.encode("ascii"))
 
 

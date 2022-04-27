@@ -179,7 +179,7 @@ class SoapBinding(Binding):
 
         elif response.status_code != 200 and not response.content:
             raise TransportError(
-                u"Server returned HTTP status %d (no content available)"
+                "Server returned HTTP status %d (no content available)"
                 % response.status_code,
                 status_code=response.status_code,
             )
