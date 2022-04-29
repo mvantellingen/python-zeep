@@ -21,11 +21,15 @@ def parse_arguments(args=None):
     parser.add_argument(
         "wsdl_file", type=str, help="Path or URL to the WSDL file", default=None
     )
-    parser.add_argument("--cache", action="store_true", help="Enable cache")
+    parser.add_argument(
+        "--cache", action="store_true", help="Enable cache"
+    )
     parser.add_argument(
         "--no-verify", action="store_true", help="Disable SSL verification"
     )
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
+    parser.add_argument(
+        "--verbose", action="store_true", help="Enable verbose output"
+    )
     parser.add_argument(
         "--profile", help="Enable profiling and save output to given file"
     )
