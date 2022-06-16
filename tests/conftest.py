@@ -2,10 +2,6 @@ import sys
 
 import pytest
 
-# Don't try to test asyncio since it is py3 only syntax
-if sys.version_info < (3, 5):
-    collect_ignore = ["test_asyncio_transport.py"]
-
 pytest.register_assert_rewrite("tests.utils")
 
 

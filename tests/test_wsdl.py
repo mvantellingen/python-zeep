@@ -3,12 +3,12 @@ from io import StringIO
 
 import pytest
 import requests_mock
-from exceptions import DTDForbidden, EntitiesForbidden
 from lxml import etree
 from pretend import stub
 
 from tests.utils import DummyTransport, assert_nodes_equal
 from zeep import Client, Settings, wsdl
+from zeep.exceptions import DTDForbidden, EntitiesForbidden
 from zeep.transports import Transport
 
 

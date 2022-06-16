@@ -3,11 +3,11 @@ import re
 from setuptools import setup
 
 install_requires = [
-    "appdirs>=1.4.0",
     "attrs>=17.2.0",
-    "cached-property>=1.3.0",
+    "cached-property>=1.3.0; python_version<'3.8'",
     "isodate>=0.5.4",
     "lxml>=4.6.0",
+    "platformdirs>=1.4.0",
     "requests>=2.7.0",
     "requests-toolbelt>=0.7.1",
     "requests-file>=1.5.1",
@@ -27,12 +27,11 @@ xmlsec_require = [
 tests_require = [
     "coverage[toml]==5.2.1",
     "freezegun==0.3.15",
-    "mock==2.0.0",
     "pretend==1.0.9",
     "pytest-cov==2.8.1",
     "pytest-httpx",
     "pytest-asyncio",
-    "pytest==6.0.1",
+    "pytest==6.2.5",
     "requests_mock>=0.7.0",
     # Linting
     "isort==5.3.2",
@@ -50,12 +49,12 @@ with open("README.rst") as fh:
 
 setup(
     name="zeep",
-    version="4.0.0",
+    version="4.1.0",
     description="A modern/fast Python SOAP client based on lxml / requests",
     long_description=long_description,
     author="Michael van Tellingen",
     author_email="michaelvantellingen@gmail.com",
-    url="http://docs.python-zeep.org",
+    url="https://docs.python-zeep.org",
     python_requires=">=3.6",
     install_requires=install_requires,
     tests_require=tests_require,
@@ -74,10 +73,12 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
     ],

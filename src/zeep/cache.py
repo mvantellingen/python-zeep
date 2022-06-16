@@ -7,7 +7,7 @@ import threading
 import typing
 from contextlib import contextmanager
 
-import appdirs
+import platformdirs
 import pytz
 
 # The sqlite3 is not available on Google App Engine so we handle the
@@ -176,7 +176,7 @@ def _is_expired(value, timeout):
 
 
 def _get_default_cache_path():
-    path = appdirs.user_cache_dir("zeep", False)
+    path = platformdirs.user_cache_dir("zeep", False)
     try:
         os.makedirs(path)
     except OSError as exc:

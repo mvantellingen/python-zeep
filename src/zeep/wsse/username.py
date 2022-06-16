@@ -2,8 +2,6 @@ import base64
 import hashlib
 import os
 
-import six
-
 from zeep import ns
 from zeep.wsse import utils
 
@@ -108,7 +106,7 @@ class UsernameToken:
             nonce = os.urandom(16)
         timestamp = utils.get_timestamp(self.created, self.zulu_timestamp)
 
-        if isinstance(self.password, six.string_types):
+        if isinstance(self.password, str):
             password = self.password.encode("utf-8")
         else:
             password = self.password
