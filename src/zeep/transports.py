@@ -218,7 +218,7 @@ class AsyncTransport(Transport):
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
         response = await self.client.post(
             address,
-            data=message,
+            content=message,
             headers=headers,
         )
         self.logger.debug(
