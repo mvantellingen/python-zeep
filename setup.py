@@ -18,7 +18,7 @@ docs_require = [
     "sphinx>=1.4.0",
 ]
 
-async_require = ["httpx"]
+async_require = ["httpx>=0.15.0"]
 
 xmlsec_require = [
     "xmlsec>=0.6.1",
