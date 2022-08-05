@@ -5,11 +5,20 @@ import requests_mock
 
 from tests.utils import load_xml
 from zeep import client, xsd
+from zeep.wsdl import Document
+from zeep.transports import Transport
 from zeep.exceptions import Error
 
 
 def test_bind():
     client_obj = client.Client("tests/wsdl_files/soap.wsdl")
+    service = client_obj.bind()
+    assert service
+
+
+def test_bind_existing_document():
+    wsdl = Document("tests/wsdl_files/soap.wsdl", transport=Transport())
+    client_obj = client.Client(wsdl)
     service = client_obj.bind()
     assert service
 

@@ -38,7 +38,7 @@ class Factory:
 class Client:
     """The zeep Client.
 
-    :param wsdl:
+    :param wsdl: Url/local WSDL location or preparsed WSDL Document
     :param wsse:
     :param transport: Custom transport class.
     :param service_name: The service name for the service binding. Defaults to
@@ -70,7 +70,10 @@ class Client:
         self.transport = (
             transport if transport is not None else self._default_transport()
         )
-        self.wsdl = Document(wsdl, self.transport, settings=self.settings)
+        if isinstance(wsdl, Document):
+            self.wsdl = wsdl
+        else:
+            self.wsdl = Document(wsdl, self.transport, settings=self.settings)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
 
