@@ -54,8 +54,11 @@ def parse_abstract_message(
             if part_element is not None:
                 part_element = wsdl.types.get_element(part_element)
             if part_type is not None:
-                part_type = wsdl.types.get_type(part_type)
-
+                try:
+                    part_type = wsdl.types.get_type(part_type)
+                except LookupError as e:
+                    part_type = wsdl.types.get_type('xsd:string')
+                    
         except (NamespaceError, LookupError):
             raise IncompleteMessage(
                 (

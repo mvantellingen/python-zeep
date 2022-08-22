@@ -526,6 +526,9 @@ class SchemaDocument:
         try:
             return items[qname]
         except KeyError:
+            if str(qname) == '{http://www.w3.org/2001/XMLSchema}json':
+                return items['{http://www.w3.org/2001/XMLSchema}string']
+
             known_items = ", ".join(items.keys())
             raise exceptions.LookupError(
                 (
