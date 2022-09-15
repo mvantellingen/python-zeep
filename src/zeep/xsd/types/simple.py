@@ -93,7 +93,7 @@ class AnySimpleType(AnyType):
         if value is Nil:
             node.set(xsi_ns("nil"), "true")
             return
-        node.text = self.xmlvalue(value)
+        node.text = value if isinstance(value, etree.CDATA) else self.xmlvalue(value)
 
     def signature(self, schema=None, standalone=True):
         return self.get_prefixed_name(schema)
