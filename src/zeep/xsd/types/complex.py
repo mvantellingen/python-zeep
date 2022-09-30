@@ -1,12 +1,14 @@
 import copy
 import logging
+import sys
 import typing
 from collections import OrderedDict, deque
 from itertools import chain
+from typing import Optional
 
-try:
+if sys.version_info >= (3, 8):
     from functools import cached_property as threaded_cached_property
-except ImportError:
+else:
     from cached_property import threaded_cached_property
 
 from lxml import etree
@@ -32,10 +34,14 @@ from zeep.xsd.valueobjects import ArrayValue, CompoundValue
 if typing.TYPE_CHECKING:
     from zeep.xsd.schema import Schema
     from zeep.xsd.types.base import Type
+else:
+    Schema = Type = None
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["ComplexType"]
+# Recursive alias
+_ObjectList = typing.List[typing.Union[CompoundValue, None, _ObjectList]]
 
 
 class ComplexType(AnyType):
@@ -166,10 +172,10 @@ class ComplexType(AnyType):
     def parse_xmlelement(
         self,
         xmlelement: etree._Element,
-        schema: "Schema" = None,
+        schema: Optional[Schema] = None,
         allow_none: bool = True,
         context: XmlParserContext = None,
-        schema_type: "Type" = None,
+        schema_type: Optional[Type] = None,
     ) -> typing.Optional[typing.Union[str, CompoundValue, typing.List[etree._Element]]]:
         """Consume matching xmlelements and call parse() on each
 
@@ -217,7 +223,7 @@ class ComplexType(AnyType):
 
             # Check if all children are consumed (parsed)
             if elements:
-                if schema.settings.strict:
+                if schema and schema.settings.strict:
                     raise XMLParseError("Unexpected element %r" % elements[0].tag)
                 else:
                     init_kwargs["_raw_elements"] = elements
@@ -333,8 +339,8 @@ class ComplexType(AnyType):
         return {}
 
     def _create_object(
-        self, value: typing.Union[list, dict, CompoundValue], name: str
-    ) -> typing.Optional[CompoundValue]:
+        self, value: typing.Union[list, dict, CompoundValue, None], name: str
+    ) -> typing.Union[CompoundValue, None, _ObjectList]:
         """Return the value as a CompoundValue object
 
         :type value: str

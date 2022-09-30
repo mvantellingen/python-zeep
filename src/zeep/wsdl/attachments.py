@@ -5,10 +5,11 @@ See https://www.w3.org/TR/SOAP-attachments
 """
 
 import base64
+import sys
 
-try:
+if sys.version_info >= (3, 8):
     from functools import cached_property
-except ImportError:
+else:
     from cached_property import cached_property
 
 from requests.structures import CaseInsensitiveDict

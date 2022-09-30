@@ -32,7 +32,7 @@ def test_load():
 
 
 @pytest.mark.skipif(os.name != "nt", reason="test valid for windows platform only")
-def test_load_file():
+def test_load_file_windows():
     cache = stub(get=lambda url: None, add=lambda url, content: None)
     transport = transports.Transport(cache=cache)
     with patch("io.open", mock_open(read_data=b"x")) as m_open:
@@ -42,7 +42,7 @@ def test_load_file():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="test valid for unix platform only")
-def test_load_file():
+def test_load_file_unix():
     cache = stub(get=lambda url: None, add=lambda url, content: None)
     transport = transports.Transport(cache=cache)
     with patch("io.open", mock_open(read_data=b"x")) as m_open:

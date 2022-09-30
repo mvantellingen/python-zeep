@@ -13,12 +13,13 @@ All, Choice, Group and Sequence.
 """
 import copy
 import operator
+import sys
 import typing
 from collections import OrderedDict, defaultdict, deque
 
-try:
+if sys.version_info >= (3, 8):
     from functools import cached_property as threaded_cached_property
-except ImportError:
+else:
     from cached_property import threaded_cached_property
 
 from lxml import etree

@@ -3,7 +3,7 @@ from zeep import Client, xsd
 API_KEY_TEST = 'YOUR_OWN_API_KEY'
 WSDL_TEST = 'https://apitest.trafficvance.com/?v3=system.wsdl'
 
-client = Client(WSDL)
+client = Client(WSDL_TEST)
 header = xsd.Element(
     '{WSDL_TEST}AuthenticateRequest',
     xsd.ComplexType([
