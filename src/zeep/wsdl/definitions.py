@@ -25,6 +25,8 @@ from zeep.exceptions import IncompleteOperation
 
 if typing.TYPE_CHECKING:
     from zeep.wsdl.wsdl import Definition
+else:
+    Definition = None
 
 MessagePart = namedtuple("MessagePart", ["element", "type"])
 
@@ -134,7 +136,7 @@ class Binding:
         self.wsdl = wsdl
         self._operations = {}
 
-    def resolve(self, definitions: "Definition") -> None:
+    def resolve(self, definitions: Definition) -> None:
         self.port_type = definitions.get("port_types", self.port_name.text)
 
         for name, operation in list(self._operations.items()):

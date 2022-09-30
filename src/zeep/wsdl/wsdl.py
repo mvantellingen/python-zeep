@@ -181,8 +181,8 @@ class Definition:
         self.types = wsdl.types
         self.port_types = {}
         self.messages = {}
-        self.bindings = {}  # type: typing.Dict[str, typing.Type[Binding]]
-        self.services = OrderedDict()  # type: typing.Dict[str, Service]
+        self.bindings: typing.Dict[str, Binding] = {}
+        self.services: typing.Dict[str, Service] = OrderedDict()
 
         self.imports = {}
         self._resolved_imports = False

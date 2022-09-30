@@ -9,7 +9,11 @@ from tests.utils import load_xml
 from zeep import ns, wsse
 from zeep.exceptions import SignatureVerificationFailed
 from zeep.wsse import signature
-from zeep.wsse.signature import xmlsec as xmlsec_installed
+
+try:
+    import xmlsec
+except ImportError:
+    xmlsec = None
 
 KEY_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "cert_valid.pem")
 KEY_FILE_PW = os.path.join(
@@ -30,7 +34,7 @@ DIGEST_METHODS_TESTDATA = (
 skip_if_no_xmlsec = pytest.mark.skipif(
     sys.platform == "win32", reason="does not run on windows"
 ) and pytest.mark.skipif(
-    xmlsec_installed is None, reason="xmlsec library not installed"
+    xmlsec is None, reason="xmlsec library not installed"
 )
 
 
@@ -77,8 +81,8 @@ def test_sign_timestamp_if_present(
         KEY_FILE,
         KEY_FILE,
         None,
-        signature_method=getattr(xmlsec_installed.Transform, signature_method),
-        digest_method=getattr(xmlsec_installed.Transform, digest_method),
+        signature_method=getattr(xmlsec.Transform, signature_method),
+        digest_method=getattr(xmlsec.Transform, digest_method),
     )
     signature.verify_envelope(envelope, KEY_FILE)
     digests = envelope.xpath("//ds:DigestMethod", namespaces={"ds": ns.DS})
@@ -120,8 +124,8 @@ def test_sign(
         envelope,
         KEY_FILE,
         KEY_FILE,
-        signature_method=getattr(xmlsec_installed.Transform, signature_method),
-        digest_method=getattr(xmlsec_installed.Transform, digest_method),
+        signature_method=getattr(xmlsec.Transform, signature_method),
+        digest_method=getattr(xmlsec.Transform, digest_method),
     )
     signature.verify_envelope(envelope, KEY_FILE)
 
@@ -240,8 +244,8 @@ def test_signature_binary(
         KEY_FILE_PW,
         KEY_FILE_PW,
         "geheim",
-        signature_method=getattr(xmlsec_installed.Transform, signature_method),
-        digest_method=getattr(xmlsec_installed.Transform, digest_method),
+        signature_method=getattr(xmlsec.Transform, signature_method),
+        digest_method=getattr(xmlsec.Transform, digest_method),
     )
     envelope, headers = plugin.apply(envelope, {})
     plugin.verify(envelope)
