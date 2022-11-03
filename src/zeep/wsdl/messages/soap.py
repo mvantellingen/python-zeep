@@ -116,21 +116,26 @@ class SoapMessage(ConcreteMessage):
             return result
 
         result = result.body
-        if result is None or len(result) == 0:
-            return None
-        elif len(result) > 1:
-            return result
-
+        try:
+            if result is None or len(result) == 0:
+                return None
+            elif len(result) > 1:
+                return result
+        except Exception:
+            pass
         # Check if we can remove the wrapping object to make the return value
         # easier to use.
-        result = next(iter(result.__values__.values()))
-        if isinstance(result, xsd.CompoundValue):
-            children = result._xsd_type.elements
-            attributes = result._xsd_type.attributes
-            if len(children) == 1 and len(attributes) == 0:
-                item_name, item_element = children[0]
-                retval = getattr(result, item_name)
-                return retval
+        try:
+            result = next(iter(result.__values__.values()))
+            if isinstance(result, xsd.CompoundValue):
+                children = result._xsd_type.elements
+                attributes = result._xsd_type.attributes
+                if len(children) == 1 and len(attributes) == 0:
+                    item_name, item_element = children[0]
+                    retval = getattr(result, item_name)
+                    return retval
+        except Exception:
+            pass
         return result
 
     def signature(self, as_output=False):
