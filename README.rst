@@ -23,6 +23,10 @@ http://docs.python-zeep.org/
 Status
 ------
 
+
+**I consider this library to be stable. Since no new developments happen around the SOAP specification it won't be updated that much. Good PR's which fix bugs are always welcome however.**
+
+
 .. image:: https://readthedocs.org/projects/python-zeep/badge/?version=latest
     :target: https://readthedocs.org/projects/python-zeep/
 
