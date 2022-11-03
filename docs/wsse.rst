@@ -26,7 +26,7 @@ platform.
 
 To append the security token as `BinarySecurityToken`, you can use wsse.BinarySignature() plugin.
 
-Example usage::
+Example usage A::
 
     >>> from zeep import Client
     >>> from zeep.wsse.signature import Signature
@@ -36,7 +36,19 @@ Example usage::
     ...         private_key_filename, public_key_filename, 
     ...         optional_password))
 
+Example usage B::
 
+    >>> from zeep import Client
+    >>> from zeep.wsse.signature import Signature
+    >>> from zeep.transports import Transport
+    >>> from requests import Session
+    >>> session = Session()
+    >>> session.cert = '/path/to/ssl.pem'
+    >>> transport = Transport(session=session)
+    >>> client = Client(
+    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
+    ...     transport=transport)
+    
 .. _xmlsec: https://pypi.python.org/pypi/xmlsec
 .. _README: https://github.com/mehcode/python-xmlsec
 

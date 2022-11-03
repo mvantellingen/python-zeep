@@ -65,14 +65,15 @@ class Settings:
             current[key] = getattr(self, key)
             setattr(self._tls, key, value)
 
-        yield
-
-        for key, value in current.items():
-            default = getattr(self, key)
-            if value == default:
-                delattr(self._tls, key)
-            else:
-                setattr(self._tls, key, value)
+        try:
+            yield
+        finally:
+            for key, value in current.items():
+                default = getattr(self, key)
+                if value == default:
+                    delattr(self._tls, key)
+                else:
+                    setattr(self._tls, key, value)
 
     def __getattribute__(self, key):
         if key != "_tls" and hasattr(self._tls, key):

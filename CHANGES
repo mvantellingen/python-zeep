@@ -1,3 +1,27 @@
+4.2.0 (2022-111-03)
+-------------------
+ - Drop support for Python 3.6
+ - Allow embedding CDATA elements in simple types (#1339)
+ - Allow to pass in a pre parsed Document (#1330)
+ - Fix httpx DeprecationWarning for post data (#1326)
+ - Add BinaryMemorySignature (#1300)
+ - Fix IndexError when empty body response (#1287)
+ - Add support for context manager on Client (#1166)
+ - Allow Ws Addressing plugin to use a different URL (#1328)
+ - Accept strings for xsd base64Binary (#1072)
+
+
+4.1.0 (2021-08-15)
+------------------
+ - Remove last dependency on `six` (#1250)
+ - Use `platformdirs` instead of the `appsdirs` dependency (#1244)
+ - Pass digest method when signing timestamp node(#1201)
+ - Fix settings context manager when an exception is raised (#1193)
+ - Don't render decimals using scientific notation (#1191)
+ - Remove dependency on `defusedxml` (deprecated) (#1179)
+ - Improve handling of str values for Duration (#1165)
+
+
 4.0.0 (2020-10-12)
 ------------------
  - Drop support for Python 2.7, 3.3, 3.4 and 3.5

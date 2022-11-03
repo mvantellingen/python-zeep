@@ -7,6 +7,7 @@ include CHANGES
 include CONTRIBUTORS.rst
 include LICENSE
 include README.rst
+include pyproject.toml
 include setup.cfg
 include setup.py
 

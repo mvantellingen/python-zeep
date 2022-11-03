@@ -83,6 +83,9 @@ class TestDecimal:
         assert instance.xmlvalue(D("10.000002")) == "10.000002"
         assert instance.xmlvalue(D("10")) == "10"
         assert instance.xmlvalue(D("-10")) == "-10"
+        assert instance.xmlvalue(D("1.1E-3")) == "0.0011"
+        assert instance.xmlvalue(D("1.1E+3")) == "1100"
+        assert instance.xmlvalue(D("1.100000000000002E-3")) == "0.001100000000000002"
 
     def test_pythonvalue(self):
         instance = builtins.Decimal()
@@ -136,6 +139,10 @@ class TestDuration:
         instance = builtins.Duration()
         value = isodate.parse_duration("P0Y1347M0D")
         assert instance.xmlvalue(value) == "P1347M"
+        assert instance.xmlvalue("P0Y1347M0D") == "P1347M"
+        assert instance.xmlvalue(datetime.timedelta(days=1347)) == "P1347D"
+        with pytest.raises(ValueError):
+            instance.xmlvalue("P15T")
 
     def test_pythonvalue(self):
         instance = builtins.Duration()
@@ -373,6 +380,7 @@ class TestBase64Binary:
     def test_xmlvalue(self):
         instance = builtins.Base64Binary()
         assert instance.xmlvalue(b"hoi") == b"aG9p"
+        assert instance.xmlvalue("aG9p") == "aG9p"
 
     def test_pythonvalue(self):
         instance = builtins.Base64Binary()

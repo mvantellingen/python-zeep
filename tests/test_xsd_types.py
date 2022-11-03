@@ -115,7 +115,7 @@ def test_simpletype_call_wrong_kwarg():
 
 def test_simpletype_str():
     item = types.AnySimpleType()
-    item.name = u"foobar"
+    item.name = "foobar"
     assert str(item) == "AnySimpleType(value)"
 
 

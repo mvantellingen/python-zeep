@@ -167,7 +167,7 @@ def test_serialize_any_array():
 def test_create_xml_soap_map():
     data = OrderedDict(
         [
-            ("text", u"String"),
+            ("text", "String"),
             ("bytes", b"Bytes"),
             ("boolean", True),
             ("integer", 100),

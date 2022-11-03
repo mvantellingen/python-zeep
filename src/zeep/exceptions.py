@@ -91,3 +91,26 @@ class IncompleteMessage(Error):
 
 class IncompleteOperation(Error):
     pass
+
+
+class DTDForbidden(Error):
+    def __init__(self, name, sysid, pubid):
+        super(DTDForbidden, self).__init__()
+        self.name = name
+        self.sysid = sysid
+        self.pubid = pubid
+
+    def __str__(self):
+        tpl = "DTDForbidden(name='{}', system_id={!r}, public_id={!r})"
+        return tpl.format(self.name, self.sysid, self.pubid)
+
+
+class EntitiesForbidden(Error):
+    def __init__(self, name, content):
+        super(EntitiesForbidden, self).__init__()
+        self.name = name
+        self.content = content
+
+    def __str__(self):
+        tpl = "EntitiesForbidden(name='{}', content={!r})"
+        return tpl.format(self.name, self.content)
