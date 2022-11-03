@@ -8,6 +8,7 @@
  - Fix IndexError when empty body response (#1287)
  - Add support for context manager on Client (#1166)
  - Allow Ws Addressing plugin to use a different URL (#1328)
+ - Accept strings for xsd base64Binary (#1072)
 
 
 4.1.0 (2021-08-15)
