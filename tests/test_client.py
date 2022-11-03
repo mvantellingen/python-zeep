@@ -5,9 +5,9 @@ import requests_mock
 
 from tests.utils import load_xml
 from zeep import client, xsd
-from zeep.wsdl import Document
-from zeep.transports import Transport
 from zeep.exceptions import Error
+from zeep.transports import Transport
+from zeep.wsdl import Document
 
 
 def test_bind():

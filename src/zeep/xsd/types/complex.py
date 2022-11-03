@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import logging
 import sys
@@ -41,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["ComplexType"]
 # Recursive alias
-_ObjectList = typing.List[typing.Union[CompoundValue, None, _ObjectList]]
+_ObjectList = typing.List[typing.Union[CompoundValue, None, "_ObjectList"]]
 
 
 class ComplexType(AnyType):

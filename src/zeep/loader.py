@@ -68,7 +68,9 @@ def parse_xml(content: str, transport, base_url=None, settings=None):
         )
 
 
-def load_external(url: typing.Union[typing.IO, str], transport, base_url=None, settings=None):
+def load_external(
+    url: typing.Union[typing.IO, str], transport, base_url=None, settings=None
+):
     """Load an external XML document.
 
     :param url:

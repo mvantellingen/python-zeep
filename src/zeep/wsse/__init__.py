@@ -1,3 +1,11 @@
-from .compose import Compose as Compose  # noqa
-from .signature import BinarySignature as BinarySignature, MemorySignature as MemorySignature, Signature as Signature  # noqa
-from .username import UsernameToken as UsernameToken  # noqa
+from .compose import Compose
+from .signature import BinarySignature, MemorySignature, Signature
+from .username import UsernameToken
+
+__all__ = [
+    "Compose",
+    "BinarySignature",
+    "MemorySignature",
+    "Signature",
+    "UsernameToken",
+]

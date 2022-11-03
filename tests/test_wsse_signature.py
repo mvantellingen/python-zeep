@@ -33,9 +33,7 @@ DIGEST_METHODS_TESTDATA = (
 
 skip_if_no_xmlsec = pytest.mark.skipif(
     sys.platform == "win32", reason="does not run on windows"
-) and pytest.mark.skipif(
-    xmlsec is None, reason="xmlsec library not installed"
-)
+) and pytest.mark.skipif(xmlsec is None, reason="xmlsec library not installed")
 
 
 @skip_if_no_xmlsec
