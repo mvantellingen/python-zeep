@@ -51,7 +51,7 @@ class Client:
 
     """
 
-    _default_transport = typing.Union[Transport, AsyncTransport]
+    _default_transport: typing.Union[Transport, AsyncTransport] = Transport
 
     def __init__(
         self,
