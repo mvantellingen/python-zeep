@@ -24,10 +24,7 @@ jobs:
       max-parallel: 4
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
-        # TODO: Remove Windows exclusion when binary wheel available for lxml
-        exclude:
-          - { platform: windows-latest, python-version: "3.10" }
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
 
     steps:
     - name: Install system dependencies
