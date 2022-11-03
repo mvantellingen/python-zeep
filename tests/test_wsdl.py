@@ -935,7 +935,7 @@ def test_wsdl_duplicate_tns(recwarn):
 
 
 def test_wsdl_dtd_entities_rules():
-    wsdl_declaration = u"""<!DOCTYPE Author [
+    wsdl_declaration = """<!DOCTYPE Author [
         <!ENTITY writer "Donald Duck.">
         ]>
         <wsdl:definitions
