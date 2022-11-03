@@ -4,7 +4,7 @@ from zeep.settings import Settings
 from zeep.transports import Transport
 from zeep.xsd.valueobjects import AnyObject
 
-__version__ = "4.1.0"
+__version__ = "4.2.0"
 __all__ = [
     "AsyncClient",
     "CachingClient",
