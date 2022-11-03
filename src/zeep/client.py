@@ -218,7 +218,8 @@ class Client:
         return self
 
     def __exit__(self, exc_type=None, exc_value=None, traceback=None):
-        self.transport.close()
+        if hasattr(self.transport, "close"):
+            self.transport.close()
 
 
 class AsyncClient(Client):
