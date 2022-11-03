@@ -53,8 +53,8 @@ def test_service_proxy_non_existing():
 
 
 def test_context_manager():
-    with client.Client("tests/wsdl_files/soap.wsdl") as client:
-        assert client
+    with client.Client("tests/wsdl_files/soap.wsdl") as c:
+        assert c
 
 
 def test_service_proxy_dir_operations():
