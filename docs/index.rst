@@ -2,7 +2,7 @@
 Zeep: Python SOAP client
 ========================
 
-A fast and modern Python SOAP client
+A Python SOAP client
 
 Highlights:
  * Compatible with Python 3.7, 3.8, 3.9, 3.10, 3.11 and PyPy
