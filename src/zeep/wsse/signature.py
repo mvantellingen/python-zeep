@@ -49,8 +49,7 @@ class MemorySignature:
         self,
         key_data,
         cert_data,
-        cert_public_key_verify,
-        verify_response=True,
+        cert_public_to_verify_response=None,
         password=None,
         signature_method=None,
         digest_method=None,
@@ -59,8 +58,7 @@ class MemorySignature:
 
         self.key_data = key_data
         self.cert_data = cert_data
-        self.cert_public_key_verify = cert_public_key_verify
-        self.verify_response=verify_response
+        self.cert_public_to_verify_response = cert_public_to_verify_response
         self.password = password
         self.digest_method = digest_method
         self.signature_method = signature_method
@@ -73,8 +71,8 @@ class MemorySignature:
         return envelope, headers
 
     def verify(self, envelope):
-        if self.verify_response:
-            key = _make_verify_key(self.cert_public_key_verify)
+        if self.cert_public_to_verify_response:
+            key = _make_verify_key(self.cert_public_to_verify_response)
             _verify_envelope_with_key(envelope, key)
         return envelope
 
@@ -86,17 +84,17 @@ class Signature(MemorySignature):
         self,
         key_file,
         certfile,
-        cert_public_key_verify_file,
-        verify_response=True,
+        cert_public_to_verify_response=None,
         password=None,
         signature_method=None,
         digest_method=None,
     ):
+        if cert_public_to_verify_response:
+            cert_public_to_verify_response = _read_file(cert_public_to_verify_response)
         super().__init__(
             _read_file(key_file),
             _read_file(certfile),
-            _read_file(cert_public_key_verify_file),
-            verify_response,
+            cert_public_to_verify_response,
             password,
             signature_method,
             digest_method,
