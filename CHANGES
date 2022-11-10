@@ -1,4 +1,8 @@
-4.2.0 (2022-111-03)
+4.2.1 (2022-11-10)
+-------------------
+ - Fix error regarding closing session in async transport (#1347)
+
+4.2.0 (2022-11-03)
 -------------------
  - Drop support for Python 3.6
  - Allow embedding CDATA elements in simple types (#1339)

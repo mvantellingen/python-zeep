@@ -37,7 +37,7 @@ class Transport:
         self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)
 
-        self.__close_session = not session
+        self._close_session = not session
         self.session = session or requests.Session()
         self.session.mount("file://", FileAdapter())
         self.session.headers["User-Agent"] = "Zeep/%s (www.python-zeep.org)" % (
@@ -156,7 +156,7 @@ class Transport:
         self.operation_timeout = old_timeout
 
     def __del__(self):
-        if self.__close_session:
+        if self._close_session:
             self.session.close()
 
 
@@ -181,6 +181,7 @@ class AsyncTransport(Transport):
         if httpx is None:
             raise RuntimeError("The AsyncTransport is based on the httpx module")
 
+        self._close_session = False
         self.cache = cache
         self.wsdl_client = wsdl_client or httpx.Client(
             verify=verify_ssl,
