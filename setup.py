@@ -49,7 +49,7 @@ with open("README.rst") as fh:
 
 setup(
     name="zeep",
-    version="4.2.0",
+    version="4.2.1",
     description="A Python SOAP client",
     long_description=long_description,
     author="Michael van Tellingen",
