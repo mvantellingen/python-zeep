@@ -42,7 +42,7 @@ def _make_verify_key(cert_data):
     return key
 
 
-class MemorySignature(object):
+class MemorySignature:
     """Sign given SOAP envelope with WSSE sig using given key and cert."""
 
     def __init__(
@@ -85,7 +85,7 @@ class Signature(MemorySignature):
         signature_method=None,
         digest_method=None,
     ):
-        super(Signature, self).__init__(
+        super().__init__(
             _read_file(key_file),
             _read_file(certfile),
             password,
@@ -244,7 +244,7 @@ def _signature_prepare(envelope, key, signature_method, digest_method):
     _sign_node(ctx, signature, envelope.find(QName(soap_env, "Body")), digest_method)
     timestamp = security.find(QName(ns.WSU, "Timestamp"))
     if timestamp != None:
-        _sign_node(ctx, signature, timestamp)
+        _sign_node(ctx, signature, timestamp, digest_method)
     ctx.sign(signature)
 
     # Place the X509 data inside a WSSE SecurityTokenReference within

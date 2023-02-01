@@ -1,9 +1,19 @@
+import typing
+
+from lxml import etree
+
+from zeep.xsd.context import XmlParserContext
 from zeep.xsd.utils import create_prefixed_name
+from zeep.xsd.valueobjects import CompoundValue
+
+if typing.TYPE_CHECKING:
+    from zeep.xsd.schema import Schema
+    from zeep.xsd.types.complex import ComplexType
 
 __all__ = ["Type"]
 
 
-class Type(object):
+class Type:
     def __init__(self, qname=None, is_global=False):
         self.qname = qname
         self.name = qname.localname if qname else None
@@ -17,8 +27,8 @@ class Type(object):
         raise NotImplementedError
 
     @property
-    def accepted_types(self):
-        return tuple()
+    def accepted_types(self) -> typing.List[typing.Type]:
+        return []
 
     def validate(self, value, required=False):
         return
@@ -34,8 +44,13 @@ class Type(object):
         return {}
 
     def parse_xmlelement(
-        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
-    ):
+        self,
+        xmlelement: etree._Element,
+        schema: "Schema" = None,
+        allow_none: bool = True,
+        context: XmlParserContext = None,
+        schema_type: "Type" = None,
+    ) -> typing.Optional[typing.Union[str, CompoundValue, typing.List[etree._Element]]]:
         raise NotImplementedError(
             "%s.parse_xmlelement() is not implemented" % self.__class__.__name__
         )
@@ -43,7 +58,13 @@ class Type(object):
     def parsexml(self, xml, schema=None):
         raise NotImplementedError
 
-    def render(self, parent, value, xsd_type=None, render_path=None):
+    def render(
+        self,
+        node: etree._Element,
+        value: typing.Union[list, dict, CompoundValue],
+        xsd_type: "ComplexType" = None,
+        render_path=None,
+    ) -> None:
         raise NotImplementedError(
             "%s.render() is not implemented" % self.__class__.__name__
         )

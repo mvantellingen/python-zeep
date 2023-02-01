@@ -1,7 +1,16 @@
-from zeep.client import CachingClient, Client  # noqa
-from zeep.transports import Transport  # noqa
-from zeep.plugins import Plugin  # noqa
-from zeep.settings import Settings  # noqa
-from zeep.xsd.valueobjects import AnyObject  # noqa
+from zeep.client import AsyncClient, CachingClient, Client
+from zeep.plugins import Plugin
+from zeep.settings import Settings
+from zeep.transports import Transport
+from zeep.xsd.valueobjects import AnyObject
 
-__version__ = "3.4.0"
+__version__ = "4.2.1"
+__all__ = [
+    "AsyncClient",
+    "CachingClient",
+    "Client",
+    "Plugin",
+    "Settings",
+    "Transport",
+    "AnyObject",
+]

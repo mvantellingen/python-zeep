@@ -15,17 +15,23 @@
     This module defines the definitions which occur within a WSDL document,
 
 """
+import typing
 import warnings
 from collections import OrderedDict, namedtuple
 
-from six import python_2_unicode_compatible
+from lxml import etree
 
 from zeep.exceptions import IncompleteOperation
+
+if typing.TYPE_CHECKING:
+    from zeep.wsdl.wsdl import Definition
+else:
+    Definition = None
 
 MessagePart = namedtuple("MessagePart", ["element", "type"])
 
 
-class AbstractMessage(object):
+class AbstractMessage:
     """Messages consist of one or more logical parts.
 
     Each part is associated with a type from some type system using a
@@ -52,7 +58,7 @@ class AbstractMessage(object):
         self.parts[name] = element
 
 
-class AbstractOperation(object):
+class AbstractOperation:
     """Abstract operations are defined in the wsdl's portType elements."""
 
     def __init__(
@@ -62,6 +68,7 @@ class AbstractOperation(object):
         output_message=None,
         fault_messages=None,
         parameter_order=None,
+        wsa_action=None,
     ):
         """Initialize the abstract operation.
 
@@ -80,10 +87,13 @@ class AbstractOperation(object):
         self.output_message = output_message
         self.fault_messages = fault_messages
         self.parameter_order = parameter_order
+        self.wsa_action = wsa_action
 
 
-class PortType(object):
-    def __init__(self, name, operations):
+class PortType:
+    def __init__(
+        self, name: etree.QName, operations: typing.Dict[str, AbstractOperation]
+    ):
         self.name = name
         self.operations = operations
 
@@ -94,8 +104,7 @@ class PortType(object):
         pass
 
 
-@python_2_unicode_compatible
-class Binding(object):
+class Binding:
     """Base class for the various bindings (SoapBinding / HttpBinding)
 
     .. raw:: ascii
@@ -127,7 +136,7 @@ class Binding(object):
         self.wsdl = wsdl
         self._operations = {}
 
-    def resolve(self, definitions):
+    def resolve(self, definitions: Definition) -> None:
         self.port_type = definitions.get("port_types", self.port_name.text)
 
         for name, operation in list(self._operations.items()):
@@ -169,8 +178,7 @@ class Binding(object):
         raise NotImplementedError()
 
 
-@python_2_unicode_compatible
-class Operation(object):
+class Operation:
     """Concrete operation
 
     Contains references to the concrete messages
@@ -204,14 +212,15 @@ class Operation(object):
 
     def __str__(self):
         if not self.input:
-            return u"%s(missing input message)" % (self.name)
+            return "%s(missing input message)" % (self.name)
 
-        retval = u"%s(%s)" % (self.name, self.input.signature())
+        retval = "%s(%s)" % (self.name, self.input.signature())
         if self.output:
-            retval += u" -> %s" % (self.output.signature(as_output=True))
+            retval += " -> %s" % (self.output.signature(as_output=True))
         return retval
 
     def create(self, *args, **kwargs):
+        assert self.input is not None
         return self.input.serialize(*args, **kwargs)
 
     def process_reply(self, envelope):
@@ -240,12 +249,14 @@ class Operation(object):
         raise NotImplementedError()
 
 
-@python_2_unicode_compatible
-class Port(object):
+class Port:
     """Specifies an address for a binding, thus defining a single communication
     endpoint.
 
     """
+
+    if typing.TYPE_CHECKING:
+        _resolve_context = None  # type: typing.Optional[typing.Dict[str, typing.Any]]
 
     def __init__(self, name, binding_name, xmlelement):
         self.name = name
@@ -264,7 +275,7 @@ class Port(object):
         )
 
     def __str__(self):
-        return u"Port: %s (%s)" % (self.name, self.binding)
+        return "Port: %s (%s)" % (self.name, self.binding)
 
     def resolve(self, definitions):
         if self._resolve_context is None:
@@ -289,11 +300,8 @@ class Port(object):
         return True
 
 
-@python_2_unicode_compatible
-class Service(object):
-    """Used to aggregate a set of related ports.
-
-    """
+class Service:
+    """Used to aggregate a set of related ports."""
 
     def __init__(self, name):
         self.ports = OrderedDict()
@@ -301,7 +309,7 @@ class Service(object):
         self._is_resolved = False
 
     def __str__(self):
-        return u"Service: %s" % self.name
+        return "Service: %s" % self.name
 
     def __repr__(self):
         return "<%s(name=%r, ports=%r)>" % (
@@ -326,5 +334,5 @@ class Service(object):
 
         self._is_resolved = True
 
-    def add_port(self, port):
+    def add_port(self, port: Port) -> None:
         self.ports[port.name] = port

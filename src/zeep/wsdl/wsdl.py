@@ -8,25 +8,34 @@ from __future__ import print_function
 import logging
 import operator
 import os
+import typing
 import warnings
 from collections import OrderedDict
 
-import six
 from lxml import etree
 
 from zeep.exceptions import IncompleteMessage
-from zeep.loader import absolute_location, is_relative_path, load_external
+from zeep.loader import (
+    absolute_location,
+    is_relative_path,
+    load_external,
+    load_external_async,
+)
 from zeep.settings import Settings
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse
+from zeep.wsdl.definitions import Binding, PortType, Service
 from zeep.xsd import Schema
+
+if typing.TYPE_CHECKING:
+    from zeep.transports import Transport
 
 NSMAP = {"wsdl": "http://schemas.xmlsoap.org/wsdl/"}
 
 logger = logging.getLogger(__name__)
 
 
-class Document(object):
+class Document:
     """A WSDL Document exists out of one or more definitions.
 
     There is always one 'root' definition which should be passed as the
@@ -51,7 +60,9 @@ class Document(object):
 
     """
 
-    def __init__(self, location, transport, base=None, settings=None):
+    def __init__(
+        self, location, transport: typing.Type["Transport"], base=None, settings=None
+    ):
         """Initialize a WSDL document.
 
         The root definition properties are exposed as entry points.
@@ -59,7 +70,7 @@ class Document(object):
         """
         self.settings = settings or Settings()
 
-        if isinstance(location, six.string_types):
+        if isinstance(location, str):
             if is_relative_path(location):
                 location = os.path.abspath(location)
             self.location = location
@@ -69,14 +80,18 @@ class Document(object):
         self.transport = transport
 
         # Dict with all definition objects within this WSDL
-        self._definitions = {}
+        self._definitions = (
+            {}
+        )  # type: typing.Dict[typing.Tuple[str, str], "Definition"]
         self.types = Schema(
             node=None,
             transport=self.transport,
             location=self.location,
             settings=self.settings,
         )
+        self.load(location)
 
+    def load(self, location):
         document = self._get_xml_document(location)
 
         root_definitions = Definition(self, document, self.location)
@@ -111,16 +126,14 @@ class Document(object):
 
         print("")
         print("Bindings:")
-        for binding_obj in sorted(
-            self.bindings.values(), key=lambda k: six.text_type(k)
-        ):
-            print(" " * 4, six.text_type(binding_obj))
+        for binding_obj in sorted(self.bindings.values(), key=lambda k: str(k)):
+            print(" " * 4, str(binding_obj))
 
         print("")
         for service in self.services.values():
-            print(six.text_type(service))
+            print(str(service))
             for port in service.ports.values():
-                print(" " * 4, six.text_type(port))
+                print(" " * 4, str(port))
                 print(" " * 8, "Operations:")
 
                 operations = sorted(
@@ -128,10 +141,10 @@ class Document(object):
                 )
 
                 for operation in operations:
-                    print("%s%s" % (" " * 12, six.text_type(operation)))
+                    print("%s%s" % (" " * 12, str(operation)))
                 print("")
 
-    def _get_xml_document(self, location):
+    def _get_xml_document(self, location: typing.IO) -> etree._Element:
         """Load the XML content from the given location and return an
         lxml.Element object.
 
@@ -143,12 +156,12 @@ class Document(object):
             location, self.transport, self.location, settings=self.settings
         )
 
-    def _add_definition(self, definition):
+    def _add_definition(self, definition: "Definition"):
         key = (definition.target_namespace, definition.location)
         self._definitions[key] = definition
 
 
-class Definition(object):
+class Definition:
     """The Definition represents one wsdl:definition within a Document.
 
     :param wsdl: The wsdl
@@ -168,8 +181,8 @@ class Definition(object):
         self.types = wsdl.types
         self.port_types = {}
         self.messages = {}
-        self.bindings = {}
-        self.services = OrderedDict()
+        self.bindings: typing.Dict[str, Binding] = {}
+        self.services: typing.Dict[str, Service] = OrderedDict()
 
         self.imports = {}
         self._resolved_imports = False
@@ -177,8 +190,9 @@ class Definition(object):
         self.target_namespace = doc.get("targetNamespace")
         self.wsdl._add_definition(self)
         self.nsmap = doc.nsmap
+        self._load(doc)
 
-        # Process the definitions
+    def _load(self, doc):
         self.parse_imports(doc)
 
         self.parse_types(doc)
@@ -188,7 +202,7 @@ class Definition(object):
         self.services = self.parse_service(doc)
 
     def __repr__(self):
-        return "<Definition(location=%r)>" % self.location
+        return "<%s(location=%r)>" % (self.__class__.__name__, self.location)
 
     def get(self, name, key, _processed=None):
         container = getattr(self, name)
@@ -217,7 +231,7 @@ class Definition(object):
 
         raise IndexError("No definition %r in %r found" % (key, name))
 
-    def resolve_imports(self):
+    def resolve_imports(self) -> None:
         """Resolve all root elements (types, messages, etc)."""
 
         # Simple guard to protect against cyclic imports
@@ -315,7 +329,7 @@ class Definition(object):
         schema_nodes = findall_multiple_ns(doc, "wsdl:types/xsd:schema", namespace_sets)
         self.types.add_documents(schema_nodes, self.location)
 
-    def parse_messages(self, doc):
+    def parse_messages(self, doc: etree._Element):
         """
 
         Definition::
@@ -341,7 +355,7 @@ class Definition(object):
                 logger.debug("Adding message: %s", msg.name.text)
         return result
 
-    def parse_ports(self, doc):
+    def parse_ports(self, doc: etree._Element) -> typing.Dict[str, PortType]:
         """Return dict with `PortType` instances as values
 
         Definition::
@@ -363,7 +377,9 @@ class Definition(object):
             logger.debug("Adding port: %s", port_type.name.text)
         return result
 
-    def parse_binding(self, doc):
+    def parse_binding(
+        self, doc: etree._Element
+    ) -> typing.Dict[str, typing.Type[Binding]]:
         """Parse the binding elements and return a dict of bindings.
 
         Currently supported bindings are Soap 1.1, Soap 1.2., HTTP Get and
@@ -398,6 +414,7 @@ class Definition(object):
 
         """
         result = {}
+        binding_classes = []  # type: typing.List[typing.Type[Binding]]
 
         if not getattr(self.wsdl.transport, "binding_classes", None):
             from zeep.wsdl import bindings
@@ -428,7 +445,7 @@ class Definition(object):
                     break
         return result
 
-    def parse_service(self, doc):
+    def parse_service(self, doc: etree._Element) -> typing.Dict[str, Service]:
         """
 
         Definition::

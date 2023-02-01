@@ -5,7 +5,7 @@ import attr
 
 
 @attr.s(slots=True)
-class Settings(object):
+class Settings:
     """
 
     :param strict: boolean to indicate if the lxml should be parsed a 'strict'.
@@ -22,7 +22,7 @@ class Settings(object):
     :param forbid_external: disallow any access to remote or local resources
       in external entities or DTD and raising an ExternalReferenceForbidden
       exception when a DTD or entity references an external resource.
-    :type forbid_entities: bool
+    :type forbid_external: bool
     :param xml_huge_tree: disable lxml/libxml2 security restrictions and
                           support very deep trees and very long text content
 
@@ -65,17 +65,17 @@ class Settings(object):
             current[key] = getattr(self, key)
             setattr(self._tls, key, value)
 
-        yield
-
-        for key, value in current.items():
-            default = getattr(self, key)
-            if value == default:
-                delattr(self._tls, key)
-            else:
-                setattr(self._tls, key, value)
+        try:
+            yield
+        finally:
+            for key, value in current.items():
+                default = getattr(self, key)
+                if value == default:
+                    delattr(self._tls, key)
+                else:
+                    setattr(self._tls, key, value)
 
     def __getattr__(self, key):
         if key != "_tls" and hasattr(self._tls, key):
             return getattr(self._tls, key)
-
-        raise AttributeError(key)
+        return super().__getattribute__(key)

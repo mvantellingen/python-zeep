@@ -1,12 +1,12 @@
 .PHONY: install clean test retest coverage docs
 
 install:
-	pip install -e .[docs,test,async,tornado]
+	pip install -e .[docs,test,async]
 	pip install bumpversion twine wheel
 
 lint:
-	flake8 src/ 
-	flake8 --ignore=E501 tests/ 
+	flake8 src/
+	flake8 --ignore=E501 tests/
 	isort --recursive --check-only --diff src tests
 
 clean:
@@ -14,17 +14,17 @@ clean:
 	find . -name '__pycache__' -delete
 
 test:
-	py.test -vvv
+	pytest -vvv
 
 retest:
-	py.test -vvv --lf
+	pytest -vvv --lf
 
 coverage:
-	py.test --cov=zeep --cov-report=term-missing --cov-report=html
+	pytest --cov=zeep --cov-report=term-missing --cov-report=html
 
 format:
-	black src/ tests/
-	isort --recursive src tests
+	isort src tests setup.py
+	black src/ tests/ setup.py
 
 docs:
 	$(MAKE) -C docs html

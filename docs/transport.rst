@@ -60,7 +60,7 @@ See :class:`requests.Session` for further details.
 Session timeout
 ---------------
 
-To set a transport timeout use the `timeout` option. The default timeout is 300
+To set a transport timeout for loading wsdl sfn xsd documents, use the `timeout` option. The default timeout is 300
 seconds:
 
 .. code-block:: python
@@ -72,6 +72,8 @@ seconds:
     client = Client(
         'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
         transport=transport)
+        
+To pass a timeout to the underlying POST/GET requests, use `operation_timeout`. This defaults to None.
 
 
 Using HTTP or SOCKS Proxy
@@ -158,6 +160,27 @@ to the Transport class.
     client = Client('http://my-endpoint.com/production.svc?wsdl',
         transport=Transport(session=session))
 
+
+Async HTTP Authentication
+-------------------------
+The Async client for zeep uses a different backend, so the setup is different in this case.
+You will need to use `httpx` to create an :class:`httpx.AsyncClient` object, and pass it to your :class:`zeep.AsyncTransport`.
+
+.. code-block:: python
+
+  import httpx
+  import zeep
+  from zeep.transports import AsyncTransport
+  
+  USER = 'username'
+  PASSWORD = 'password'
+  
+  httpx_client = httpx.AsyncClient(auth=(USER, PASSWORD))
+  
+  aclient = zeep.AsyncClient(
+      "http://my-endpoint.com/production.svc?wsdl",
+      transport=AsyncTransport(client=httpx_client)
+  )
 
 .. _debugging:
 

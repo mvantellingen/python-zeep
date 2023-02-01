@@ -1,9 +1,7 @@
-from six.moves import range
-
 from zeep import ns
 
 
-class NamePrefixGenerator(object):
+class NamePrefixGenerator:
     def __init__(self, prefix="_value_"):
         self._num = 1
         self._prefix = prefix
@@ -14,7 +12,7 @@ class NamePrefixGenerator(object):
         return retval
 
 
-class UniqueNameGenerator(object):
+class UniqueNameGenerator:
     def __init__(self):
         self._unique_count = {}
 
@@ -29,7 +27,7 @@ class UniqueNameGenerator(object):
 
 def max_occurs_iter(max_occurs, items=None):
     assert max_occurs is not None
-    generator = range(0, max_occurs if max_occurs != "unbounded" else 2 ** 31 - 1)
+    generator = range(0, max_occurs if max_occurs != "unbounded" else 2**31 - 1)
 
     if items is not None:
         for i, sub_kwargs in zip(generator, items):

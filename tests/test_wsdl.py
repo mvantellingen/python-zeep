@@ -1,14 +1,14 @@
 import io
+from io import StringIO
 
 import pytest
 import requests_mock
-from defusedxml import DTDForbidden, EntitiesForbidden
 from lxml import etree
 from pretend import stub
-from six import StringIO
 
 from tests.utils import DummyTransport, assert_nodes_equal
 from zeep import Client, Settings, wsdl
+from zeep.exceptions import DTDForbidden, EntitiesForbidden
 from zeep.transports import Transport
 
 
@@ -935,7 +935,7 @@ def test_wsdl_duplicate_tns(recwarn):
 
 
 def test_wsdl_dtd_entities_rules():
-    wsdl_declaration = u"""<!DOCTYPE Author [
+    wsdl_declaration = """<!DOCTYPE Author [
         <!ENTITY writer "Donald Duck.">
         ]>
         <wsdl:definitions

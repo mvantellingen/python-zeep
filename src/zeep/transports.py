@@ -1,15 +1,26 @@
 import logging
 import os
 from contextlib import contextmanager
+from urllib.parse import urlparse
 
 import requests
-from six.moves.urllib.parse import urlparse
+from requests import Response
+from requests_file import FileAdapter
 
+from zeep.exceptions import TransportError
 from zeep.utils import get_media_type, get_version
 from zeep.wsdl.utils import etree_to_string
 
+try:
+    import httpx
+except ImportError:
+    httpx = None
 
-class Transport(object):
+
+__all__ = ["AsyncTransport", "Transport"]
+
+
+class Transport:
     """The transport object handles all communication to the SOAP server.
 
     :param cache: The cache object to be used to cache GET requests
@@ -26,7 +37,9 @@ class Transport(object):
         self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)
 
+        self._close_session = not session
         self.session = session or requests.Session()
+        self.session.mount("file://", FileAdapter())
         self.session.headers["User-Agent"] = "Zeep/%s (www.python-zeep.org)" % (
             get_version()
         )
@@ -100,7 +113,7 @@ class Transport(object):
             raise ValueError("No url given to load")
 
         scheme = urlparse(url).scheme
-        if scheme in ("http", "https"):
+        if scheme in ("http", "https", "file"):
 
             if self.cache:
                 response = self.cache.get(url)
@@ -113,13 +126,9 @@ class Transport(object):
                 self.cache.add(url, content)
 
             return content
-
-        elif scheme == "file":
-            if url.startswith("file://"):
-                url = url[7:]
-
-        with open(os.path.expanduser(url), "rb") as fh:
-            return fh.read()
+        else:
+            with open(os.path.expanduser(url), "rb") as fh:
+                return fh.read()
 
     def _load_remote_data(self, url):
         self.logger.debug("Loading remote data from: %s", url)
@@ -145,3 +154,103 @@ class Transport(object):
         self.operation_timeout = timeout
         yield
         self.operation_timeout = old_timeout
+
+    def __del__(self):
+        if self._close_session:
+            self.session.close()
+
+
+class AsyncTransport(Transport):
+    """Asynchronous Transport class using httpx.
+
+    Note that loading the wsdl is still a sync process since and only the
+    operations can be called via async.
+
+    """
+
+    def __init__(
+        self,
+        client=None,
+        wsdl_client=None,
+        cache=None,
+        timeout=300,
+        operation_timeout=None,
+        verify_ssl=True,
+        proxy=None,
+    ):
+        if httpx is None:
+            raise RuntimeError("The AsyncTransport is based on the httpx module")
+
+        self._close_session = False
+        self.cache = cache
+        self.wsdl_client = wsdl_client or httpx.Client(
+            verify=verify_ssl,
+            proxies=proxy,
+            timeout=timeout,
+        )
+        self.client = client or httpx.AsyncClient(
+            verify=verify_ssl,
+            proxies=proxy,
+            timeout=operation_timeout,
+        )
+        self.logger = logging.getLogger(__name__)
+
+        self.wsdl_client.headers = {
+            "User-Agent": "Zeep/%s (www.python-zeep.org)" % (get_version())
+        }
+        self.client.headers = {
+            "User-Agent": "Zeep/%s (www.python-zeep.org)" % (get_version())
+        }
+
+    async def aclose(self):
+        await self.client.aclose()
+
+    def _load_remote_data(self, url):
+        response = self.wsdl_client.get(url)
+        result = response.read()
+
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise TransportError(status_code=response.status_code)
+        return result
+
+    async def post(self, address, message, headers):
+        self.logger.debug("HTTP Post to %s:\n%s", address, message)
+        response = await self.client.post(
+            address,
+            content=message,
+            headers=headers,
+        )
+        self.logger.debug(
+            "HTTP Response from %s (status: %d):\n%s",
+            address,
+            response.status_code,
+            response.read(),
+        )
+        return response
+
+    async def post_xml(self, address, envelope, headers):
+        message = etree_to_string(envelope)
+        response = await self.post(address, message, headers)
+        return self.new_response(response)
+
+    async def get(self, address, params, headers):
+        response = await self.client.get(
+            address,
+            params=params,
+            headers=headers,
+        )
+        return self.new_response(response)
+
+    def new_response(self, response):
+        """Convert an aiohttp.Response object to a requests.Response object"""
+        body = response.read()
+
+        new = Response()
+        new._content = body
+        new.status_code = response.status_code
+        new.headers = response.headers
+        new.cookies = response.cookies
+        new.encoding = response.encoding
+        return new

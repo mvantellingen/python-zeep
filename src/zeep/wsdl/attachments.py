@@ -5,12 +5,17 @@ See https://www.w3.org/TR/SOAP-attachments
 """
 
 import base64
+import sys
 
-from cached_property import cached_property
+if sys.version_info >= (3, 8):
+    from functools import cached_property
+else:
+    from cached_property import cached_property
+
 from requests.structures import CaseInsensitiveDict
 
 
-class MessagePack(object):
+class MessagePack:
     def __init__(self, parts):
         self._parts = parts
 
@@ -48,7 +53,7 @@ class MessagePack(object):
                 return attachment
 
 
-class Attachment(object):
+class Attachment:
     def __init__(self, part):
         encoding = part.encoding or "utf-8"
         self.headers = CaseInsensitiveDict(

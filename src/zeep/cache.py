@@ -4,11 +4,11 @@ import errno
 import logging
 import os
 import threading
+import typing
 from contextlib import contextmanager
 
-import appdirs
+import platformdirs
 import pytz
-import six
 
 # The sqlite3 is not available on Google App Engine so we handle the
 # ImportError here and set the sqlite3 var to None.
@@ -16,23 +16,61 @@ import six
 try:
     import sqlite3
 except ImportError:
-    sqlite3 = None
+    sqlite3 = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
 
-class Base(object):
+class Base:
+    """Base class for caching backends."""
+
     def add(self, url, content):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get(self, url):
-        raise NotImplemented()
+        raise NotImplementedError()
+
+
+class VersionedCacheBase(Base):
+    """Versioned base class for caching backends.
+    Note when subclassing a version class attribute must be provided.
+    """
+
+    def _encode_data(self, data):
+        """Helper function for encoding cacheable content as base64.
+        :param data: Content to be encoded.
+        :rtype: bytes
+        """
+        data = base64.b64encode(data)
+        return self._version_string + data
+
+    def _decode_data(self, data):
+        """Helper function for decoding base64 cached content.
+        :param data: Content to be decoded.
+        :rtype: bytes
+        """
+        if data.startswith(self._version_string):
+            return base64.b64decode(data[len(self._version_string) :])
+
+    @property
+    def _version_string(self):
+        """Expose the version prefix to be used in content serialization.
+        :rtype: bytes
+        """
+        assert (
+            getattr(self, "_version", None) is not None
+        ), "A version must be provided in order to use the VersionedCacheBase backend."
+        prefix = "$ZEEP:%s$" % self._version
+        return bytes(prefix.encode("ascii"))
 
 
 class InMemoryCache(Base):
     """Simple in-memory caching using dict lookup with support for timeouts"""
 
-    _cache = {}  # global cache, thread-safe by default
+    #: global cache, thread-safe by default
+    _cache = (
+        {}
+    )  # type: typing.Dict[str, typing.Tuple[datetime.datetime, typing.Union[bytes, str]]]
 
     def __init__(self, timeout=3600):
         self._timeout = timeout
@@ -58,8 +96,8 @@ class InMemoryCache(Base):
         return None
 
 
-class SqliteCache(Base):
-    """Cache contents via an sqlite database on the filesystem"""
+class SqliteCache(VersionedCacheBase):
+    """Cache contents via a sqlite database on the filesystem."""
 
     _version = "1"
 
@@ -125,23 +163,6 @@ class SqliteCache(Base):
                 return self._decode_data(data)
         logger.debug("Cache MISS for %s", url)
 
-    def _encode_data(self, data):
-        data = base64.b64encode(data)
-        if six.PY2:
-            return buffer(self._version_string + data)  # noqa
-        return self._version_string + data
-
-    def _decode_data(self, data):
-        if six.PY2:
-            data = str(data)
-        if data.startswith(self._version_string):
-            return base64.b64decode(data[len(self._version_string) :])
-
-    @property
-    def _version_string(self):
-        prefix = u"$ZEEP:%s$" % self._version
-        return bytes(prefix.encode("ascii"))
-
 
 def _is_expired(value, timeout):
     """Return boolean if the value is expired"""
@@ -155,7 +176,7 @@ def _is_expired(value, timeout):
 
 
 def _get_default_cache_path():
-    path = appdirs.user_cache_dir("zeep", False)
+    path = platformdirs.user_cache_dir("zeep", False)
     try:
         os.makedirs(path)
     except OSError as exc:

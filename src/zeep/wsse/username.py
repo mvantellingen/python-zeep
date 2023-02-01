@@ -6,7 +6,7 @@ from zeep import ns
 from zeep.wsse import utils
 
 
-class UsernameToken(object):
+class UsernameToken:
     """UsernameToken Profile 1.1
 
     https://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-UsernameTokenProfile.pdf
@@ -47,7 +47,14 @@ class UsernameToken(object):
         nonce=None,
         created=None,
         timestamp_token=None,
+        zulu_timestamp=None,
+        hash_password=None,
     ):
+        """
+        Some SOAP services want zulu timestamps with Z in timestamps and
+        in password digests they may want password to be hashed before
+        adding it to nonce and created.
+        """
         self.username = username
         self.password = password
         self.password_digest = password_digest
@@ -55,6 +62,8 @@ class UsernameToken(object):
         self.created = created
         self.use_digest = use_digest
         self.timestamp_token = timestamp_token
+        self.zulu_timestamp = zulu_timestamp
+        self.hash_password = hash_password
 
     def apply(self, envelope, headers):
         security = utils.get_security_header(envelope)
@@ -95,14 +104,23 @@ class UsernameToken(object):
             nonce = self.nonce.encode("utf-8")
         else:
             nonce = os.urandom(16)
-        timestamp = utils.get_timestamp(self.created)
+        timestamp = utils.get_timestamp(self.created, self.zulu_timestamp)
+
+        if isinstance(self.password, str):
+            password = self.password.encode("utf-8")
+        else:
+            password = self.password
 
         # digest = Base64 ( SHA-1 ( nonce + created + password ) )
-        if not self.password_digest:
+        if not self.password_digest and self.hash_password:
             digest = base64.b64encode(
                 hashlib.sha1(
-                    nonce + timestamp.encode("utf-8") + self.password.encode("utf-8")
+                    nonce + timestamp.encode("utf-8") + hashlib.sha1(password).digest()
                 ).digest()
+            ).decode("ascii")
+        elif not self.password_digest:
+            digest = base64.b64encode(
+                hashlib.sha1(nonce + timestamp.encode("utf-8") + password).digest()
             ).decode("ascii")
         else:
             digest = self.password_digest

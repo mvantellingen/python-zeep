@@ -20,9 +20,9 @@ class Schema(Base):
         return {}
 
     def parse(self, xmlelement, schema, context=None):
-        from zeep.xsd.schema import Schema
+        from zeep.xsd.schema import Schema as _Schema
 
-        schema = Schema(xmlelement, schema._transport)
+        schema = _Schema(xmlelement, schema._transport)
         context.schemas.append(schema)
         return schema
 

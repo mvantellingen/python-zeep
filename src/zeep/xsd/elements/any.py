@@ -29,7 +29,7 @@ class Any(Base):
         :type process_contents: str (strict, lax, skip)
 
         """
-        super(Any, self).__init__()
+        super().__init__()
         self.max_occurs = max_occurs
         self.min_occurs = min_occurs
         self.restrict = restrict
@@ -154,15 +154,15 @@ class Any(Base):
         elif self.restrict:
             if isinstance(value, list):
                 for val in value:
-                    self.restrict.render(parent, val, None, render_path)
+                    self.restrict.render(parent, val, None, render_path=render_path)
             else:
-                self.restrict.render(parent, value, None, render_path)
+                self.restrict.render(parent, value, None, render_path=render_path)
         else:
             if isinstance(value.value, list):
                 for val in value.value:
-                    value.xsd_elm.render(parent, val, render_path)
+                    value.xsd_elm.render(parent, val, render_path=render_path)
             else:
-                value.xsd_elm.render(parent, value.value, render_path)
+                value.xsd_elm.render(parent, value.value, render_path=render_path)
 
     def validate(self, value, render_path):
         if self.accepts_multiple and isinstance(value, list):
@@ -172,7 +172,11 @@ class Any(Base):
                 raise exceptions.ValidationError(
                     "Expected at least %d items (minOccurs check)" % self.min_occurs
                 )
-            if self.max_occurs != "unbounded" and len(value) > self.max_occurs:
+            if (
+                self.max_occurs != "unbounded"
+                and isinstance(self.max_occurs, int)
+                and len(value) > self.max_occurs
+            ):
                 raise exceptions.ValidationError(
                     "Expected at most %d items (maxOccurs check)" % self.min_occurs
                 )
@@ -192,9 +196,9 @@ class Any(Base):
         # Check if we received a proper value object. If we receive the wrong
         # type then return a nice error message
         if self.restrict:
-            expected_types = (etree._Element, dict) + self.restrict.accepted_types
+            expected_types = [etree._Element, dict] + self.restrict.accepted_types
         else:
-            expected_types = (etree._Element, dict, AnyObject)
+            expected_types = [etree._Element, dict, AnyObject]
 
         if value in (None, NotSet):
             if not self.is_optional:
@@ -202,7 +206,7 @@ class Any(Base):
                     "Missing element %s" % (self.name), path=render_path
                 )
 
-        elif not isinstance(value, expected_types):
+        elif not isinstance(value, tuple(expected_types)):
             type_names = ["%s.%s" % (t.__module__, t.__name__) for t in expected_types]
             err_message = "Any element received object of type %r, expected %s" % (
                 type(value).__name__,
@@ -234,6 +238,7 @@ class Any(Base):
 
 
 class AnyAttribute(Base):
+    # FIXME: should not inherit from Base
     name = None
     _ignore_attributes = [etree.QName(ns.XSI, "type")]
 

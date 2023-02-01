@@ -1,6 +1,14 @@
-class Base(object):
+import typing
+
+
+class Base:
+    if typing.TYPE_CHECKING:
+        attr_name = ""  # type: str
+        max_occurs = 0  # type: typing.Union[int, str]
+        min_occurs = 0  # type: int
+
     @property
-    def accepts_multiple(self):
+    def accepts_multiple(self) -> bool:
         return self.max_occurs != 1
 
     @property
@@ -8,11 +16,11 @@ class Base(object):
         return None
 
     @property
-    def is_optional(self):
+    def is_optional(self) -> bool:
         return self.min_occurs == 0
 
     def parse_args(self, args, index=0):
-        result = {}
+        result = {}  #: typing.Dict[str, typing.Any]
         if not args:
             return result, args, index
 

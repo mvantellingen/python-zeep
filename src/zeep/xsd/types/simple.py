@@ -1,25 +1,29 @@
 import logging
+import typing
 
-import six
 from lxml import etree
 
 from zeep.exceptions import ValidationError
 from zeep.xsd.const import Nil, xsd_ns, xsi_ns
+from zeep.xsd.context import XmlParserContext
 from zeep.xsd.types.any import AnyType
+from zeep.xsd.valueobjects import CompoundValue
+
+if typing.TYPE_CHECKING:
+    from zeep.xsd.schema import Schema
+    from zeep.xsd.types.base import Type
+    from zeep.xsd.types.complex import ComplexType
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["AnySimpleType"]
 
 
-@six.python_2_unicode_compatible
 class AnySimpleType(AnyType):
     _default_qname = xsd_ns("anySimpleType")
 
     def __init__(self, qname=None, is_global=False):
-        super(AnySimpleType, self).__init__(
-            qname or etree.QName(self._default_qname), is_global
-        )
+        super().__init__(qname or etree.QName(self._default_qname), is_global)
 
     def __call__(self, *args, **kwargs):
         """Return the xmlvalue for the given value.
@@ -45,7 +49,7 @@ class AnySimpleType(AnyType):
                     "%s() got an unexpected keyword argument %r. "
                     + "Simple types expect only a single value argument"
                 )
-                % (self.__class__.__name__, next(six.iterkeys(kwargs)))
+                % (self.__class__.__name__, next(kwargs.keys()))
             )
 
         value = args[0] if args else kwargs["value"]
@@ -62,26 +66,34 @@ class AnySimpleType(AnyType):
         return "%s(value)" % (self.__class__.__name__)
 
     def parse_xmlelement(
-        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
-    ):
+        self,
+        xmlelement: etree._Element,
+        schema: "Schema" = None,
+        allow_none: bool = True,
+        context: XmlParserContext = None,
+        schema_type: "Type" = None,
+    ) -> typing.Optional[typing.Union[str, CompoundValue, typing.List[etree._Element]]]:
         if xmlelement.text is None:
-            return
+            return None
         try:
             return self.pythonvalue(xmlelement.text)
         except (TypeError, ValueError):
             logger.exception("Error during xml -> python translation")
             return None
 
-    def pythonvalue(self, xmlvalue):
-        raise NotImplementedError(
-            "%s.pytonvalue() not implemented" % self.__class__.__name__
-        )
+    def render(
+        self,
+        node: etree._Element,
+        value: typing.Union[list, dict, CompoundValue],
+        xsd_type: "ComplexType" = None,
+        render_path=None,
+    ) -> None:
+        assert xsd_type is None
 
-    def render(self, parent, value, xsd_type=None, render_path=None):
         if value is Nil:
-            parent.set(xsi_ns("nil"), "true")
+            node.set(xsi_ns("nil"), "true")
             return
-        parent.text = self.xmlvalue(value)
+        node.text = value if isinstance(value, etree.CDATA) else self.xmlvalue(value)
 
     def signature(self, schema=None, standalone=True):
         return self.get_prefixed_name(schema)

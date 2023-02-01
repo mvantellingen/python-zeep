@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=40.6.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.coverage.run]
+branch = true
+source = ["zeep"]
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages/"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.isort]
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+balanced_wrapping = true
+default_section = "THIRDPARTY"
+known_first_party = ["zeep", "tests"]
+use_parentheses = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = [
+    "tests",
+]
+markers = [
+    # mark a test to allow socket usage
+    "requests"
+]

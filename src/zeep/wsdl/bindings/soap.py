@@ -1,4 +1,5 @@
 import logging
+import typing
 
 from lxml import etree
 from requests_toolbelt.multipart.decoder import MultipartDecoder
@@ -12,6 +13,10 @@ from zeep.wsdl.definitions import Binding, Operation
 from zeep.wsdl.messages import DocumentMessage, RpcMessage
 from zeep.wsdl.messages.xop import process_xop
 from zeep.wsdl.utils import etree_to_string, url_http_to_https
+
+if typing.TYPE_CHECKING:
+    from zeep.wsdl.wsdl import Definition
+
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +39,7 @@ class SoapBinding(Binding):
         :param default_style:
 
         """
-        super(SoapBinding, self).__init__(wsdl, name, port_name)
+        super().__init__(wsdl, name, port_name)
         self.transport = transport
         self.default_style = default_style
 
@@ -76,7 +81,7 @@ class SoapBinding(Binding):
             if not options:
                 options = client.service._binding_options
 
-            if operation_obj.abstract.input_message.wsa_action:
+            if operation_obj.abstract.wsa_action:
                 envelope, http_headers = wsa.WsAddressingPlugin().egress(
                     envelope, http_headers, operation_obj, options
                 )
@@ -129,6 +134,35 @@ class SoapBinding(Binding):
 
         return self.process_reply(client, operation_obj, response)
 
+    async def send_async(self, client, options, operation, args, kwargs):
+        """Called from the async service
+
+        :param client: The client with which the operation was called
+        :type client: zeep.client.Client
+        :param options: The binding options
+        :type options: dict
+        :param operation: The operation object from which this is a reply
+        :type operation: zeep.wsdl.definitions.Operation
+        :param args: The args to pass to the operation
+        :type args: tuple
+        :param kwargs: The kwargs to pass to the operation
+        :type kwargs: dict
+
+        """
+        envelope, http_headers = self._create(
+            operation, args, kwargs, client=client, options=options
+        )
+
+        response = await client.transport.post_xml(
+            options["address"], envelope, http_headers
+        )
+
+        if client.settings.raw_response:
+            return response
+
+        operation_obj = self.get(operation)
+        return self.process_reply(client, operation_obj, response)
+
     def process_reply(self, client, operation, response):
         """Process the XML reply from the server.
 
@@ -145,7 +179,7 @@ class SoapBinding(Binding):
 
         elif response.status_code != 200 and not response.content:
             raise TransportError(
-                u"Server returned HTTP status %d (no content available)"
+                "Server returned HTTP status %d (no content available)"
                 % response.status_code,
                 status_code=response.status_code,
             )
@@ -288,7 +322,7 @@ class Soap11Binding(SoapBinding):
             )
 
         def get_text(name):
-            child = fault_node.find(name)
+            child = fault_node.find(name, namespaces=fault_node.nsmap)
             if child is not None:
                 return child.text
 
@@ -296,7 +330,7 @@ class Soap11Binding(SoapBinding):
             message=get_text("faultstring"),
             code=get_text("faultcode"),
             actor=get_text("faultactor"),
-            detail=fault_node.find("detail"),
+            detail=fault_node.find("detail", namespaces=fault_node.nsmap),
         )
 
     def _set_http_headers(self, serialized, operation):
@@ -376,7 +410,7 @@ class SoapOperation(Operation):
     """Represent's an operation within a specific binding."""
 
     def __init__(self, name, binding, nsmap, soapaction, style):
-        super(SoapOperation, self).__init__(name, binding)
+        super().__init__(name, binding)
         self.nsmap = nsmap
         self.soapaction = soapaction
         self.style = style
@@ -466,8 +500,8 @@ class SoapOperation(Operation):
 
         return obj
 
-    def resolve(self, definitions):
-        super(SoapOperation, self).resolve(definitions)
+    def resolve(self, definitions: "Definition"):
+        super().resolve(definitions)
         for name, fault in self.faults.items():
             if name in self.abstract.fault_messages:
                 fault.resolve(definitions, self.abstract.fault_messages[name])

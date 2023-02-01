@@ -1,27 +1,53 @@
+from __future__ import annotations
+
 import copy
 import logging
+import sys
+import typing
 from collections import OrderedDict, deque
 from itertools import chain
+from typing import Optional
 
-from cached_property import threaded_cached_property
+if sys.version_info >= (3, 8):
+    from functools import cached_property as threaded_cached_property
+else:
+    from cached_property import threaded_cached_property
+
+from lxml import etree
 
 from zeep.exceptions import UnexpectedElementError, XMLParseError
-from zeep.xsd.const import NotSet, SkipValue, Nil, xsi_ns
+from zeep.xsd.const import Nil, NotSet, SkipValue, xsi_ns
+from zeep.xsd.context import XmlParserContext
 from zeep.xsd.elements import (
-    Any, AnyAttribute, AttributeGroup, Choice, Element, Group, Sequence)
+    Any,
+    AnyAttribute,
+    AttributeGroup,
+    Choice,
+    Element,
+    Group,
+    Sequence,
+)
 from zeep.xsd.elements.indicators import OrderIndicator
 from zeep.xsd.types.any import AnyType
 from zeep.xsd.types.simple import AnySimpleType
 from zeep.xsd.utils import NamePrefixGenerator
 from zeep.xsd.valueobjects import ArrayValue, CompoundValue
 
+if typing.TYPE_CHECKING:
+    from zeep.xsd.schema import Schema
+    from zeep.xsd.types.base import Type
+else:
+    Schema = Type = None
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["ComplexType"]
+# Recursive alias
+_ObjectList = typing.List[typing.Union[CompoundValue, None, "_ObjectList"]]
 
 
 class ComplexType(AnyType):
-    _xsd_name = None
+    _xsd_name: typing.Optional[str] = None
 
     def __init__(
         self,
@@ -30,7 +56,7 @@ class ComplexType(AnyType):
         restriction=None,
         extension=None,
         qname=None,
-        is_global=False,
+        is_global: bool = False,
     ):
         if element and type(element) == list:
             element = Sequence(element)
@@ -40,8 +66,8 @@ class ComplexType(AnyType):
         self._attributes = attributes or []
         self._restriction = restriction
         self._extension = extension
-        self._extension_types = tuple()
-        super(ComplexType, self).__init__(qname=qname, is_global=is_global)
+        self._extension_types: typing.List[typing.Type] = []
+        super().__init__(qname=qname, is_global=is_global)
 
     def __call__(self, *args, **kwargs):
         if self._array_type:
@@ -49,11 +75,11 @@ class ComplexType(AnyType):
         return self._value_class(*args, **kwargs)
 
     @property
-    def accepted_types(self):
-        return (self._value_class,) + self._extension_types
+    def accepted_types(self) -> typing.List[typing.Type]:
+        return [self._value_class] + self._extension_types
 
     @threaded_cached_property
-    def _array_class(self):
+    def _array_class(self) -> typing.Type[ArrayValue]:
         assert self._array_type
         return type(
             self.__class__.__name__,
@@ -62,7 +88,7 @@ class ComplexType(AnyType):
         )
 
     @threaded_cached_property
-    def _value_class(self):
+    def _value_class(self) -> typing.Type[CompoundValue]:
         return type(
             self.__class__.__name__,
             (CompoundValue,),
@@ -146,21 +172,20 @@ class ComplexType(AnyType):
         return array_type
 
     def parse_xmlelement(
-        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
-    ):
+        self,
+        xmlelement: etree._Element,
+        schema: Optional[Schema] = None,
+        allow_none: bool = True,
+        context: XmlParserContext = None,
+        schema_type: Optional[Type] = None,
+    ) -> typing.Optional[typing.Union[str, CompoundValue, typing.List[etree._Element]]]:
         """Consume matching xmlelements and call parse() on each
 
         :param xmlelement: XML element objects
-        :type xmlelement: lxml.etree._Element
         :param schema: The parent XML schema
-        :type schema: zeep.xsd.Schema
         :param allow_none: Allow none
-        :type allow_none: bool
         :param context: Optional parsing context (for inline schemas)
-        :type context: zeep.xsd.context.XmlParserContext
         :param schema_type: The original type (not overriden via xsi:type)
-        :type schema_type: zeep.xsd.types.base.Type
-        :rtype: dict or None
 
         """
         # If this is an empty complexType (<xsd:complexType name="x"/>)
@@ -183,7 +208,7 @@ class ComplexType(AnyType):
         else:
             elements = deque(xmlelement.iterchildren())
             if allow_none and len(elements) == 0 and len(attributes) == 0:
-                return
+                return None
 
             # Parse elements. These are always indicator elements (all, choice,
             # group, sequence)
@@ -200,7 +225,7 @@ class ComplexType(AnyType):
 
             # Check if all children are consumed (parsed)
             if elements:
-                if schema.settings.strict:
+                if schema and schema.settings.strict:
                     raise XMLParseError("Unexpected element %r" % elements[0].tag)
                 else:
                     init_kwargs["_raw_elements"] = elements
@@ -211,24 +236,27 @@ class ComplexType(AnyType):
             for name, attribute in self.attributes:
                 if attribute.name:
                     if attribute.qname.text in attributes:
-                        value = attributes.pop(attribute.qname.text)
-                        init_kwargs[name] = attribute.parse(value)
+                        attr_value = attributes.pop(attribute.qname.text)
+                        init_kwargs[name] = attribute.parse(attr_value)
                 else:
                     init_kwargs[name] = attribute.parse(attributes)
 
-        value = self._value_class(**init_kwargs)
+        value: CompoundValue = self._value_class(**init_kwargs)
         schema_type = schema_type or self
         if schema_type and getattr(schema_type, "_array_type", None):
-            value = schema_type._array_class.from_value_object(value)
+            return schema_type._array_class.from_value_object(value)
         return value
 
-    def render(self, parent, value, xsd_type=None, render_path=None):
-        """Serialize the given value lxml.Element subelements on the parent
+    def render(
+        self,
+        node: etree._Element,
+        value: typing.Union[list, dict, CompoundValue],
+        xsd_type: "ComplexType" = None,
+        render_path=None,
+    ) -> None:
+        """Serialize the given value lxml.Element subelements on the node
         element.
 
-        :type parent: lxml.etree._Element
-        :type value: Union[list, dict, zeep.xsd.valueobjects.CompoundValue]
-        :type xsd_type: zeep.xsd.types.base.Type
         :param render_path: list
 
         """
@@ -249,15 +277,15 @@ class ComplexType(AnyType):
         for name, attribute in self.attributes:
             attr_value = value[name] if name in value else NotSet
             child_path = render_path + [name]
-            attribute.render(parent, attr_value, child_path)
+            attribute.render(node, attr_value, child_path)
 
         if (
             len(self.elements_nested) == 1
-            and isinstance(value, self.accepted_types)
+            and isinstance(value, tuple(self.accepted_types))
             and not isinstance(value, (list, dict, CompoundValue))
         ):
             element = self.elements_nested[0][1]
-            element.type.render(parent, value, None, child_path)
+            element.type.render(node, value, None, child_path)
             return
 
         # Render sub elements
@@ -274,28 +302,29 @@ class ComplexType(AnyType):
                 continue
 
             if isinstance(element, Element):
-                element.type.render(parent, element_value, None, child_path)
+                element.type.render(node, element_value, None, child_path)
             else:
-                element.render(parent, element_value, child_path)
+                element.render(node, element_value, child_path)
 
         if xsd_type:
             if xsd_type._xsd_name:
-                parent.set(xsi_ns("type"), xsd_type._xsd_name)
+                node.set(xsi_ns("type"), xsd_type._xsd_name)
             if xsd_type.qname:
-                parent.set(xsi_ns("type"), xsd_type.qname)
+                node.set(xsi_ns("type"), xsd_type.qname)
 
-    def parse_kwargs(self, kwargs, name, available_kwargs):
+    def parse_kwargs(
+        self,
+        kwargs: typing.Dict[str, typing.Any],
+        name: str,
+        available_kwargs: typing.Set[str],
+    ) -> typing.Dict[str, typing.Any]:
         """Parse the kwargs for this type and return the accepted data as
         a dict.
 
         :param kwargs: The kwargs
-        :type kwargs: dict
         :param name: The name as which this type is registered in the parent
-        :type name: str
         :param available_kwargs: The kwargs keys which are still available,
          modified in place
-        :type available_kwargs: set
-        :rtype: dict
 
         """
         value = None
@@ -311,7 +340,9 @@ class ComplexType(AnyType):
             return {name: value}
         return {}
 
-    def _create_object(self, value, name):
+    def _create_object(
+        self, value: typing.Union[list, dict, CompoundValue, None], name: str
+    ) -> typing.Union[CompoundValue, None, _ObjectList]:
         """Return the value as a CompoundValue object
 
         :type value: str

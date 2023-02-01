@@ -4,7 +4,6 @@ from decimal import Decimal as D
 import isodate
 import pytest
 import pytz
-import six
 
 from zeep.xsd.types import builtins
 
@@ -18,6 +17,42 @@ class TestString:
     def test_pythonvalue(self):
         instance = builtins.String()
         result = instance.pythonvalue("foobar")
+        assert result == "foobar"
+
+        result = instance.pythonvalue(" foo\tbar\r\n ")
+        assert result == " foo\tbar\r\n "
+
+
+class TestNormalizedString:
+    def test_xmlvalue(self):
+        instance = builtins.NormalizedString()
+        result = instance.xmlvalue("foobar")
+        assert result == "foobar"
+
+    def test_pythonvalue(self):
+        instance = builtins.NormalizedString()
+        result = instance.pythonvalue("foobar")
+        assert result == "foobar"
+
+        result = instance.pythonvalue("fo\tob\rar\n")
+        assert result == "fo ob ar "
+
+
+class TestToken:
+    def test_xmlvalue(self):
+        instance = builtins.Token()
+        result = instance.xmlvalue("foobar")
+        assert result == "foobar"
+
+    def test_pythonvalue(self):
+        instance = builtins.Token()
+        result = instance.pythonvalue("foobar")
+        assert result == "foobar"
+
+        result = instance.pythonvalue("fo\tob\rar")
+        assert result == "fo ob ar"
+
+        result = instance.pythonvalue("  foobar ")
         assert result == "foobar"
 
 
@@ -37,6 +72,7 @@ class TestBoolean:
         assert instance.pythonvalue("true") is True
         assert instance.pythonvalue("0") is False
         assert instance.pythonvalue("false") is False
+        assert instance.pythonvalue("\t \r\nfalse ") is False
 
 
 class TestDecimal:
@@ -47,6 +83,9 @@ class TestDecimal:
         assert instance.xmlvalue(D("10.000002")) == "10.000002"
         assert instance.xmlvalue(D("10")) == "10"
         assert instance.xmlvalue(D("-10")) == "-10"
+        assert instance.xmlvalue(D("1.1E-3")) == "0.0011"
+        assert instance.xmlvalue(D("1.1E+3")) == "1100"
+        assert instance.xmlvalue(D("1.100000000000002E-3")) == "0.001100000000000002"
 
     def test_pythonvalue(self):
         instance = builtins.Decimal()
@@ -54,6 +93,7 @@ class TestDecimal:
         assert instance.pythonvalue("10.001") == D("10.001")
         assert instance.pythonvalue("+10.001") == D("10.001")
         assert instance.pythonvalue("-10.001") == D("-10.001")
+        assert instance.pythonvalue(" \r\n 10 \t") == D("10")
 
 
 class TestFloat:
@@ -63,10 +103,7 @@ class TestFloat:
         assert instance.xmlvalue(float(3.9999)) == "3.9999"
         assert instance.xmlvalue(float("inf")) == "INF"
         assert instance.xmlvalue(float(12.78e-2)) == "0.1278"
-        if six.PY2:
-            assert instance.xmlvalue(float("1267.43233E12")) == "1.26743233E+15"
-        else:
-            assert instance.xmlvalue(float("1267.43233E12")) == "1267432330000000.0"
+        assert instance.xmlvalue(float("1267.43233E12")) == "1267432330000000.0"
 
     def test_pythonvalue(self):
         instance = builtins.Float()
@@ -78,6 +115,7 @@ class TestFloat:
         assert instance.pythonvalue("-0") == float(0)
         assert instance.pythonvalue("0") == float(0)
         assert instance.pythonvalue("INF") == float("inf")
+        assert instance.pythonvalue("\t \r12.78e-2\n  ") == float("0.1278")
 
 
 class TestDouble:
@@ -93,6 +131,7 @@ class TestDouble:
         assert instance.pythonvalue("12") == float(12)
         assert instance.pythonvalue("-0") == float(0)
         assert instance.pythonvalue("0") == float(0)
+        assert instance.pythonvalue(" \r\n0 \t") == float(0)
 
 
 class TestDuration:
@@ -100,11 +139,19 @@ class TestDuration:
         instance = builtins.Duration()
         value = isodate.parse_duration("P0Y1347M0D")
         assert instance.xmlvalue(value) == "P1347M"
+        assert instance.xmlvalue("P0Y1347M0D") == "P1347M"
+        assert instance.xmlvalue(datetime.timedelta(days=1347)) == "P1347D"
+        with pytest.raises(ValueError):
+            instance.xmlvalue("P15T")
 
     def test_pythonvalue(self):
         instance = builtins.Duration()
         expected = isodate.parse_duration("P0Y1347M0D")
         value = "P0Y1347M0D"
+        assert instance.pythonvalue(value) == expected
+
+        expected = isodate.parse_duration("P0Y1347M0D")
+        value = "\r  \nP0Y1347M0D\t "
         assert instance.pythonvalue(value) == expected
 
 
@@ -135,11 +182,20 @@ class TestDateTime:
         value = datetime.datetime(2016, 3, 4, 21, 14, 42)
         assert instance.pythonvalue("2016-03-04T21:14:42") == value
 
+        value = datetime.datetime(2016, 3, 4, 0, 0, 0)
+        assert instance.pythonvalue("2016-03-04 00:00:00") == value
+
+        value = datetime.datetime(2016, 3, 4, 21, 14, 42, 123456)
+        assert instance.pythonvalue("2016-03-04 21:14:42.123456") == value
+
         value = datetime.datetime(2016, 3, 4, 21, 14, 42, 123456)
         assert instance.pythonvalue("2016-03-04T21:14:42.123456") == value
 
         value = datetime.datetime(2016, 3, 4, 0, 0, 0)
         assert instance.pythonvalue("2016-03-04") == value
+
+        value = datetime.datetime(2016, 3, 4, 0, 0, 0)
+        assert instance.pythonvalue(" \r\n\t2016-03-04   ") == value
 
     def test_pythonvalue_invalid(self):
         instance = builtins.DateTime()
@@ -165,6 +221,9 @@ class TestTime:
         value = isodate.parse_time("21:14:42.120+0200")
         assert instance.pythonvalue("21:14:42.120+0200") == value
 
+        value = datetime.time(21, 14, 42)
+        assert instance.pythonvalue("\t\r\n  21:14:42   ") == value
+
     def test_pythonvalue_invalid(self):
         instance = builtins.Time()
         with pytest.raises(ValueError):
@@ -185,6 +244,7 @@ class TestDate:
         assert instance.pythonvalue("2001-10-26+02:00") == datetime.date(2001, 10, 26)
         assert instance.pythonvalue("2001-10-26Z") == datetime.date(2001, 10, 26)
         assert instance.pythonvalue("2001-10-26+00:00") == datetime.date(2001, 10, 26)
+        assert instance.pythonvalue("\r\n\t 2016-03-04   ") == datetime.date(2016, 3, 4)
 
     def test_pythonvalue_invalid(self):
         instance = builtins.Date()
@@ -222,8 +282,8 @@ class TestgYearMonth:
 class TestgYear:
     def test_xmlvalue(self):
         instance = builtins.gYear()
-        instance.xmlvalue((2001, None)) == "2001"
-        instance.xmlvalue((2001, pytz.utc)) == "2001Z"
+        assert instance.xmlvalue((2001, None)) == "2001"
+        assert instance.xmlvalue((2001, pytz.utc)) == "2001Z"
 
     def test_pythonvalue(self):
         instance = builtins.gYear()
@@ -233,6 +293,10 @@ class TestgYear:
         assert instance.pythonvalue("2001+00:00") == (2001, pytz.utc)
         assert instance.pythonvalue("-2001") == (-2001, None)
         assert instance.pythonvalue("-20000") == (-20000, None)
+        assert instance.pythonvalue("  \t2001+02:00\r\n ") == (
+            2001,
+            pytz.FixedOffset(120),
+        )
 
         with pytest.raises(builtins.ParseError):
             assert instance.pythonvalue("99")
@@ -251,6 +315,7 @@ class TestgMonthDay:
         assert instance.pythonvalue("--11-01-04:00") == (11, 1, pytz.FixedOffset(-240))
         assert instance.pythonvalue("--11-15") == (11, 15, None)
         assert instance.pythonvalue("--02-29") == (2, 29, None)
+        assert instance.pythonvalue("\t\r\n --05-01 ") == (5, 1, None)
 
         with pytest.raises(builtins.ParseError):
             assert instance.pythonvalue("99")
@@ -269,6 +334,7 @@ class TestgMonth:
         assert instance.pythonvalue("--11-04:00") == (11, pytz.FixedOffset(-240))
         assert instance.pythonvalue("--11") == (11, None)
         assert instance.pythonvalue("--02") == (2, None)
+        assert instance.pythonvalue("\n\t --11Z \r") == (11, pytz.utc)
 
         with pytest.raises(builtins.ParseError):
             assert instance.pythonvalue("99")
@@ -295,6 +361,7 @@ class TestgDay:
         assert instance.pythonvalue("---01-04:00") == (1, pytz.FixedOffset(-240))
         assert instance.pythonvalue("---15") == (15, None)
         assert instance.pythonvalue("---31") == (31, None)
+        assert instance.pythonvalue("\r\n  \t---31 ") == (31, None)
         with pytest.raises(builtins.ParseError):
             assert instance.pythonvalue("99")
 
@@ -313,6 +380,7 @@ class TestBase64Binary:
     def test_xmlvalue(self):
         instance = builtins.Base64Binary()
         assert instance.xmlvalue(b"hoi") == b"aG9p"
+        assert instance.xmlvalue("aG9p") == "aG9p"
 
     def test_pythonvalue(self):
         instance = builtins.Base64Binary()

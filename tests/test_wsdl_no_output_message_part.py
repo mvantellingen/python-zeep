@@ -1,4 +1,4 @@
-from six import StringIO
+from io import StringIO
 
 from zeep.wsdl import wsdl
 

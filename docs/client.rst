@@ -51,6 +51,29 @@ The settings object is always accessible via the client using
 Please see :ref:`settings` for more information.
 
 
+The AsyncClient
+~~~~~~~~~~~~~~~
+
+The `AsyncClient` allows you to execute operations in an asynchronous
+fashion. There is one big caveat however: the wsdl documents are still loaded
+using synchronous methods. The reason for this is that the codebase was
+originally not written for asynchronous usage and support that is quite a lot
+of work.
+
+To use async operations you need to use the `AsyncClient()` and the
+corresponding `AsyncTransport()` (this is the default transport for the
+`AsyncClient`)
+
+.. code-block:: python
+
+    client = zeep.AsyncClient("http://localhost:8000/?wsdl")
+
+    response = await client.service.myoperation()
+
+
+.. versionadded:: 4.0.0
+
+
 Strict mode
 ~~~~~~~~~~~
 By default zeep will operate in 'strict' mode. This can be disabled if you
@@ -109,6 +132,26 @@ binding you can use the ``bind()`` method on the client object:
     service2 = client.bind('SecondService', 'Port12')
     service2.someOperation(myArg=1)
 
+for example, if your wsdl contains these definitions
+
+.. code-block:: xml
+
+    <wsdl:service name="ServiceName">
+    <wsdl:port name="PortName" binding="tns:BasicHttpsBinding_IServiziPartner">
+    <soap:address location="https://aaa.bbb.ccc/ddd/eee.svc"/>
+    </wsdl:port>
+    <wsdl:port name="PortNameAdmin" binding="tns:BasicHttpsBinding_IServiziPartnerAdmin">
+    <soap:address location="https://aaa.bbb.ccc/ddd/eee.svc/admin"/>
+    </wsdl:port>
+    </wsdl:service>
+
+and you need to calls methods defined in **https://aaa.bbb.ccc/ddd/eee.svc/admin** you can do:
+
+.. code-block:: python
+
+    client = Client("https://www.my.wsdl") # this will use default binding
+    client_admin = client.bind('ServiceName', 'PortNameAdmin')
+    client_admin.method1() #this will call method1 defined in service name ServiceName and port PortNameAdmin
 
 Creating new ServiceProxy objects
 ---------------------------------

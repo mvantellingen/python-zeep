@@ -3,9 +3,10 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-import six
-from defusedxml.lxml import fromstring
+from urllib.parse import urlencode
+
 from lxml import etree
+from lxml.etree import fromstring
 
 from zeep import ns, xsd
 from zeep.helpers import serialize_object
@@ -19,7 +20,7 @@ class MimeMessage(ConcreteMessage):
     _nsmap = {"mime": ns.MIME}
 
     def __init__(self, wsdl, name, operation, part_name):
-        super(MimeMessage, self).__init__(wsdl, name, operation)
+        super().__init__(wsdl, name, operation)
         self.part_name = part_name
 
     def resolve(self, definitions, abstract_message):
@@ -93,7 +94,7 @@ class MimeContent(MimeMessage):
     """
 
     def __init__(self, wsdl, name, operation, content_type, part_name):
-        super(MimeContent, self).__init__(wsdl, name, operation, part_name)
+        super().__init__(wsdl, name, operation, part_name)
         self.content_type = content_type
 
     def serialize(self, *args, **kwargs):
@@ -103,7 +104,7 @@ class MimeContent(MimeMessage):
         data = ""
         if self.content_type == "application/x-www-form-urlencoded":
             items = serialize_object(value)
-            data = six.moves.urllib.parse.urlencode(items)
+            data = urlencode(items)
         elif self.content_type == "text/xml":
             document = etree.Element("root")
             self.body.render(document, value)

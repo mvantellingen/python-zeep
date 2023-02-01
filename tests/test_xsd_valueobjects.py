@@ -1,7 +1,6 @@
 import pickle
 
 import pytest
-import six
 from lxml.etree import QName
 
 from zeep import xsd
@@ -58,9 +57,7 @@ def test_simple_args_too_many():
     try:
         valueobjects._process_signature(xsd_type, args, kwargs)
     except TypeError as exc:
-        assert six.text_type(exc) == (
-            "__init__() takes at most 2 positional arguments (3 given)"
-        )
+        assert str(exc) == ("__init__() takes at most 2 positional arguments (3 given)")
     else:
         assert False, "TypeError not raised"
 

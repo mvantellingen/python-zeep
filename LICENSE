@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2016-2017 Michael van Tellingen
+Copyright (c) 2016-2021 Michael van Tellingen
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,9 @@ SOFTWARE.
 --
 
 Parts of the XSD handling are heavily inspired by soapfish, see:
-https://github.com/FlightDataServices/soapfish
+https://github.com/soapteam/soapfish
 
-Copyright (c) 2011-2014, soapfish contributors
+Copyright (c) 2011-2021, Soapfish Contributors
 All rights reserved.
 For the exact contribution history, see the git revision log.
 

@@ -1,16 +1,5 @@
 root = true
 
-[*.py]
-line_length = 79
-multi_line_output = 4
-balanced_wrapping = true
-default_section = THIRDPARTY
-known_first_party = zeep,tests
-use_parentheses = true
-indent_style = space
-indent_size = 4
-tab_width = 4
-
 [*.yml]
 indent_size = 2
 shift_width = 2

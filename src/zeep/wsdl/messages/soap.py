@@ -4,6 +4,7 @@
 
 """
 import copy
+import typing
 from collections import OrderedDict
 
 from lxml import etree
@@ -14,6 +15,7 @@ from zeep.utils import as_qname
 from zeep.wsdl.messages.base import ConcreteMessage, SerializedMessage
 from zeep.wsdl.messages.multiref import process_multiref
 from zeep.xsd.context import XmlParserContext
+from zeep.xsd.valueobjects import CompoundValue
 
 __all__ = ["DocumentMessage", "RpcMessage"]
 
@@ -33,8 +35,11 @@ class SoapMessage(ConcreteMessage):
 
     """
 
+    if typing.TYPE_CHECKING:
+        _resolve_info = {}  # type: typing.Dict[str, typing.Any]
+
     def __init__(self, wsdl, name, operation, type, nsmap):
-        super(SoapMessage, self).__init__(wsdl, name, operation)
+        super().__init__(wsdl, name, operation)
         self.nsmap = nsmap
         self.abstract = None  # Set during resolve()
         self.type = type
@@ -79,7 +84,11 @@ class SoapMessage(ConcreteMessage):
         # XXX: This is only used in Soap 1.1 so should be moved to the the
         # Soap11Binding._set_http_headers(). But let's keep it like this for
         # now.
-        headers = {"SOAPAction": '"%s"' % self.operation.soapaction}
+        headers = {
+            "SOAPAction": '"%s"' % self.operation.soapaction
+            if self.operation.soapaction
+            else '""'
+        }
         return SerializedMessage(path=None, headers=headers, content=envelope)
 
     def deserialize(self, envelope):
@@ -89,6 +98,8 @@ class SoapMessage(ConcreteMessage):
         """
         if not self.envelope:
             return None
+
+        assert self.header
 
         body = envelope.find("soap-env:Body", namespaces=self.nsmap)
         body_result = self._deserialize_body(body)
@@ -143,6 +154,8 @@ class SoapMessage(ConcreteMessage):
             parts = [self.body.type.signature(schema=self.wsdl.types, standalone=False)]
         else:
             parts = []
+
+        assert self.header
         if self.header.type._element:
             parts.append(
                 "_soapheaders={%s}"
@@ -205,8 +218,8 @@ class SoapMessage(ConcreteMessage):
     def _parse_body(cls, xmlelement):
         """Parse soap:body and return a dict with data to resolve it.
 
-            <soap:body parts="nmtokens"? use="literal|encoded"?
-                       encodingStyle="uri-list"? namespace="uri"?>
+        <soap:body parts="nmtokens"? use="literal|encoded"?
+                   encodingStyle="uri-list"? namespace="uri"?>
 
         """
         return {
@@ -303,6 +316,7 @@ class SoapMessage(ConcreteMessage):
         """
         all_elements = xsd.Sequence([])
 
+        assert self.header
         if self.header.type._element:
             all_elements.append(
                 xsd.Element("{%s}header" % self.nsmap["soap-env"], self.header.type)
@@ -329,10 +343,11 @@ class SoapMessage(ConcreteMessage):
         header = soap.Header()
         if isinstance(headers_value, list):
             for header_value in headers_value:
-                if hasattr(header_value, "_xsd_elm"):
-                    header_value._xsd_elm.render(header, header_value)
-                elif hasattr(header_value, "_xsd_type"):
-                    header_value._xsd_type.render(header, header_value)
+                if isinstance(header_value, CompoundValue):
+                    if hasattr(header_value, "_xsd_elm"):
+                        header_value._xsd_elm.render(header, header_value)
+                    else:
+                        header_value._xsd_type.render(header, header_value)
                 elif isinstance(header_value, etree._Element):
                     header.append(header_value)
                 else:
@@ -353,6 +368,9 @@ class SoapMessage(ConcreteMessage):
             raise ValueError("Invalid value given to _soapheaders")
 
         return header
+
+    def _deserialize_body(self, xmlelement):
+        raise NotImplementedError()
 
     def _deserialize_headers(self, xmlelement):
         """Deserialize the values in the SOAP:Header element"""
@@ -389,6 +407,9 @@ class SoapMessage(ConcreteMessage):
             container.append(element)
         return xsd.Element(name, xsd.ComplexType(container))
 
+    def _resolve_body(self, info, definitions, parts):
+        raise NotImplementedError()
+
 
 class DocumentMessage(SoapMessage):
     """In the document message there are no additional wrappers, and the
@@ -411,7 +432,7 @@ class DocumentMessage(SoapMessage):
     """
 
     def __init__(self, *args, **kwargs):
-        super(DocumentMessage, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _deserialize_body(self, xmlelement):
 
@@ -439,8 +460,11 @@ class DocumentMessage(SoapMessage):
         else:
             sub_elements = []
             for part_name, part in parts.items():
-                element = part.element.clone()
-                element.attr_name = part_name or element.name
+                if part.element is not None:
+                    element = part.element.clone()
+                    element.attr_name = part_name or element.name
+                else:
+                    element = xsd.Element(name=part_name, type_=part.type)
                 sub_elements.append(element)
 
         if len(sub_elements) > 1:

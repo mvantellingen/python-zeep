@@ -1,8 +1,9 @@
+from io import StringIO
+
 import requests_mock
 from lxml import etree
 from pretend import stub
 from requests_toolbelt.multipart.decoder import MultipartDecoder
-from six import StringIO
 
 from tests.utils import assert_nodes_equal
 from zeep import Client

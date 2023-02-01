@@ -9,7 +9,7 @@ all the elements.
 __all__ = ["RefElement", "RefAttribute", "RefAttributeGroup", "RefGroup"]
 
 
-class RefElement(object):
+class RefElement:
     def __init__(
         self, tag, ref, schema, is_qualified=False, min_occurs=1, max_occurs=1
     ):
@@ -30,7 +30,7 @@ class RefElement(object):
 class RefAttribute(RefElement):
     def __init__(self, *args, **kwargs):
         self._array_type = kwargs.pop("array_type", None)
-        super(RefAttribute, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def resolve(self):
         attrib = self._schema.get_attribute(self._ref)

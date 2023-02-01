@@ -10,6 +10,7 @@ from zeep.xsd.const import Nil, NotSet, xsi_ns
 from zeep.xsd.context import XmlParserContext
 from zeep.xsd.elements.base import Base
 from zeep.xsd.utils import create_prefixed_name, max_occurs_iter
+from zeep.xsd.valueobjects import CompoundValue
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class Element(Base):
 
     def __call__(self, *args, **kwargs):
         instance = self.type(*args, **kwargs)
-        if hasattr(instance, "_xsd_type"):
+        if isinstance(instance, CompoundValue):
             instance._xsd_elm = self
         return instance
 
@@ -265,7 +266,11 @@ class Element(Base):
                     % (self.min_occurs, len(value)),
                     path=render_path,
                 )
-            elif self.max_occurs != "unbounded" and len(value) > self.max_occurs:
+            elif (
+                self.max_occurs != "unbounded"
+                and isinstance(self.max_occurs, int)
+                and len(value) > self.max_occurs
+            ):
                 raise exceptions.ValidationError(
                     "Expected at most %d items (maxOccurs check) %d items found."
                     % (self.max_occurs, len(value)),

@@ -13,7 +13,7 @@ __all__ = ["Attribute", "AttributeGroup"]
 
 class Attribute(Element):
     def __init__(self, name, type_=None, required=False, default=None):
-        super(Attribute, self).__init__(name=name, type_=type_, default=default)
+        super().__init__(name=name, type_=type_, default=default)
         self.required = required
         self.array_type = None
 
@@ -44,19 +44,19 @@ class Attribute(Element):
 
     def clone(self, *args, **kwargs):
         array_type = kwargs.pop("array_type", None)
-        new = super(Attribute, self).clone(*args, **kwargs)
+        new = super().clone(*args, **kwargs)
         new.array_type = array_type
         return new
 
     def resolve(self):
-        retval = super(Attribute, self).resolve()
+        retval = super().resolve()
         self.type = self.type.resolve()
         if self.array_type:
             retval.array_type = self.array_type.resolve()
         return retval
 
 
-class AttributeGroup(object):
+class AttributeGroup:
     def __init__(self, name, attributes):
         if not isinstance(name, etree.QName):
             name = etree.QName(name)

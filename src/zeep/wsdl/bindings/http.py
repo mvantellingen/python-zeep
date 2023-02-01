@@ -1,6 +1,5 @@
 import logging
 
-import six
 from lxml import etree
 
 from zeep import ns
@@ -8,6 +7,7 @@ from zeep.exceptions import Fault
 from zeep.utils import qname_attr
 from zeep.wsdl import messages
 from zeep.wsdl.definitions import Binding, Operation
+from zeep.wsdl.utils import url_http_to_https
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ NSMAP = {"http": ns.HTTP, "wsdl": ns.WSDL, "mime": ns.MIME}
 
 class HttpBinding(Binding):
     def create_message(self, operation, *args, **kwargs):
-        if isinstance(operation, six.string_types):
+        if isinstance(operation, str):
             operation = self.get(operation)
             if not operation:
                 raise ValueError("Operation not found")
@@ -29,9 +29,10 @@ class HttpBinding(Binding):
 
         # Force the usage of HTTPS when the force_https boolean is true
         location = address_node.get("location")
-        if force_https and location and location.startswith("http://"):
-            logger.warning("Forcing http:address location to HTTPS")
-            location = "https://" + location[8:]
+        if force_https and location:
+            location = url_http_to_https(location)
+            if location != address_node.get("location"):
+                logger.warning("Forcing http:address location to HTTPS")
 
         return {"address": location}
 
@@ -49,7 +50,6 @@ class HttpBinding(Binding):
     def process_reply(self, client, operation, response):
         if response.status_code != 200:
             return self.process_error(response.content)
-            raise NotImplementedError("No error handling yet!")
         return operation.process_reply(response.content)
 
     def process_error(self, doc):
@@ -114,7 +114,7 @@ class HttpGetBinding(HttpBinding):
 
 class HttpOperation(Operation):
     def __init__(self, name, binding, location):
-        super(HttpOperation, self).__init__(name, binding)
+        super().__init__(name, binding)
         self.location = location
 
     def process_reply(self, envelope):
@@ -124,15 +124,15 @@ class HttpOperation(Operation):
     def parse(cls, definitions, xmlelement, binding):
         """
 
-            <wsdl:operation name="GetLastTradePrice">
-              <http:operation location="GetLastTradePrice"/>
-              <wsdl:input>
-                <mime:content type="application/x-www-form-urlencoded"/>
-              </wsdl:input>
-              <wsdl:output>
-                <mime:mimeXml/>
-              </wsdl:output>
-            </wsdl:operation>
+        <wsdl:operation name="GetLastTradePrice">
+          <http:operation location="GetLastTradePrice"/>
+          <wsdl:input>
+            <mime:content type="application/x-www-form-urlencoded"/>
+          </wsdl:input>
+          <wsdl:output>
+            <mime:mimeXml/>
+          </wsdl:output>
+        </wsdl:operation>
 
         """
         name = xmlelement.get("name")
@@ -169,7 +169,7 @@ class HttpOperation(Operation):
         return obj
 
     def resolve(self, definitions):
-        super(HttpOperation, self).resolve(definitions)
+        super().resolve(definitions)
         if self.output:
             self.output.resolve(definitions, self.abstract.output_message)
         if self.input:

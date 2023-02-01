@@ -121,7 +121,7 @@ def test_any_value_element_tree():
 def test_any_value_invalid():
     schema = get_any_schema()
 
-    class SomeThing(object):
+    class SomeThing:
         pass
 
     container_elm = schema.get_element("{http://tests.python-zeep.org/}container")

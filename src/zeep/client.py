@@ -1,14 +1,15 @@
 import logging
+import typing
 
-from zeep.proxy import ServiceProxy
+from zeep.proxy import AsyncServiceProxy, ServiceProxy
 from zeep.settings import Settings
-from zeep.transports import Transport
+from zeep.transports import AsyncTransport, Transport
 from zeep.wsdl import Document
 
 logger = logging.getLogger(__name__)
 
 
-class Factory(object):
+class Factory:
     def __init__(self, types, kind, namespace):
         self._method = getattr(types, "get_%s" % kind)
 
@@ -34,10 +35,10 @@ class Factory(object):
         return self._method("{%s}%s" % (self._ns, key))
 
 
-class Client(object):
+class Client:
     """The zeep Client.
 
-    :param wsdl:
+    :param wsdl: Url/local WSDL location or preparsed WSDL Document
     :param wsse:
     :param transport: Custom transport class.
     :param service_name: The service name for the service binding. Defaults to
@@ -49,6 +50,8 @@ class Client(object):
     :param settings: a zeep.Settings() object
 
     """
+
+    _default_transport: typing.Union[Transport, AsyncTransport] = Transport
 
     def __init__(
         self,
@@ -64,8 +67,13 @@ class Client(object):
             raise ValueError("No URL given for the wsdl")
 
         self.settings = settings or Settings()
-        self.transport = transport if transport is not None else Transport()
-        self.wsdl = Document(wsdl, self.transport, settings=self.settings)
+        self.transport = (
+            transport if transport is not None else self._default_transport()
+        )
+        if isinstance(wsdl, Document):
+            self.wsdl = wsdl
+        else:
+            self.wsdl = Document(wsdl, self.transport, settings=self.settings)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
 
@@ -98,7 +106,11 @@ class Client(object):
             )
         return self._default_service
 
-    def bind(self, service_name=None, port_name=None):
+    def bind(
+        self,
+        service_name: typing.Optional[str] = None,
+        port_name: typing.Optional[str] = None,
+    ):
         """Create a new ServiceProxy for the given service_name and port_name.
 
         The default ServiceProxy instance (`self.service`) always referes to
@@ -170,9 +182,7 @@ class Client(object):
         return self.wsdl.types.get_element(name)
 
     def set_ns_prefix(self, prefix, namespace):
-        """Set a shortcut for the given namespace.
-
-        """
+        """Set a shortcut for the given namespace."""
         self.wsdl.types.set_ns_prefix(prefix, namespace)
 
     def set_default_soapheaders(self, headers):
@@ -195,7 +205,7 @@ class Client(object):
             port = list(service.ports.values())[0]
         return port
 
-    def _get_service(self, name):
+    def _get_service(self, name: typing.Optional[str]) -> str:
         if name:
             service = self.wsdl.services.get(name)
             if not service:
@@ -203,6 +213,42 @@ class Client(object):
         else:
             service = next(iter(self.wsdl.services.values()), None)
         return service
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type=None, exc_value=None, traceback=None):
+        if hasattr(self.transport, "close"):
+            self.transport.close()
+
+
+class AsyncClient(Client):
+    _default_transport = AsyncTransport
+
+    def bind(
+        self,
+        service_name: typing.Optional[str] = None,
+        port_name: typing.Optional[str] = None,
+    ):
+        """Create a new ServiceProxy for the given service_name and port_name.
+
+        The default ServiceProxy instance (`self.service`) always referes to
+        the first service/port in the wsdl Document.  Use this when a specific
+        port is required.
+
+        """
+        if not self.wsdl.services:
+            return
+
+        service = self._get_service(service_name)
+        port = self._get_port(service, port_name)
+        return AsyncServiceProxy(self, port.binding, **port.binding_options)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type=None, exc_value=None, traceback=None) -> None:
+        await self.transport.aclose()
 
 
 class CachingClient(Client):
@@ -220,4 +266,4 @@ class CachingClient(Client):
 
         kwargs["transport"] = kwargs.get("transport") or Transport(cache=SqliteCache())
 
-        super(CachingClient, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)

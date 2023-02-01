@@ -1,5 +1,16 @@
+import typing
+
+from lxml import etree
+
 from zeep.utils import get_base_class
+from zeep.xsd.context import XmlParserContext
 from zeep.xsd.types.simple import AnySimpleType
+
+if typing.TYPE_CHECKING:
+    from zeep.xsd.schema import Schema
+    from zeep.xsd.types.base import Type
+    from zeep.xsd.types.complex import ComplexType
+    from zeep.xsd.valueobjects import CompoundValue
 
 __all__ = ["ListType", "UnionType"]
 
@@ -9,13 +20,20 @@ class ListType(AnySimpleType):
 
     def __init__(self, item_type):
         self.item_type = item_type
-        super(ListType, self).__init__()
+        super().__init__()
 
     def __call__(self, value):
         return value
 
-    def render(self, parent, value, xsd_type=None, render_path=None):
-        parent.text = self.xmlvalue(value)
+    def render(
+        self,
+        node: etree._Element,
+        value: typing.Union[list, dict, "CompoundValue"],
+        xsd_type: "ComplexType" = None,
+        render_path=None,
+    ) -> None:
+        assert xsd_type is None
+        node.text = self.xmlvalue(value)
 
     def resolve(self):
         self.item_type = self.item_type.resolve()
@@ -43,7 +61,7 @@ class UnionType(AnySimpleType):
         self.item_types = item_types
         self.item_class = None
         assert item_types
-        super(UnionType, self).__init__(None)
+        super().__init__(None)
 
     def resolve(self):
         self.item_types = [item.resolve() for item in self.item_types]
@@ -56,13 +74,20 @@ class UnionType(AnySimpleType):
         return ""
 
     def parse_xmlelement(
-        self, xmlelement, schema=None, allow_none=True, context=None, schema_type=None
-    ):
+        self,
+        xmlelement: etree._Element,
+        schema: "Schema" = None,
+        allow_none: bool = True,
+        context: XmlParserContext = None,
+        schema_type: "Type" = None,
+    ) -> typing.Optional[
+        typing.Union[str, "CompoundValue", typing.List[etree._Element]]
+    ]:
         if self.item_class:
             return self.item_class().parse_xmlelement(
                 xmlelement, schema, allow_none, context
             )
-        return xmlelement.text
+        return str(xmlelement.text) or None
 
     def pythonvalue(self, value):
         if self.item_class:

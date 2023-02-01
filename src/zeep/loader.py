@@ -1,14 +1,15 @@
 import os.path
+import typing
+from urllib.parse import urljoin, urlparse, urlunparse
 
-from defusedxml.lxml import fromstring
 from lxml import etree
-from six.moves.urllib.parse import urljoin, urlparse, urlunparse
+from lxml.etree import Resolver, XMLParser, XMLSyntaxError, fromstring
 
-from zeep.exceptions import XMLSyntaxError
+from zeep.exceptions import DTDForbidden, EntitiesForbidden, XMLSyntaxError
 from zeep.settings import Settings
 
 
-class ImportResolver(etree.Resolver):
+class ImportResolver(Resolver):
     """Custom lxml resolve to use the transport object"""
 
     def __init__(self, transport):
@@ -20,7 +21,7 @@ class ImportResolver(etree.Resolver):
             return self.resolve_string(content, context)
 
 
-def parse_xml(content, transport, base_url=None, settings=None):
+def parse_xml(content: str, transport, base_url=None, settings=None):
     """Parse an XML string and return the root Element.
 
     :param content: The XML string
@@ -38,7 +39,7 @@ def parse_xml(content, transport, base_url=None, settings=None):
     """
     settings = settings or Settings()
     recover = not settings.strict
-    parser = etree.XMLParser(
+    parser = XMLParser(
         remove_comments=True,
         resolve_entities=False,
         recover=recover,
@@ -46,20 +47,30 @@ def parse_xml(content, transport, base_url=None, settings=None):
     )
     parser.resolvers.add(ImportResolver(transport))
     try:
-        return fromstring(
-            content,
-            parser=parser,
-            base_url=base_url,
-            forbid_dtd=settings.forbid_dtd,
-            forbid_entities=settings.forbid_entities,
-        )
+        elementtree = fromstring(content, parser=parser, base_url=base_url)
+        docinfo = elementtree.getroottree().docinfo
+        if docinfo.doctype:
+            if settings.forbid_dtd:
+                raise DTDForbidden(
+                    docinfo.doctype, docinfo.system_url, docinfo.public_id
+                )
+        if settings.forbid_entities:
+            for dtd in docinfo.internalDTD, docinfo.externalDTD:
+                if dtd is None:
+                    continue
+                for entity in dtd.iterentities():
+                    raise EntitiesForbidden(entity.name, entity.content)
+
+        return elementtree
     except etree.XMLSyntaxError as exc:
         raise XMLSyntaxError(
             "Invalid XML content received (%s)" % exc.msg, content=content
         )
 
 
-def load_external(url, transport, base_url=None, settings=None):
+def load_external(
+    url: typing.Union[typing.IO, str], transport, base_url=None, settings=None
+):
     """Load an external XML document.
 
     :param url:
@@ -79,6 +90,26 @@ def load_external(url, transport, base_url=None, settings=None):
     return parse_xml(content, transport, base_url, settings=settings)
 
 
+async def load_external_async(url: typing.IO, transport, base_url=None, settings=None):
+    """Load an external XML document.
+
+    :param url:
+    :param transport:
+    :param base_url:
+    :param settings: A zeep.settings.Settings object containing parse settings.
+    :type settings: zeep.settings.Settings
+
+    """
+    settings = settings or Settings()
+    if hasattr(url, "read"):
+        content = url.read()
+    else:
+        if base_url:
+            url = absolute_location(url, base_url)
+        content = await transport.load(url)
+    return parse_xml(content, transport, base_url, settings=settings)
+
+
 def normalize_location(settings, url, base_url):
     """Return a 'normalized' url for the given url.
 
@@ -86,12 +117,6 @@ def normalize_location(settings, url, base_url):
     enabled.
 
     """
-    # Python 2.7 doesn't accept None to urlparse() calls, but Python 3 does.
-    # So as a guard convert None to '' here so that we can't introduce errors in
-    # Python 2.7 like #930. Can be removed when we drop Python 2 support.
-    if url is None:
-        url = ""
-
     if base_url:
         url = absolute_location(url, base_url)
 

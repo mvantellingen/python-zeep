@@ -1,5 +1,6 @@
 import cgi
 import inspect
+import typing
 
 from lxml import etree
 
@@ -7,13 +8,18 @@ from zeep.exceptions import XMLParseError
 from zeep.ns import XSD
 
 
-def qname_attr(node, attr_name, target_namespace=None):
+def qname_attr(
+    node: etree._Element,
+    attr_name: typing.Union[str, etree.QName],
+    target_namespace=None,
+) -> typing.Optional[etree.QName]:
     value = node.get(attr_name)
     if value is not None:
         return as_qname(value, node.nsmap, target_namespace)
+    return None
 
 
-def as_qname(value, nsmap, target_namespace=None):
+def as_qname(value: str, nsmap, target_namespace=None) -> etree.QName:
     """Convert the given value to a QName"""
     value = value.strip()  # some xsd's contain leading/trailing spaces
     if ":" in value:
@@ -43,7 +49,7 @@ def as_qname(value, nsmap, target_namespace=None):
     return etree.QName(value)
 
 
-def findall_multiple_ns(node, name, namespace_sets):
+def findall_multiple_ns(node: etree._Element, name, namespace_sets):
     result = []
     for nsmap in namespace_sets:
         result.extend(node.findall(name, namespaces=nsmap))
