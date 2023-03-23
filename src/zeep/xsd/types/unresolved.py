@@ -4,7 +4,7 @@ from lxml import etree
 
 from zeep.xsd.types.base import Type
 from zeep.xsd.types.collection import UnionType  # FIXME
-from zeep.xsd.types.simple import AnySimpleType  # FIXME
+from zeep.xsd.types.simple import AnySimpleType, Facets  # FIXME
 
 if typing.TYPE_CHECKING:
     from zeep.xsd.types.complex import ComplexType
@@ -38,12 +38,13 @@ class UnresolvedType(Type):
 
 
 class UnresolvedCustomType(Type):
-    def __init__(self, qname, base_type, schema):
+    def __init__(self, qname, base_type, schema, facets: Facets):
         assert qname is not None
         self.qname = qname
         self.name = str(qname.localname)
         self.schema = schema
         self.base_type = base_type
+        self.facets = facets
 
     def __repr__(self):
         return "<%s(qname=%r, base_type=%r)>" % (
@@ -63,7 +64,11 @@ class UnresolvedCustomType(Type):
             return xsd_type(base.item_types)
 
         elif issubclass(base.__class__, AnySimpleType):
-            xsd_type = type(self.name, (base.__class__,), cls_attributes)
+            xsd_type = type(
+                self.name,
+                (base.__class__,),
+                dict(cls_attributes, facets=self.facets.parse_values(base))
+            )
             return xsd_type(self.qname)
 
         else:
