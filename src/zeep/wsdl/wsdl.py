@@ -7,10 +7,12 @@ from __future__ import print_function
 
 import logging
 import operator
+import sys
 import os
 import typing
 import warnings
 from collections import OrderedDict
+from functools import partial
 
 from lxml import etree
 
@@ -106,7 +108,8 @@ class Document:
     def __repr__(self):
         return "<WSDL(location=%r)>" % self.location
 
-    def dump(self):
+    def dump(self, output=sys.stdout):
+        print = partial(print, file=output)
         print("")
         print("Prefixes:")
         for prefix, namespace in self.types.prefix_map.items():
