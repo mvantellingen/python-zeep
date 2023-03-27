@@ -1,5 +1,5 @@
 class Error(Exception):
-    def __init__(self, message=""):
+    def __init__(self, message: str = ""):
         super(Exception, self).__init__(message)
         self.message = message
 
@@ -19,7 +19,7 @@ class XMLParseError(Error):
         self.sourceline = kwargs.pop("sourceline", None)
         super().__init__(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         location = None
         if self.filename and self.sourceline:
             location = "%s:%s" % (self.filename, self.sourceline)
@@ -37,7 +37,7 @@ class WsdlSyntaxError(Error):
 
 
 class TransportError(Error):
-    def __init__(self, message="", status_code=0, content=None):
+    def __init__(self, message: str = "", status_code=0, content=None):
         super().__init__(message)
         self.status_code = status_code
         self.content = content
@@ -56,7 +56,7 @@ class NamespaceError(Error):
 
 
 class Fault(Error):
-    def __init__(self, message, code=None, actor=None, detail=None, subcodes=None):
+    def __init__(self, message: str, code=None, actor=None, detail=None, subcodes=None):
         super().__init__(message)
         self.message = message
         self.code = code
@@ -74,7 +74,7 @@ class ValidationError(Error):
         self.path = kwargs.pop("path", [])
         super().__init__(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.path:
             path = ".".join(str(x) for x in self.path)
             return "%s (%s)" % (self.message, path)
