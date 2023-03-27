@@ -1,6 +1,7 @@
 import logging
 import os
 from contextlib import contextmanager
+from typing import Any, Callable, TypeVar
 from urllib.parse import urlparse
 
 import requests
@@ -18,6 +19,46 @@ except ImportError:
 
 
 __all__ = ["AsyncTransport", "Transport"]
+
+WrapFuncType = TypeVar("WrapFuncType", bound=Callable[..., Any])
+
+
+def retry_server_disconnect(func: WrapFuncType) -> WrapFuncType:
+    """Retry once if the server disconnects the connection.
+
+    An HTTP/1.1 is allowed to disconnect the connection at any time.
+    We need to retry ONCE if this happens.
+
+    http://datatracker.ietf.org/doc/html/rfc2616#section-8.1.4
+
+    A client, server, or proxy MAY close the transport connection at any
+    time. For example, a client might have started to send a new request
+    at the same time that the server has decided to close the "idle"
+    connection. From the server's point of view, the connection is being
+    closed while it was idle, but from the client's point of view, a
+    request is in progress.
+
+    This means that clients, servers, and proxies MUST be able to recover
+    from asynchronous close events. Client software SHOULD reopen the
+    transport connection and retransmit the aborted sequence of requests
+    without user interaction so long as the request sequence is
+    idempotent (see section 9.1.2). Non-idempotent methods or sequences
+    MUST NOT be automatically retried, although user agents MAY offer a
+    human operator the choice of retrying the request(s). Confirmation by
+    user-agent software with semantic understanding of the application
+    MAY substitute for user confirmation. The automatic retry SHOULD NOT
+    be repeated if the second sequence of requests fails.
+    """
+
+    def _retry_server_disconnect_wrapper(self, *args: Any, **kwargs: Any) -> Any:
+        if httpx is None:
+            return func(self, *args, **kwargs)
+        try:
+            return func(self, *args, **kwargs)
+        except httpx.RemoteProtocolError:
+            return func(self, *args, **kwargs)
+
+    return _retry_server_disconnect_wrapper
 
 
 class Transport:
@@ -44,6 +85,7 @@ class Transport:
             get_version()
         )
 
+    @retry_server_disconnect
     def get(self, address, params, headers):
         """Proxy to requests.get()
 
@@ -57,6 +99,7 @@ class Transport:
         )
         return response
 
+    @retry_server_disconnect
     def post(self, address, message, headers):
         """Proxy to requests.posts()
 
@@ -114,7 +157,6 @@ class Transport:
 
         scheme = urlparse(url).scheme
         if scheme in ("http", "https", "file"):
-
             if self.cache:
                 response = self.cache.get(url)
                 if response:
@@ -215,6 +257,7 @@ class AsyncTransport(Transport):
             raise TransportError(status_code=response.status_code)
         return result
 
+    @retry_server_disconnect
     async def post(self, address, message, headers):
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
         response = await self.client.post(
@@ -235,6 +278,7 @@ class AsyncTransport(Transport):
         response = await self.post(address, message, headers)
         return self.new_response(response)
 
+    @retry_server_disconnect
     async def get(self, address, params, headers):
         response = await self.client.get(
             address,
