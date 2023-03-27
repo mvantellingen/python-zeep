@@ -411,6 +411,44 @@ def test_choice_element_with_any_max_occurs():
     assert result._value_1 == ["any-content"]
 
 
+def test_choice_element_zero():
+    schema = xsd.Schema(
+        load_xml(
+            """
+            <xsd:schema
+                    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                    xmlns:tns="http://tests.python-zeep.org/"
+                    elementFormDefault="qualified"
+                    targetNamespace="http://tests.python-zeep.org/">
+              <xsd:element name="container">
+                <xsd:complexType>
+                  <xsd:choice>
+                    <xsd:element name="item_1" type="xsd:decimal" />
+                  </xsd:choice>
+                </xsd:complexType>
+              </xsd:element>
+            </xsd:schema>
+        """
+        )
+    )
+
+    element = schema.get_element("ns0:container")
+    value = element(item_1=0)
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <ns0:item_1>0</ns0:item_1>
+        </ns0:container>
+      </document>
+    """
+    node = render_node(element, value)
+    assert_nodes_equal(expected, node)
+
+    result = element.parse(node[0], schema)
+    assert result.item_1 == 0
+
+
 def test_choice_optional_values():
     schema = load_xml(
         """
