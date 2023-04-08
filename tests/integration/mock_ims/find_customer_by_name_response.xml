@@ -1,0 +1,75 @@
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+    <s:Body>
+        <GetAllCustomersFilteredResponse xmlns="http://tempuri.org/">
+            <GetAllCustomersFilteredResult xmlns:a="http://schemas.datacontract.org/2004/07/PresentationModel.Customer"
+                xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+                <a:Customer xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/" z:Id="i1">
+                    <Errors xmlns="http://schemas.datacontract.org/2004/07/PresentationModel" i:nil="true"/>
+                    <HasErrors xmlns="http://schemas.datacontract.org/2004/07/PresentationModel">false</HasErrors>
+                    <Id xmlns="http://schemas.datacontract.org/2004/07/PresentationModel">2644557</Id>
+                    <RowVersion xmlns="http://schemas.datacontract.org/2004/07/PresentationModel">2021-01-05T17:46:56</RowVersion>
+                    <a:AccountEmail/>
+                    <a:AccountManager/>
+                    <a:Address>Postbus 19035 - 3501DA - UTRECHT</a:Address>
+                    <a:ChannelReservations xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Circuits" i:nil="true"/>
+                    <a:Circuits xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Circuits" i:nil="true"/>
+                    <a:Code>AD93DAEF-0911-E511-80D0-005056956C1A</a:Code>
+                    <a:ContractCustomerRelations xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Contract" i:nil="true"/>
+                    <a:Country xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Site" i:nil="true"/>
+                    <a:CountryId i:nil="true"/>
+                    <a:CustomerRelatedContacts i:nil="true"/>
+                    <a:CustomerRelatedContracts i:nil="true"/>
+                    <a:CustomerType i:nil="true"/>
+                    <a:CustomerTypeId i:nil="true"/>
+                    <a:EsimProfiles xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Esim" i:nil="true"/>
+                    <a:Esims xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Esim" i:nil="true"/>
+                    <a:FaxNumber/>
+                    <a:FullName>SURFNET BV</a:FullName>
+                    <a:InNumbers xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Warehouse" i:nil="true"/>
+                    <a:IpRanges xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.IpManagement" i:nil="true"/>
+                    <a:ManagementSystems xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.EquipmentDefinition" i:nil="true"/>
+                    <a:Name>SURFNET</a:Name>
+                    <a:Nodes xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Equipment" i:nil="true"/>
+                    <a:Number>536</a:Number>
+                    <a:NumberManagementList xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.NumberManagement" i:nil="true"/>
+                    <a:OloCircuits xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Circuits" i:nil="true"/>
+                    <a:Orders xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Orders" i:nil="true"/>
+                    <a:ParentCustomer i:nil="true"/>
+                    <a:ParentCustomerId>2644557</a:ParentCustomerId>
+                    <a:PhoneNumber>+31 887873000</a:PhoneNumber>
+                    <a:PortReservations xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Equipment" i:nil="true"/>
+                    <a:PwCodeBlue>0</a:PwCodeBlue>
+                    <a:PwEmailSetups xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.PlannedWork" i:nil="true"/>
+                    <a:PwExtraInfo/>
+                    <a:PwInformAtRisk>1</a:PwInformAtRisk>
+                    <a:PwInformDown>1</a:PwInformDown>
+                    <a:PwInformImPact>1</a:PwInformImPact>
+                    <a:PwInformNoImPact>0</a:PwInformNoImPact>
+                    <a:PwInformProtectionSwitch>1</a:PwInformProtectionSwitch>
+                    <a:PwInformedList xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.PlannedWork" i:nil="true"/>
+                    <a:PwLanguage>NL</a:PwLanguage>
+                    <a:Racks xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Equipment" i:nil="true"/>
+                    <a:ServiceCenter>1</a:ServiceCenter>
+                    <a:ServiceCenterName>SURFNET</a:ServiceCenterName>
+                    <a:Sites xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Site" i:nil="true"/>
+                    <a:Sla xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Equipment" i:nil="true"/>
+                    <a:SlaId i:nil="true"/>
+                    <a:Speeds xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.Circuits" i:nil="true"/>
+                    <a:SubCustomers i:nil="true"/>
+                    <a:TelephoneNumberRanges xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.NumberManagement" i:nil="true"/>
+                    <a:TelephoneNumbers xmlns:b="http://schemas.datacontract.org/2004/07/PresentationModel.NumberManagement" i:nil="true"/>
+                    <a:Website>HTTP://WWW.SURFNET.NL</a:Website>
+                </a:Customer>
+            </GetAllCustomersFilteredResult>
+            <pager xmlns:a="http://schemas.datacontract.org/2004/07/PresentationModel.DatabaseFilter"
+                xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+                <a:AvailableElements>0</a:AvailableElements>
+                <a:Descending>false</a:Descending>
+                <a:ElementsRead>1</a:ElementsRead>
+                <a:NumberOfElements>1</a:NumberOfElements>
+                <a:OrderByProperty i:nil="true"/>
+                <a:StartElement>0</a:StartElement>
+            </pager>
+        </GetAllCustomersFilteredResponse>
+    </s:Body>
+</s:Envelope>
