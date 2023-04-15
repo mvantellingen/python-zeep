@@ -170,13 +170,14 @@ class DateTime(BuiltinType):
 
     @treat_whitespace("collapse")
     def pythonvalue(self, value):
-
         # Determine based on the length of the value if it only contains a date
         # lazy hack ;-)
         if len(value) == 10:
             value += "T00:00:00"
         elif (len(value) == 19 or len(value) == 26) and value[10] == " ":
             value = "T".join(value.split(" "))
+        elif len(value) > 10 and value[10] == "-":  # 2010-01-01-00:00:00...
+            value[10] = "T"
         return isodate.parse_datetime(value)
 
 
