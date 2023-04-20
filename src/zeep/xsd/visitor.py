@@ -68,7 +68,7 @@ class SchemaVisitor:
         self.document.register_element(qname, instance)
 
     def register_attribute(
-        self, name: etree.QName, instance: xsd_elements.Attribute
+            self, name: etree.QName, instance: xsd_elements.Attribute
     ) -> None:
         self.document.register_attribute(name, instance)
 
@@ -79,7 +79,7 @@ class SchemaVisitor:
         self.document.register_group(qname, instance)
 
     def register_attribute_group(
-        self, qname: etree.QName, instance: xsd_elements.AttributeGroup
+            self, qname: etree.QName, instance: xsd_elements.AttributeGroup
     ) -> None:
         self.document.register_attribute_group(qname, instance)
 
@@ -302,7 +302,7 @@ class SchemaVisitor:
         # If included schema doesn't have default ns, then it should be set to parent's targetNs.
         # See Chameleon Inclusion https://www.w3.org/TR/xmlschema11-1/#chameleon-xslt
         if not schema_node.nsmap.get(None) and (
-            node.nsmap.get(None) or parent.attrib.get("targetNamespace")
+                node.nsmap.get(None) or parent.attrib.get("targetNamespace")
         ):
             nsmap = {None: node.nsmap.get(None) or parent.attrib["targetNamespace"]}
             nsmap.update(schema_node.nsmap)
@@ -436,7 +436,7 @@ class SchemaVisitor:
         return element
 
     def visit_attribute(
-        self, node: etree._Element, parent: etree._Element
+            self, node: etree._Element, parent: etree._Element
     ) -> typing.Union[xsd_elements.Attribute, xsd_elements.RefAttribute]:
         """Declares an attribute.
 
@@ -925,7 +925,11 @@ class SchemaVisitor:
                 raise self._create_error(
                     "Unexpected element %s in xsd:sequence" % child.tag, child
                 )
-
+            if node.attrib:
+                if "minOccurs" in node.attrib:
+                    child.set("minOccurs", node.attrib["minOccurs"])
+                    if "maxOccurs" in node.attrib:
+                        child.set("maxOccurs", node.attrib["maxOccurs"])
             item = self.process(child, node)
             assert item is not None
             result.append(item)
@@ -1217,7 +1221,7 @@ class SchemaVisitor:
         # that fact and handle it by auto-importing the schema if it is
         # referenced.
         if name.namespace in AUTO_IMPORT_NAMESPACES and not self.document.is_imported(
-            name.namespace
+                name.namespace
         ):
             logger.debug("Auto importing missing known schema: %s", name.namespace)
             import_node = etree.Element(
@@ -1226,10 +1230,10 @@ class SchemaVisitor:
             self.visit_import(import_node, None)
 
         if (
-            not name.namespace
-            and self.document._element_form == "qualified"
-            and self.document._target_namespace
-            and not self.document._has_empty_import
+                not name.namespace
+                and self.document._element_form == "qualified"
+                and self.document._target_namespace
+                and not self.document._has_empty_import
         ):
             name = etree.QName(self.document._target_namespace, name.localname)
         return name
