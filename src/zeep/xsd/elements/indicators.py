@@ -236,18 +236,20 @@ class OrderIndicator(Indicator, list):
 
         self.validate(values, render_path)
 
+        child_path = render_path
         for value in max_occurs_iter(self.max_occurs, values):
             for name, element in self.elements_nested:
                 if name:
                     if name in value:
                         element_value = value[name]
-                        child_path = render_path + [name]
+                        child_path += [name]
+                    elif isinstance(value, etree._Element):
+                        element_value = value
+                        child_path += [name]
                     else:
                         element_value = NotSet
-                        child_path = render_path
                 else:
                     element_value = value
-                    child_path = render_path
 
                 if element_value is SkipValue:
                     continue
