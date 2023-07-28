@@ -95,6 +95,39 @@ def test_soap11_process_error():
             "utf-8"
         )
 
+    responseWithEmptyNamespaceInFault = load_xml(
+        """
+        <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns="http://example.com/my/schema">
+          <soapenv:Body>
+            <soapenv:Fault>
+              <faultcode xmlns="">fault-code-withEmptyNamespace</faultcode>
+              <faultstring xmlns="">fault-string-withEmptyNamespace</faultstring>
+              <detail xmlns="">
+                <myFaultDetails xmlns="http://example.com/my/schema">
+                  <message>detail-message-withNamespace</message>
+                  <errorcode>detail-code-withNamespace</errorcode>
+                </myFaultDetails>
+              </detail>
+            </soapenv:Fault>
+          </soapenv:Body>
+        </soapenv:Envelope>
+    """
+    )
+
+    try:
+        binding.process_error(responseWithEmptyNamespaceInFault, None)
+    except Fault as exc:
+        assert exc.message == "fault-string-withEmptyNamespace"
+        assert exc.code == "fault-code-withEmptyNamespace"
+        assert exc.actor is None
+        assert exc.subcodes is None
+        assert "detail-message-withNamespace" in etree.tostring(exc.detail).decode(
+            "utf-8"
+        )
+
+
 
 def test_soap12_process_error():
     response = """
