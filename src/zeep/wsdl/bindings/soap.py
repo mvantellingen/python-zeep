@@ -321,8 +321,15 @@ class Soap11Binding(SoapBinding):
                 detail=etree_to_string(doc),
             )
 
-        def get_text(name):
+        def get_node(name):
             child = fault_node.find(name, namespaces=fault_node.nsmap)
+            if child is not None:
+                return child
+            child = fault_node.find(name)
+            return child
+
+        def get_text(name):
+            child = get_node(name)
             if child is not None:
                 return child.text
 
@@ -330,7 +337,7 @@ class Soap11Binding(SoapBinding):
             message=get_text("faultstring"),
             code=get_text("faultcode"),
             actor=get_text("faultactor"),
-            detail=fault_node.find("detail", namespaces=fault_node.nsmap),
+            detail=get_node("detail"),
         )
 
     def _set_http_headers(self, serialized, operation):
