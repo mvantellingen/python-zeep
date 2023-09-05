@@ -51,6 +51,8 @@ class Client:
 
     """
 
+    ServiceProxyClass = ServiceProxy
+
     _default_transport: typing.Union[Transport, AsyncTransport] = Transport
 
     def __init__(
@@ -139,7 +141,7 @@ class Client:
                 "No binding found with the given QName. Available bindings "
                 "are: %s" % (", ".join(self.wsdl.bindings.keys()))
             )
-        return ServiceProxy(self, binding, address=address)
+        return self.ServiceProxyClass(self, binding, address=address)
 
     def create_message(self, service, operation_name, *args, **kwargs):
         """Create the payload for the given operation.
@@ -224,6 +226,8 @@ class Client:
 
 class AsyncClient(Client):
     _default_transport = AsyncTransport
+
+    ServiceProxyClass = AsyncServiceProxy
 
     def bind(
         self,
