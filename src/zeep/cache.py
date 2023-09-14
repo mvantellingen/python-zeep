@@ -18,6 +18,14 @@ try:
 except ImportError:
     sqlite3 = None  # type: ignore
 
+try:
+    from cachetools import TTLCache as Cache
+except ImportError:
+    Cache = None
+
+_ttl_cache = None
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -163,6 +171,47 @@ class SqliteCache(VersionedCacheBase):
                 return self._decode_data(data)
         logger.debug("Cache MISS for %s", url)
 
+
+class TTLCache(Base):
+    """LRU Cache implementation with per-item time-to-live (TTL) value."""
+
+    def __init__(self, maxsize: float, ttl: float, getsizeof: None = None):
+        """Initialize TTLCache.
+
+        Args:
+            maxsize (float): The maximum size of the cache. When this size is reached, least recently used items will be discarded from the cache.
+                The unit of measurement for maxsize is number of items, not bytes by default. This implementation can be overriden using the getsizeof method.
+            ttl (float): The time-to-live value of the cache’s items. After ttl seconds, the entry will expire and be removed from the cache.
+            getsizeof (None, optional): In general, a cache’s size is the total size of its item’s values. Therefore, Cache provides a getsizeof() method,
+                which returns the size of a given value. The default implementation of getsizeof() returns 1 irrespective of its argument, making the cache’s size
+                equal to the number of its items, or len(cache). Defaults to None.
+        """
+        if Cache is None:
+            raise RuntimeError("cachetools module is required for the TTLCache")
+        global _ttl_cache
+        if _ttl_cache is None:
+            logger.debug("Initializing TTL Cache.")
+            _ttl_cache = Cache(maxsize=maxsize, ttl=ttl, getsizeof=getsizeof)
+        else:
+            logger.debug("TTL Cache already initialized.")
+
+    def add(self, url, content):
+        logger.debug("Caching contents of %s", url)
+        if not isinstance(content, (str, bytes)):
+            raise TypeError(
+                f"a bytes-like object is required, not {type(content).__name__}"
+            )
+        _ttl_cache[url] = content
+        logger.debug("Cached contents of %s", url)
+
+    def get(self, url):
+        try:
+            content = _ttl_cache[url]
+            logger.debug("Cache HIT for %s", url)
+            return content
+        except KeyError:
+            logger.debug("Cache MISS for %s", url)
+            return None
 
 def _is_expired(value, timeout):
     """Return boolean if the value is expired"""
