@@ -140,6 +140,42 @@ Changing the SqliteCache settings can be done via:
 Another option is to use the InMemoryCache backend.  It internally uses a
 global dict to store urls with the corresponding content.
 
+One of the options is to use TTLCache, This is a Least Recently Used (LRU) cache implementation with per-item time-to-live (TTL) value.
+When you want to use TTLCache you will need to install the python
+cachetools module. This can be done by installing the ``ttlcache`` extras::
+
+    pip install zeep[ttlcache]
+
+Benefits of using TTLCache:
+
+- TTLCache clears the entries after the items expire as compared to In Memory Cache which just marks the entries as expired but still holds them in memory.
+
+- TTLCache lets you specify max size and a per item TTL.
+
+.. code-block:: python
+
+    from zeep import Client
+    from zeep.cache import TTLCache
+    from zeep.transports import Transport
+
+    transport = Transport(cache=TTLCache(maxsize=5, ttl=10))
+    client = Client(
+        'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
+        transport=transport)
+
+Parameters:
+
+- maxsize: The maximum size of the cache. When this size is reached, least recently used items will be discarded from the cache. Note: The unit of measurement for maxsize is number of items, not bytes by default. This implementation can be overriden using the getsizeof method.
+
+- ttl: The time-to-live value of the cache’s items. After ttl seconds, the entry will expire and be removed from the cache. 
+
+- getsizeof: In general, a cache’s size is the total size of its item’s values. Therefore, Cache provides a getsizeof() method, which returns the size of a given value. The default implementation of getsizeof() returns 1 irrespective of its argument, making the cache’s size equal to the number of its items, or len(cache).
+
+.. code-block:: python
+
+    import sys
+    def getsizeof(value):
+        return sys.getsizeof(value)
 
 HTTP Authentication
 -------------------
