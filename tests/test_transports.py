@@ -49,6 +49,7 @@ def test_load_file_unix():
         result = transport.load("file:///usr/local/bin/example.wsdl")
         assert result == b"x"
         m_open.assert_called_once_with("/usr/local/bin/example.wsdl", "rb")
+        m_open.return_value.close.assert_called()
 
 
 @pytest.mark.skipif(os.name != "nt", reason="test valid for windows platform only")
