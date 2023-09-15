@@ -1,6 +1,6 @@
 import logging
 import os
-from contextlib import contextmanager
+from contextlib import contextmanager, closing
 from urllib.parse import urlparse
 
 import requests
@@ -114,7 +114,6 @@ class Transport:
 
         scheme = urlparse(url).scheme
         if scheme in ("http", "https", "file"):
-
             if self.cache:
                 response = self.cache.get(url)
                 if response:
@@ -133,8 +132,9 @@ class Transport:
     def _load_remote_data(self, url):
         self.logger.debug("Loading remote data from: %s", url)
         response = self.session.get(url, timeout=self.load_timeout)
-        response.raise_for_status()
-        return response.content
+        with closing(response):
+            response.raise_for_status()
+            return response.content
 
     @contextmanager
     def settings(self, timeout=None):
