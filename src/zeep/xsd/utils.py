@@ -27,7 +27,7 @@ class UniqueNameGenerator:
 
 def max_occurs_iter(max_occurs, items=None):
     assert max_occurs is not None
-    generator = range(0, max_occurs if max_occurs != "unbounded" else 2 ** 31 - 1)
+    generator = range(0, max_occurs if max_occurs != "unbounded" else 2**31 - 1)
 
     if items is not None:
         for i, sub_kwargs in zip(generator, items):

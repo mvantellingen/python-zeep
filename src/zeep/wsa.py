@@ -13,6 +13,9 @@ WSA = ElementMaker(namespace=ns.WSA, nsmap={"wsa": ns.WSA})
 class WsAddressingPlugin(Plugin):
     nsmap = {"wsa": ns.WSA}
 
+    def __init__(self, address_url: str = None):
+        self.address_url = address_url
+
     def egress(self, envelope, http_headers, operation, binding_options):
         """Apply the ws-addressing headers to the given envelope."""
 
@@ -24,7 +27,7 @@ class WsAddressingPlugin(Plugin):
         headers = [
             WSA.Action(wsa_action),
             WSA.MessageID("urn:uuid:" + str(uuid.uuid4())),
-            WSA.To(binding_options["address"]),
+            WSA.To(self.address_url or binding_options["address"]),
         ]
         header.extend(headers)
 

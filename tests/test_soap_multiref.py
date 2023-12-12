@@ -10,7 +10,7 @@ from zeep.transports import Transport
 @pytest.mark.requests
 def test_parse_multiref_soap_response():
     wsdl_file = io.StringIO(
-        u"""
+        """
         <?xml version="1.0"?>
         <wsdl:definitions
           xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
@@ -134,7 +134,7 @@ def test_parse_multiref_soap_response():
 @pytest.mark.requests
 def test_parse_multiref_soap_response_child():
     wsdl_file = io.StringIO(
-        u"""
+        """
         <?xml version="1.0"?>
         <wsdl:definitions
           xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"

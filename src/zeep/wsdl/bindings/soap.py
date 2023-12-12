@@ -179,7 +179,7 @@ class SoapBinding(Binding):
 
         elif response.status_code != 200 and not response.content:
             raise TransportError(
-                u"Server returned HTTP status %d (no content available)"
+                "Server returned HTTP status %d (no content available)"
                 % response.status_code,
                 status_code=response.status_code,
             )
@@ -322,7 +322,7 @@ class Soap11Binding(SoapBinding):
             )
 
         def get_text(name):
-            child = fault_node.find(name)
+            child = fault_node.find(name, namespaces=fault_node.nsmap)
             if child is not None:
                 return child.text
 
@@ -330,7 +330,7 @@ class Soap11Binding(SoapBinding):
             message=get_text("faultstring"),
             code=get_text("faultcode"),
             actor=get_text("faultactor"),
-            detail=fault_node.find("detail"),
+            detail=fault_node.find("detail", namespaces=fault_node.nsmap),
         )
 
     def _set_http_headers(self, serialized, operation):

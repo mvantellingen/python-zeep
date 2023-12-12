@@ -5,8 +5,8 @@
 """
 from urllib.parse import urlencode
 
-from defusedxml.lxml import fromstring
 from lxml import etree
+from lxml.etree import fromstring
 
 from zeep import ns, xsd
 from zeep.helpers import serialize_object

@@ -6,10 +6,19 @@ import requests_mock
 from tests.utils import load_xml
 from zeep import client, xsd
 from zeep.exceptions import Error
+from zeep.transports import Transport
+from zeep.wsdl import Document
 
 
 def test_bind():
     client_obj = client.Client("tests/wsdl_files/soap.wsdl")
+    service = client_obj.bind()
+    assert service
+
+
+def test_bind_existing_document():
+    wsdl = Document("tests/wsdl_files/soap.wsdl", transport=Transport())
+    client_obj = client.Client(wsdl)
     service = client_obj.bind()
     assert service
 
@@ -41,6 +50,11 @@ def test_service_proxy_non_existing():
     client_obj = client.Client("tests/wsdl_files/soap.wsdl")
     with pytest.raises(AttributeError):
         assert client_obj.service.NonExisting
+
+
+def test_context_manager():
+    with client.Client("tests/wsdl_files/soap.wsdl") as c:
+        assert c
 
 
 def test_service_proxy_dir_operations():

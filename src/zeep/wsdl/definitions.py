@@ -25,6 +25,8 @@ from zeep.exceptions import IncompleteOperation
 
 if typing.TYPE_CHECKING:
     from zeep.wsdl.wsdl import Definition
+else:
+    Definition = None
 
 MessagePart = namedtuple("MessagePart", ["element", "type"])
 
@@ -134,7 +136,7 @@ class Binding:
         self.wsdl = wsdl
         self._operations = {}
 
-    def resolve(self, definitions: "Definition") -> None:
+    def resolve(self, definitions: Definition) -> None:
         self.port_type = definitions.get("port_types", self.port_name.text)
 
         for name, operation in list(self._operations.items()):
@@ -210,11 +212,11 @@ class Operation:
 
     def __str__(self):
         if not self.input:
-            return u"%s(missing input message)" % (self.name)
+            return "%s(missing input message)" % (self.name)
 
-        retval = u"%s(%s)" % (self.name, self.input.signature())
+        retval = "%s(%s)" % (self.name, self.input.signature())
         if self.output:
-            retval += u" -> %s" % (self.output.signature(as_output=True))
+            retval += " -> %s" % (self.output.signature(as_output=True))
         return retval
 
     def create(self, *args, **kwargs):
@@ -273,7 +275,7 @@ class Port:
         )
 
     def __str__(self):
-        return u"Port: %s (%s)" % (self.name, self.binding)
+        return "Port: %s (%s)" % (self.name, self.binding)
 
     def resolve(self, definitions):
         if self._resolve_context is None:
@@ -307,7 +309,7 @@ class Service:
         self._is_resolved = False
 
     def __str__(self):
-        return u"Service: %s" % self.name
+        return "Service: %s" % self.name
 
     def __repr__(self):
         return "<%s(name=%r, ports=%r)>" % (

@@ -38,7 +38,7 @@ class Factory:
 class Client:
     """The zeep Client.
 
-    :param wsdl:
+    :param wsdl: Url/local WSDL location or preparsed WSDL Document
     :param wsse:
     :param transport: Custom transport class.
     :param service_name: The service name for the service binding. Defaults to
@@ -51,7 +51,7 @@ class Client:
 
     """
 
-    _default_transport = Transport
+    _default_transport: typing.Union[Transport, AsyncTransport] = Transport
 
     def __init__(
         self,
@@ -70,7 +70,10 @@ class Client:
         self.transport = (
             transport if transport is not None else self._default_transport()
         )
-        self.wsdl = Document(wsdl, self.transport, settings=self.settings)
+        if isinstance(wsdl, Document):
+            self.wsdl = wsdl
+        else:
+            self.wsdl = Document(wsdl, self.transport, settings=self.settings)
         self.wsse = wsse
         self.plugins = plugins if plugins is not None else []
 
@@ -210,6 +213,13 @@ class Client:
         else:
             service = next(iter(self.wsdl.services.values()), None)
         return service
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type=None, exc_value=None, traceback=None):
+        if hasattr(self.transport, "close"):
+            self.transport.close()
 
 
 class AsyncClient(Client):

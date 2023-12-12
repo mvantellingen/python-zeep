@@ -5,7 +5,7 @@ Zeep: Python SOAP client
 A fast and modern Python SOAP client
 
 Highlights:
- * Compatible with Python 3.6, 3.7, 3.8 and PyPy
+ * Compatible with Python 3.7, 3.8, 3.9, 3.10, 3.11 and PyPy
  * Build on top of lxml and requests
  * Support for Soap 1.1, Soap 1.2 and HTTP bindings
  * Support for WS-Addressing headers
@@ -70,8 +70,8 @@ If you have installed pip then run::
     pip install zeep
 
 
-Note that the latest version to support Python 2.7, 3.3, 3.4 and 3.5 is Zeep 3.4, 
-install via `pip install zeep==3.4.0`
+Note that the latest version to support Python 2.7, 3.3, 3.4 and 3.5 is Zeep 3.4,
+install via `pip install zeep==2.4.0`
 
 This assumes that there are wheel files available for the latest lxml release.
 If that is not the case (https://pypi.python.org/pypi/lxml/) then first
@@ -106,7 +106,7 @@ See ``python -mzeep --help`` for more information about this command.
 
 .. note:: Zeep follows `semver`_ for versioning, however bugs can always occur.
           So as always pin the version of zeep you tested with
-          (e.g. ``zeep==4.0.0``').
+          (e.g. ``zeep==4.1.0``').
 
 
 .. _semver: http://semver.org/

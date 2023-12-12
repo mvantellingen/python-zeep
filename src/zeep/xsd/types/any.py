@@ -1,12 +1,18 @@
 import logging
+import sys
 import typing
 
-from cached_property import threaded_cached_property
+if sys.version_info >= (3, 8):
+    from functools import cached_property as threaded_cached_property
+else:
+    from cached_property import threaded_cached_property
+
 from lxml import etree
 
 from zeep.utils import qname_attr
 from zeep.xsd.const import xsd_ns, xsi_ns
 from zeep.xsd.context import XmlParserContext
+from zeep.xsd.elements.base import Base
 from zeep.xsd.types.base import Type
 from zeep.xsd.valueobjects import AnyObject, CompoundValue
 
@@ -21,7 +27,7 @@ __all__ = ["AnyType"]
 
 class AnyType(Type):
     _default_qname = xsd_ns("anyType")
-    _element = None
+    _element: typing.Optional[Base] = None
 
     def __call__(self, value=None):
         return value or ""

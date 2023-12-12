@@ -2,14 +2,14 @@ import os.path
 import typing
 from urllib.parse import urljoin, urlparse, urlunparse
 
-from defusedxml.lxml import fromstring
 from lxml import etree
+from lxml.etree import Resolver, XMLParser, XMLSyntaxError, fromstring
 
-from zeep.exceptions import XMLSyntaxError
+from zeep.exceptions import DTDForbidden, EntitiesForbidden, XMLSyntaxError
 from zeep.settings import Settings
 
 
-class ImportResolver(etree.Resolver):
+class ImportResolver(Resolver):
     """Custom lxml resolve to use the transport object"""
 
     def __init__(self, transport):
@@ -39,7 +39,7 @@ def parse_xml(content: str, transport, base_url=None, settings=None):
     """
     settings = settings or Settings()
     recover = not settings.strict
-    parser = etree.XMLParser(
+    parser = XMLParser(
         remove_comments=True,
         resolve_entities=False,
         recover=recover,
@@ -47,20 +47,30 @@ def parse_xml(content: str, transport, base_url=None, settings=None):
     )
     parser.resolvers.add(ImportResolver(transport))
     try:
-        return fromstring(
-            content,
-            parser=parser,
-            base_url=base_url,
-            forbid_dtd=settings.forbid_dtd,
-            forbid_entities=settings.forbid_entities,
-        )
+        elementtree = fromstring(content, parser=parser, base_url=base_url)
+        docinfo = elementtree.getroottree().docinfo
+        if docinfo.doctype:
+            if settings.forbid_dtd:
+                raise DTDForbidden(
+                    docinfo.doctype, docinfo.system_url, docinfo.public_id
+                )
+        if settings.forbid_entities:
+            for dtd in docinfo.internalDTD, docinfo.externalDTD:
+                if dtd is None:
+                    continue
+                for entity in dtd.iterentities():
+                    raise EntitiesForbidden(entity.name, entity.content)
+
+        return elementtree
     except etree.XMLSyntaxError as exc:
         raise XMLSyntaxError(
             "Invalid XML content received (%s)" % exc.msg, content=content
         )
 
 
-def load_external(url: typing.IO, transport, base_url=None, settings=None):
+def load_external(
+    url: typing.Union[typing.IO, str], transport, base_url=None, settings=None
+):
     """Load an external XML document.
 
     :param url:
