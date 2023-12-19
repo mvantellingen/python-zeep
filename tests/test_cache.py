@@ -35,6 +35,7 @@ class TestSqliteCache:
         result = c.get("http://tests.python-zeep.org/example.wsdl")
         assert result is None
 
+    @pytest.mark.network
     def test_has_expired(self, tmpdir):
         c = cache.SqliteCache(path=tmpdir.join("sqlite.cache.db").strpath)
         c.add("http://tests.python-zeep.org/example.wsdl", b"content")
@@ -51,6 +52,7 @@ class TestSqliteCache:
         assert result == b"content"
 
 
+@pytest.mark.network
 def test_memory_cache_timeout(tmpdir):
     c = cache.InMemoryCache()
     c.add("http://tests.python-zeep.org/example.wsdl", b"content")
@@ -76,6 +78,7 @@ class TestIsExpired:
     def test_timeout_none(self):
         assert cache._is_expired(100, None) is False
 
+    @pytest.mark.network
     def test_has_expired(self):
         timeout = 7200
         utcnow = datetime.datetime.utcnow()
@@ -83,6 +86,7 @@ class TestIsExpired:
         with freezegun.freeze_time(utcnow):
             assert cache._is_expired(value, timeout) is False
 
+    @pytest.mark.network
     def test_has_not_expired(self):
         timeout = 7200
         utcnow = datetime.datetime.utcnow()

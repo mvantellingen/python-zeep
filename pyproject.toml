@@ -28,5 +28,6 @@ testpaths = [
 ]
 markers = [
     # mark a test to allow socket usage
-    "requests"
+    "requests",
+    "network: test case requires network connection",
 ]
