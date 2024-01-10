@@ -151,6 +151,7 @@ class ComplexType(AnyType):
                             [
                                 Any(
                                     max_occurs="unbounded",
+                                    min_occurs=0,
                                     restrict=self._array_type.array_type,
                                 )
                             ]
