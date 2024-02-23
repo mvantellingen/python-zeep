@@ -5,7 +5,7 @@ Zeep: Python SOAP client
 A Python SOAP client
 
 Highlights:
- * Compatible with Python 3.7, 3.8, 3.9, 3.10, 3.11 and PyPy3
+ * Compatible with Python 3.7, 3.8, 3.9, 3.10, 3.11, 3.12 and PyPy3
  * Build on top of lxml, requests and httpx
  * Support for Soap 1.1, Soap 1.2 and HTTP bindings
  * Support for WS-Addressing headers
