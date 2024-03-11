@@ -309,7 +309,8 @@ class Element(Base):
     def signature(self, schema=None, standalone=True):
         from zeep.xsd import ComplexType
 
-        if self.type.is_global or (not standalone and self.is_global):
+        if ((self.type.is_global and self.type.qname is not None) or
+                (not standalone and self.is_global)):
             value = self.type.get_prefixed_name(schema)
         else:
             value = self.type.signature(schema, standalone=False)
