@@ -1,0 +1,6 @@
+Added httpx>=0.27.0 as regular dependency
+Reusing already existing virtualenv
+Generating production lockfile: /home/nir/Desktop/tzv5hob/python-zeep/requirements.lock
+Generating dev lockfile: /home/nir/Desktop/tzv5hob/python-zeep/requirements-dev.lock
+Installing dependencies
+Done!

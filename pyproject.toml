@@ -1,6 +1,53 @@
+[project]
+name = "python-zeep"
+version = "4.2.1"
+description = "Add your description here"
+authors = [
+    { name = "ניר", email = "88795475+nrbnlulu@users.noreply.github.com" }
+]
+
+dependencies = [
+    "httpx>=0.27.0",
+    "attrs>=17.2.0",
+    "isodate>=0.6.1",
+    "lxml>=5.0",
+    "platformdirs>=1.4.0",
+    "requests>=2.7.0",
+    "requests-toolbelt>=0.7.1",
+    "requests-file>=1.5.1",
+    "pytz",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
 [build-system]
-requires = ["setuptools>=40.6.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "coverage[toml]==5.2.1",
+    "freezegun==0.3.15",
+    "pretend==1.0.9",
+    "pytest-cov==2.8.1",
+    "pytest-httpx",
+    "pytest-asyncio",
+    "pytest>=7.0",
+    "requests_mock>=0.7.0",
+    # Linting
+    "isort==5.3.2",
+    "flake8==3.8.3",
+    "flake8-blind-except==0.1.1",
+    "flake8-debugger==3.2.1",
+    "flake8-imports==0.1.1",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/zeep"]
 
 [tool.coverage.run]
 branch = true
