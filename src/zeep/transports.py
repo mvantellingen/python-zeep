@@ -114,7 +114,6 @@ class Transport:
 
         scheme = urlparse(url).scheme
         if scheme in ("http", "https", "file"):
-
             if self.cache:
                 response = self.cache.get(url)
                 if response:

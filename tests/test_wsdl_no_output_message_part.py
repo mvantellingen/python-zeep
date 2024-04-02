@@ -4,7 +4,6 @@ from zeep.wsdl import wsdl
 
 
 def test_wsdl_parses_operations_with_no_output():
-
     wsdl_content = StringIO(
         """
     <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"

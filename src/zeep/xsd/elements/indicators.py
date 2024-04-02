@@ -11,6 +11,7 @@ All, Choice, Group and Sequence.
               -> Group
 
 """
+
 import copy
 import operator
 import sys
@@ -134,7 +135,6 @@ class OrderIndicator(Indicator, list):
         return max(results)
 
     def parse_args(self, args, index=0):
-
         # If the sequence contains an choice element then we can't convert
         # the args to kwargs since Choice elements don't work with position
         # arguments
@@ -365,7 +365,6 @@ class Choice(OrderIndicator):
             # Choose out of multiple
             options = []
             for element_name, element in self.elements_nested:
-
                 local_xmlelements = copy.copy(xmlelements)
 
                 try:

@@ -1,8 +1,9 @@
 """
-    zeep.wsdl.messages.soap
-    ~~~~~~~~~~~~~~~~~~~~~~~
+zeep.wsdl.messages.soap
+~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import copy
 import typing
 from collections import OrderedDict
@@ -116,8 +117,10 @@ class SoapMessage(ConcreteMessage):
             return result
 
         result = result.body
-        if not hasattr(result, '__len__'): # Return body directly if len is allowed (could indicated valid primitive type).
-            return result        
+        if not hasattr(
+            result, "__len__"
+        ):  # Return body directly if len is allowed (could indicated valid primitive type).
+            return result
         if result is None or len(result) == 0:
             return None
         elif len(result) > 1:
@@ -437,7 +440,6 @@ class DocumentMessage(SoapMessage):
         super().__init__(*args, **kwargs)
 
     def _deserialize_body(self, xmlelement):
-
         if not self._is_body_wrapped:
             # TODO: For now we assume that the body only has one child since
             # only one part is specified in the wsdl. This should be handled

@@ -122,7 +122,6 @@ def test_parse_soap_header_wsdl():
 
 
 def test_parse_types_multiple_schemas():
-
     content = StringIO(
         """
     <?xml version="1.0"?>
@@ -981,7 +980,6 @@ def test_wsdl_dtd_entities_rules():
 
 
 def test_extra_http_headers(recwarn, monkeypatch):
-
     wsdl_main = StringIO(
         """
         <?xml version="1.0"?>

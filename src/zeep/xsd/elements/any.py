@@ -166,7 +166,6 @@ class Any(Base):
 
     def validate(self, value, render_path):
         if self.accepts_multiple and isinstance(value, list):
-
             # Validate bounds
             if len(value) < self.min_occurs:
                 raise exceptions.ValidationError(

@@ -1,20 +1,21 @@
 """
-    zeep.wsdl.definitions
-    ~~~~~~~~~~~~~~~~~~~~~
+zeep.wsdl.definitions
+~~~~~~~~~~~~~~~~~~~~~
 
-    A WSDL document exists out of a number of definitions. There are 6 major
-    definitions, these are:
+A WSDL document exists out of a number of definitions. There are 6 major
+definitions, these are:
 
-     - types
-     - message
-     - portType
-     - binding
-     - port
-     - service
+ - types
+ - message
+ - portType
+ - binding
+ - port
+ - service
 
-    This module defines the definitions which occur within a WSDL document,
+This module defines the definitions which occur within a WSDL document,
 
 """
+
 import typing
 import warnings
 from collections import OrderedDict, namedtuple

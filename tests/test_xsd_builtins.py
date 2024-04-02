@@ -369,11 +369,11 @@ class TestgDay:
 class TestHexBinary:
     def test_xmlvalue(self):
         instance = builtins.HexBinary()
-        assert instance.xmlvalue(b"\xFF") == b"\xFF"
+        assert instance.xmlvalue(b"\xff") == b"\xff"
 
     def test_pythonvalue(self):
         instance = builtins.HexBinary()
-        assert instance.pythonvalue(b"\xFF") == b"\xFF"
+        assert instance.pythonvalue(b"\xff") == b"\xff"
 
 
 class TestBase64Binary:

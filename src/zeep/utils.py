@@ -91,7 +91,6 @@ def detect_soap_env(envelope):
 def get_media_type(value):
     """Parse a HTTP content-type header and return the media-type"""
     msg = Message()
-    msg['content-type'] = value
-    
-    return msg.get_content_type()
+    msg["content-type"] = value
 
+    return msg.get_content_type()

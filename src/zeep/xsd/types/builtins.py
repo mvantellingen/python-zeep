@@ -170,7 +170,6 @@ class DateTime(BuiltinType):
 
     @treat_whitespace("collapse")
     def pythonvalue(self, value):
-
         # Determine based on the length of the value if it only contains a date
         # lazy hack ;-)
         if len(value) == 10:

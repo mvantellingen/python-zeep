@@ -243,7 +243,7 @@ class AsyncClient(Client):
         service = self._get_service(service_name)
         port = self._get_port(service, port_name)
         return AsyncServiceProxy(self, port.binding, **port.binding_options)
-    
+
     async def __aenter__(self):
         return self
 
@@ -260,12 +260,14 @@ class AsyncClient(Client):
         try:
             binding = self.wsdl.bindings[binding_name]
         except KeyError:
-            raise ValueError(
-                "No binding found with the given QName. Available bindings "
-                "are: %s" % (", ".join(self.wsdl.bindings.keys()))
+            msg = (
+                "No binding found with the given QName. Available bindings are: %s"
+                % (", ".join(self.wsdl.bindings.keys()))
             )
+            raise ValueError()
         return AsyncServiceProxy(self, binding, address=address)
-        
+
+
 class CachingClient(Client):
     """Shortcut to create a caching client, for the lazy people.
 
@@ -275,7 +277,6 @@ class CachingClient(Client):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Don't use setdefault since we want to lazily init the Transport cls
         from zeep.cache import SqliteCache
 

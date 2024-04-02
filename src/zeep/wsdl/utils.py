@@ -1,8 +1,9 @@
 """
-    zeep.wsdl.utils
-    ~~~~~~~~~~~~~~~
+zeep.wsdl.utils
+~~~~~~~~~~~~~~~
 
 """
+
 from urllib.parse import urlparse, urlunparse
 
 from lxml import etree
