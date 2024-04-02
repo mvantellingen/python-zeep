@@ -243,14 +243,29 @@ class AsyncClient(Client):
         service = self._get_service(service_name)
         port = self._get_port(service, port_name)
         return AsyncServiceProxy(self, port.binding, **port.binding_options)
-
+    
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, exc_type=None, exc_value=None, traceback=None) -> None:
         await self.transport.aclose()
 
+    def create_service(self, binding_name, address) -> AsyncServiceProxy:
+        """Create a new ServiceProxy for the given binding name and address.
 
+        :param binding_name: The QName of the binding
+        :param address: The address of the endpoint
+
+        """
+        try:
+            binding = self.wsdl.bindings[binding_name]
+        except KeyError:
+            raise ValueError(
+                "No binding found with the given QName. Available bindings "
+                "are: %s" % (", ".join(self.wsdl.bindings.keys()))
+            )
+        return AsyncServiceProxy(self, binding, address=address)
+        
 class CachingClient(Client):
     """Shortcut to create a caching client, for the lazy people.
 
