@@ -194,6 +194,7 @@ class AsyncTransport(Transport):
             timeout=operation_timeout,
         )
         self.logger = logging.getLogger(__name__)
+        self.operation_timeout = operation_timeout
 
         self.wsdl_client.headers = {
             "User-Agent": "Zeep/%s (www.python-zeep.org)" % (get_version())
@@ -221,6 +222,7 @@ class AsyncTransport(Transport):
             address,
             content=message,
             headers=headers,
+            timeout=self.operation_timeout,
         )
         self.logger.debug(
             "HTTP Response from %s (status: %d):\n%s",
@@ -240,6 +242,7 @@ class AsyncTransport(Transport):
             address,
             params=params,
             headers=headers,
+            timeout=self.operation_timeout,
         )
         return self.new_response(response)
 
