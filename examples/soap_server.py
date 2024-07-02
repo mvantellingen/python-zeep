@@ -21,7 +21,7 @@ class ExampleService(ServiceBase):
     @rpc(Unicode, _returns=Unicode)
     def slow_request(ctx, request_id):
         time.sleep(1)
-        return u'Request: %s' % request_id
+        return 'Request: %s' % request_id
 
 application = Application(
     services=[ExampleService],

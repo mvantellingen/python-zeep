@@ -32,7 +32,7 @@ class Factory:
         :rtype: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
 
         """
-        return self._method("{%s}%s" % (self._ns, key))
+        return self._method("{{{}}}{}".format(self._ns, key))
 
 
 class Client:

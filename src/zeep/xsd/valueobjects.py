@@ -24,7 +24,7 @@ class AnyObject:
         self.value = value
 
     def __repr__(self):
-        return "<%s(type=%r, value=%r)>" % (
+        return "<{}(type={!r}, value={!r})>".format(
             self.__class__.__name__,
             self.xsd_elm,
             self.value,
@@ -154,7 +154,7 @@ class CompoundValue:
             return self.__values__[key]
         except KeyError:
             raise AttributeError(
-                "%s instance has no attribute '%s'" % (self.__class__.__name__, key)
+                "{} instance has no attribute '{}'".format(self.__class__.__name__, key)
             )
 
     def __deepcopy__(self, memo):

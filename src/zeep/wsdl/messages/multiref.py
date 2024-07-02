@@ -122,7 +122,7 @@ def _prefix_node(node):
             namespace, localname = match.groups()
 
             if namespace in reverse_nsmap:
-                value = "%s:%s" % (reverse_nsmap.get(namespace), localname)
+                value = "{}:{}".format(reverse_nsmap.get(namespace), localname)
                 node.set(key, value)
 
 
@@ -151,6 +151,6 @@ def _get_attributes(node):
 
             if prefix in nsmap:
                 namespace = nsmap[prefix]
-                value = "{%s}%s" % (namespace, localname)
+                value = "{{{}}}{}".format(namespace, localname)
         result[key] = value
     return list(result.items())

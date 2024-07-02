@@ -4,7 +4,7 @@ class Error(Exception):
         self.message = message
 
     def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.message)
+        return "{}({!r})".format(self.__class__.__name__, self.message)
 
 
 class XMLSyntaxError(Error):
@@ -22,9 +22,9 @@ class XMLParseError(Error):
     def __str__(self):
         location = None
         if self.filename and self.sourceline:
-            location = "%s:%s" % (self.filename, self.sourceline)
+            location = "{}:{}".format(self.filename, self.sourceline)
         if location:
-            return "%s (%s)" % (self.message, location)
+            return "{} ({})".format(self.message, location)
         return self.message
 
 
@@ -77,7 +77,7 @@ class ValidationError(Error):
     def __str__(self):
         if self.path:
             path = ".".join(str(x) for x in self.path)
-            return "%s (%s)" % (self.message, path)
+            return "{} ({})".format(self.message, path)
         return self.message
 
 
@@ -95,7 +95,7 @@ class IncompleteOperation(Error):
 
 class DTDForbidden(Error):
     def __init__(self, name, sysid, pubid):
-        super(DTDForbidden, self).__init__()
+        super().__init__()
         self.name = name
         self.sysid = sysid
         self.pubid = pubid
@@ -107,7 +107,7 @@ class DTDForbidden(Error):
 
 class EntitiesForbidden(Error):
     def __init__(self, name, content):
-        super(EntitiesForbidden, self).__init__()
+        super().__init__()
         self.name = name
         self.content = content
 

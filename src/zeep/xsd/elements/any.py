@@ -44,7 +44,7 @@ class Any(Base):
         return any_object
 
     def __repr__(self):
-        return "<%s(name=%r)>" % (self.__class__.__name__, self.name)
+        return "<{}(name={!r})>".format(self.__class__.__name__, self.name)
 
     def accept(self, value):
         return True
@@ -207,8 +207,8 @@ class Any(Base):
                 )
 
         elif not isinstance(value, tuple(expected_types)):
-            type_names = ["%s.%s" % (t.__module__, t.__name__) for t in expected_types]
-            err_message = "Any element received object of type %r, expected %s" % (
+            type_names = ["{}.{}".format(t.__module__, t.__name__) for t in expected_types]
+            err_message = "Any element received object of type {!r}, expected {}".format(
                 type(value).__name__,
                 " or ".join(type_names),
             )

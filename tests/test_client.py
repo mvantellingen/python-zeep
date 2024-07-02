@@ -60,7 +60,7 @@ def test_context_manager():
 def test_service_proxy_dir_operations():
     client_obj = client.Client("tests/wsdl_files/soap.wsdl")
     operations = [op for op in dir(client_obj.service) if not op.startswith("_")]
-    assert set(operations) == set(["GetLastTradePrice", "GetLastTradePriceNoOutput"])
+    assert set(operations) == {"GetLastTradePrice", "GetLastTradePriceNoOutput"}
 
 
 def test_operation_proxy_doc():

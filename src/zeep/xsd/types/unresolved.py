@@ -18,7 +18,7 @@ class UnresolvedType(Type):
         self.schema = schema
 
     def __repr__(self):
-        return "<%s(qname=%r)>" % (self.__class__.__name__, self.qname.text)
+        return "<{}(qname={!r})>".format(self.__class__.__name__, self.qname.text)
 
     def render(
         self,
@@ -46,7 +46,7 @@ class UnresolvedCustomType(Type):
         self.base_type = base_type
 
     def __repr__(self):
-        return "<%s(qname=%r, base_type=%r)>" % (
+        return "<{}(qname={!r}, base_type={!r})>".format(
             self.__class__.__name__,
             self.qname.text,
             self.base_type,

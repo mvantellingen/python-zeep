@@ -8,10 +8,7 @@ from collections import OrderedDict, deque
 from itertools import chain
 from typing import Optional
 
-if sys.version_info >= (3, 8):
-    from functools import cached_property as threaded_cached_property
-else:
-    from cached_property import threaded_cached_property
+from functools import cached_property as threaded_cached_property
 
 from lxml import etree
 
@@ -47,7 +44,7 @@ _ObjectList = typing.List[typing.Union[CompoundValue, None, "_ObjectList"]]
 
 
 class ComplexType(AnyType):
-    _xsd_name: typing.Optional[str] = None
+    _xsd_name: str | None = None
 
     def __init__(
         self,
@@ -66,7 +63,7 @@ class ComplexType(AnyType):
         self._attributes = attributes or []
         self._restriction = restriction
         self._extension = extension
-        self._extension_types: typing.List[typing.Type] = []
+        self._extension_types: list[type] = []
         super().__init__(qname=qname, is_global=is_global)
 
     def __call__(self, *args, **kwargs):
@@ -75,11 +72,11 @@ class ComplexType(AnyType):
         return self._value_class(*args, **kwargs)
 
     @property
-    def accepted_types(self) -> typing.List[typing.Type]:
+    def accepted_types(self) -> list[type]:
         return [self._value_class] + self._extension_types
 
     @threaded_cached_property
-    def _array_class(self) -> typing.Type[ArrayValue]:
+    def _array_class(self) -> type[ArrayValue]:
         assert self._array_type
         return type(
             self.__class__.__name__,
@@ -88,7 +85,7 @@ class ComplexType(AnyType):
         )
 
     @threaded_cached_property
-    def _value_class(self) -> typing.Type[CompoundValue]:
+    def _value_class(self) -> type[CompoundValue]:
         return type(
             self.__class__.__name__,
             (CompoundValue,),
@@ -96,7 +93,7 @@ class ComplexType(AnyType):
         )
 
     def __str__(self):
-        return "%s(%s)" % (self.__class__.__name__, self.signature())
+        return "{}({})".format(self.__class__.__name__, self.signature())
 
     @threaded_cached_property
     def attributes(self):
@@ -174,11 +171,11 @@ class ComplexType(AnyType):
     def parse_xmlelement(
         self,
         xmlelement: etree._Element,
-        schema: Optional[Schema] = None,
+        schema: Schema | None = None,
         allow_none: bool = True,
         context: XmlParserContext = None,
-        schema_type: Optional[Type] = None,
-    ) -> typing.Optional[typing.Union[str, CompoundValue, typing.List[etree._Element]]]:
+        schema_type: Type | None = None,
+    ) -> str | CompoundValue | list[etree._Element] | None:
         """Consume matching xmlelements and call parse() on each
 
         :param xmlelement: XML element objects
@@ -250,8 +247,8 @@ class ComplexType(AnyType):
     def render(
         self,
         node: etree._Element,
-        value: typing.Union[list, dict, CompoundValue],
-        xsd_type: "ComplexType" = None,
+        value: list | dict | CompoundValue,
+        xsd_type: ComplexType = None,
         render_path=None,
     ) -> None:
         """Serialize the given value lxml.Element subelements on the node
@@ -314,10 +311,10 @@ class ComplexType(AnyType):
 
     def parse_kwargs(
         self,
-        kwargs: typing.Dict[str, typing.Any],
+        kwargs: dict[str, typing.Any],
         name: str,
-        available_kwargs: typing.Set[str],
-    ) -> typing.Dict[str, typing.Any]:
+        available_kwargs: set[str],
+    ) -> dict[str, typing.Any]:
         """Parse the kwargs for this type and return the accepted data as
         a dict.
 
@@ -341,8 +338,8 @@ class ComplexType(AnyType):
         return {}
 
     def _create_object(
-        self, value: typing.Union[list, dict, CompoundValue, None], name: str
-    ) -> typing.Union[CompoundValue, None, _ObjectList]:
+        self, value: list | dict | CompoundValue | None, name: str
+    ) -> CompoundValue | None | _ObjectList:
         """Return the value as a CompoundValue object
 
         :type value: str
@@ -507,11 +504,11 @@ class ComplexType(AnyType):
             parts.append(part)
 
         for name, attribute in self.attributes:
-            part = "%s: %s" % (name, attribute.signature(schema, standalone=False))
+            part = "{}: {}".format(name, attribute.signature(schema, standalone=False))
             parts.append(part)
 
         value = ", ".join(parts)
         if standalone:
-            return "%s(%s)" % (self.get_prefixed_name(schema), value)
+            return "{}({})".format(self.get_prefixed_name(schema), value)
         else:
             return value

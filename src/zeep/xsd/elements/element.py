@@ -49,9 +49,9 @@ class Element(Base):
     def __str__(self):
         if self.type:
             if self.type.is_global:
-                return "%s(%s)" % (self.name, self.type.qname)
+                return "{}({})".format(self.name, self.type.qname)
             else:
-                return "%s(%s)" % (self.name, self.type.signature())
+                return "{}({})".format(self.name, self.type.signature())
         return "%s()" % self.name
 
     def __call__(self, *args, **kwargs):
@@ -61,7 +61,7 @@ class Element(Base):
         return instance
 
     def __repr__(self):
-        return "<%s(name=%r, type=%r)>" % (
+        return "<{}(name={!r}, type={!r})>".format(
             self.__class__.__name__,
             self.name,
             self.type,
@@ -295,7 +295,7 @@ class Element(Base):
             self.type.validate(value, required=True)
         except exceptions.ValidationError as exc:
             raise exceptions.ValidationError(
-                "The element %s is not valid: %s" % (self.qname, exc.message),
+                "The element {} is not valid: {}".format(self.qname, exc.message),
                 path=render_path,
             )
 
@@ -318,7 +318,7 @@ class Element(Base):
                 value = "{%s}" % value
 
         if standalone:
-            value = "%s(%s)" % (self.get_prefixed_name(schema), value)
+            value = "{}({})".format(self.get_prefixed_name(schema), value)
 
         if self.accepts_multiple:
             return "%s[]" % value

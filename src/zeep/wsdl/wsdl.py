@@ -3,7 +3,6 @@
     ~~~~~~~~~~~~~~
 
 """
-from __future__ import print_function
 
 import logging
 import operator
@@ -110,7 +109,7 @@ class Document:
         print("")
         print("Prefixes:")
         for prefix, namespace in self.types.prefix_map.items():
-            print(" " * 4, "%s: %s" % (prefix, namespace))
+            print(" " * 4, "{}: {}".format(prefix, namespace))
 
         print("")
         print("Global elements:")
@@ -141,7 +140,7 @@ class Document:
                 )
 
                 for operation in operations:
-                    print("%s%s" % (" " * 12, str(operation)))
+                    print("{}{}".format(" " * 12, str(operation)))
                 print("")
 
     def _get_xml_document(self, location: typing.IO) -> etree._Element:
@@ -202,7 +201,7 @@ class Definition:
         self.services = self.parse_service(doc)
 
     def __repr__(self):
-        return "<%s(location=%r)>" % (self.__class__.__name__, self.location)
+        return "<{}(location={!r})>".format(self.__class__.__name__, self.location)
 
     def get(self, name, key, _processed=None):
         container = getattr(self, name)
@@ -229,7 +228,7 @@ class Definition:
                     except IndexError:
                         pass
 
-        raise IndexError("No definition %r in %r found" % (key, name))
+        raise IndexError("No definition {!r} in {!r} found".format(key, name))
 
     def resolve_imports(self) -> None:
         """Resolve all root elements (types, messages, etc)."""

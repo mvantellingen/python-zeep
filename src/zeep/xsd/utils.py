@@ -33,8 +33,7 @@ def max_occurs_iter(max_occurs, items=None):
         for i, sub_kwargs in zip(generator, items):
             yield sub_kwargs
     else:
-        for i in generator:
-            yield i
+        yield from generator
 
 
 def create_prefixed_name(qname, schema):
@@ -51,10 +50,10 @@ def create_prefixed_name(qname, schema):
     if schema and qname.namespace:
         prefix = schema.get_shorthand_for_ns(qname.namespace)
         if prefix:
-            return "%s:%s" % (prefix, qname.localname)
+            return "{}:{}".format(prefix, qname.localname)
     elif qname.namespace in ns.NAMESPACE_TO_PREFIX:
         prefix = ns.NAMESPACE_TO_PREFIX[qname.namespace]
-        return "%s:%s" % (prefix, qname.localname)
+        return "{}:{}".format(prefix, qname.localname)
 
     if qname.namespace:
         return qname.text

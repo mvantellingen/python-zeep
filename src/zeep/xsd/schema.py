@@ -47,7 +47,7 @@ class Schema:
     def __repr__(self):
         main_doc = self.root_document
         if main_doc:
-            return "<Schema(location=%r, tns=%r)>" % (
+            return "<Schema(location={!r}, tns={!r})>".format(
                 main_doc._location,
                 main_doc._target_namespace,
             )
@@ -303,8 +303,7 @@ class _SchemaContainer:
         self._instances = OrderedDict()
 
     def __iter__(self):
-        for document in self.values():
-            yield document
+        yield from self.values()
 
     def add(self, document: "SchemaDocument") -> None:
         """Add a schema document"""
@@ -348,8 +347,7 @@ class _SchemaContainer:
 
     def values(self):
         for documents in self._instances.values():
-            for document in documents:
-                yield document
+            yield from documents
 
 
 class SchemaDocument:
@@ -384,7 +382,7 @@ class SchemaDocument:
         # self._xml_schema = None
 
     def __repr__(self):
-        return "<SchemaDocument(location=%r, tns=%r, is_empty=%r)>" % (
+        return "<SchemaDocument(location={!r}, tns={!r}, is_empty={!r})>".format(
             self._location,
             self._target_namespace,
             self.is_empty,

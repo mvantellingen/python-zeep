@@ -89,7 +89,7 @@ class Decimal(BuiltinType):
     @check_no_collection
     def xmlvalue(self, value):
         if isinstance(value, _Decimal):
-            return "{:f}".format(value)
+            return f"{value:f}"
         return str(value)
 
     @treat_whitespace("collapse")

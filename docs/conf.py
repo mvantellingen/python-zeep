@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Zeep documentation build configuration file, created by
 # sphinx-quickstart on Fri Mar  4 16:51:06 2016.
@@ -52,9 +51,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Zeep'
-copyright = u'2016, <a href="https://www.mvantellingen.nl/">Michael van Tellingen</a>'
-author = u'Michael van Tellingen'
+project = 'Zeep'
+copyright = '2016, <a href="https://www.mvantellingen.nl/">Michael van Tellingen</a>'
+author = 'Michael van Tellingen'
 
 
 # The version info for the project you're documenting, acts as replacement for
@@ -249,8 +248,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Zeep.tex', u'Zeep Documentation',
-     u'Michael van Tellingen', 'manual'),
+    (master_doc, 'Zeep.tex', 'Zeep Documentation',
+     'Michael van Tellingen', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -293,7 +292,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Zeep', u'Zeep Documentation',
+    (master_doc, 'Zeep', 'Zeep Documentation',
      author, 'Zeep', 'One line description of project.',
      'Miscellaneous'),
 ]
