@@ -47,7 +47,7 @@ def test_union_same_types():
 def test_union_mixed():
     schema = xsd.Schema(
         load_xml(
-            """
+            r"""
         <?xml version="1.0"?>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"

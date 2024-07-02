@@ -1,5 +1,3 @@
-from __future__ import division
-
 from zeep.xsd.const import xsd_ns
 from zeep.xsd.elements.base import Base
 

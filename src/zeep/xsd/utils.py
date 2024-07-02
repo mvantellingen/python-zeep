@@ -33,8 +33,7 @@ def max_occurs_iter(max_occurs, items=None):
         for i, sub_kwargs in zip(generator, items):
             yield sub_kwargs
     else:
-        for i in generator:
-            yield i
+        yield from generator
 
 
 def create_prefixed_name(qname, schema):

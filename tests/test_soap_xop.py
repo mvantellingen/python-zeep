@@ -249,7 +249,7 @@ def test_xop():
             headers={"Content-Type": content_type},
         )
         result = service.TestOperation2("")
-        assert result["_value_1"] == "BINARYDATA".encode()
+        assert result["_value_1"] == b"BINARYDATA"
 
         m.post(
             "http://tests.python-zeep.org/test",
@@ -257,7 +257,7 @@ def test_xop():
             headers={"Content-Type": content_type},
         )
         result = service.TestOperation1("")
-        assert result == "BINARYDATA".encode()
+        assert result == b"BINARYDATA"
 
 
 def test_xop_cid_encoded():
@@ -302,4 +302,4 @@ def test_xop_cid_encoded():
             headers={"Content-Type": content_type},
         )
         result = service.TestOperation2("")
-        assert result["_value_1"] == "BINARYDATA".encode()
+        assert result["_value_1"] == b"BINARYDATA"

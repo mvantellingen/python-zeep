@@ -159,7 +159,7 @@ def test_parse_types_multiple_schemas():
 
 def test_parse_types_nsmap_issues():
     content = StringIO(
-        """
+        r"""
     <?xml version="1.0"?>
     <wsdl:definitions targetNamespace="urn:ec.europa.eu:taxud:vies:services:checkVat"
       xmlns:tns1="urn:ec.europa.eu:taxud:vies:services:checkVat:types"
@@ -199,7 +199,7 @@ def test_parse_types_nsmap_issues():
 @pytest.mark.requests
 def test_parse_soap_import_wsdl():
     client = stub(transport=Transport(), wsse=None)
-    content = io.open("tests/wsdl_files/soap-enc.xsd", "r", encoding="utf-8").read()
+    content = open("tests/wsdl_files/soap-enc.xsd", encoding="utf-8").read()
 
     with requests_mock.mock() as m:
         m.get("http://schemas.xmlsoap.org/soap/encoding/", text=content)

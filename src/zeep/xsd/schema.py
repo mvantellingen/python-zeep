@@ -303,8 +303,7 @@ class _SchemaContainer:
         self._instances = OrderedDict()
 
     def __iter__(self):
-        for document in self.values():
-            yield document
+        yield from self.values()
 
     def add(self, document: "SchemaDocument") -> None:
         """Add a schema document"""
@@ -348,8 +347,7 @@ class _SchemaContainer:
 
     def values(self):
         for documents in self._instances.values():
-            for document in documents:
-                yield document
+            yield from documents
 
 
 class SchemaDocument:

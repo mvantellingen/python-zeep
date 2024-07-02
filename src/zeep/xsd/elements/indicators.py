@@ -17,10 +17,7 @@ import sys
 import typing
 from collections import OrderedDict, defaultdict, deque
 
-if sys.version_info >= (3, 8):
-    from functools import cached_property as threaded_cached_property
-else:
-    from cached_property import threaded_cached_property
+from functools import cached_property as threaded_cached_property
 
 from lxml import etree
 
@@ -661,8 +658,7 @@ class Group(Indicator):
         return self.signature()
 
     def __iter__(self, *args, **kwargs):
-        for item in self.child:
-            yield item
+        yield from self.child
 
     @threaded_cached_property
     def elements(self):
