@@ -18,7 +18,6 @@ from zeep.loader import (
     absolute_location,
     is_relative_path,
     load_external,
-    load_external_async,
 )
 from zeep.settings import Settings
 from zeep.utils import findall_multiple_ns

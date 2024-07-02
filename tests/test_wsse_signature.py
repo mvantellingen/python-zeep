@@ -2,7 +2,6 @@ import os
 import sys
 
 import pytest
-from lxml import etree
 from lxml.etree import QName
 
 from tests.utils import load_xml

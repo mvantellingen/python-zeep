@@ -4,7 +4,6 @@ import errno
 import logging
 import os
 import threading
-import typing
 from contextlib import contextmanager
 
 import platformdirs
