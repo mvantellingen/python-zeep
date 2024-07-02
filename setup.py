@@ -4,7 +4,6 @@ from setuptools import setup
 
 install_requires = [
     "attrs>=17.2.0",
-    "cached-property>=1.3.0; python_version<'3.8'",
     "isodate>=0.5.4",
     "lxml>=4.6.0",
     "platformdirs>=1.4.0",
@@ -58,7 +57,7 @@ setup(
     project_urls={
         "Source": "https://github.com/mvantellingen/python-zeep",
     },
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require={
@@ -75,13 +74,11 @@ setup(
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
     ],
