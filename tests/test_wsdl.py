@@ -1,4 +1,3 @@
-import io
 from io import StringIO
 
 import pytest

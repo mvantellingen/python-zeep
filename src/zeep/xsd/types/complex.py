@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import copy
 import logging
-import sys
 import typing
 from collections import OrderedDict, deque
 from itertools import chain
-from typing import Optional
 
 from functools import cached_property as threaded_cached_property
 

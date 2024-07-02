@@ -5,7 +5,6 @@ See https://www.w3.org/TR/SOAP-attachments
 """
 
 import base64
-import sys
 
 from functools import cached_property
 

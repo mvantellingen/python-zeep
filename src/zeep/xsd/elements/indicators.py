@@ -13,13 +13,10 @@ All, Choice, Group and Sequence.
 """
 import copy
 import operator
-import sys
-import typing
 from collections import OrderedDict, defaultdict, deque
 
 from functools import cached_property as threaded_cached_property
 
-from lxml import etree
 
 from zeep.exceptions import UnexpectedElementError, ValidationError
 from zeep.xsd.const import NotSet, SkipValue

@@ -211,7 +211,7 @@ class AsyncTransport(Transport):
 
         try:
             response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
+        except httpx.HTTPStatusError:
             raise TransportError(status_code=response.status_code)
         return result
 
