@@ -48,7 +48,7 @@ class Client:
                       document.
     :param plugins: a list of Plugin instances
     :param settings: a zeep.Settings() object
-
+    :param verify_doc: a boolean to verify the response envelope
     """
 
     _default_transport: typing.Union[Transport, AsyncTransport] = Transport
@@ -62,6 +62,7 @@ class Client:
         port_name=None,
         plugins=None,
         settings=None,
+        verify_doc=True,
     ):
         if not wsdl:
             raise ValueError("No URL given for the wsdl")
@@ -81,6 +82,7 @@ class Client:
         self._default_service_name = service_name
         self._default_port_name = port_name
         self._default_soapheaders = None
+        self.verify_doc = verify_doc
 
     @property
     def namespaces(self):
@@ -260,7 +262,6 @@ class CachingClient(Client):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Don't use setdefault since we want to lazily init the Transport cls
         from zeep.cache import SqliteCache
 

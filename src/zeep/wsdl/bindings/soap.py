@@ -215,7 +215,8 @@ class SoapBinding(Binding):
             if process_xop(doc, message_pack):
                 message_pack = None
 
-        if client.wsse:
+        # disable doc verification
+        if client.wsse and client.verify_doc:
             client.wsse.verify(doc)
 
         doc, http_headers = plugins.apply_ingress(
