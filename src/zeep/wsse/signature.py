@@ -8,13 +8,15 @@ admittedly painful, will likely assist in understanding the code in this
 module.
 
 """
+
+from datetime import UTC, datetime, timedelta
 from lxml import etree
 from lxml.etree import QName
 
 from zeep import ns
 from zeep.exceptions import SignatureVerificationFailed
 from zeep.utils import detect_soap_env
-from zeep.wsse.utils import ensure_id, get_security_header
+from zeep.wsse.utils import WSU, ensure_id, get_security_header
 
 try:
     import xmlsec
@@ -92,6 +94,40 @@ class Signature(MemorySignature):
             signature_method,
             digest_method,
         )
+
+
+class SignatureWithTimestampAndHeader(Signature):
+    """Sign given SOAP envelope with WSSE sign using given key file and cert file.
+
+    Include timestamp and authcode if given
+    """
+
+    def apply(self, envelope, headers):
+        security = get_security_header(envelope)
+
+        created = datetime.now(tz=UTC)
+        expired = created + timedelta(seconds=600)
+
+        timestamp_header = WSU("Timestamp")
+
+        timestamp_header.extend(
+            [
+                WSU("Created", created.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"),
+                WSU("Expires", expired.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"),
+            ]
+        )
+        security.append(timestamp_header)
+
+        key = _make_sign_key(self.key_data, self.cert_data, self.password)
+        _sign_envelope_with_key(
+            envelope,
+            key,
+            self.signature_method,
+            self.digest_method,
+            sign_token=True,
+        )
+
+        return envelope, headers
 
 
 class BinarySignature(Signature):
@@ -216,7 +252,9 @@ def sign_envelope(
     return _sign_envelope_with_key(envelope, key, signature_method, digest_method)
 
 
-def _signature_prepare(envelope, key, signature_method, digest_method):
+def _signature_prepare(
+    envelope, key, signature_method, digest_method, sign_token=False
+):
     """Prepare envelope and sign."""
     soap_env = detect_soap_env(envelope)
 
@@ -245,6 +283,18 @@ def _signature_prepare(envelope, key, signature_method, digest_method):
     timestamp = security.find(QName(ns.WSU, "Timestamp"))
     if timestamp != None:
         _sign_node(ctx, signature, timestamp, digest_method)
+
+    if sign_token and (header := envelope.find(QName(soap_env, "Header"))) is not None:
+        if (
+            auth_token := header.find(
+                QName(
+                    "http://cpaglobal.com/webservices/authentication/header",
+                    "authenticationtoken",
+                )
+            )
+        ) is not None:
+            _sign_node(ctx, signature, auth_token, digest_method)
+
     ctx.sign(signature)
 
     # Place the X509 data inside a WSSE SecurityTokenReference within
@@ -255,9 +305,11 @@ def _signature_prepare(envelope, key, signature_method, digest_method):
     return security, sec_token_ref, x509_data
 
 
-def _sign_envelope_with_key(envelope, key, signature_method, digest_method):
+def _sign_envelope_with_key(
+    envelope, key, signature_method, digest_method, sign_token=False
+):
     _, sec_token_ref, x509_data = _signature_prepare(
-        envelope, key, signature_method, digest_method
+        envelope, key, signature_method, digest_method, sign_token=sign_token
     )
     sec_token_ref.append(x509_data)
 
@@ -306,6 +358,7 @@ def _verify_envelope_with_key(envelope, key):
     soap_env = detect_soap_env(envelope)
 
     header = envelope.find(QName(soap_env, "Header"))
+    # disable signature verification
     if header is None:
         raise SignatureVerificationFailed()
 
