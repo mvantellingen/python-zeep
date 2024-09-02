@@ -37,7 +37,7 @@ class tags:
     attributeGroup = xsd_ns("attributeGroup")
     restriction = xsd_ns("restriction")
     extension = xsd_ns("extension")
-    notation = xsd_ns("notations")
+    notation = xsd_ns("notation")
 
 
 class SchemaVisitor:
