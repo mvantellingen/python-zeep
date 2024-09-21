@@ -247,13 +247,13 @@ def _signature_prepare(envelope, key, signature_method, digest_method, signature
     # Perform the actual signing.
     ctx = xmlsec.SignatureContext()
     ctx.key = key
-    # Sign default elements if present
-    timestamp = security.find(QName(ns.WSU, "Timestamp"))
-    if timestamp != None:
-        _sign_node(ctx, signature, timestamp, digest_method)
-
-    # Sign extra elements defined in WSDL
-    if signatures is not None:
+    # Preserve the previous behaviour for backwards compatibility
+    if signatures is None:
+        _sign_node(ctx, signature, envelope.find(QName(soap_env, "Body")), digest_method)
+        timestamp = security.find(QName(ns.WSU, "Timestamp"))
+        if timestamp != None:
+            _sign_node(ctx, signature, timestamp, digest_method)
+    else:
         if signatures["body"] or signatures["everything"]:
             _sign_node(
                 ctx, signature, envelope.find(QName(soap_env, "Body")), digest_method
