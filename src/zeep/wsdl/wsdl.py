@@ -454,6 +454,9 @@ class Definition:
                         ),
                         namespaces=NSMAP,
                     )
+                    # Initialize a set to keep track of all unique headers
+                    all_headers = set()
+
                     for sign in signed_parts:
                         if len(sign.getchildren()) == 0:
                             # No children, we should sign everything
@@ -464,11 +467,15 @@ class Definition:
                         for child in sign.iterchildren():
                             if len(child.items()) > 0:
                                 # Header ...
-                                part = {attr: value for attr, value in child.items()}
-                                binding.signatures["header"].append(part)
+                                part = frozenset({attr: value for attr, value in child.items()}.items())
+                                all_headers.add(part)
                             elif child.tag.split("}")[-1].lower() == "body":
                                 # Body ...
                                 binding.signatures["body"] = True
+
+                    # If we didn't set "everything" to True, update the headers
+                    if not binding.signatures.get("everything", False):
+                        binding.signatures["header"] = [dict(header) for header in all_headers]
                     logger.debug("Adding binding: %s", binding.name.text)
                     result[binding.name.text] = binding
                     break

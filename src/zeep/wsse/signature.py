@@ -254,18 +254,18 @@ def _signature_prepare(envelope, key, signature_method, digest_method, signature
         if timestamp != None:
             _sign_node(ctx, signature, timestamp, digest_method)
     else:
-        if signatures["body"] or signatures["everything"]:
+        if signatures.get("body") or signatures.get("everything"):
             _sign_node(
                 ctx, signature, envelope.find(QName(soap_env, "Body")), digest_method
             )
         header = get_or_create_header(envelope)
-        if signatures["everything"]:
+        if signatures.get("everything"):
             for node in header.iterchildren():
                 # Everything doesn't mean everything ...
                 if node.nsmap.get(node.prefix) not in OMITTED_HEADERS:
                     _sign_node(ctx, signature, node, digest_method)
         else:
-            for node in signatures["header"]:
+            for node in signatures.get("header", []):
                 _sign_node(
                     ctx,
                     signature,

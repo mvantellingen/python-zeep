@@ -136,7 +136,7 @@ class Binding:
         self.wsdl = wsdl
         self._operations = {}
         self.signatures = {
-            "header": [],  # Elements of header, that should be signed
+            "header": [],  # Parts of header, that should be signed
             "body": False,  # If body should be signed
             "everything": False,  # If every header should be signed
         }
