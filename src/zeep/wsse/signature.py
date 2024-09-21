@@ -272,6 +272,17 @@ def _signature_prepare(envelope, key, signature_method, digest_method, signature
                     header.find(QName(node["Namespace"], node["Name"])),
                     digest_method,
                 )
+        # Sign elements specified by XPath expressions
+        for element in signatures.get("elements", []):
+            _sign_node_by_xpath(
+                ctx,
+                signature,
+                envelope,
+                element["xpath"],
+                element["xpath_version"],
+                digest_method
+            )
+
     ctx.sign(signature)
 
     # Place the X509 data inside a WSSE SecurityTokenReference within
@@ -280,6 +291,20 @@ def _signature_prepare(envelope, key, signature_method, digest_method, signature
     # the X509 data (because it doesn't understand WSSE).
     sec_token_ref = etree.SubElement(key_info, QName(ns.WSSE, "SecurityTokenReference"))
     return security, sec_token_ref, x509_data
+
+def _sign_node_by_xpath(ctx, signature, envelope, xpath, xpath_version, digest_method):
+    # Create an XPath evaluator with the appropriate version
+    if xpath_version == '1.0':
+        evaluator = etree.XPath(xpath, namespaces=envelope.nsmap)
+    else:
+        evaluator = etree.XPath(xpath, namespaces=envelope.nsmap, extension={('http://www.w3.org/TR/1999/REC-xpath-19991116', 'version'): xpath_version})
+    
+    # Evaluate the XPath expression
+    nodes = evaluator(envelope)
+    
+    # Sign each node found by the XPath expression
+    for node in nodes:
+        _sign_node(ctx, signature, node, digest_method)
 
 
 def _sign_envelope_with_key(

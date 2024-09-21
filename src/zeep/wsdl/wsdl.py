@@ -476,6 +476,39 @@ class Definition:
                     # If we didn't set "everything" to True, update the headers
                     if not binding.signatures.get("everything", False):
                         binding.signatures["header"] = [dict(header) for header in all_headers]
+
+                    # Begin parsing SignedElements assertions
+                    signed_elements = doc.xpath(
+                        'wsp:Policy[@wsu:Id="{}"]//sp:SignedElements'.format(binding_policy),
+                        namespaces=NSMAP,
+                    )
+
+                    for signed_element in signed_elements:
+                        xpath_version = signed_element.get('XPathVersion', 'http://www.w3.org/TR/1999/REC-xpath-19991116')  # Default to XPath 1.0 if not specified
+
+                        xpath_expressions = signed_element.xpath('sp:XPath', namespaces=NSMAP)
+
+                        for xpath in xpath_expressions:
+                            xpath_string = xpath.text
+                            if xpath_string:
+                                # Store the XPath expression and its version
+                                binding.signatures.setdefault('elements', []).append({
+                                    'xpath': xpath_string,
+                                    'xpath_version': xpath_version
+                                })
+
+                    # If you want to merge multiple SignedElements assertions as per the specification
+                    if 'elements' in binding.signatures:
+                        # Remove duplicates while preserving order
+                        unique_elements = []
+                        seen = set()
+                        for element in binding.signatures['elements']:
+                            element_tuple = (element['xpath'], element['xpath_version'])
+                            if element_tuple not in seen:
+                                seen.add(element_tuple)
+                                unique_elements.append(element)
+                        binding.signatures['elements'] = unique_elements
+
                     logger.debug("Adding binding: %s", binding.name.text)
                     result[binding.name.text] = binding
                     break

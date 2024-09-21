@@ -1377,7 +1377,7 @@ def test_parse_bindings_signed_unknown():
     document = wsdl.Document(content, None)
     assert document.bindings[
         "{http://tests.python-zeep.org/xsd-main}TestBinding"
-    ].signatures == {"body": False, "everything": False, "header": []}
+    ].signatures == {"body": False, "everything": False, "header": [], "elements": []}
 
 def test_parse_bindings_signed_body():
     policy = """
@@ -1391,7 +1391,7 @@ def test_parse_bindings_signed_body():
     document = wsdl.Document(content, None)
     assert document.bindings[
         "{http://tests.python-zeep.org/xsd-main}TestBinding"
-    ].signatures == {"body": True, "everything": False, "header": []}
+    ].signatures == {"body": True, "everything": False, "header": [], "elements": []}
 
 
 def test_parse_bindings_signed_everything():
@@ -1404,7 +1404,7 @@ def test_parse_bindings_signed_everything():
     document = wsdl.Document(content, None)
     assert document.bindings[
         "{http://tests.python-zeep.org/xsd-main}TestBinding"
-    ].signatures == {"body": True, "everything": True, "header": []}
+    ].signatures == {"body": True, "everything": True, "header": [], "elements": []}
 
 
 def test_parse_bindings_signed_headers():
@@ -1423,12 +1423,32 @@ def test_parse_bindings_signed_headers():
         "body": False,
         "everything": False,
         "header": [{"Name": "To", "Namespace": "http://www.w3.org/2005/08/addressing"}],
+        "elements": []
     }
 
+def test_parse_bindings_signed_elements():
+    policy = """
+      <wsp:Policy wsu:Id="TestBinding_policy">
+        <sp:SignedElements>
+          <sp:XPath>//wsse:Security/wsu:Timestamp</sp:XPath>
+        </sp:SignedElements>
+      </wsp:Policy>
+    """
+    content = StringIO(BASE_WSDL.format(policy=policy).strip())
+    document = wsdl.Document(content, None)
+    assert document.bindings[
+        "{http://tests.python-zeep.org/xsd-main}TestBinding"
+    ].signatures == {
+        "body": False,
+        "everything": False,
+        "header": [],
+        "elements": [{"xpath": "//wsse:Security/wsu:Timestamp", "xpath_version": "http://www.w3.org/TR/1999/REC-xpath-19991116"}]
+    }
+  
 
 def test_parse_bindings_signed_nothing():
     content = StringIO(BASE_WSDL.format(policy="").strip())
     document = wsdl.Document(content, None)
     assert document.bindings[
         "{http://tests.python-zeep.org/xsd-main}TestBinding"
-    ].signatures == {"body": False, "everything": False, "header": []}
+    ].signatures == {"body": False, "everything": False, "header": [], "elements": []}

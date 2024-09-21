@@ -137,6 +137,7 @@ class Binding:
         self._operations = {}
         self.signatures = {
             "header": [],  # Parts of header, that should be signed
+            "elements": [],  # Arbitrary XPath elements that should be signed
             "body": False,  # If body should be signed
             "everything": False,  # If every header should be signed
         }
