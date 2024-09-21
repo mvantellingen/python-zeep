@@ -185,8 +185,8 @@ def test_sign_element(
         envelope,
         KEY_FILE,
         KEY_FILE,
-        signature_method=getattr(xmlsec_installed.Transform, signature_method),
-        digest_method=getattr(xmlsec_installed.Transform, digest_method),
+        signature_method=getattr(xmlsec.Transform, signature_method),
+        digest_method=getattr(xmlsec.Transform, digest_method),
         signatures=signatures,
     )
     signature.verify_envelope(envelope, KEY_FILE)
@@ -242,8 +242,8 @@ def test_sign_everything(
         envelope,
         KEY_FILE,
         KEY_FILE,
-        signature_method=getattr(xmlsec_installed.Transform, signature_method),
-        digest_method=getattr(xmlsec_installed.Transform, digest_method),
+        signature_method=getattr(xmlsec.Transform, signature_method),
+        digest_method=getattr(xmlsec.Transform, digest_method),
         signatures=signatures,
     )
     signature.verify_envelope(envelope, KEY_FILE)
