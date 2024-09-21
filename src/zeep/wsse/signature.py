@@ -242,7 +242,7 @@ def _signature_prepare(envelope, key, signature_method, digest_method, signature
 
     # Insert the Signature node in the wsse:Security header.
     security = get_security_header(envelope)
-    security.insert(0, signature)
+    security.append(signature)
 
     # Perform the actual signing.
     ctx = xmlsec.SignatureContext()
@@ -316,7 +316,7 @@ def _sign_envelope_with_key_binary(
     )
     ref.attrib["URI"] = "#" + ensure_id(bintok)
     bintok.text = x509_data.find(QName(ns.DS, "X509Certificate")).text
-    security.insert(1, bintok)
+    security.insert(0, bintok)
     x509_data.getparent().remove(x509_data)
 
 
