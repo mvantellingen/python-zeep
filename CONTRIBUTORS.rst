@@ -52,4 +52,4 @@ Contributors
 * Øyvind Heddeland Instefjord
 * Gil Obradors
 * Pol Sanlorenzo
-
+* Caio Salgado
