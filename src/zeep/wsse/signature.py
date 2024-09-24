@@ -8,6 +8,7 @@ admittedly painful, will likely assist in understanding the code in this
 module.
 
 """
+
 from lxml import etree
 from lxml.etree import QName
 
@@ -53,7 +54,7 @@ class MemorySignature:
         signature_method=None,
         digest_method=None,
         verify_reply_signature=True,
-        response_cert_data=None
+        response_cert_data=None,
     ):
         check_xmlsec_import()
 
@@ -63,7 +64,7 @@ class MemorySignature:
         self.digest_method = digest_method
         self.signature_method = signature_method
         self.verify_reply_signature = verify_reply_signature
-        self.response_cert_data= response_cert_data
+        self.response_cert_data = response_cert_data
 
     def apply(self, envelope, headers):
         key = _make_sign_key(self.key_data, self.cert_data, self.password)
@@ -75,8 +76,9 @@ class MemorySignature:
     def verify(self, envelope):
         if not self.verify_reply_signature:
             return envelope
-        key = _make_verify_key(self.cert_data if not self.response_cert_data else
-                               self.response_cert_data)
+        key = _make_verify_key(
+            self.cert_data if not self.response_cert_data else self.response_cert_data
+        )
         _verify_envelope_with_key(envelope, key)
         return envelope
 
@@ -92,7 +94,7 @@ class Signature(MemorySignature):
         signature_method=None,
         digest_method=None,
         verify_reply_signature=True,
-        response_certfile=None
+        response_certfile=None,
     ):
         super().__init__(
             _read_file(key_file),
@@ -101,7 +103,7 @@ class Signature(MemorySignature):
             signature_method,
             digest_method,
             verify_reply_signature,
-            _read_file(response_certfile) if response_certfile else None
+            _read_file(response_certfile) if response_certfile else None,
         )
 
 
