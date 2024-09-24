@@ -360,7 +360,7 @@ def _sign_node(ctx, signature, target, digest_method=None):
     """
 
     # Ensure the target node has a wsu:Id attribute and get its value.
-    node_id = ensure_id(target)
+    ensure_id(target)
 
     # Unlike HTML, XML doesn't have a single standardized Id. WSSE suggests the
     # use of the wsu:Id attribute for this purpose, but XMLSec doesn't
@@ -370,10 +370,10 @@ def _sign_node(ctx, signature, target, digest_method=None):
 
     # Add reference to signature with URI attribute pointing to that ID.
     ref = xmlsec.template.add_reference(
-        signature, digest_method or xmlsec.Transform.SHA1, uri="#" + node_id
+        signature, digest_method or xmlsec.Transform.SHA1, uri=""
     )
     # This is an XML normalization transform which will be performed on the
     # target node contents before signing. This ensures that changes to
     # irrelevant whitespace, attribute ordering, etc won't invalidate the
     # signature.
-    xmlsec.template.add_transform(ref, xmlsec.Transform.EXCL_C14N)
+    xmlsec.template.add_transform(ref, xmlsec.Transform.ENVELOPED)
