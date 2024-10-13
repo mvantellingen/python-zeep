@@ -15,6 +15,7 @@
     This module defines the definitions which occur within a WSDL document,
 
 """
+
 import typing
 import warnings
 from collections import OrderedDict, namedtuple

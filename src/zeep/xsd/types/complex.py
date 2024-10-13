@@ -4,9 +4,8 @@ import copy
 import logging
 import typing
 from collections import OrderedDict, deque
-from itertools import chain
-
 from functools import cached_property as threaded_cached_property
+from itertools import chain
 
 from lxml import etree
 

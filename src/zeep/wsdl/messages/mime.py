@@ -3,6 +3,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from urllib.parse import urlencode
 
 from lxml import etree

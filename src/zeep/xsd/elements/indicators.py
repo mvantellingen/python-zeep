@@ -11,12 +11,11 @@ All, Choice, Group and Sequence.
               -> Group
 
 """
+
 import copy
 import operator
 from collections import OrderedDict, defaultdict, deque
-
 from functools import cached_property as threaded_cached_property
-
 
 from zeep.exceptions import UnexpectedElementError, ValidationError
 from zeep.xsd.const import NotSet, SkipValue

@@ -3,6 +3,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import copy
 import typing
 from collections import OrderedDict
@@ -85,9 +86,11 @@ class SoapMessage(ConcreteMessage):
         # Soap11Binding._set_http_headers(). But let's keep it like this for
         # now.
         headers = {
-            "SOAPAction": '"%s"' % self.operation.soapaction
-            if self.operation.soapaction
-            else '""'
+            "SOAPAction": (
+                '"%s"' % self.operation.soapaction
+                if self.operation.soapaction
+                else '""'
+            )
         }
         return SerializedMessage(path=None, headers=headers, content=envelope)
 
@@ -116,8 +119,10 @@ class SoapMessage(ConcreteMessage):
             return result
 
         result = result.body
-        if not hasattr(result, '__len__'): # Return body directly if len is allowed (could indicated valid primitive type).
-            return result        
+        if not hasattr(
+            result, "__len__"
+        ):  # Return body directly if len is allowed (could indicated valid primitive type).
+            return result
         if result is None or len(result) == 0:
             return None
         elif len(result) > 1:

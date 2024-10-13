@@ -21,7 +21,6 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-
 class Base:
     """Base class for caching backends."""
 

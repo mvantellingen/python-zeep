@@ -2,6 +2,7 @@ import datetime
 
 import freezegun
 import pytest
+
 from zeep import cache
 
 
@@ -39,7 +40,9 @@ class TestSqliteCache:
         c = cache.SqliteCache(path=tmpdir.join("sqlite.cache.db").strpath)
         c.add("http://tests.python-zeep.org/example.wsdl", b"content")
 
-        freeze_dt = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=7200)
+        freeze_dt = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            seconds=7200
+        )
         with freezegun.freeze_time(freeze_dt):
             result = c.get("http://tests.python-zeep.org/example.wsdl")
             assert result is None
@@ -58,7 +61,9 @@ def test_memory_cache_timeout(tmpdir):
     result = c.get("http://tests.python-zeep.org/example.wsdl")
     assert result == b"content"
 
-    freeze_dt = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=7200)
+    freeze_dt = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+        seconds=7200
+    )
     with freezegun.freeze_time(freeze_dt):
         result = c.get("http://tests.python-zeep.org/example.wsdl")
         assert result is None

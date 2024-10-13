@@ -1,6 +1,5 @@
 import logging
 import typing
-
 from functools import cached_property as threaded_cached_property
 
 from lxml import etree
