@@ -48,6 +48,10 @@ python -m zeep <url-to-wsdl>
 
 Please see the [documentation](http://docs.python-zeep.org) for more information.
 
+
+# Sponsors
+[![Kraken Tech](https://camo.githubusercontent.com/ecc2b8426b961f8895e4f42741c006839e4488fbe9ba8e92cfa02d48c7fdb3f1/68747470733a2f2f7374617469632e6f63746f70757363646e2e636f6d2f6b746c2f6b72616b656e2d6c6f676f2d772d67726f75702d7365636f6e646172792d323032322e706e67)](https://github.com/octoenergy)
+
 # Support
 
 If you want to report a bug, please first read [the bug reporting guidelines](http://docs.python-zeep.org/en/master/reporting_bugs.html).
