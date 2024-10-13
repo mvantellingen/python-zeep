@@ -1,3 +1,13 @@
+4.3.0 (2024-10-13)
+------------------
+ - Drop support for Python 3.7 and 3.8 and add support for Python 3.12 and 3.13 (#1421, #1408)
+ - Add workaround to support date values with timezone in combination with
+   isodate 0.7.2 (#1431)
+ - Replace deprecated `datetime.datetime.utcnow()`
+ - Properly close 'file://' resources (#1339)
+ - Complete migration to pyproject.toml (remove setup.py)
+
+
 4.2.1 (2022-11-10)
 -------------------
  - Fix error regarding closing session in async transport (#1347)
