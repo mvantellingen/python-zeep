@@ -5,6 +5,7 @@ import logging
 import os
 import threading
 from contextlib import contextmanager
+from typing import Dict, Tuple, Union
 
 import platformdirs
 import pytz
@@ -18,6 +19,7 @@ except ImportError:
     sqlite3 = None  # type: ignore
 
 logger = logging.getLogger(__name__)
+
 
 
 class Base:
@@ -67,9 +69,7 @@ class InMemoryCache(Base):
     """Simple in-memory caching using dict lookup with support for timeouts"""
 
     #: global cache, thread-safe by default
-    _cache = (
-        {}
-    )  # type: typing.Dict[str, typing.Tuple[datetime.datetime, typing.Union[bytes, str]]]
+    _cache: Dict[str, Tuple[datetime.datetime, Union[bytes, str]]] = {}
 
     def __init__(self, timeout=3600):
         self._timeout = timeout
@@ -80,7 +80,7 @@ class InMemoryCache(Base):
             raise TypeError(
                 "a bytes-like object is required, not {}".format(type(content).__name__)
             )
-        self._cache[url] = (datetime.datetime.utcnow(), content)
+        self._cache[url] = (datetime.datetime.now(datetime.timezone.utc), content)
 
     def get(self, url):
         try:
@@ -129,6 +129,8 @@ class SqliteCache(VersionedCacheBase):
 
     @contextmanager
     def db_connection(self):
+        assert sqlite3
+
         with self._lock:
             connection = sqlite3.connect(
                 self._db_path, detect_types=sqlite3.PARSE_DECLTYPES
@@ -145,7 +147,7 @@ class SqliteCache(VersionedCacheBase):
             cursor.execute("DELETE FROM request WHERE url = ?", (url,))
             cursor.execute(
                 "INSERT INTO request (created, url, content) VALUES (?, ?, ?)",
-                (datetime.datetime.utcnow(), url, data),
+                (datetime.datetime.now(datetime.timezone.utc), url, data),
             )
             conn.commit()
 
@@ -168,7 +170,7 @@ def _is_expired(value, timeout):
     if timeout is None:
         return False
 
-    now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=pytz.utc)
     max_age = value.replace(tzinfo=pytz.utc)
     max_age += datetime.timedelta(seconds=timeout)
     return now > max_age
