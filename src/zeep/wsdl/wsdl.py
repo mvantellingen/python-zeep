@@ -14,11 +14,7 @@ from collections import OrderedDict
 from lxml import etree
 
 from zeep.exceptions import IncompleteMessage
-from zeep.loader import (
-    absolute_location,
-    is_relative_path,
-    load_external,
-)
+from zeep.loader import absolute_location, is_relative_path, load_external
 from zeep.settings import Settings
 from zeep.utils import findall_multiple_ns
 from zeep.wsdl import parse

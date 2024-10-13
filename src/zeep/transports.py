@@ -1,6 +1,6 @@
 import logging
 import os
-from contextlib import contextmanager, closing
+from contextlib import closing, contextmanager
 from urllib.parse import urlparse
 
 import requests
