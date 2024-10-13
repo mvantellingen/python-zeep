@@ -24,19 +24,19 @@ xmlsec_require = [
 ]
 
 tests_require = [
-    "coverage[toml]==5.2.1",
-    "freezegun==0.3.15",
+    "coverage[toml]==7.6.2",
+    "freezegun==1.5.1",
     "pretend==1.0.9",
-    "pytest-cov==2.8.1",
+    "pytest-cov==5.0.0",
     "pytest-httpx",
     "pytest-asyncio",
-    "pytest==6.2.5",
-    "requests_mock>=0.7.0",
+    "pytest==8.3.3",
+    "requests_mock==1.12.1",
     # Linting
-    "isort==5.3.2",
-    "flake8==3.8.3",
-    "flake8-blind-except==0.1.1",
-    "flake8-debugger==3.2.1",
+    "isort==5.13.2",
+    "flake8==7.1.1",
+    "flake8-blind-except==0.2.1",
+    "flake8-debugger==4.1.2",
     "flake8-imports==0.1.1",
 ]
 
