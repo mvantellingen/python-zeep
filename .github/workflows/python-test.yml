@@ -1,6 +1,11 @@
 name: Python Tests
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
 
@@ -95,4 +100,5 @@ jobs:
       run: tox -e coverage-report
 
     - name: Upload to codecov
+      if: github.ref == 'refs/heads/main'
       uses: codecov/codecov-action@v4
