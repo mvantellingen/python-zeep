@@ -210,7 +210,19 @@ class Date(BuiltinType):
 
     @treat_whitespace("collapse")
     def pythonvalue(self, value):
-        return isodate.parse_date(value)
+        try:
+            return isodate.parse_date(value)
+        except isodate.ISO8601Error:
+            # Recent versions of isodate don't support timezone in date's. This
+            # is not really ISO8601 compliant anway, but we should try to handle
+            # it. This is a hack to support this.
+            if "+" in value:
+                value = value.split("+")[0]
+                return isodate.parse_date(value)
+            if "Z" in value:
+                value = value.split("Z")[0]
+                return isodate.parse_date(value)
+            raise
 
 
 class gYearMonth(BuiltinType):
