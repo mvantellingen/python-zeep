@@ -7,6 +7,9 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
     steps:
     - uses: actions/checkout@v4
 
@@ -22,7 +25,4 @@ jobs:
       run: python setup.py sdist bdist_wheel
 
     - name: Publish package
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
+      uses: pypa/gh-action-pypi-publish@release/v1
