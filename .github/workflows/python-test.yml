@@ -70,10 +70,12 @@ jobs:
     - name: Prepare artifacts
       run: mkdir .coverage-data && mv .coverage.* .coverage-data/
 
-    - uses: actions/upload-artifact@master
+    - uses: actions/upload-artifact@v4
       with:
-        name: coverage-data
-        path: .coverage-data/
+        name: coverage-data-${{ matrix.platform }}-${{ matrix.python-version }}
+        path: .coverage-data/.coverage.*
+        include-hidden-files: true
+        retention-days: 1
 
   coverage:
     runs-on: ubuntu-latest
@@ -81,9 +83,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: actions/download-artifact@master
+    - uses: actions/download-artifact@v4
       with:
-        name: coverage-data
+        pattern: coverage-data-*
+        merge-multiple: true
         path: .
 
     - name: Set up Python 3.12
