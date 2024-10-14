@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 import logging
 import typing
 
@@ -93,7 +94,7 @@ class SoapBinding(Binding):
 
             # Apply WSSE
             if client.wsse:
-                if isinstance(client.wsse, list):
+                if isinstance(client.wsse, Sequence):
                     for wsse in client.wsse:
                         envelope, http_headers = wsse.apply(envelope, http_headers)
                 else:
@@ -216,7 +217,11 @@ class SoapBinding(Binding):
                 message_pack = None
 
         if client.wsse:
-            client.wsse.verify(doc)
+            if isinstance(client.wsse, Sequence):
+                for wsse in client.wsse:
+                    wsse.verify(doc)
+            else:
+                client.wsse.verify(doc)
 
         doc, http_headers = plugins.apply_ingress(
             client, doc, response.headers, operation
