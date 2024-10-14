@@ -60,10 +60,9 @@ def parse_abstract_message(
         except (NamespaceError, LookupError):
             raise IncompleteMessage(
                 (
-                    "The wsdl:message for %r contains an invalid part (%r): "
+                    f"The wsdl:message for {message_name.text!r} contains an invalid part ({part_name!r}): "
                     "invalid xsd type or elements"
                 )
-                % (message_name.text, part_name)
             )
 
         message_part = definitions.MessagePart(part_element, part_type)
@@ -116,7 +115,7 @@ def parse_abstract_operation(
 
         if not param_msg:
             raise IncompleteMessage(
-                "Operation/%s element is missing required name attribute" % tag_name
+                f"Operation/{tag_name} element is missing required name attribute"
             )
 
         try:

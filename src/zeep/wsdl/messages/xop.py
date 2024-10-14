@@ -14,11 +14,11 @@ def process_xop(document, message_pack):
         href = xop_node.get("href")
         if href.startswith("cid:"):
             # URL can be encoded. RFC2392
-            href = "<%s>" % unquote(href[4:])
+            href = f"<{unquote(href[4:])}>"
 
         value = message_pack.get_by_content_id(href)
         if not value:
-            raise ValueError("No part found for: %r" % xop_node.get("href"))
+            raise ValueError(f"No part found for: {xop_node.get('href')!r}")
         num_replaced += 1
 
         xop_parent = xop_node.getparent()

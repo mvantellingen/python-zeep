@@ -35,7 +35,7 @@ class Indicator(Base):
     """Base class for the other indicators"""
 
     def __repr__(self):
-        return "<%s(%s)>" % (self.__class__.__name__, super().__repr__())
+        return f"<{self.__class__.__name__}({super().__repr__()})>"
 
     @property
     def default_value(self):
@@ -191,8 +191,7 @@ class OrderIndicator(Indicator, list):
 
                 if item_kwargs:
                     raise TypeError(
-                        ("%s() got an unexpected keyword argument %r.")
-                        % (self, list(item_kwargs)[0])
+                        f"{self}() got an unexpected keyword argument {list(item_kwargs)[0]!r}."
                     )
 
                 result.append(subresult)
@@ -260,12 +259,12 @@ class OrderIndicator(Indicator, list):
                 parts.append(element.signature(schema, standalone=False))
             else:
                 value = element.signature(schema, standalone=False)
-                parts.append("%s: %s" % (name, value))
+                parts.append(f"{name}: {value}")
 
         part = ", ".join(parts)
 
         if self.accepts_multiple:
-            return "[%s]" % (part,)
+            return f"[{part}]"
         return part
 
 
@@ -444,8 +443,8 @@ class Choice(OrderIndicator):
                             break
                 else:
                     raise TypeError(
-                        "No complete xsd:Sequence found for the xsd:Choice %r.\n"
-                        "The signature is: %s" % (name, self.signature())
+                        f"No complete xsd:Sequence found for the xsd:Choice {name!r}.\n"
+                        f"The signature is: {self.signature()}"
                     )
 
             if not self.accepts_multiple:
@@ -574,9 +573,9 @@ class Choice(OrderIndicator):
                 parts.append(
                     "{%s: %s}" % (name, element.signature(schema, standalone=False))
                 )
-        part = "(%s)" % " | ".join(parts)
+        part = f"({' | '.join(parts)})"
         if self.accepts_multiple:
-            return "%s[]" % (part,)
+            return f"{part}[]"
         return part
 
 
@@ -696,8 +695,7 @@ class Group(Indicator):
 
                 if available_sub_kwargs:
                     raise TypeError(
-                        ("%s() got an unexpected keyword argument %r.")
-                        % (self, list(available_sub_kwargs)[0])
+                        f"{self}() got an unexpected keyword argument {list(available_sub_kwargs)[0]!r}."
                     )
 
                 if subresult:
@@ -750,6 +748,6 @@ class Group(Indicator):
     def signature(self, schema=None, standalone=True):
         name = create_prefixed_name(self.qname, schema)
         if standalone:
-            return "%s(%s)" % (name, self.child.signature(schema, standalone=False))
+            return f"{name}({self.child.signature(schema, standalone=False)})"
         else:
             return self.child.signature(schema, standalone=False)

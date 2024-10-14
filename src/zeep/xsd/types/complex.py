@@ -90,7 +90,7 @@ class ComplexType(AnyType):
         )
 
     def __str__(self):
-        return "%s(%s)" % (self.__class__.__name__, self.signature())
+        return f"{self.__class__.__name__}({self.signature()})"
 
     @threaded_cached_property
     def attributes(self):
@@ -101,7 +101,7 @@ class ComplexType(AnyType):
             if attr.name is None:
                 name = generator.get_name()
             elif attr.name in elm_names:
-                name = "attr__%s" % attr.name
+                name = f"attr__{attr.name}"
             else:
                 name = attr.name
             result.append((name, attr))
@@ -220,7 +220,7 @@ class ComplexType(AnyType):
             # Check if all children are consumed (parsed)
             if elements:
                 if schema and schema.settings.strict:
-                    raise XMLParseError("Unexpected element %r" % elements[0].tag)
+                    raise XMLParseError(f"Unexpected element {elements[0].tag!r}")
                 else:
                     init_kwargs["_raw_elements"] = elements
 
@@ -501,11 +501,11 @@ class ComplexType(AnyType):
             parts.append(part)
 
         for name, attribute in self.attributes:
-            part = "%s: %s" % (name, attribute.signature(schema, standalone=False))
+            part = f"{name}: {attribute.signature(schema, standalone=False)}"
             parts.append(part)
 
         value = ", ".join(parts)
         if standalone:
-            return "%s(%s)" % (self.get_prefixed_name(schema), value)
+            return f"{self.get_prefixed_name(schema)}({value})"
         else:
             return value

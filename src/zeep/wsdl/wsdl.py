@@ -98,13 +98,13 @@ class Document:
         self.services = root_definitions.services
 
     def __repr__(self):
-        return "<WSDL(location=%r)>" % self.location
+        return f"<WSDL(location={self.location!r})>"
 
     def dump(self):
         print("")
         print("Prefixes:")
         for prefix, namespace in self.types.prefix_map.items():
-            print(" " * 4, "%s: %s" % (prefix, namespace))
+            print(" " * 4, f"{prefix}: {namespace}")
 
         print("")
         print("Global elements:")
@@ -135,7 +135,7 @@ class Document:
                 )
 
                 for operation in operations:
-                    print("%s%s" % (" " * 12, str(operation)))
+                    print(" " * 12, str(operation))
                 print("")
 
     def _get_xml_document(self, location: typing.IO) -> etree._Element:
@@ -196,7 +196,7 @@ class Definition:
         self.services = self.parse_service(doc)
 
     def __repr__(self):
-        return "<%s(location=%r)>" % (self.__class__.__name__, self.location)
+        return f"<{self.__class__.__name__}(location={self.location!r})>"
 
     def get(self, name, key, _processed=None):
         container = getattr(self, name)
@@ -223,7 +223,7 @@ class Definition:
                     except IndexError:
                         pass
 
-        raise IndexError("No definition %r in %r found" % (key, name))
+        raise IndexError(f"No definition {key!r} in {name!r} found")
 
     def resolve_imports(self) -> None:
         """Resolve all root elements (types, messages, etc)."""

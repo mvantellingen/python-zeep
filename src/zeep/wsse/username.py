@@ -95,7 +95,7 @@ class UsernameToken:
     def _create_password_text(self):
         return [
             utils.WSSE.Password(
-                self.password, Type="%s#PasswordText" % self.username_token_profile_ns
+                self.password, Type=f"{self.username_token_profile_ns}#PasswordText"
             )
         ]
 
@@ -127,11 +127,11 @@ class UsernameToken:
 
         return [
             utils.WSSE.Password(
-                digest, Type="%s#PasswordDigest" % self.username_token_profile_ns
+                digest, Type=f"{self.username_token_profile_ns}#PasswordDigest"
             ),
             utils.WSSE.Nonce(
                 base64.b64encode(nonce).decode("utf-8"),
-                EncodingType="%s#Base64Binary" % self.soap_message_secutity_ns,
+                EncodingType=f"{self.soap_message_secutity_ns}#Base64Binary",
             ),
             utils.WSU.Created(timestamp),
         ]

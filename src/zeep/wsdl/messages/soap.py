@@ -87,7 +87,7 @@ class SoapMessage(ConcreteMessage):
         # now.
         headers = {
             "SOAPAction": (
-                '"%s"' % self.operation.soapaction
+                f'"{self.operation.soapaction}"'
                 if self.operation.soapaction
                 else '""'
             )

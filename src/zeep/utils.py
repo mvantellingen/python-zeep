@@ -33,7 +33,7 @@ def as_qname(value: str, nsmap, target_namespace=None) -> etree.QName:
             namespace = nsmap.get(prefix)
 
         if not namespace:
-            raise XMLParseError("No namespace defined for %r (%r)" % (prefix, value))
+            raise XMLParseError(f"No namespace defined for {prefix!r} ({value!r})")
 
         # Workaround for https://github.com/mvantellingen/python-zeep/issues/349
         if not local:

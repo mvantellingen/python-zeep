@@ -89,7 +89,7 @@ class SchemaVisitor:
     def process(self, node, parent):
         visit_func = self.visitors.get(node.tag)
         if not visit_func:
-            raise ValueError("No visitor defined for %r" % node.tag)
+            raise ValueError(f"No visitor defined for {node.tag!r}")
         result = visit_func(self, node, parent)
         return result
 
@@ -245,9 +245,8 @@ class SchemaVisitor:
             raise XMLParseError(
                 (
                     "The namespace defined on the xsd:import doesn't match the "
-                    "imported targetNamespace located at %r "
-                )
-                % (location),
+                    f"imported targetNamespace located at {location!r} "
+                ),
                 filename=self.document._location,
                 sourceline=node.sourceline,
             )
@@ -550,7 +549,7 @@ class SchemaVisitor:
         elif child.tag == tags.union:
             xsd_type = self.visit_union(child, node)
         else:
-            raise AssertionError("Unexpected child: %r" % child.tag)
+            raise AssertionError(f"Unexpected child: {child.tag!r}")
 
         assert xsd_type is not None
         if is_global:
@@ -923,7 +922,7 @@ class SchemaVisitor:
         for child in children:
             if child.tag not in sub_types:
                 raise self._create_error(
-                    "Unexpected element %s in xsd:sequence" % child.tag, child
+                    f"Unexpected element {child.tag} in xsd:sequence", child
                 )
 
             item = self.process(child, node)
@@ -1250,7 +1249,7 @@ class SchemaVisitor:
                 attribute = self.process(child, node)
                 attributes.append(attribute)
             else:
-                raise self._create_error("Unexpected tag `%s`" % (child.tag), node)
+                raise self._create_error(f"Unexpected tag `{child.tag}`", node)
         return attributes
 
     def _create_error(self, message, node):

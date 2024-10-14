@@ -40,9 +40,7 @@ class Transport:
         self._close_session = not session
         self.session = session or requests.Session()
         self.session.mount("file://", FileAdapter())
-        self.session.headers["User-Agent"] = "Zeep/%s (www.python-zeep.org)" % (
-            get_version()
-        )
+        self.session.headers["User-Agent"] = f"Zeep/{get_version()} (www.python-zeep.org)"
 
     def get(self, address, params, headers):
         """Proxy to requests.get()
@@ -196,10 +194,10 @@ class AsyncTransport(Transport):
         self.logger = logging.getLogger(__name__)
 
         self.wsdl_client.headers = {
-            "User-Agent": "Zeep/%s (www.python-zeep.org)" % (get_version())
+            "User-Agent": f"Zeep/{get_version()} (www.python-zeep.org)"
         }
         self.client.headers = {
-            "User-Agent": "Zeep/%s (www.python-zeep.org)" % (get_version())
+            "User-Agent": f"Zeep/{get_version()} (www.python-zeep.org)"
         }
 
     async def aclose(self):

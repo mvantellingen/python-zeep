@@ -38,7 +38,7 @@ class Attribute(Element):
             self.type.validate(value, required=self.required)
         except exceptions.ValidationError as exc:
             raise exceptions.ValidationError(
-                "The attribute %s is not valid: %s" % (self.qname, exc.message),
+                f"The attribute {self.qname} is not valid: {exc.message}",
                 path=render_path,
             )
 

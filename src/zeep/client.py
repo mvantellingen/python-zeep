@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class Factory:
     def __init__(self, types, kind, namespace):
-        self._method = getattr(types, "get_%s" % kind)
+        self._method = getattr(types, f"get_{kind}")
 
         if namespace in types.namespaces:
             self._ns = namespace
@@ -137,7 +137,7 @@ class Client:
         except KeyError:
             raise ValueError(
                 "No binding found with the given QName. Available bindings "
-                "are: %s" % (", ".join(self.wsdl.bindings.keys()))
+                f"are: {', '.join(self.wsdl.bindings.keys())}"
             )
         return ServiceProxy(self, binding, address=address)
 

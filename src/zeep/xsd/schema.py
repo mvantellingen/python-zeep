@@ -47,10 +47,7 @@ class Schema:
     def __repr__(self):
         main_doc = self.root_document
         if main_doc:
-            return "<Schema(location=%r, tns=%r)>" % (
-                main_doc._location,
-                main_doc._target_namespace,
-            )
+            return f"<Schema(location={main_doc._location!r}, tns={main_doc._target_namespace!r})>"
         return "<Schema()>"
 
     @property
@@ -164,7 +161,7 @@ class Schema:
             except KeyError:
                 return self._prefix_map_auto[prefix]
         except KeyError:
-            raise ValueError("No such prefix %r" % prefix)
+            raise ValueError(f"No such prefix {prefix!r}")
 
     def get_shorthand_for_ns(self, namespace):
         for prefix, other_namespace in self._prefix_map_auto.items():
@@ -262,7 +259,7 @@ class Schema:
             elif prefix in self._prefix_map_auto:
                 return etree.QName(self._prefix_map_auto[prefix], localname)
             else:
-                raise ValueError("No namespace defined for the prefix %r" % prefix)
+                raise ValueError(f"No namespace defined for the prefix {prefix!r}")
         else:
             return etree.QName(name)
 
@@ -273,7 +270,7 @@ class Schema:
             if namespace is None or namespace in prefix_map.values():
                 continue
 
-            prefix_map["ns%d" % i] = namespace
+            prefix_map[f"ns{i}"] = namespace
             i += 1
         return prefix_map
 
@@ -323,7 +320,7 @@ class _SchemaContainer:
             if fail_silently:
                 return []
             raise exceptions.NamespaceError(
-                "No schema available for the namespace %r" % namespace
+                f"No schema available for the namespace {namespace!r}"
             )
         return self._instances[namespace]
 
@@ -382,10 +379,9 @@ class SchemaDocument:
         # self._xml_schema = None
 
     def __repr__(self):
-        return "<SchemaDocument(location=%r, tns=%r, is_empty=%r)>" % (
-            self._location,
-            self._target_namespace,
-            self.is_empty,
+        return (
+            "<SchemaDocument"
+            f"(location={self._location!r}, tns={self._target_namespace!r}, is_empty={self.is_empty!r})>"
         )
 
     @property

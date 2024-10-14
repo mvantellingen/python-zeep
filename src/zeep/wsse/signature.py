@@ -321,7 +321,7 @@ def _verify_envelope_with_key(envelope, key):
         # Get the reference URI and cut off the initial '#'
         referenced_id = ref.get("URI")[1:]
         referenced = envelope.xpath(
-            "//*[@wsu:Id='%s']" % referenced_id, namespaces={"wsu": ns.WSU}
+            f"//*[@wsu:Id='{referenced_id}']", namespaces={"wsu": ns.WSU}
         )[0]
         ctx.register_id(referenced, "Id", ns.WSU)
 

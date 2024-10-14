@@ -49,10 +49,10 @@ class Element(Base):
     def __str__(self):
         if self.type:
             if self.type.is_global:
-                return "%s(%s)" % (self.name, self.type.qname)
+                return f"{self.name}({self.type.qname})"
             else:
-                return "%s(%s)" % (self.name, self.type.signature())
-        return "%s()" % self.name
+                return f"{self.name}({self.type.signature()})"
+        return f"{self.name}()"
 
     def __call__(self, *args, **kwargs):
         instance = self.type(*args, **kwargs)
@@ -61,11 +61,7 @@ class Element(Base):
         return instance
 
     def __repr__(self):
-        return "<%s(name=%r, type=%r)>" % (
-            self.__class__.__name__,
-            self.name,
-            self.type,
-        )
+        return f"<{self.__class__.__name__}(name={self.name!r}, type={self.type!r})>"
 
     def __eq__(self, other):
         return (
@@ -204,8 +200,7 @@ class Element(Base):
                 # not optional then throw an error
                 if num_matches == 0 and not self.is_optional:
                     raise UnexpectedElementError(
-                        "Unexpected element %r, expected %r"
-                        % (element_tag.text, self.qname.text)
+                        f"Unexpected element {element_tag.text!r}, expected {self.qname.text!r}"
                     )
                 break
 
@@ -262,8 +257,7 @@ class Element(Base):
             # Validate bounds
             if len(value) < self.min_occurs:
                 raise exceptions.ValidationError(
-                    "Expected at least %d items (minOccurs check) %d items found."
-                    % (self.min_occurs, len(value)),
+                    f"Expected at least {self.min_occurs} items (minOccurs check) {len(value)} items found.",
                     path=render_path,
                 )
             elif (
@@ -272,8 +266,7 @@ class Element(Base):
                 and len(value) > self.max_occurs
             ):
                 raise exceptions.ValidationError(
-                    "Expected at most %d items (maxOccurs check) %d items found."
-                    % (self.max_occurs, len(value)),
+                    f"Expected at most {self.max_occurs} items (maxOccurs check) {len(value)} items found.",
                     path=render_path,
                 )
 
@@ -282,7 +275,7 @@ class Element(Base):
         else:
             if not self.is_optional and not self.nillable and value in (None, NotSet):
                 raise exceptions.ValidationError(
-                    "Missing element %s" % (self.name), path=render_path
+                    f"Missing element {self.name}", path=render_path
                 )
 
             self._validate_item(value, render_path)
@@ -295,7 +288,7 @@ class Element(Base):
             self.type.validate(value, required=True)
         except exceptions.ValidationError as exc:
             raise exceptions.ValidationError(
-                "The element %s is not valid: %s" % (self.qname, exc.message),
+                f"The element {self.qname} is not valid: {exc.message}",
                 path=render_path,
             )
 
@@ -318,8 +311,8 @@ class Element(Base):
                 value = "{%s}" % value
 
         if standalone:
-            value = "%s(%s)" % (self.get_prefixed_name(schema), value)
+            value = f"{self.get_prefixed_name(schema)}({value})"
 
         if self.accepts_multiple:
-            return "%s[]" % value
+            return f"{value}[]"
         return value

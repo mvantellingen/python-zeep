@@ -46,8 +46,7 @@ class MimeMessage(ConcreteMessage):
                 message = list(self.abstract.parts.values())[0]
             else:
                 raise ValueError(
-                    "Multiple parts for message %r while no matching part found"
-                    % self.part_name
+                    f"Multiple parts for message {self.part_name!r} while no matching part found"
                 )
 
             if message.element:

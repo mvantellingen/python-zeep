@@ -15,9 +15,8 @@ class MessagePack:
         self._parts = parts
 
     def __repr__(self):
-        return "<MessagePack(attachments=[%s])>" % (
-            ", ".join(repr(a) for a in self.attachments)
-        )
+        joined_attachments = ", ".join(repr(a) for a in self.attachments)
+        return f"<MessagePack(attachments=[{joined_attachments}])>"
 
     @property
     def root(self):
@@ -60,7 +59,7 @@ class Attachment:
         self._part = part
 
     def __repr__(self):
-        return "<Attachment(%r, %r)>" % (self.content_id, self.content_type)
+        return f"<Attachment({self.content_id!r}, {self.content_type!r})>"
 
     @cached_property
     def content(self):

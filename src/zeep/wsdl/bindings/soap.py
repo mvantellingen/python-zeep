@@ -67,7 +67,7 @@ class SoapBinding(Binding):
         """
         operation_obj = self.get(operation)
         if not operation_obj:
-            raise ValueError("Operation %r not found" % operation)
+            raise ValueError(f"Operation {operation!r} not found")
 
         # Create the SOAP envelope
         serialized = operation_obj.create(*args, **kwargs)
@@ -179,8 +179,7 @@ class SoapBinding(Binding):
 
         elif response.status_code != 200 and not response.content:
             raise TransportError(
-                "Server returned HTTP status %d (no content available)"
-                % response.status_code,
+                f"Server returned HTTP status {response.status_code} (no content available)",
                 status_code=response.status_code,
             )
 
@@ -204,8 +203,10 @@ class SoapBinding(Binding):
             doc = parse_xml(content, self.transport, settings=client.settings)
         except XMLSyntaxError as exc:
             raise TransportError(
-                "Server returned response (%s) with invalid XML: %s.\nContent: %r"
-                % (response.status_code, exc, response.content),
+                (
+                    f"Server returned response ({response.status_code}) with invalid XML: {exc}."
+                    f"\nContent: {response.content!r}"
+                ),
                 status_code=response.status_code,
                 content=response.content,
             )
@@ -290,8 +291,7 @@ class SoapBinding(Binding):
 
         if transport not in supported_transports:
             raise NotImplementedError(
-                "The binding transport %s is not supported (only soap/http)"
-                % (transport)
+                f"The binding transport {transport} is not supported (only soap/http)"
             )
         default_style = soap_node.get("style", "document")
 
@@ -401,7 +401,7 @@ class Soap12Binding(SoapBinding):
             [
                 "application/soap+xml",
                 "charset=utf-8",
-                'action="%s"' % operation.soapaction,
+                f'action="{operation.soapaction}"',
             ]
         )
 

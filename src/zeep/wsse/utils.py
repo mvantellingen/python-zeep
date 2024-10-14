@@ -37,7 +37,7 @@ def get_timestamp(timestamp=None, zulu_timestamp=None):
 
 
 def get_unique_id():
-    return "id-{0}".format(uuid4())
+    return f"id-{uuid4()}"
 
 
 def ensure_id(node):

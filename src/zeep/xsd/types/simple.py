@@ -63,7 +63,7 @@ class AnySimpleType(AnyType):
         )
 
     def __str__(self):
-        return "%s(value)" % (self.__class__.__name__)
+        return f"{self.__class__.__name__}(value)"
 
     def parse_xmlelement(
         self,

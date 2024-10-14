@@ -44,7 +44,7 @@ class Any(Base):
         return any_object
 
     def __repr__(self):
-        return "<%s(name=%r)>" % (self.__class__.__name__, self.name)
+        return f"<{self.__class__.__name__}(name={self.name!r})>"
 
     def accept(self, value):
         return True
@@ -170,7 +170,7 @@ class Any(Base):
             # Validate bounds
             if len(value) < self.min_occurs:
                 raise exceptions.ValidationError(
-                    "Expected at least %d items (minOccurs check)" % self.min_occurs
+                    f"Expected at least {self.min_occurs} items (minOccurs check)"
                 )
             if (
                 self.max_occurs != "unbounded"
@@ -178,7 +178,7 @@ class Any(Base):
                 and len(value) > self.max_occurs
             ):
                 raise exceptions.ValidationError(
-                    "Expected at most %d items (maxOccurs check)" % self.min_occurs
+                    f"Expected at most {self.min_occurs} items (maxOccurs check)"
                 )
 
             for val in value:
@@ -203,15 +203,13 @@ class Any(Base):
         if value in (None, NotSet):
             if not self.is_optional:
                 raise exceptions.ValidationError(
-                    "Missing element %s" % (self.name), path=render_path
+                    f"Missing element {self.name}", path=render_path
                 )
 
         elif not isinstance(value, tuple(expected_types)):
-            type_names = ["%s.%s" % (t.__module__, t.__name__) for t in expected_types]
-            err_message = "Any element received object of type %r, expected %s" % (
-                type(value).__name__,
-                " or ".join(type_names),
-            )
+            type_names = [f"{t.__module__}.{t.__name__}" for t in expected_types]
+            joined_type_names = " or ".join(type_names)
+            err_message = f"Any element received object of type {type(value).__name__!r}, expected {joined_type_names}"
 
             raise TypeError(
                 "\n".join(
@@ -233,7 +231,7 @@ class Any(Base):
             base = "ANY"
 
         if self.accepts_multiple:
-            return "%s[]" % base
+            return f"{base}[]"
         return base
 
 

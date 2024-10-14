@@ -96,7 +96,7 @@ class ServiceProxy:
         try:
             return self._operations[key]
         except KeyError:
-            raise AttributeError("Service has no operation %r" % key)
+            raise AttributeError(f"Service has no operation {key!r}")
 
     def __iter__(self):
         """Return iterator over the services and their callables."""

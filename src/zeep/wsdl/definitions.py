@@ -50,7 +50,7 @@ class AbstractMessage:
         self.parts = OrderedDict()
 
     def __repr__(self):
-        return "<%s(name=%r)>" % (self.__class__.__name__, self.name.text)
+        return f"<{self.__class__.__name__}(name={self.name.text!r})>"
 
     def resolve(self, definitions):
         pass
@@ -99,7 +99,7 @@ class PortType:
         self.operations = operations
 
     def __repr__(self):
-        return "<%s(name=%r)>" % (self.__class__.__name__, self.name.text)
+        return f"<{self.__class__.__name__}(name={self.name.text!r})>"
 
     def resolve(self, definitions):
         pass
@@ -152,14 +152,10 @@ class Binding:
         self._operations[operation.name] = operation
 
     def __str__(self):
-        return "%s: %s" % (self.__class__.__name__, self.name.text)
+        return f"{self.__class__.__name__}: {self.name.text}"
 
     def __repr__(self):
-        return "<%s(name=%r, port_type=%r)>" % (
-            self.__class__.__name__,
-            self.name.text,
-            self.port_type,
-        )
+        return f"<{self.__class__.__name__}(name={self.name.text!r}, port_type={self.port_type!r})>"
 
     def all(self):
         return self._operations
@@ -168,7 +164,7 @@ class Binding:
         try:
             return self._operations[key]
         except KeyError:
-            raise ValueError("No such operation %r on %s" % (key, self.name))
+            raise ValueError(f"No such operation {key!r} on {self.name}")
 
     @classmethod
     def match(cls, node):
@@ -200,24 +196,22 @@ class Operation:
             self.abstract = self.binding.port_type.operations[self.name]
         except KeyError:
             raise IncompleteOperation(
-                "The wsdl:operation %r was not found in the wsdl:portType %r"
-                % (self.name, self.binding.port_type.name.text)
+                (
+                    f"The wsdl:operation {self.name!r} was not found in the"
+                    f" wsdl:portType {self.binding.port_type.name.text!r}"
+                )
             )
 
     def __repr__(self):
-        return "<%s(name=%r, style=%r)>" % (
-            self.__class__.__name__,
-            self.name,
-            self.style,
-        )
+        return f"<{self.__class__.__name__}(name={self.name!r}, style={self.style!r})>"
 
     def __str__(self):
         if not self.input:
-            return "%s(missing input message)" % (self.name)
+            return f"{self.name}(missing input message)"
 
-        retval = "%s(%s)" % (self.name, self.input.signature())
+        retval = f"{self.name}({self.input.signature()})"
         if self.output:
-            retval += " -> %s" % (self.output.signature(as_output=True))
+            retval += f" -> {self.output.signature(as_output=True)}"
         return retval
 
     def create(self, *args, **kwargs):
@@ -268,15 +262,10 @@ class Port:
         self.binding_options = {}
 
     def __repr__(self):
-        return "<%s(name=%r, binding=%r, %r)>" % (
-            self.__class__.__name__,
-            self.name,
-            self.binding,
-            self.binding_options,
-        )
+        return f"<{self.__class__.__name__}(name={self.name!r}, binding={self.binding!r}, {self.binding_options!r})>"
 
     def __str__(self):
-        return "Port: %s (%s)" % (self.name, self.binding)
+        return f"Port: {self.name} ({self.binding})"
 
     def resolve(self, definitions):
         if self._resolve_context is None:
@@ -310,14 +299,10 @@ class Service:
         self._is_resolved = False
 
     def __str__(self):
-        return "Service: %s" % self.name
+        return f"Service: {self.name}"
 
     def __repr__(self):
-        return "<%s(name=%r, ports=%r)>" % (
-            self.__class__.__name__,
-            self.name,
-            self.ports,
-        )
+        return f"<{self.__class__.__name__}(name={self.name!r}, ports={self.ports!r})>"
 
     def resolve(self, definitions):
         if self._is_resolved:

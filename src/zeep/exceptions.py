@@ -4,7 +4,7 @@ class Error(Exception):
         self.message = message
 
     def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.message)
+        return f"{self.__class__.__name__}({self.message!r})"
 
 
 class XMLSyntaxError(Error):
@@ -22,9 +22,9 @@ class XMLParseError(Error):
     def __str__(self):
         location = None
         if self.filename and self.sourceline:
-            location = "%s:%s" % (self.filename, self.sourceline)
+            location = f"{self.filename}:{self.sourceline}"
         if location:
-            return "%s (%s)" % (self.message, location)
+            return f"{self.message} ({location})"
         return self.message
 
 
@@ -77,7 +77,7 @@ class ValidationError(Error):
     def __str__(self):
         if self.path:
             path = ".".join(str(x) for x in self.path)
-            return "%s (%s)" % (self.message, path)
+            return f"{self.message} ({path})"
         return self.message
 
 

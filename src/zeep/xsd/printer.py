@@ -27,7 +27,7 @@ class PrettyPrinter:
             if num > 0:
                 for i, (key, value) in enumerate(obj.items()):
                     write(" " * (indent * level))
-                    write("'%s'" % key)
+                    write(f"'{key}'")
                     write(": ")
                     self._format(value, stream, level=level + 1)
                     if i < num - 1:

@@ -7,7 +7,7 @@ class NamePrefixGenerator:
         self._prefix = prefix
 
     def get_name(self):
-        retval = "%s%d" % (self._prefix, self._num)
+        retval = self._prefix + str(self._num)
         self._num += 1
         return retval
 
@@ -19,7 +19,7 @@ class UniqueNameGenerator:
     def create_name(self, name):
         if name in self._unique_count:
             self._unique_count[name] += 1
-            return "%s__%d" % (name, self._unique_count[name])
+            return f"{name}__{self._unique_count[name]}"
         else:
             self._unique_count[name] = 0
             return name
@@ -50,10 +50,10 @@ def create_prefixed_name(qname, schema):
     if schema and qname.namespace:
         prefix = schema.get_shorthand_for_ns(qname.namespace)
         if prefix:
-            return "%s:%s" % (prefix, qname.localname)
+            return f"{prefix}:{qname.localname}"
     elif qname.namespace in ns.NAMESPACE_TO_PREFIX:
         prefix = ns.NAMESPACE_TO_PREFIX[qname.namespace]
-        return "%s:%s" % (prefix, qname.localname)
+        return f"{prefix}:{qname.localname}"
 
     if qname.namespace:
         return qname.text

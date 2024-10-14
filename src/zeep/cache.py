@@ -60,7 +60,7 @@ class VersionedCacheBase(Base):
         assert (
             getattr(self, "_version", None) is not None
         ), "A version must be provided in order to use the VersionedCacheBase backend."
-        prefix = "$ZEEP:%s$" % self._version
+        prefix = f"$ZEEP:{self._version}$"
         return bytes(prefix.encode("ascii"))
 
 
@@ -77,7 +77,7 @@ class InMemoryCache(Base):
         logger.debug("Caching contents of %s", url)
         if not isinstance(content, (str, bytes)):
             raise TypeError(
-                "a bytes-like object is required, not {}".format(type(content).__name__)
+                f"a bytes-like object is required, not {type(content).__name__}"
             )
         self._cache[url] = (datetime.datetime.now(datetime.timezone.utc), content)
 

@@ -86,7 +86,7 @@ class UrlReplacement(HttpMessage):
 
         path = self.operation.location
         for key, value in params.items():
-            path = path.replace("(%s)" % key, value if value is not None else "")
+            path = path.replace(f"({key})", value if value is not None else "")
         return SerializedMessage(path=path, headers=headers, content="")
 
     @classmethod

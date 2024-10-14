@@ -25,8 +25,7 @@ def check_no_collection(func):
     def _wrapper(self, value):
         if isinstance(value, (list, dict, set)):
             raise ValueError(
-                "The %s type doesn't accept collections as value"
-                % (self.__class__.__name__)
+                f"The {self.__class__.__name__} type doesn't accept collections as value"
             )
 
         return func(self, value)

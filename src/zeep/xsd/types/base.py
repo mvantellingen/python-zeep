@@ -52,7 +52,7 @@ class Type:
         schema_type: "Type" = None,
     ) -> typing.Optional[typing.Union[str, CompoundValue, typing.List[etree._Element]]]:
         raise NotImplementedError(
-            "%s.parse_xmlelement() is not implemented" % self.__class__.__name__
+            f"{self.__class__.__name__}.parse_xmlelement() is not implemented"
         )
 
     def parsexml(self, xml, schema=None):
@@ -66,22 +66,22 @@ class Type:
         render_path=None,
     ) -> None:
         raise NotImplementedError(
-            "%s.render() is not implemented" % self.__class__.__name__
+            f"{self.__class__.__name__}.render() is not implemented"
         )
 
     def resolve(self):
         raise NotImplementedError(
-            "%s.resolve() is not implemented" % self.__class__.__name__
+            f"{self.__class__.__name__}.resolve() is not implemented"
         )
 
     def extend(self, child):
         raise NotImplementedError(
-            "%s.extend() is not implemented" % self.__class__.__name__
+            f"{self.__class__.__name__}.extend() is not implemented"
         )
 
     def restrict(self, child):
         raise NotImplementedError(
-            "%s.restrict() is not implemented" % self.__class__.__name__
+            f"{self.__class__.__name__}.restrict() is not implemented"
         )
 
     @property

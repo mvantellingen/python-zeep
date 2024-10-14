@@ -24,11 +24,7 @@ class AnyObject:
         self.value = value
 
     def __repr__(self):
-        return "<%s(type=%r, value=%r)>" % (
-            self.__class__.__name__,
-            self.xsd_elm,
-            self.value,
-        )
+        return "<{self.__class__.__name__}(type={self.xsd_elm!r}, value={self.value!r})>"
 
     def __deepcopy__(self, memo):
         return type(self)(self.xsd_elm, copy.deepcopy(self.value))
@@ -154,7 +150,7 @@ class CompoundValue:
             return self.__values__[key]
         except KeyError:
             raise AttributeError(
-                "%s instance has no attribute '%s'" % (self.__class__.__name__, key)
+                f"{self.__class__.__name__} instance has no attribute '{key}'"
             )
 
     def __deepcopy__(self, memo):
@@ -206,8 +202,7 @@ def _process_signature(xsd_type, args, kwargs):
 
         if num_args > index:
             raise TypeError(
-                "__init__() takes at most %s positional arguments (%s given)"
-                % (len(result), num_args)
+                f"__init__() takes at most {len(result)} positional arguments ({num_args} given)"
             )
 
     # Process the named arguments (sequence/group/all/choice). The

@@ -18,7 +18,7 @@ class UnresolvedType(Type):
         self.schema = schema
 
     def __repr__(self):
-        return "<%s(qname=%r)>" % (self.__class__.__name__, self.qname.text)
+        return f"<{self.__class__.__name__}(qname={self.qname.text!r})>"
 
     def render(
         self,
@@ -28,8 +28,7 @@ class UnresolvedType(Type):
         render_path=None,
     ) -> None:
         raise RuntimeError(
-            "Unable to render unresolved type %s. This is probably a bug."
-            % (self.qname)
+            f"Unable to render unresolved type {self.qname}. This is probably a bug."
         )
 
     def resolve(self):
@@ -46,11 +45,7 @@ class UnresolvedCustomType(Type):
         self.base_type = base_type
 
     def __repr__(self):
-        return "<%s(qname=%r, base_type=%r)>" % (
-            self.__class__.__name__,
-            self.qname.text,
-            self.base_type,
-        )
+        return f"<{self.__class__.__name__}(qname={self.qname.text!r}, base_type={self.base_type!r})>"
 
     def resolve(self):
         base = self.base_type
