@@ -15,6 +15,7 @@ from lxml.etree import QName
 from zeep import ns
 from zeep.exceptions import SignatureVerificationFailed
 from zeep.utils import detect_soap_env
+from zeep.wsdl.utils import get_or_create_header
 from zeep.wsse.utils import ensure_id, get_security_header
 
 try:
@@ -25,6 +26,8 @@ except ImportError:
 
 # SOAP envelope
 SOAP_NS = "http://schemas.xmlsoap.org/soap/envelope/"
+# Namespaces omitted from signing
+OMITTED_HEADERS = [ns.WSSE]
 
 
 def _read_file(f_name):
@@ -62,10 +65,10 @@ class MemorySignature:
         self.digest_method = digest_method
         self.signature_method = signature_method
 
-    def apply(self, envelope, headers):
+    def apply(self, envelope, headers, signatures=None):
         key = _make_sign_key(self.key_data, self.cert_data, self.password)
         _sign_envelope_with_key(
-            envelope, key, self.signature_method, self.digest_method
+            envelope, key, self.signature_method, self.digest_method, signatures
         )
         return envelope, headers
 
@@ -100,10 +103,10 @@ class BinarySignature(Signature):
 
     Place the key information into BinarySecurityElement."""
 
-    def apply(self, envelope, headers):
+    def apply(self, envelope, headers, signatures=None):
         key = _make_sign_key(self.key_data, self.cert_data, self.password)
         _sign_envelope_with_key_binary(
-            envelope, key, self.signature_method, self.digest_method
+            envelope, key, self.signature_method, self.digest_method, signatures
         )
         return envelope, headers
 
@@ -124,6 +127,7 @@ def sign_envelope(
     password=None,
     signature_method=None,
     digest_method=None,
+    signatures=None,
 ):
     """Sign given SOAP envelope with WSSE sig using given key and cert.
 
@@ -214,10 +218,12 @@ def sign_envelope(
     """
     # Load the signing key and certificate.
     key = _make_sign_key(_read_file(keyfile), _read_file(certfile), password)
-    return _sign_envelope_with_key(envelope, key, signature_method, digest_method)
+    return _sign_envelope_with_key(
+        envelope, key, signature_method, digest_method, signatures
+    )
 
 
-def _signature_prepare(envelope, key, signature_method, digest_method):
+def _signature_prepare(envelope, key, signature_method, digest_method, signatures=None):
     """Prepare envelope and sign."""
     soap_env = detect_soap_env(envelope)
 
@@ -237,15 +243,47 @@ def _signature_prepare(envelope, key, signature_method, digest_method):
 
     # Insert the Signature node in the wsse:Security header.
     security = get_security_header(envelope)
-    security.insert(0, signature)
+    security.append(signature)
 
     # Perform the actual signing.
     ctx = xmlsec.SignatureContext()
     ctx.key = key
-    _sign_node(ctx, signature, envelope.find(QName(soap_env, "Body")), digest_method)
-    timestamp = security.find(QName(ns.WSU, "Timestamp"))
-    if timestamp != None:
-        _sign_node(ctx, signature, timestamp, digest_method)
+    # Preserve the previous behaviour for backwards compatibility
+    if signatures is None:
+        _sign_node(ctx, signature, envelope.find(QName(soap_env, "Body")), digest_method)
+        timestamp = security.find(QName(ns.WSU, "Timestamp"))
+        if timestamp != None:
+            _sign_node(ctx, signature, timestamp, digest_method)
+    else:
+        if signatures.get("body") or signatures.get("everything"):
+            _sign_node(
+                ctx, signature, envelope.find(QName(soap_env, "Body")), digest_method
+            )
+        header = get_or_create_header(envelope)
+        if signatures.get("everything"):
+            for node in header.iterchildren():
+                # Everything doesn't mean everything ...
+                if node.nsmap.get(node.prefix) not in OMITTED_HEADERS:
+                    _sign_node(ctx, signature, node, digest_method)
+        else:
+            for node in signatures.get("header", []):
+                _sign_node(
+                    ctx,
+                    signature,
+                    header.find(QName(node["Namespace"], node["Name"])),
+                    digest_method,
+                )
+        # Sign elements specified by XPath expressions
+        for element in signatures.get("elements", []):
+            _sign_node_by_xpath(
+                ctx,
+                signature,
+                envelope,
+                element["xpath"],
+                element["xpath_version"],
+                digest_method
+            )
+
     ctx.sign(signature)
 
     # Place the X509 data inside a WSSE SecurityTokenReference within
@@ -255,17 +293,35 @@ def _signature_prepare(envelope, key, signature_method, digest_method):
     sec_token_ref = etree.SubElement(key_info, QName(ns.WSSE, "SecurityTokenReference"))
     return security, sec_token_ref, x509_data
 
+def _sign_node_by_xpath(ctx, signature, envelope, xpath, xpath_version, digest_method):
+    # Create an XPath evaluator with the appropriate version
+    if xpath_version == '1.0':
+        evaluator = etree.XPath(xpath, namespaces=envelope.nsmap)
+    else:
+        evaluator = etree.XPath(xpath, namespaces=envelope.nsmap, extension={('http://www.w3.org/TR/1999/REC-xpath-19991116', 'version'): xpath_version})
+    
+    # Evaluate the XPath expression
+    nodes = evaluator(envelope)
+    
+    # Sign each node found by the XPath expression
+    for node in nodes:
+        _sign_node(ctx, signature, node, digest_method)
 
-def _sign_envelope_with_key(envelope, key, signature_method, digest_method):
+
+def _sign_envelope_with_key(
+    envelope, key, signature_method, digest_method, signatures=None
+):
     _, sec_token_ref, x509_data = _signature_prepare(
-        envelope, key, signature_method, digest_method
+        envelope, key, signature_method, digest_method, signatures=signatures
     )
     sec_token_ref.append(x509_data)
 
 
-def _sign_envelope_with_key_binary(envelope, key, signature_method, digest_method):
+def _sign_envelope_with_key_binary(
+    envelope, key, signature_method, digest_method, signatures=None
+):
     security, sec_token_ref, x509_data = _signature_prepare(
-        envelope, key, signature_method, digest_method
+        envelope, key, signature_method, digest_method, signatures=signatures
     )
     ref = etree.SubElement(
         sec_token_ref,
@@ -286,7 +342,7 @@ def _sign_envelope_with_key_binary(envelope, key, signature_method, digest_metho
     )
     ref.attrib["URI"] = "#" + ensure_id(bintok)
     bintok.text = x509_data.find(QName(ns.DS, "X509Certificate")).text
-    security.insert(1, bintok)
+    security.insert(0, bintok)
     x509_data.getparent().remove(x509_data)
 
 

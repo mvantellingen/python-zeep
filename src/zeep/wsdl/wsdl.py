@@ -13,6 +13,7 @@ from collections import OrderedDict
 
 from lxml import etree
 
+from zeep import ns
 from zeep.exceptions import IncompleteMessage
 from zeep.loader import absolute_location, is_relative_path, load_external
 from zeep.settings import Settings
@@ -24,7 +25,12 @@ from zeep.xsd import Schema
 if typing.TYPE_CHECKING:
     from zeep.transports import Transport
 
-NSMAP = {"wsdl": "http://schemas.xmlsoap.org/wsdl/"}
+NSMAP = {
+    'wsdl': ns.WSDL,
+    'wsp':  ns.WSP,
+    'sp': ns.SP,
+    'wsu': ns.WSU,
+}
 
 logger = logging.getLogger(__name__)
 
@@ -433,6 +439,69 @@ class Definition:
                     except NotImplementedError as exc:
                         logger.debug("Ignoring binding: %s", exc)
                         continue
+
+                    # Begin heuristics for signed parts...
+                    binding_policy = binding.name.localname + "_policy"
+                    signed_parts = doc.xpath(
+                        'wsp:Policy[@wsu:Id="{}"]//sp:SignedParts'.format(
+                            binding_policy
+                        ),
+                        namespaces=NSMAP,
+                    )
+                    # Initialize a set to keep track of all unique headers
+                    all_headers = set()
+
+                    for sign in signed_parts:
+                        if len(sign.getchildren()) == 0:
+                            # No children, we should sign everything
+                            binding.signatures["body"] = True
+                            binding.signatures["everything"] = True
+                            break
+
+                        for child in sign.iterchildren():
+                            if len(child.items()) > 0:
+                                # Header ...
+                                part = frozenset({attr: value for attr, value in child.items()}.items())
+                                all_headers.add(part)
+                            elif child.tag.split("}")[-1].lower() == "body":
+                                # Body ...
+                                binding.signatures["body"] = True
+
+                    # If we didn't set "everything" to True, update the headers
+                    if not binding.signatures.get("everything", False):
+                        binding.signatures["header"] = [dict(header) for header in all_headers]
+
+                    # Begin parsing SignedElements assertions
+                    signed_elements = doc.xpath(
+                        'wsp:Policy[@wsu:Id="{}"]//sp:SignedElements'.format(binding_policy),
+                        namespaces=NSMAP,
+                    )
+
+                    for signed_element in signed_elements:
+                        xpath_version = signed_element.get('XPathVersion', 'http://www.w3.org/TR/1999/REC-xpath-19991116')  # Default to XPath 1.0 if not specified
+
+                        xpath_expressions = signed_element.xpath('sp:XPath', namespaces=NSMAP)
+
+                        for xpath in xpath_expressions:
+                            xpath_string = xpath.text
+                            if xpath_string:
+                                # Store the XPath expression and its version
+                                binding.signatures.setdefault('elements', []).append({
+                                    'xpath': xpath_string,
+                                    'xpath_version': xpath_version
+                                })
+
+                    # If you want to merge multiple SignedElements assertions as per the specification
+                    if 'elements' in binding.signatures:
+                        # Remove duplicates while preserving order
+                        unique_elements = []
+                        seen = set()
+                        for element in binding.signatures['elements']:
+                            element_tuple = (element['xpath'], element['xpath_version'])
+                            if element_tuple not in seen:
+                                seen.add(element_tuple)
+                                unique_elements.append(element)
+                        binding.signatures['elements'] = unique_elements
 
                     logger.debug("Adding binding: %s", binding.name.text)
                     result[binding.name.text] = binding

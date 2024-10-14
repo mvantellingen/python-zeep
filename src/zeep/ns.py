@@ -11,6 +11,8 @@ HTTP = "http://schemas.xmlsoap.org/wsdl/http/"
 MIME = "http://schemas.xmlsoap.org/wsdl/mime/"
 
 WSA = "http://www.w3.org/2005/08/addressing"
+WSP = "http://schemas.xmlsoap.org/ws/2004/09/policy"
+SP = "http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702"
 
 
 DS = "http://www.w3.org/2000/09/xmldsig#"
