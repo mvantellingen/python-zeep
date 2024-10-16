@@ -106,7 +106,7 @@ See ``python -mzeep --help`` for more information about this command.
 
 .. note:: Zeep follows `semver`_ for versioning, however bugs can always occur.
           So as always pin the version of zeep you tested with
-          (e.g. ``zeep==4.3.0``').
+          (e.g. ``zeep==4.3.1``').
 
 
 .. _semver: http://semver.org/
