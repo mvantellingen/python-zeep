@@ -1,3 +1,7 @@
+4.3.1 (2024-10-16)
+------------------
+ - Fix regression in parsing xsd:Date with negative timezone
+
 4.3.0 (2024-10-13)
 ------------------
  - Drop support for Python 3.7 and 3.8 and add support for Python 3.12 and 3.13 (#1421, #1408)

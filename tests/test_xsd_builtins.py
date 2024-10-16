@@ -242,6 +242,8 @@ class TestDate:
         instance = builtins.Date()
         assert instance.pythonvalue("2016-03-04") == datetime.date(2016, 3, 4)
         assert instance.pythonvalue("2001-10-26+02:00") == datetime.date(2001, 10, 26)
+        assert instance.pythonvalue("2001-10-26-02:00") == datetime.date(2001, 10, 26)
+        assert instance.pythonvalue("2024-08-21-10:00") == datetime.date(2024, 8, 21)
         assert instance.pythonvalue("2001-10-26Z") == datetime.date(2001, 10, 26)
         assert instance.pythonvalue("2001-10-26+00:00") == datetime.date(2001, 10, 26)
         assert instance.pythonvalue("\r\n\t 2016-03-04   ") == datetime.date(2016, 3, 4)

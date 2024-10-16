@@ -201,6 +201,7 @@ class Time(BuiltinType):
 class Date(BuiltinType):
     _default_qname = xsd_ns("date")
     accepted_types = [datetime.date, str]
+    _pattern = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 
     @check_no_collection
     def xmlvalue(self, value):
@@ -215,13 +216,10 @@ class Date(BuiltinType):
         except isodate.ISO8601Error:
             # Recent versions of isodate don't support timezone in date's. This
             # is not really ISO8601 compliant anway, but we should try to handle
-            # it. This is a hack to support this.
-            if "+" in value:
-                value = value.split("+")[0]
-                return isodate.parse_date(value)
-            if "Z" in value:
-                value = value.split("Z")[0]
-                return isodate.parse_date(value)
+            # it, so lets just use a regex to parse the date directly.
+            m = self._pattern.match(value)
+            if m:
+                return datetime.date(*map(int, m.groups()))
             raise
 
 
