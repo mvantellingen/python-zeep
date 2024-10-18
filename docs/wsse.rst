@@ -10,7 +10,7 @@ The UsernameToken supports both the passwordText and passwordDigest methods::
     >>> from zeep import Client
     >>> from zeep.wsse.username import UsernameToken
     >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
+    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
     ...     wsse=UsernameToken('username', 'password'))
 
 To use the passwordDigest method you need to supply `use_digest=True` to the
@@ -21,19 +21,24 @@ Signature (x509)
 ----------------
 
 To use the wsse.Signature() plugin you will need to install the `xmlsec`_
-module. See the `README`_ for xmlsec for the required dependencies on your 
+module. See the `README`_ for xmlsec for the required dependencies on your
 platform.
 
 To append the security token as `BinarySecurityToken`, you can use wsse.BinarySignature() plugin.
+
+To skip response signature verification set `verify_reply_signature=False`
+
+To configure different certificate for response verify process, set `response_key_file` or
+and `response_certfile`.
 
 Example usage A::
 
     >>> from zeep import Client
     >>> from zeep.wsse.signature import Signature
     >>> client = Client(
-    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL', 
+    ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
     ...     wsse=Signature(
-    ...         private_key_filename, public_key_filename, 
+    ...         private_key_filename, public_key_filename,
     ...         optional_password))
 
 Example usage B::
@@ -48,7 +53,7 @@ Example usage B::
     >>> client = Client(
     ...     'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
     ...     transport=transport)
-    
+
 .. _xmlsec: https://pypi.python.org/pypi/xmlsec
 .. _README: https://github.com/mehcode/python-xmlsec
 
