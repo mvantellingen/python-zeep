@@ -613,7 +613,7 @@ class Sequence(OrderIndicator):
             for elm_name, element in self.elements:
                 try:
                     item_subresult = element.parse_xmlelements(
-                        xmlelements, schema, name, context=context
+                        xmlelements, schema, elm_name, context=context
                     )
                 except UnexpectedElementError:
                     if schema.settings.strict:
