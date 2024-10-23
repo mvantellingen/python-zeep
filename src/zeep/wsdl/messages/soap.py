@@ -208,12 +208,12 @@ class SoapMessage(ConcreteMessage):
 
         # After some profiling it turns out that .find() and .findall() in this
         # case are twice as fast as the xpath method
-        body = xmlelement.find("soap:body", namespaces=operation.binding.nsmap)
+        body = xmlelement.find(".//soap:body", namespaces=operation.binding.nsmap)
         if body is not None:
             body_data = cls._parse_body(body)
 
         # Parse soap:header (multiple)
-        elements = xmlelement.findall("soap:header", namespaces=operation.binding.nsmap)
+        elements = xmlelement.findall(".//soap:header", namespaces=operation.binding.nsmap)
         header_data = cls._parse_header(
             elements, definitions.target_namespace, operation
         )
