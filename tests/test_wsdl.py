@@ -1,4 +1,5 @@
 from io import StringIO
+import re
 
 import pytest
 import requests_mock
@@ -192,7 +193,13 @@ def test_parse_types_nsmap_issues():
     </wsdl:definitions>
     """.strip()
     )
-    assert wsdl.Document(content, None)
+    doc = wsdl.Document(content, None)
+    assert doc
+
+    ty = doc.types.get_type(
+        '{urn:ec.europa.eu:taxud:vies:services:checkVat:types}companyTypeCode'
+    )
+    assert ty.facets.patterns == [re.compile(r'[A-Z]{2}\-[1-9][0-9]?')]
 
 
 @pytest.mark.requests

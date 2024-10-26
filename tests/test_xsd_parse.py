@@ -476,6 +476,14 @@ def test_union():
     result = elm.parse(xml, schema)
     assert result._value_1 == "Idle"
 
+    ty_1 = schema.get_type("{http://tests.python-zeep.org/tst}Type1")
+    assert ty_1.facets.max_length == 255
+    assert ty_1.facets.enumeration == ['Idle', 'Processing', 'Stopped']
+
+    ty_2 = schema.get_type("{http://tests.python-zeep.org/tst}Type2")
+    assert ty_2.facets.max_length == 255
+    assert ty_2.facets.enumeration == ['Paused']
+
 
 def test_parse_invalid_values():
     schema = xsd.Schema(
