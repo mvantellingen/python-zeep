@@ -5,7 +5,6 @@ import re
 from decimal import Decimal as _Decimal
 
 import isodate
-import pytz
 
 from zeep.xsd.const import xsd_ns
 from zeep.xsd.types.any import AnyType
@@ -548,12 +547,12 @@ class PositiveInteger(NonNegativeInteger):
 ##
 # Other
 def _parse_timezone(val):
-    """Return a pytz.tzinfo object"""
+    """Return a datetime.timezone object"""
     if not val:
         return
 
     if val == "Z" or val == "+00:00":
-        return pytz.utc
+        return datetime.timezone.utc
 
     negative = val.startswith("-")
     minutes = int(val[-2:])
@@ -561,18 +560,18 @@ def _parse_timezone(val):
 
     if negative:
         minutes = 0 - minutes
-    return pytz.FixedOffset(minutes)
+    return datetime.timezone(datetime.timedelta(minutes=minutes))
 
 
 def _unparse_timezone(tzinfo):
     if not tzinfo:
         return ""
 
-    if tzinfo == pytz.utc:
+    if tzinfo == datetime.timezone.utc:
         return "Z"
 
-    hours = math.floor(tzinfo._minutes / 60)
-    minutes = tzinfo._minutes % 60
+    hours = math.floor(tzinfo.utcoffset(None).total_seconds() / 60 / 60)
+    minutes = tzinfo.utcoffset(None).total_seconds() / 60 / 60 - hours
 
     if hours > 0:
         return "+%02d:%02d" % (hours, minutes)

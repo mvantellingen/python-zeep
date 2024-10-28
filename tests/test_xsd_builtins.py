@@ -3,7 +3,7 @@ from decimal import Decimal as D
 
 import isodate
 import pytest
-import pytz
+from datetime import timedelta, timezone
 
 from zeep.xsd.types import builtins
 
@@ -161,13 +161,13 @@ class TestDateTime:
         value = datetime.datetime(2016, 3, 4, 21, 14, 42)
         assert instance.xmlvalue(value) == "2016-03-04T21:14:42"
 
-        value = datetime.datetime(2016, 3, 4, 21, 14, 42, tzinfo=pytz.utc)
+        value = datetime.datetime(2016, 3, 4, 21, 14, 42, tzinfo=timezone.utc)
         assert instance.xmlvalue(value) == "2016-03-04T21:14:42Z"
 
-        value = datetime.datetime(2016, 3, 4, 21, 14, 42, 123456, tzinfo=pytz.utc)
+        value = datetime.datetime(2016, 3, 4, 21, 14, 42, 123456, tzinfo=timezone.utc)
         assert instance.xmlvalue(value) == "2016-03-04T21:14:42.123456Z"
 
-        value = datetime.datetime(2016, 3, 4, 21, 14, 42, tzinfo=pytz.utc)
+        value = datetime.datetime(2016, 3, 4, 21, 14, 42, tzinfo=timezone.utc)
         value = value.astimezone(pytz.timezone("Europe/Amsterdam"))
         assert instance.xmlvalue(value) == "2016-03-04T22:14:42+01:00"
 
@@ -262,7 +262,7 @@ class TestgYearMonth:
     def test_xmlvalue(self):
         instance = builtins.gYearMonth()
         assert instance.xmlvalue((2012, 10, None)) == "2012-10"
-        assert instance.xmlvalue((2012, 10, pytz.utc)) == "2012-10Z"
+        assert instance.xmlvalue((2012, 10, timezone.utc)) == "2012-10Z"
 
     def test_pythonvalue(self):
         instance = builtins.gYearMonth()
@@ -270,10 +270,10 @@ class TestgYearMonth:
         assert instance.pythonvalue("2001-10+02:00") == (
             2001,
             10,
-            pytz.FixedOffset(120),
+            timezone(timedelta(minutes=120)),
         )
-        assert instance.pythonvalue("2001-10Z") == (2001, 10, pytz.utc)
-        assert instance.pythonvalue("2001-10+00:00") == (2001, 10, pytz.utc)
+        assert instance.pythonvalue("2001-10Z") == (2001, 10, timezone.utc)
+        assert instance.pythonvalue("2001-10+00:00") == (2001, 10, timezone.utc)
         assert instance.pythonvalue("-2001-10") == (-2001, 10, None)
         assert instance.pythonvalue("-20001-10") == (-20001, 10, None)
 
@@ -285,19 +285,19 @@ class TestgYear:
     def test_xmlvalue(self):
         instance = builtins.gYear()
         assert instance.xmlvalue((2001, None)) == "2001"
-        assert instance.xmlvalue((2001, pytz.utc)) == "2001Z"
+        assert instance.xmlvalue((2001, timezone.utc)) == "2001Z"
 
     def test_pythonvalue(self):
         instance = builtins.gYear()
         assert instance.pythonvalue("2001") == (2001, None)
-        assert instance.pythonvalue("2001+02:00") == (2001, pytz.FixedOffset(120))
-        assert instance.pythonvalue("2001Z") == (2001, pytz.utc)
-        assert instance.pythonvalue("2001+00:00") == (2001, pytz.utc)
+        assert instance.pythonvalue("2001+02:00") == (2001, timezone(timedelta(minutes=120)))
+        assert instance.pythonvalue("2001Z") == (2001, timezone.utc)
+        assert instance.pythonvalue("2001+00:00") == (2001, timezone.utc)
         assert instance.pythonvalue("-2001") == (-2001, None)
         assert instance.pythonvalue("-20000") == (-20000, None)
         assert instance.pythonvalue("  \t2001+02:00\r\n ") == (
             2001,
-            pytz.FixedOffset(120),
+            timezone(timedelta(minutes=120)),
         )
 
         with pytest.raises(builtins.ParseError):
@@ -312,9 +312,9 @@ class TestgMonthDay:
     def test_pythonvalue(self):
         instance = builtins.gMonthDay()
         assert instance.pythonvalue("--05-01") == (5, 1, None)
-        assert instance.pythonvalue("--11-01Z") == (11, 1, pytz.utc)
-        assert instance.pythonvalue("--11-01+02:00") == (11, 1, pytz.FixedOffset(120))
-        assert instance.pythonvalue("--11-01-04:00") == (11, 1, pytz.FixedOffset(-240))
+        assert instance.pythonvalue("--11-01Z") == (11, 1, timezone.utc)
+        assert instance.pythonvalue("--11-01+02:00") == (11, 1, timezone(timedelta(minutes=120)))
+        assert instance.pythonvalue("--11-01-04:00") == (11, 1, timezone(timedelta(minutes=-240)))
         assert instance.pythonvalue("--11-15") == (11, 15, None)
         assert instance.pythonvalue("--02-29") == (2, 29, None)
         assert instance.pythonvalue("\t\r\n --05-01 ") == (5, 1, None)
@@ -331,12 +331,12 @@ class TestgMonth:
     def test_pythonvalue(self):
         instance = builtins.gMonth()
         assert instance.pythonvalue("--05") == (5, None)
-        assert instance.pythonvalue("--11Z") == (11, pytz.utc)
-        assert instance.pythonvalue("--11+02:00") == (11, pytz.FixedOffset(120))
-        assert instance.pythonvalue("--11-04:00") == (11, pytz.FixedOffset(-240))
+        assert instance.pythonvalue("--11Z") == (11, timezone.utc)
+        assert instance.pythonvalue("--11+02:00") == (11, timezone(timedelta(minutes=120)))
+        assert instance.pythonvalue("--11-04:00") == (11, timezone(timedelta(minutes=-240)))
         assert instance.pythonvalue("--11") == (11, None)
         assert instance.pythonvalue("--02") == (2, None)
-        assert instance.pythonvalue("\n\t --11Z \r") == (11, pytz.utc)
+        assert instance.pythonvalue("\n\t --11Z \r") == (11, timezone.utc)
 
         with pytest.raises(builtins.ParseError):
             assert instance.pythonvalue("99")
@@ -349,18 +349,18 @@ class TestgDay:
         value = (1, None)
         assert instance.xmlvalue(value) == "---01"
 
-        value = (1, pytz.FixedOffset(120))
+        value = (1, timezone(timedelta(minutes=120)))
         assert instance.xmlvalue(value) == "---01+02:00"
 
-        value = (1, pytz.FixedOffset(-240))
+        value = (1, timezone(timedelta(minutes=-240)))
         assert instance.xmlvalue(value) == "---01-04:00"
 
     def test_pythonvalue(self):
         instance = builtins.gDay()
         assert instance.pythonvalue("---01") == (1, None)
-        assert instance.pythonvalue("---01Z") == (1, pytz.utc)
-        assert instance.pythonvalue("---01+02:00") == (1, pytz.FixedOffset(120))
-        assert instance.pythonvalue("---01-04:00") == (1, pytz.FixedOffset(-240))
+        assert instance.pythonvalue("---01Z") == (1, timezone.utc)
+        assert instance.pythonvalue("---01+02:00") == (1, timezone(timedelta(minutes=120)))
+        assert instance.pythonvalue("---01-04:00") == (1, timezone(timedelta(minutes=-240)))
         assert instance.pythonvalue("---15") == (15, None)
         assert instance.pythonvalue("---31") == (31, None)
         assert instance.pythonvalue("\r\n  \t---31 ") == (31, None)
