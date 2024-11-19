@@ -20,11 +20,12 @@ A simple example:
 
     from zeep import Client
 
-    client = Client('http://www.webservicex.net/ConvertSpeed.asmx?WSDL')
-    result = client.service.ConvertSpeed(
-        100, 'kilometersPerhour', 'milesPerhour')
+    client = Client(
+        'http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?WSDL')
+        
+    result = client.service.CapitalCity("DE")
 
-    assert result == 62.137
+    assert result == 'Berlin'
 
 
 Quick Introduction
