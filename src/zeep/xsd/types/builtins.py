@@ -151,6 +151,10 @@ class DateTime(BuiltinType):
         if isinstance(value, str):
             return value
 
+        if isinstance(value, six.string_types):
+            # Make sure the string is a valid ISO date/time
+            value = isodate.parse_datetime(value)
+
         # Bit of a hack, since datetime is a subclass of date we can't just
         # test it with an isinstance(). And actually, we should not really
         # care about the type, as long as it has the required attributes
