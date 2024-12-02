@@ -286,7 +286,7 @@ def _sign_envelope_with_key_binary(envelope, key, signature_method, digest_metho
     )
     ref.attrib["URI"] = "#" + ensure_id(bintok)
     bintok.text = x509_data.find(QName(ns.DS, "X509Certificate")).text
-    security.insert(1, bintok)
+    security.insert(0, bintok)
     x509_data.getparent().remove(x509_data)
 
 
