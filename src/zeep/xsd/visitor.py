@@ -960,6 +960,9 @@ class SchemaVisitor:
         annotation, children = self._pop_annotation(list(node))
         for child in children:
             assert child.tag in sub_types, child
+            # TODO: We should actually process the Annotation, rather than skipping it.
+            if child.tag == tags.annotation:
+                continue
             item = self.process(child, node)
             result.append(item)
 
