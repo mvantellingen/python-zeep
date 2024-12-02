@@ -186,3 +186,37 @@ ServiceProxy as the first argument and the operation name as the second argument
 
     client = Client('http://my-endpoint.com/production.svc?wsdl')
     node = client.create_message(client.service, 'myOperation', user='hi')
+
+
+Parsing the raw XML response data
+---------------------------------
+
+It is also possible to load the response as raw XML data in situations
+where running the query for testing purposes would not make sense:
+
+
+.. code-block:: python
+
+    from zeep import Client
+    from zeep.loader import parse_xml
+
+    # Replace YOUR-WSDL and OPERATION_NAME with the wsdl url
+    # and the method name you are calling.
+
+    # The response data can be read from file or stored
+    # in the xml=""" """ variable.
+    # with open('data.xml', 'r') as f:
+    #    xml = f.read()
+
+    xml = """
+    <!-- store data here or load from file -->
+    """
+
+    client = Client(YOUR-WSDL)
+    operation = client.service._binding._operations[OPERATION-NAME]
+
+    # Parse xml
+    doc = parse_xml(xml, client.transport)
+
+    # Process the data into dictionary
+    result = operation.process_reply(doc)
