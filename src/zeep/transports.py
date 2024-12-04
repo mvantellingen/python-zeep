@@ -183,15 +183,17 @@ class AsyncTransport(Transport):
 
         self._close_session = False
         self.cache = cache
+        proxy_kwarg_name = "proxy" if httpx.__version__ >= "0.26.0" else "proxies"
+        proxy_kwargs = {proxy_kwarg_name: proxy}
         self.wsdl_client = wsdl_client or httpx.Client(
             verify=verify_ssl,
-            proxies=proxy,
             timeout=timeout,
+            **proxy_kwargs,
         )
         self.client = client or httpx.AsyncClient(
             verify=verify_ssl,
-            proxies=proxy,
             timeout=operation_timeout,
+            **proxy_kwargs,
         )
         self.logger = logging.getLogger(__name__)
 
