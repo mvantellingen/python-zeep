@@ -53,7 +53,10 @@ test = [
     "flake8-debugger==4.1.2",
     "flake8-imports==0.1.1",
 ]
-async = ["httpx>=0.15.0"]
+async = [
+    "httpx>=0.15.0",
+    "packaging",
+]
 xmlsec = ["xmlsec>=0.6.1"]
 
 [build-system]
