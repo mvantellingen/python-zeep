@@ -7,7 +7,10 @@ See https://www.w3.org/TR/SOAP-attachments
 import base64
 from functools import cached_property
 
-from requests.structures import CaseInsensitiveDict
+try:
+    from requests.structures import CaseInsensitiveDict as Headers
+except ImportError:
+    from httpx import Headers
 
 
 class MessagePack:
@@ -51,7 +54,7 @@ class MessagePack:
 class Attachment:
     def __init__(self, part):
         encoding = part.encoding or "utf-8"
-        self.headers = CaseInsensitiveDict(
+        self.headers = Headers(
             {k.decode(encoding): v.decode(encoding) for k, v in part.headers.items()}
         )
         self.content_type = self.headers.get("Content-Type", None)

@@ -4,7 +4,10 @@ import logging.config
 import time
 from urllib.parse import urlparse
 
-import requests
+try:
+    from requests import Session
+except ImportError:
+    from httpx import Client as Session
 
 from zeep.cache import SqliteCache
 from zeep.client import Client
@@ -63,7 +66,7 @@ def main(args):
         profile.enable()
 
     cache = SqliteCache() if args.cache else None
-    session = requests.Session()
+    session = Session()
 
     if args.no_verify:
         session.verify = False

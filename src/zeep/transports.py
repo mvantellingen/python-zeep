@@ -1,15 +1,24 @@
+from __future__ import annotations
+
 import logging
 import os
 from contextlib import closing, contextmanager
+from typing import TYPE_CHECKING, Union
 from urllib.parse import urlparse
-
-import requests
-from requests import Response
-from requests_file import FileAdapter
 
 from zeep.exceptions import TransportError
 from zeep.utils import get_media_type, get_version
 from zeep.wsdl.utils import etree_to_string
+
+if TYPE_CHECKING:
+    from httpx import Client
+    from requests import Session
+
+try:
+    import requests
+    from requests_file import FileAdapter
+except ImportError:
+    requests = None
 
 try:
     import httpx
@@ -27,6 +36,9 @@ except ImportError:
     Version = None
     HTTPX_PROXY_KWARG_NAME = None
 
+if requests is None and httpx is None:
+    raise RuntimeError("Either `requests` or `httpx` must be installed.")
+
 __all__ = ["AsyncTransport", "Transport"]
 
 
@@ -37,19 +49,27 @@ class Transport:
     :param timeout: The timeout for loading wsdl and xsd documents.
     :param operation_timeout: The timeout for operations (POST/GET). By
                               default this is None (no timeout).
-    :param session: A :py:class:`request.Session()` object (optional)
+    :param session: A :py:class:`request.Session()` or :py:class:`httpx.Client()` object (optional)
 
     """
 
-    def __init__(self, cache=None, timeout=300, operation_timeout=None, session=None):
+    def __init__(
+        self,
+        cache=None,
+        timeout=300,
+        operation_timeout=None,
+        session: Union[Session, Client, None] = None,
+    ):
         self.cache = cache
         self.load_timeout = timeout
         self.operation_timeout = operation_timeout
         self.logger = logging.getLogger(__name__)
 
         self._close_session = not session
-        self.session = session or requests.Session()
-        self.session.mount("file://", FileAdapter())
+        self.session = session or (requests.Session() if requests else httpx.Client())
+        if requests and isinstance(self.session, requests.Session):
+            self.session = session or requests.Session()
+            self.session.mount("file://", FileAdapter())
         self.session.headers["User-Agent"] = "Zeep/%s (www.python-zeep.org)" % (
             get_version()
         )
@@ -246,22 +266,25 @@ class AsyncTransport(Transport):
 
     async def post_xml(self, address, envelope, headers):
         message = etree_to_string(envelope)
-        response = await self.post(address, message, headers)
-        return self.new_response(response)
+        return await self.post(address, message, headers)
 
     async def get(self, address, params, headers):
-        response = await self.client.get(
+        return await self.client.get(
             address,
             params=params,
             headers=headers,
         )
-        return self.new_response(response)
 
     def new_response(self, response):
         """Convert an aiohttp.Response object to a requests.Response object"""
+        if requests is None:
+            raise RuntimeError(
+                "`requests` must be installed to use the `new_response` function."
+            )
+
         body = response.read()
 
-        new = Response()
+        new = requests.Response()
         new._content = body
         new.status_code = response.status_code
         new.headers = response.headers

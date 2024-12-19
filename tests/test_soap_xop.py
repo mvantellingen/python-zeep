@@ -3,10 +3,10 @@ from io import StringIO
 import requests_mock
 from lxml import etree
 from pretend import stub
-from requests_toolbelt.multipart.decoder import MultipartDecoder
 
 from tests.utils import assert_nodes_equal
 from zeep import Client
+from zeep.multipart_decoder import MultipartDecoder
 from zeep.transports import Transport
 from zeep.wsdl.attachments import MessagePack
 from zeep.wsdl.messages import xop
