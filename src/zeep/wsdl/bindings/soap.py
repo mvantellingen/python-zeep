@@ -225,7 +225,7 @@ class SoapBinding(Binding):
         # If the response code is not 200 or if there is a Fault node available
         # then assume that an error occured.
         fault_node = doc.find("soap-env:Body/soap-env:Fault", namespaces=self.nsmap)
-        if response.status_code != 200 or fault_node is not None:
+        if response.status_code not in (200, 201, 202) or fault_node is not None:
             return self.process_error(doc, operation)
 
         result = operation.process_reply(doc)
