@@ -195,12 +195,12 @@ class AsyncTransport(Transport):
         )
         self.logger = logging.getLogger(__name__)
 
-        self.wsdl_client.headers = {
-            "User-Agent": "Zeep/%s (www.python-zeep.org)" % (get_version())
-        }
-        self.client.headers = {
-            "User-Agent": "Zeep/%s (www.python-zeep.org)" % (get_version())
-        }
+        self.wsdl_client.headers["User-Agent"] = "Zeep/%s (www.python-zeep.org)" % (
+            get_version()
+        )
+        self.client.headers["User-Agent"] = "Zeep/%s (www.python-zeep.org)" % (
+            get_version()
+        )
 
     async def aclose(self):
         await self.client.aclose()
