@@ -56,7 +56,7 @@ class NamespaceError(Error):
 
 
 class Fault(Error):
-    def __init__(self, message, code=None, actor=None, detail=None, subcodes=None):
+    def __init__(self, message="", code=None, actor=None, detail=None, subcodes=None):
         super().__init__(message)
         self.message = message
         self.code = code
