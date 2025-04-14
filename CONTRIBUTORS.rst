@@ -51,4 +51,4 @@ Contributors
 * Zoltan Benedek
 * Øyvind Heddeland Instefjord
 * Pol Sanlorenzo
-
+* David Colangelo

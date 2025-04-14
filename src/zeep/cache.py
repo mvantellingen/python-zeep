@@ -6,6 +6,7 @@ import os
 import threading
 from contextlib import contextmanager
 from typing import Dict, Tuple, Union
+import redis
 
 import platformdirs
 import pytz
@@ -162,6 +163,42 @@ class SqliteCache(VersionedCacheBase):
                 logger.debug("Cache HIT for %s", url)
                 return self._decode_data(data)
         logger.debug("Cache MISS for %s", url)
+
+class ReddisCache(Base):
+    """Cache contents via a redis database
+    - This is helpful if you make zeep calls from a pool of servers that need to share a common cache
+    """
+
+    def __init__(self, redis_host, password, db=0, port=6379, timeout=3600):
+        self._timeout = timeout
+        self._redis_host = redis_host
+
+        self._redis_client = redis.StrictRedis(
+            host=redis_host,
+            port=port,
+            password=password,
+            db=db
+        )
+
+    def add(self, url, content):
+        logger.debug("Caching contents of %s", url)
+        # Remove the cached key
+        self._redis_client.delete(url)
+        # add the new cache response for the url
+        self._redis_client.set(url, value={
+            'time': datetime.datetime.now(datetime.timezone.utc),
+            'value': content
+        })
+
+    def get(self, url):
+        cached_value = self._redis_client.get(url)
+        if not _is_expired(cached_value['time'], self._timeout):
+            logger.debug("Cache HIT for %s", url)
+            return cached_value['value']
+        else:
+            logger.debug("Cache MISS for %s", url)
+            return None
+
 
 
 def _is_expired(value, timeout):
