@@ -1,6 +1,6 @@
 [project]
 name = "zeep"
-version = "4.3.1"
+version = "4.3.2"
 description = "A Python SOAP client"
 readme = "README.md"
 license = { text = "MIT" }
@@ -28,6 +28,7 @@ dependencies = [
     "requests-toolbelt>=0.7.1",
     "requests-file>=1.5.1",
     "pytz",
+    "redis"
 ]
 
 [project.urls]

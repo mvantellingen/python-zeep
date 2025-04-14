@@ -164,7 +164,7 @@ class SqliteCache(VersionedCacheBase):
                 return self._decode_data(data)
         logger.debug("Cache MISS for %s", url)
 
-class ReddisCache(Base):
+class RedisCache(Base):
     """Cache contents via a redis database
     - This is helpful if you make zeep calls from a pool of servers that need to share a common cache
     """
