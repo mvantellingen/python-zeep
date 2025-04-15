@@ -169,7 +169,7 @@ class RedisCache(Base):
     - This is helpful if you make zeep calls from a pool of servers that need to share a common cache
     """
 
-    def __init__(self, redis_host, password, db=0, port=6379, timeout=3600):
+    def __init__(self, redis_host, password, port=6379, timeout=3600, health_check_interval=10, socket_timeout=5, retry_on_timeout=True, single_connection_client=True):
         self._timeout = timeout
         self._redis_host = redis_host
 
@@ -177,7 +177,10 @@ class RedisCache(Base):
             host=redis_host,
             port=port,
             password=password,
-            db=db
+            health_check_interval=health_check_interval,
+            socket_timeout=socket_timeout,
+            retry_on_timeout=retry_on_timeout,
+            single_connection_client = single_connection_client
         )
 
     def add(self, url, content):
@@ -192,9 +195,9 @@ class RedisCache(Base):
 
     def get(self, url):
         cached_value = self._redis_client.get(url)
-        if not _is_expired(cached_value['time'], self._timeout):
+        if cached_value is not None and not _is_expired(cached_value['time'], self._timeout):
             logger.debug("Cache HIT for %s", url)
-            return cached_value['value']
+            return cached_value.get('value', None)
         else:
             logger.debug("Cache MISS for %s", url)
             return None

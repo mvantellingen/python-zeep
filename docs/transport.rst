@@ -141,6 +141,31 @@ Another option is to use the InMemoryCache backend.  It internally uses a
 global dict to store urls with the corresponding content.
 
 
+If you run your servers in a pool you may wish to share your WSDL cache across multiple servers if they are making
+similar calls. To do this you can offload the cache to a shared redis instance by setting a redis cache as follows:
+
+.. code-block:: python
+    from zeep import Client
+    from zeep.transports import Transport
+    from zeep.cache import RedisCache
+
+    cache = RedisCache(
+        redis_host="127.0.0.1",
+        password="APasswordYouLike",
+        timeout=60
+    )
+
+    transport = Transport(
+        cache=cache,
+    )
+
+    client = Client(
+        'http://www.webservicex.net/ConvertSpeed.asmx?WSDL',
+        transport=transport)
+
+
+
+
 HTTP Authentication
 -------------------
 While some providers incorporate security features in the header of a SOAP message,
