@@ -7,6 +7,7 @@ import threading
 from contextlib import contextmanager
 from typing import Dict, Tuple, Union
 import redis
+import json
 
 import platformdirs
 import pytz
@@ -187,14 +188,30 @@ class RedisCache(Base):
         logger.debug("Caching contents of %s", url)
         # Remove the cached key
         self._redis_client.delete(url)
-        # add the new cache response for the url
-        self._redis_client.set(url, value={
-            'time': datetime.datetime.now(datetime.timezone.utc),
-            'value': content
-        })
+
+        try:
+            # Stringify the data
+            data = json.dumps({
+                'time': datetime.datetime.now(datetime.timezone.utc),
+                'value': content
+            })
+
+            # add the new cache response for the url
+            self._redis_client.set(url, value=data)
+        except Exception as e:
+            logger.debug("Could not cache contents of %s", url)
+            logger.debug(e)
 
     def get(self, url):
-        cached_value = self._redis_client.get(url)
+
+        try:
+            cached_value = json.loads(self._redis_client.get(url))
+        except Exception as e:
+            logger.debug("Could extract from cache contents of %s", url)
+            logger.debug(e)
+            # if we cant decode it just return none
+            return None
+
         if cached_value is not None and not _is_expired(cached_value['time'], self._timeout):
             logger.debug("Cache HIT for %s", url)
             return cached_value.get('value', None)
