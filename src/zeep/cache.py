@@ -190,10 +190,10 @@ class RedisCache(Base):
         self._redis_client.delete(url)
 
         try:
-            # Stringify the data
+            # Stringify the data and add the time so we know when it was written
             data = json.dumps({
-                'time': datetime.datetime.now(datetime.timezone.utc),
-                'value': content
+                'time': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                'value': base64.b64encode(content).decode('utf-8')
             })
 
             # add the new cache response for the url
@@ -205,16 +205,25 @@ class RedisCache(Base):
     def get(self, url):
 
         try:
-            cached_value = json.loads(self._redis_client.get(url))
+            value = self._redis_client.get(url)
+            if value is None:
+                logger.debug("Cache MISS for %s", url)
+                return None
+
+            cached_value = json.loads(value)
         except Exception as e:
-            logger.debug("Could extract from cache contents of %s", url)
+            logger.debug("Could not extract from cache contents of %s", url)
             logger.debug(e)
             # if we cant decode it just return none
             return None
 
-        if cached_value is not None and not _is_expired(cached_value['time'], self._timeout):
+        if cached_value is not None and not _is_expired(datetime.datetime.fromisoformat(cached_value['time']), self._timeout):
             logger.debug("Cache HIT for %s", url)
-            return cached_value.get('value', None)
+            value = cached_value.get('value', None)
+            if value is not None:
+                return base64.b64decode(value)
+            else:
+                return None
         else:
             logger.debug("Cache MISS for %s", url)
             return None
