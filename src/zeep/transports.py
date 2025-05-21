@@ -185,12 +185,12 @@ class AsyncTransport(Transport):
         self.cache = cache
         self.wsdl_client = wsdl_client or httpx.Client(
             verify=verify_ssl,
-            proxies=proxy,
+            proxy=proxy,
             timeout=timeout,
         )
         self.client = client or httpx.AsyncClient(
             verify=verify_ssl,
-            proxies=proxy,
+            proxy=proxy,
             timeout=operation_timeout,
         )
         self.logger = logging.getLogger(__name__)
