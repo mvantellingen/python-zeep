@@ -723,6 +723,8 @@ class SchemaVisitor:
         annotation, children = self._pop_annotation(list(node))
         if children and children[0].tag == tags.simpleType:
             return self.visit_simple_type(children[0], node)
+        else:
+            return xsd_types.AnySimpleType()
 
     def visit_restriction_simple_content(self, node, parent):
         """
