@@ -58,7 +58,7 @@ class Transport:
         return response
 
     def post(self, address, message, headers):
-        """Proxy to requests.posts()
+        """Proxy to requests.post()
 
         :param address: The URL for the request
         :param message: The content for the body
