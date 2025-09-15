@@ -136,6 +136,12 @@ class Binding:
         self.port_type = None
         self.wsdl = wsdl
         self._operations = {}
+        self.signatures = {
+            "header": [],  # Parts of header, that should be signed
+            "elements": [],  # Arbitrary XPath elements that should be signed
+            "body": False,  # If body should be signed
+            "everything": False,  # If every header should be signed
+        }
 
     def resolve(self, definitions: Definition) -> None:
         self.port_type = definitions.get("port_types", self.port_name.text)
