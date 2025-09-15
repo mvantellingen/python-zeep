@@ -351,7 +351,6 @@ def test_xml_simple_content_nil():
     schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
     container_elm = schema.get_element("tns:container")
     obj = container_elm(xsd.Nil)
-    result = render_node(container_elm, obj)
 
     expected = """
       <document>
@@ -422,3 +421,37 @@ def test_ignore_sequence_order():
 
     response = elm.parse(node[0], schema)
     assert response.Baz.id == 3
+
+
+def test_xml_simple_content_nil_allow_nil():
+    schema = xsd.Schema(load_xml("""
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+          <element name="container" nillable="true" minOccurs="0" maxOccurs="unbounded">
+            <complexType>
+              <simpleContent>
+                <restriction base="string">
+                  <maxLength value="1000"/>
+                </restriction>
+              </simpleContent>
+            </complexType>
+          </element>
+        </schema>
+        """))
+    schema.set_ns_prefix('tns', 'http://tests.python-zeep.org/')
+    container_elm = schema.get_element('tns:container')
+    obj = container_elm(xsd.Nil)
+
+    expected = """
+          <document>
+            <ns0:container xmlns:ns0="http://tests.python-zeep.org/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+          </document>
+        """
+    result = render_node(container_elm, obj)
+    assert_nodes_equal(result, expected)
+
+    obj = container_elm.parse(result[0], schema, allow_none=True)
+    assert obj is None

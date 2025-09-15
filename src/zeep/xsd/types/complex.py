@@ -189,6 +189,9 @@ class ComplexType(AnyType):
         attributes = xmlelement.attrib
         init_kwargs = OrderedDict()
 
+        if allow_none and xmlelement.get(xsi_ns('nil')) == 'true':
+            return None
+
         # If this complexType extends a simpleType then we have no nested
         # elements. Parse it directly via the type object. This is the case
         # for xsd:simpleContent
