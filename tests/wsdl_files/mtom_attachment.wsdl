@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:tns="http://test.ellethee.org/"
+    xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata"
+    xmlns:wsp="http://www.w3.org/ns/ws-policy"
+    xmlns:wsp1_2="http://schemas.xmlsoap.org/ws/2004/09/policy"
+    xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xop="http://www.w3.org/2004/08/xop/include"
+    targetNamespace="http://test.ellethee.org/" name="MtomAttachment">
+    <documentation>
+        Service: MtomAttachment
+        Version: 1.1
+        Owner: ellethee
+    </documentation>
+    <types>
+        <xsd:schema>
+            <xsd:import namespace="http://test.ellethee.org/" schemaLocation="mtom_attachment.xsd" />
+        </xsd:schema>
+    </types>
+    <message name="upload">
+        <part name="parameters" element="tns:upload" />
+    </message>
+    <message name="uploadArray">
+        <part name="parameters" element="tns:arrayOfUpload" />
+    </message>
+    <message name="uploadResponse">
+        <part name="parameters" element="tns:uploadResponse" />
+    </message>
+    <portType name="MtomAttachmentPortType">
+        <documentation>MTOM Attachment Port</documentation>
+        <operation name="upload">
+            <input message="tns:upload" />
+            <output message="tns:uploadResponse" />
+        </operation>
+        <operation name="multiUpload">
+            <input message="tns:uploadArray" />
+            <output message="tns:uploadResponse" />
+        </operation>
+    </portType>
+    <binding name="MtomAttachmentBinding" type="tns:MtomAttachmentPortType">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document" />
+        <operation name="upload">
+            <soap:operation soapAction="" />
+            <input><soap:body use="literal" /></input>
+            <output><soap:body use="literal" /></output>
+        </operation>
+        <operation name="multiUpload">
+            <soap:operation soapAction="" />
+            <input><soap:body use="literal" /></input>
+            <output><soap:body use="literal" /></output>
+        </operation>
+    </binding>
+    <service name="MtomAttachmentService">
+        <documentation>MTOM Attachment Test</documentation>
+        <port name="MtomAttachmentPort" binding="tns:MtomAttachmentBinding">
+            <soap:address location="http://test.ellethee.org/mtom_attachment" />
+        </port>
+    </service>
+</definitions>
