@@ -5,7 +5,6 @@ import re
 from decimal import Decimal as _Decimal
 
 import isodate
-import pytz
 
 from zeep.xsd.const import xsd_ns
 from zeep.xsd.types.any import AnyType
@@ -151,22 +150,7 @@ class DateTime(BuiltinType):
         if isinstance(value, str):
             return value
 
-        # Bit of a hack, since datetime is a subclass of date we can't just
-        # test it with an isinstance(). And actually, we should not really
-        # care about the type, as long as it has the required attributes
-        if not all(hasattr(value, attr) for attr in ("hour", "minute", "second")):
-            value = datetime.datetime.combine(
-                value,
-                datetime.time(
-                    getattr(value, "hour", 0),
-                    getattr(value, "minute", 0),
-                    getattr(value, "second", 0),
-                ),
-            )
-
-        if getattr(value, "microsecond", 0):
-            return isodate.isostrf.strftime(value, "%Y-%m-%dT%H:%M:%S.%f%Z")
-        return isodate.isostrf.strftime(value, "%Y-%m-%dT%H:%M:%S%Z")
+        return value.isoformat().replace("+00:00", "Z")
 
     @treat_whitespace("collapse")
     def pythonvalue(self, value):
@@ -189,9 +173,7 @@ class Time(BuiltinType):
         if isinstance(value, str):
             return value
 
-        if value.microsecond:
-            return isodate.isostrf.strftime(value, "%H:%M:%S.%f%Z")
-        return isodate.isostrf.strftime(value, "%H:%M:%S%Z")
+        return value.isoformat().replace("+00:00", "Z")
 
     @treat_whitespace("collapse")
     def pythonvalue(self, value):
@@ -207,7 +189,7 @@ class Date(BuiltinType):
     def xmlvalue(self, value):
         if isinstance(value, str):
             return value
-        return isodate.isostrf.strftime(value, "%Y-%m-%d")
+        return value.strftime("%Y-%m-%d")
 
     @treat_whitespace("collapse")
     def pythonvalue(self, value):
@@ -548,12 +530,12 @@ class PositiveInteger(NonNegativeInteger):
 ##
 # Other
 def _parse_timezone(val):
-    """Return a pytz.tzinfo object"""
+    """Return a timezone object"""
     if not val:
         return
 
     if val == "Z" or val == "+00:00":
-        return pytz.utc
+        return datetime.timezone.utc
 
     negative = val.startswith("-")
     minutes = int(val[-2:])
@@ -561,22 +543,17 @@ def _parse_timezone(val):
 
     if negative:
         minutes = 0 - minutes
-    return pytz.FixedOffset(minutes)
+    return datetime.timezone(offset=datetime.timedelta(minutes=minutes))
 
 
-def _unparse_timezone(tzinfo):
+def _unparse_timezone(tzinfo: datetime.timezone):
     if not tzinfo:
         return ""
 
-    if tzinfo == pytz.utc:
+    if tzinfo == datetime.timezone.utc:
         return "Z"
 
-    hours = math.floor(tzinfo._minutes / 60)
-    minutes = tzinfo._minutes % 60
-
-    if hours > 0:
-        return "+%02d:%02d" % (hours, minutes)
-    return "-%02d:%02d" % (abs(hours), minutes)
+    return datetime.datetime.now(tz=tzinfo).isoformat()[-6:]
 
 
 _types = [

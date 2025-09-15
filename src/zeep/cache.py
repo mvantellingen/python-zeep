@@ -8,7 +8,6 @@ from contextlib import contextmanager
 from typing import Dict, Tuple, Union
 
 import platformdirs
-import pytz
 
 # The sqlite3 is not available on Google App Engine so we handle the
 # ImportError here and set the sqlite3 var to None.
@@ -169,8 +168,8 @@ def _is_expired(value, timeout):
     if timeout is None:
         return False
 
-    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=pytz.utc)
-    max_age = value.replace(tzinfo=pytz.utc)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    max_age = value.replace(tzinfo=datetime.timezone.utc)
     max_age += datetime.timedelta(seconds=timeout)
     return now > max_age
 
