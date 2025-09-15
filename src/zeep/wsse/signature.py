@@ -53,6 +53,8 @@ class MemorySignature:
         password=None,
         signature_method=None,
         digest_method=None,
+        verify_reply_signature=True,
+        response_cert_data=None,
     ):
         check_xmlsec_import()
 
@@ -61,6 +63,8 @@ class MemorySignature:
         self.password = password
         self.digest_method = digest_method
         self.signature_method = signature_method
+        self.verify_reply_signature = verify_reply_signature
+        self.response_cert_data = response_cert_data
 
     def apply(self, envelope, headers):
         key = _make_sign_key(self.key_data, self.cert_data, self.password)
@@ -70,7 +74,11 @@ class MemorySignature:
         return envelope, headers
 
     def verify(self, envelope):
-        key = _make_verify_key(self.cert_data)
+        if not self.verify_reply_signature:
+            return envelope
+        key = _make_verify_key(
+            self.cert_data if not self.response_cert_data else self.response_cert_data
+        )
         _verify_envelope_with_key(envelope, key)
         return envelope
 
@@ -85,6 +93,8 @@ class Signature(MemorySignature):
         password=None,
         signature_method=None,
         digest_method=None,
+        verify_reply_signature=True,
+        response_certfile=None,
     ):
         super().__init__(
             _read_file(key_file),
@@ -92,6 +102,8 @@ class Signature(MemorySignature):
             password,
             signature_method,
             digest_method,
+            verify_reply_signature,
+            _read_file(response_certfile) if response_certfile else None,
         )
 
 
@@ -348,7 +360,7 @@ def _sign_node(ctx, signature, target, digest_method=None):
     """
 
     # Ensure the target node has a wsu:Id attribute and get its value.
-    node_id = ensure_id(target)
+    ensure_id(target)
 
     # Unlike HTML, XML doesn't have a single standardized Id. WSSE suggests the
     # use of the wsu:Id attribute for this purpose, but XMLSec doesn't
@@ -358,10 +370,10 @@ def _sign_node(ctx, signature, target, digest_method=None):
 
     # Add reference to signature with URI attribute pointing to that ID.
     ref = xmlsec.template.add_reference(
-        signature, digest_method or xmlsec.Transform.SHA1, uri="#" + node_id
+        signature, digest_method or xmlsec.Transform.SHA1, uri=""
     )
     # This is an XML normalization transform which will be performed on the
     # target node contents before signing. This ensures that changes to
     # irrelevant whitespace, attribute ordering, etc won't invalidate the
     # signature.
-    xmlsec.template.add_transform(ref, xmlsec.Transform.EXCL_C14N)
+    xmlsec.template.add_transform(ref, xmlsec.Transform.ENVELOPED)
