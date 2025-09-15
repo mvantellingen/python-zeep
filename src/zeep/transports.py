@@ -18,6 +18,7 @@ except ImportError:
 
 try:
     from packaging.version import Version
+
     if httpx is None or Version(httpx.__version__) < Version("0.26.0"):
         HTTPX_PROXY_KWARG_NAME = "proxies"
     else:

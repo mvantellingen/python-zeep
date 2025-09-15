@@ -1,6 +1,6 @@
 """
-    zeep.wsdl.wsdl
-    ~~~~~~~~~~~~~~
+zeep.wsdl.wsdl
+~~~~~~~~~~~~~~
 
 """
 

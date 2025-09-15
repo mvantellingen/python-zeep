@@ -1,6 +1,6 @@
 """
-    zeep.wsdl.messages.mime
-    ~~~~~~~~~~~~~~~~~~~~~~~
+zeep.wsdl.messages.mime
+~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 

@@ -1,6 +1,6 @@
 """
-    zeep.wsdl.parse
-    ~~~~~~~~~~~~~~~
+zeep.wsdl.parse
+~~~~~~~~~~~~~~~
 
 """
 
