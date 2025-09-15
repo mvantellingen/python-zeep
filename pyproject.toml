@@ -28,6 +28,7 @@ dependencies = [
     "requests-toolbelt>=0.7.1",
     "requests-file>=1.5.1",
     "pytz",
+    "redis>=5.2.1"
 ]
 
 [project.urls]

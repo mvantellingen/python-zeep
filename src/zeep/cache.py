@@ -6,6 +6,8 @@ import os
 import threading
 from contextlib import contextmanager
 from typing import Dict, Tuple, Union
+import redis
+import json
 
 import platformdirs
 import pytz
@@ -162,6 +164,70 @@ class SqliteCache(VersionedCacheBase):
                 logger.debug("Cache HIT for %s", url)
                 return self._decode_data(data)
         logger.debug("Cache MISS for %s", url)
+
+class RedisCache(Base):
+    """Cache contents via a redis database
+    - This is helpful if you make zeep calls from a pool of servers that need to share a common cache
+    """
+
+    def __init__(self, redis_host, password, port=6379, timeout=3600, health_check_interval=10, socket_timeout=5, retry_on_timeout=True, single_connection_client=True):
+        self._timeout = timeout
+        self._redis_host = redis_host
+
+        self._redis_client = redis.StrictRedis(
+            host=redis_host,
+            port=port,
+            password=password,
+            health_check_interval=health_check_interval,
+            socket_timeout=socket_timeout,
+            retry_on_timeout=retry_on_timeout,
+            single_connection_client = single_connection_client
+        )
+
+    def add(self, url, content):
+        logger.debug("Caching contents of %s", url)
+        # Remove the cached key
+        self._redis_client.delete(url)
+
+        try:
+            # Stringify the data and add the time so we know when it was written
+            data = json.dumps({
+                'time': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                'value': base64.b64encode(content).decode('utf-8')
+            })
+
+            # add the new cache response for the url
+            self._redis_client.set(url, value=data)
+        except Exception as e:
+            logger.debug("Could not cache contents of %s", url)
+            logger.debug(e)
+
+    def get(self, url):
+
+        try:
+            value = self._redis_client.get(url)
+            if value is None:
+                logger.debug("Cache MISS for %s", url)
+                return None
+
+            cached_value = json.loads(value)
+        except Exception as e:
+            logger.debug("Could not extract from cache contents of %s", url)
+            logger.debug(e)
+            # if we cant decode it just return none
+            return None
+
+        if cached_value is not None and not _is_expired(datetime.datetime.fromisoformat(cached_value['time']), self._timeout):
+            logger.debug("Cache HIT for %s", url)
+            value = cached_value.get('value', None)
+            if value is not None:
+                return base64.b64decode(value)
+            else:
+                return None
+        else:
+            logger.debug("Cache MISS for %s", url)
+            return None
+
 
 
 def _is_expired(value, timeout):
