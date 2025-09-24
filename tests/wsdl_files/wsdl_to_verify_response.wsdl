@@ -1,0 +1,688 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="https://webservice.face.gob.es" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:impl="https://webservice.face.gob.es" xmlns:intf="https://webservice.face.gob.es" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--WSDL created by Apache Axis version: 1.4
+Built on Apr 22, 2006 (06:55:48 PDT)-->
+ <wsdl:types>
+  <schema targetNamespace="https://webservice.face.gob.es" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+   <complexType name="FacturaFile">
+    <sequence>
+     <element name="factura" type="xsd:string"/>
+     <element name="nombre" type="xsd:string"/>
+     <element name="mime" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="AnexoFile">
+    <sequence>
+     <element name="anexo" type="xsd:string"/>
+     <element name="nombre" type="xsd:string"/>
+     <element name="mime" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="ArrayOfAnexoFile">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="anexo" type="impl:AnexoFile"/>
+    </sequence>
+   </complexType>
+   <complexType name="EnviarFacturaRequest">
+    <sequence>
+     <element name="correo" type="xsd:string"/>
+     <element name="factura" type="impl:FacturaFile"/>
+     <element name="anexos" nillable="true" type="impl:ArrayOfAnexoFile"/>
+    </sequence>
+   </complexType>
+   <complexType name="Resultado">
+    <sequence>
+     <element name="codigo" type="xsd:string"/>
+     <element name="descripcion" type="xsd:string"/>
+     <element name="codigoSeguimiento" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="EnviarFactura">
+    <sequence>
+     <element name="numeroRegistro" type="xsd:string"/>
+     <element name="organoGestor" type="xsd:string"/>
+     <element name="unidadTramitadora" type="xsd:string"/>
+     <element name="oficinaContable" type="xsd:string"/>
+     <element name="identificadorEmisor" type="xsd:string"/>
+     <element name="numeroFactura" nillable="true" type="xsd:string"/>
+     <element name="serieFactura" nillable="true" type="xsd:string"/>
+     <element name="fechaRecepcion" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="EnviarFacturaResponse">
+    <sequence>
+     <element name="resultado" type="impl:Resultado"/>
+     <element name="factura" nillable="true" type="impl:EnviarFactura"/>
+    </sequence>
+   </complexType>
+   <complexType name="ArrayOfEnviarFacturaOffLineRequest">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="facturas" type="impl:EnviarFacturaRequest"/>
+    </sequence>
+   </complexType>
+   <complexType name="Solicitud">
+    <sequence>
+     <element name="numSolicitud" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="EnviarFacturaOffLineResponse">
+    <sequence>
+     <element name="resultado" type="impl:Resultado"/>
+     <element name="solicitud" nillable="true" type="impl:Solicitud"/>
+    </sequence>
+   </complexType>
+   <complexType name="FacturaOffLine">
+    <sequence>
+     <element name="codigo" nillable="true" type="xsd:string"/>
+     <element name="descripcion" nillable="true" type="xsd:string"/>
+     <element name="factura" nillable="true" type="impl:EnviarFactura"/>
+    </sequence>
+   </complexType>
+   <complexType name="ArrayOfFacturaOffLine">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="facturaOffLine" type="impl:FacturaOffLine"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarListadoFacturasOffLine">
+    <sequence>
+     <element name="estado" nillable="true" type="xsd:string"/>
+     <element name="facturas" nillable="true" type="impl:ArrayOfFacturaOffLine"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarListadoFacturasOffLineResponse">
+    <sequence>
+     <element name="resultado" type="impl:Resultado"/>
+     <element name="solicitud" nillable="true" type="impl:ConsultarListadoFacturasOffLine"/>
+    </sequence>
+   </complexType>
+   <complexType name="EstadoFactura">
+    <sequence>
+     <element name="codigo" type="xsd:string"/>
+     <element name="descripcion" type="xsd:string"/>
+     <element name="motivo" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarFactura">
+    <sequence>
+     <element name="numeroRegistro" type="xsd:string"/>
+     <element name="tramitacion" type="impl:EstadoFactura"/>
+     <element name="anulacion" type="impl:EstadoFactura"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarFacturaResponse">
+    <sequence>
+     <element name="resultado" type="impl:Resultado"/>
+     <element name="factura" nillable="true" type="impl:ConsultarFactura"/>
+    </sequence>
+   </complexType>
+   <complexType name="AnularFactura">
+    <sequence>
+     <element name="numeroRegistro" type="xsd:string"/>
+     <element name="mensaje" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="AnularFacturaResponse">
+    <sequence>
+     <element name="resultado" type="impl:Resultado"/>
+     <element name="factura" nillable="true" type="impl:AnularFactura"/>
+    </sequence>
+   </complexType>
+   <complexType name="Estado">
+    <sequence>
+     <element name="nombre" type="xsd:string"/>
+     <element name="codigo" type="xsd:string"/>
+     <element name="descripcion" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="ArrayOfEstado">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="estado" type="impl:Estado"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarEstadosResponse">
+    <sequence>
+     <element name="resultado" type="impl:Resultado"/>
+     <element name="estados" nillable="true" type="impl:ArrayOfEstado"/>
+    </sequence>
+   </complexType>
+   <complexType name="UnidadDir3">
+    <sequence>
+     <element name="codigo" nillable="true" type="xsd:string"/>
+     <element name="nombre" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="OGUTOC">
+    <sequence>
+     <element name="organoGestor" nillable="true" type="impl:UnidadDir3"/>
+     <element name="unidadTramitadora" nillable="true" type="impl:UnidadDir3"/>
+     <element name="oficinaContable" nillable="true" type="impl:UnidadDir3"/>
+    </sequence>
+   </complexType>
+   <complexType name="ArrayOfOGUTOC">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="relacion" type="impl:OGUTOC"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarRelacionesResponse">
+    <sequence>
+     <element name="resultado" type="impl:Resultado"/>
+     <element name="relaciones" nillable="true" type="impl:ArrayOfOGUTOC"/>
+    </sequence>
+   </complexType>
+   <complexType name="ArrayOfAdministracion">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="administracion" type="impl:UnidadDir3"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarAdminitracionesResponse">
+    <sequence>
+     <element name="resultado" type="impl:Resultado"/>
+     <element name="administraciones" nillable="true" type="impl:ArrayOfAdministracion"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarRelacionesPorAdministracionResponse">
+    <sequence>
+     <element name="resultado" type="impl:Resultado"/>
+     <element name="relaciones" nillable="true" type="impl:ArrayOfOGUTOC"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarListadoFacturaRequest">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="numeroRegistro" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarListadoFactura">
+    <sequence>
+     <element name="codigo" type="xsd:string"/>
+     <element name="descripcion" type="xsd:string"/>
+     <element name="factura" type="impl:ConsultarFactura"/>
+    </sequence>
+   </complexType>
+   <complexType name="ArrayOfConsultarListadoFactura">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="consultarListadoFactura" type="impl:ConsultarListadoFactura"/>
+    </sequence>
+   </complexType>
+   <complexType name="ConsultarListadoFacturaResponse">
+    <sequence>
+     <element name="resultado" type="impl:Resultado"/>
+     <element name="facturas" nillable="true" type="impl:ArrayOfConsultarListadoFactura"/>
+    </sequence>
+   </complexType>
+  </schema>
+ </wsdl:types>
+
+   <wsdl:message name="consultarEstadosResponse">
+
+      <wsdl:part name="return" type="impl:ConsultarEstadosResponse">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarUnidadesRequest">
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarListadoFacturasResponse">
+
+      <wsdl:part name="return" type="impl:ConsultarListadoFacturaResponse">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarUnidadesPorAdministracionResponse">
+
+      <wsdl:part name="return" type="impl:ConsultarRelacionesPorAdministracionResponse">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarListadoFacturasRequest">
+
+      <wsdl:part name="request" type="impl:ConsultarListadoFacturaRequest">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="anularFacturaRequest">
+
+      <wsdl:part name="numeroRegistro" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="motivo" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarFacturaRequest">
+
+      <wsdl:part name="numeroRegistro" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="enviarFacturaResponse">
+
+      <wsdl:part name="return" type="impl:EnviarFacturaResponse">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="enviarListadoFacturasOffLineRequest">
+
+      <wsdl:part name="request" type="impl:ArrayOfEnviarFacturaOffLineRequest">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarAdministracionesResponse">
+
+      <wsdl:part name="return" type="impl:ConsultarAdminitracionesResponse">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarListadoFacturasOffLineResponse">
+
+      <wsdl:part name="return" type="impl:ConsultarListadoFacturasOffLineResponse">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarEstadosRequest">
+
+   </wsdl:message>
+
+   <wsdl:message name="enviarFacturaRequest">
+
+      <wsdl:part name="request" type="impl:EnviarFacturaRequest">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarAdministracionesRequest">
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarUnidadesResponse">
+
+      <wsdl:part name="return" type="impl:ConsultarRelacionesResponse">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarFacturaResponse">
+
+      <wsdl:part name="return" type="impl:ConsultarFacturaResponse">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="anularFacturaResponse">
+
+      <wsdl:part name="return" type="impl:AnularFacturaResponse">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarListadoFacturasOffLineRequest">
+
+      <wsdl:part name="idSolicitud" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="enviarListadoFacturasOffLineResponse">
+
+      <wsdl:part name="return" type="impl:EnviarFacturaOffLineResponse">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultarUnidadesPorAdministracionRequest">
+
+      <wsdl:part name="codigoDir" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:portType name="FacturaSSPPWebServiceProxyPort">
+
+      <wsdl:operation name="enviarFactura" parameterOrder="request">
+
+         <wsdl:input message="impl:enviarFacturaRequest" name="enviarFacturaRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:enviarFacturaResponse" name="enviarFacturaResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="enviarListadoFacturasOffLine" parameterOrder="request">
+
+         <wsdl:input message="impl:enviarListadoFacturasOffLineRequest" name="enviarListadoFacturasOffLineRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:enviarListadoFacturasOffLineResponse" name="enviarListadoFacturasOffLineResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarListadoFacturasOffLine" parameterOrder="idSolicitud">
+
+         <wsdl:input message="impl:consultarListadoFacturasOffLineRequest" name="consultarListadoFacturasOffLineRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:consultarListadoFacturasOffLineResponse" name="consultarListadoFacturasOffLineResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarFactura" parameterOrder="numeroRegistro">
+
+         <wsdl:input message="impl:consultarFacturaRequest" name="consultarFacturaRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:consultarFacturaResponse" name="consultarFacturaResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="anularFactura" parameterOrder="numeroRegistro motivo">
+
+         <wsdl:input message="impl:anularFacturaRequest" name="anularFacturaRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:anularFacturaResponse" name="anularFacturaResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarEstados">
+
+         <wsdl:input message="impl:consultarEstadosRequest" name="consultarEstadosRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:consultarEstadosResponse" name="consultarEstadosResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarUnidades">
+
+         <wsdl:input message="impl:consultarUnidadesRequest" name="consultarUnidadesRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:consultarUnidadesResponse" name="consultarUnidadesResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarAdministraciones">
+
+         <wsdl:input message="impl:consultarAdministracionesRequest" name="consultarAdministracionesRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:consultarAdministracionesResponse" name="consultarAdministracionesResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarUnidadesPorAdministracion" parameterOrder="codigoDir">
+
+         <wsdl:input message="impl:consultarUnidadesPorAdministracionRequest" name="consultarUnidadesPorAdministracionRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:consultarUnidadesPorAdministracionResponse" name="consultarUnidadesPorAdministracionResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarListadoFacturas" parameterOrder="request">
+
+         <wsdl:input message="impl:consultarListadoFacturasRequest" name="consultarListadoFacturasRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:consultarListadoFacturasResponse" name="consultarListadoFacturasResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+   </wsdl:portType>
+
+   <wsdl:binding name="FacturaSSPPWebServiceProxyPortSoapBinding" type="impl:FacturaSSPPWebServiceProxyPort">
+
+      <wsdlsoap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+      <wsdl:operation name="enviarFactura">
+
+         <wsdlsoap:operation soapAction="https://webservice.face.gob.es#enviarFactura"/>
+
+         <wsdl:input name="enviarFacturaRequest">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="enviarFacturaResponse">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="enviarListadoFacturasOffLine">
+
+         <wsdlsoap:operation soapAction="https://webservice.face.gob.es#enviarListadoFacturasOffLine"/>
+
+         <wsdl:input name="enviarListadoFacturasOffLineRequest">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="enviarListadoFacturasOffLineResponse">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarListadoFacturasOffLine">
+
+         <wsdlsoap:operation soapAction="https://webservice.face.gob.es#consultarListadoFacturasOffLine"/>
+
+         <wsdl:input name="consultarListadoFacturasOffLineRequest">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="consultarListadoFacturasOffLineResponse">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarFactura">
+
+         <wsdlsoap:operation soapAction="https://webservice.face.gob.es#consultarFactura"/>
+
+         <wsdl:input name="consultarFacturaRequest">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="consultarFacturaResponse">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="anularFactura">
+
+         <wsdlsoap:operation soapAction="https://webservice.face.gob.es#anularFactura"/>
+
+         <wsdl:input name="anularFacturaRequest">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="anularFacturaResponse">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarEstados">
+
+         <wsdlsoap:operation soapAction="https://webservice.face.gob.es#consultarEstados"/>
+
+         <wsdl:input name="consultarEstadosRequest">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="consultarEstadosResponse">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarUnidades">
+
+         <wsdlsoap:operation soapAction="https://webservice.face.gob.es#consultarUnidades"/>
+
+         <wsdl:input name="consultarUnidadesRequest">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="consultarUnidadesResponse">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarAdministraciones">
+
+         <wsdlsoap:operation soapAction="https://webservice.face.gob.es#consultarAdministraciones"/>
+
+         <wsdl:input name="consultarAdministracionesRequest">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="consultarAdministracionesResponse">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarUnidadesPorAdministracion">
+
+         <wsdlsoap:operation soapAction="https://webservice.face.gob.es#consultarUnidadesPorAdministracion"/>
+
+         <wsdl:input name="consultarUnidadesPorAdministracionRequest">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="consultarUnidadesPorAdministracionResponse">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultarListadoFacturas">
+
+         <wsdlsoap:operation soapAction="https://webservice.face.gob.es#consultarListadoFacturas"/>
+
+         <wsdl:input name="consultarListadoFacturasRequest">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="consultarListadoFacturasResponse">
+
+            <wsdlsoap:body namespace="https://webservice.face.gob.es" use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+   </wsdl:binding>
+
+   <wsdl:service name="FacturaSSPPWebServiceProxyService">
+
+      <wsdl:port binding="impl:FacturaSSPPWebServiceProxyPortSoapBinding" name="FacturaSSPPWebServiceProxyPort">
+
+         <wsdlsoap:address location="https://webservice.face.gob.es"/>
+
+      </wsdl:port>
+
+   </wsdl:service>
+
+</wsdl:definitions>
