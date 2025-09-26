@@ -93,33 +93,66 @@ class Any(Base):
         return {}
 
     def parse_xmlelements(self, xmlelements, schema, name=None, context=None):
-        """Consume matching xmlelements and call parse() on each of them
+        """Parse XML elements matching an <xsd:any> declaration using schema lookup.
 
-        :param xmlelements: Dequeue of XML element objects
+        This method consumes and parses XML elements that match the <xsd:any> construct
+        in an XML Schema. If possible, it attempts to resolve each element's type using
+        the provided schema and parse it accordingly.
+
+        Elements with nested child elements are deserialized into dictionaries keyed by
+        tag name. If resolution via the schema fails, the method falls back to returning
+        element text or the raw lxml Element.
+
+        :param xmlelements: Deque of XML element objects
         :type xmlelements: collections.deque of lxml.etree._Element
-        :param schema: The parent XML schema
+        :param schema: The parent XML schema used for resolving element types
         :type schema: zeep.xsd.Schema
-        :param name: The name of the parent element
-        :type name: str
-        :param context: Optional parsing context (for inline schemas)
+        :param name: The name of the parent element, if available
+        :type name: str or None
+        :param context: Optional parsing context for schema resolution
         :type context: zeep.xsd.context.XmlParserContext
-        :return: dict or None
-
+        :return: Parsed representation of the XML elements as a dictionary
+        :rtype: dict or None
         """
-        result = []
+        from lxml.etree import QName
 
-        for _unused in max_occurs_iter(self.max_occurs):
-            if xmlelements:
-                xmlelement = xmlelements.popleft()
-                item = self.parse(xmlelement, schema, context=context)
-                if item is not None:
-                    result.append(item)
-            else:
+        parsed_result = {}
+
+        for _ in max_occurs_iter(self.max_occurs):
+            if not xmlelements:
                 break
 
-        if not self.accepts_multiple:
-            result = result[0] if result else None
-        return result
+            xmlelement = xmlelements.popleft()
+            tag_name = QName(xmlelement.tag).localname
+
+            children = list(xmlelement)
+            if children and schema:
+                child_result = {}
+                for child in children:
+                    child_qname = QName(child.tag)
+                    try:
+                        xsd_el = schema.get_element(child_qname)
+                        val = xsd_el.parse_xmlelement(
+                            child, schema=schema, allow_none=True, context=context
+                        )
+                        child_result[child_qname.localname] = val
+                    except Exception:
+                        # Deep-parse manually if schema parsing fails
+                        if list(child):  # has nested children
+                            nested = {}
+                            for sub in child:
+                                nested_qn = QName(sub.tag)
+                                nested[nested_qn.localname] = sub.text or sub
+                            child_result[child_qname.localname] = nested
+                        else:
+                            child_result[child_qname.localname] = child.text or child
+
+                parsed_result[tag_name] = child_result
+            else:
+                parsed_result[tag_name] = xmlelement.text or xmlelement
+
+        return parsed_result
+
 
     def render(self, parent, value, render_path=None):
         assert parent is not None
