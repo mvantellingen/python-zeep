@@ -78,10 +78,9 @@ class SoapBinding(Binding):
 
         # Apply ws-addressing
         if client:
-            if service is None:
-                service = client.service
-
             if not options:
+                if service is None:
+                    service = client.service
                 options = service._binding_options
 
             if operation_obj.abstract.wsa_action:
