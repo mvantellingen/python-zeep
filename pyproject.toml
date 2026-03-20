@@ -57,6 +57,7 @@ async = [
     "packaging",
 ]
 xmlsec = ["xmlsec>=0.6.1"]
+crypto = ["cryptography>=3.0"]
 
 [build-system]
 requires = ["setuptools>=40.6.0", "wheel"]
