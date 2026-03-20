@@ -24,6 +24,10 @@ xmlsec_require = [
     "xmlsec>=0.6.1",
 ]
 
+crypto_require = [
+    "cryptography>=3.0",
+]
+
 tests_require = [
     "coverage[toml]==5.2.1",
     "freezegun==0.3.15",
@@ -43,9 +47,7 @@ tests_require = [
 
 
 with open("README.rst") as fh:
-    long_description = re.sub(
-        "^.. start-no-pypi.*^.. end-no-pypi", "", fh.read(), flags=re.M | re.S
-    )
+    long_description = re.sub("^.. start-no-pypi.*^.. end-no-pypi", "", fh.read(), flags=re.M | re.S)
 
 setup(
     name="zeep",
@@ -66,6 +68,7 @@ setup(
         "test": tests_require,
         "async": async_require,
         "xmlsec": xmlsec_require,
+        "crypto": crypto_require,
     },
     entry_points={},
     package_dir={"": "src"},
