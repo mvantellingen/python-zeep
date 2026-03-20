@@ -1,6 +1,7 @@
 """Tests for zeep.wsse.crypto — pure-Python WS-Security signing."""
 
 import os
+from datetime import datetime, timezone
 
 import pytest
 from lxml import etree
@@ -296,6 +297,46 @@ def test_mixed_algorithms_sha256_digest_sha1_signature():
     assert sig_method.get("Algorithm") == crypto.SIG_RSA_SHA1
 
 
+@skip_if_no_crypto
+def test_key_identifier_thumbprint():
+    envelope = _make_envelope()
+    plugin = crypto.CryptoSignature(
+        KEY_FILE,
+        CERT_FILE,
+        key_info_style=crypto.KEY_IDENTIFIER_THUMBPRINT,
+    )
+    envelope, headers = plugin.apply(envelope, {})
+    plugin.verify(envelope)
+
+    key_identifier = envelope.xpath(
+        "//ds:KeyInfo//wsse:KeyIdentifier",
+        namespaces={"ds": ns.DS, "wsse": ns.WSSE},
+    )
+    assert len(key_identifier) == 1
+    assert key_identifier[0].get("ValueType").endswith("ThumbprintSHA1")
+    assert key_identifier[0].text
+
+
+@skip_if_no_crypto
+def test_key_identifier_ski():
+    envelope = _make_envelope()
+    plugin = crypto.CryptoSignature(
+        KEY_FILE,
+        CERT_FILE,
+        key_info_style=crypto.KEY_IDENTIFIER_SKI,
+    )
+    envelope, headers = plugin.apply(envelope, {})
+    plugin.verify(envelope)
+
+    key_identifier = envelope.xpath(
+        "//ds:KeyInfo//wsse:KeyIdentifier",
+        namespaces={"ds": ns.DS, "wsse": ns.WSSE},
+    )
+    assert len(key_identifier) == 1
+    assert key_identifier[0].get("ValueType").endswith("X509SubjectKeyIdentifier")
+    assert key_identifier[0].text
+
+
 # -----------------------------------------------------------------------
 # Signing extra elements (UsernameToken, BinarySecurityToken)
 # -----------------------------------------------------------------------
@@ -381,6 +422,25 @@ def test_inclusive_ns_prefixes():
     assert len(inc_ns_els) >= 1
     prefix_lists = [el.get("PrefixList") for el in inc_ns_els]
     assert "wsse ds" in prefix_lists or "ds wsse" in prefix_lists
+
+
+@skip_if_no_crypto
+def test_security_header_layout_xmlsec_compatible():
+    envelope = _make_envelope_with_timestamp()
+    plugin = crypto.CryptoBinarySignature(
+        KEY_FILE,
+        CERT_FILE,
+        security_header_layout="xmlsec_compatible",
+    )
+    envelope, headers = plugin.apply(envelope, {})
+    plugin.verify(envelope)
+
+    security_children = envelope.xpath(
+        "//wsse:Security/*",
+        namespaces={"wsse": ns.WSSE},
+    )
+    local_names = [QName(node.tag).localname for node in security_children]
+    assert local_names[:3] == ["Signature", "BinarySecurityToken", "Timestamp"]
 
 
 @skip_if_no_crypto
@@ -611,3 +671,25 @@ def test_verify_no_security_header_raises():
             envelope,
             crypto._load_pem_certificate(open(CERT_FILE, "rb").read()),
         )
+
+
+@skip_if_no_crypto
+def test_verify_with_timestamp_policy_expired_raises():
+    envelope = _make_envelope_with_timestamp()
+    plugin = crypto.CryptoSignature(KEY_FILE, CERT_FILE)
+    envelope, headers = plugin.apply(envelope, {})
+
+    with pytest.raises(SignatureVerificationFailed):
+        plugin.verify(
+            envelope,
+            validate_timestamp=True,
+            now=datetime(2030, 1, 1, tzinfo=timezone.utc),
+        )
+
+
+@skip_if_no_crypto
+def test_verify_with_certificate_time_policy_passes():
+    envelope = _make_envelope()
+    plugin = crypto.CryptoSignature(KEY_FILE, CERT_FILE)
+    envelope, headers = plugin.apply(envelope, {})
+    plugin.verify(envelope, validate_certificate_time=True)

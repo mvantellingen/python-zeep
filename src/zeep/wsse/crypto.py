@@ -40,6 +40,7 @@ Usage::
 
 import base64
 import hashlib
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from lxml import etree
@@ -56,6 +57,7 @@ try:
     from cryptography.hazmat.primitives.serialization.pkcs12 import (
         load_key_and_certificates,
     )
+    from cryptography.x509.oid import ExtensionOID
     from cryptography.x509 import load_der_x509_certificate, load_pem_x509_certificate
 except ImportError:
     hashes = None  # type: ignore[assignment]
@@ -78,7 +80,10 @@ DIGEST_SHA512 = "http://www.w3.org/2001/04/xmlenc#sha512"
 
 # Canonicalization
 C14N_EXCL = "http://www.w3.org/2001/10/xml-exc-c14n#"
-C14N_EXCL_NS = "http://www.w3.org/2001/10/xml-exc-c14n#"
+KEY_IDENTIFIER_SKI = "ski"
+KEY_IDENTIFIER_THUMBPRINT = "thumbprint"
+KEY_INFO_X509 = "x509"
+KEY_INFO_BINARY_REF = "binary-ref"
 
 # Mapping from URI → cryptography hash class
 _SIG_HASH_MAP = {
@@ -141,6 +146,21 @@ def _cert_base64(certificate) -> str:
     return base64.b64encode(_cert_der_bytes(certificate)).decode("ascii")
 
 
+def _cert_thumbprint_sha1_base64(certificate) -> str:
+    """Return base64(SHA1(DER(cert)))."""
+    thumbprint = hashlib.sha1(_cert_der_bytes(certificate)).digest()
+    return base64.b64encode(thumbprint).decode("ascii")
+
+
+def _cert_subject_key_identifier_base64(certificate) -> str:
+    """Return base64(subjectKeyIdentifier) from cert extension."""
+    try:
+        ski_ext = certificate.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
+    except Exception:
+        raise ValueError("Certificate does not contain SubjectKeyIdentifier extension")
+    return base64.b64encode(ski_ext.value.digest).decode("ascii")
+
+
 # ---------------------------------------------------------------------------
 # XML canonicalization and digest helpers
 # ---------------------------------------------------------------------------
@@ -192,7 +212,6 @@ def _verify_bytes(public_key, signature_bytes: bytes, data: bytes, signature_uri
 # ---------------------------------------------------------------------------
 
 DS_NS = ns.DS
-ECC14N_NS = "http://www.w3.org/2001/10/xml-exc-c14n#"
 
 
 def _ds(tag):
@@ -200,7 +219,7 @@ def _ds(tag):
 
 
 def _ec(tag):
-    return QName(ECC14N_NS, tag)
+    return QName(C14N_EXCL, tag)
 
 
 def _wsse(tag):
@@ -386,6 +405,38 @@ def _add_key_info_binary_ref(sig_el, bintok_id):
     return key_info
 
 
+def _add_key_info_key_identifier(sig_el, certificate, identifier_type: str):
+    """Add wsse:KeyIdentifier in SecurityTokenReference."""
+    key_info = etree.SubElement(sig_el, _ds("KeyInfo"))
+    sec_token_ref = etree.SubElement(key_info, _wsse("SecurityTokenReference"))
+
+    if identifier_type == KEY_IDENTIFIER_THUMBPRINT:
+        value_type = (
+            "http://docs.oasis-open.org/wss/oasis-wss-soap-message-security-1.1#ThumbprintSHA1"
+        )
+        value = _cert_thumbprint_sha1_base64(certificate)
+    elif identifier_type == KEY_IDENTIFIER_SKI:
+        value_type = (
+            "http://docs.oasis-open.org/wss/2004/01/"
+            "oasis-200401-wss-x509-token-profile-1.0#X509SubjectKeyIdentifier"
+        )
+        value = _cert_subject_key_identifier_base64(certificate)
+    else:
+        raise ValueError(f"Unsupported key identifier type: {identifier_type}")
+
+    key_id = etree.SubElement(
+        sec_token_ref,
+        _wsse("KeyIdentifier"),
+        ValueType=value_type,
+        EncodingType=(
+            "http://docs.oasis-open.org/wss/2004/01/"
+            "oasis-200401-wss-soap-message-security-1.0#Base64Binary"
+        ),
+    )
+    key_id.text = value
+    return key_info
+
+
 def _add_binary_security_token(security, certificate):
     """Insert a ``BinarySecurityToken`` into the security header and return it."""
     bintok = etree.Element(
@@ -402,6 +453,38 @@ def _add_binary_security_token(security, certificate):
     # Insert at position 0 (before Signature, Timestamp, etc.)
     security.insert(0, bintok)
     return bintok
+
+
+def _reorder_security_children(security: etree._Element, layout: str):
+    """Reorder wsse:Security direct children for interop-sensitive layouts."""
+    if layout == "append":
+        return
+
+    layout_map = {
+        "xmlsec_compatible": ["Signature", "BinarySecurityToken", "Timestamp"],
+        "signature_first": ["Signature", "Timestamp", "BinarySecurityToken"],
+        "timestamp_first": ["Timestamp", "BinarySecurityToken", "Signature"],
+        "binary_first": ["BinarySecurityToken", "Timestamp", "Signature"],
+    }
+    priority = layout_map.get(layout)
+    if priority is None:
+        raise ValueError(f"Unsupported security_header_layout: {layout}")
+
+    indexed = list(enumerate(list(security)))
+    ranked = sorted(
+        indexed,
+        key=lambda item: (
+            priority.index(QName(item[1].tag).localname)
+            if QName(item[1].tag).localname in priority
+            else len(priority),
+            item[0],
+        ),
+    )
+
+    for child in list(security):
+        security.remove(child)
+    for _, child in ranked:
+        security.append(child)
 
 
 # ---------------------------------------------------------------------------
@@ -492,6 +575,69 @@ def _verify_envelope(envelope, certificate):
             raise SignatureVerificationFailed(f"Digest mismatch for element {ref_id}")
 
 
+def _parse_xs_datetime(value: str) -> datetime:
+    value = value.strip()
+    if value.endswith("Z"):
+        value = value[:-1] + "+00:00"
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _validate_timestamp_policy(
+    envelope: etree._Element,
+    now: Optional[datetime] = None,
+    clock_skew_seconds: int = 0,
+):
+    """Validate Timestamp freshness semantics (Created/Expires)."""
+    soap_env = detect_soap_env(envelope)
+    header = envelope.find(QName(soap_env, "Header"))
+    if header is None:
+        raise SignatureVerificationFailed("No SOAP Header found")
+    security = header.find(QName(ns.WSSE, "Security"))
+    if security is None:
+        raise SignatureVerificationFailed("No wsse:Security header found")
+    timestamp = security.find(QName(ns.WSU, "Timestamp"))
+    if timestamp is None:
+        raise SignatureVerificationFailed("No wsu:Timestamp found")
+
+    created_el = timestamp.find(QName(ns.WSU, "Created"))
+    expires_el = timestamp.find(QName(ns.WSU, "Expires"))
+    if created_el is None or created_el.text is None:
+        raise SignatureVerificationFailed("Timestamp missing wsu:Created")
+    if expires_el is None or expires_el.text is None:
+        raise SignatureVerificationFailed("Timestamp missing wsu:Expires")
+
+    created = _parse_xs_datetime(created_el.text)
+    expires = _parse_xs_datetime(expires_el.text)
+    if expires < created:
+        raise SignatureVerificationFailed("Timestamp has Expires earlier than Created")
+
+    now = now or datetime.now(timezone.utc)
+    skew = abs(int(clock_skew_seconds))
+    if created.timestamp() - skew > now.timestamp():
+        raise SignatureVerificationFailed("Timestamp Created is in the future")
+    if expires.timestamp() + skew < now.timestamp():
+        raise SignatureVerificationFailed("Timestamp has expired")
+
+
+def _validate_certificate_time(certificate, now: Optional[datetime] = None):
+    """Validate certificate validity period against current time."""
+    now = now or datetime.now(timezone.utc)
+    not_before = getattr(certificate, "not_valid_before_utc", None)
+    not_after = getattr(certificate, "not_valid_after_utc", None)
+    if not_before is None:
+        not_before = certificate.not_valid_before.replace(tzinfo=timezone.utc)
+    if not_after is None:
+        not_after = certificate.not_valid_after.replace(tzinfo=timezone.utc)
+
+    if now < not_before:
+        raise SignatureVerificationFailed("Certificate is not yet valid")
+    if now > not_after:
+        raise SignatureVerificationFailed("Certificate has expired")
+
+
 # ---------------------------------------------------------------------------
 # Public API — classes
 # ---------------------------------------------------------------------------
@@ -539,14 +685,47 @@ class CryptoMemorySignature:
         sign_binary_security_token: bool = False,
         inclusive_ns_prefixes: Optional[Dict[str, List[str]]] = None,
         c14n_inclusive_prefixes: Optional[List[str]] = None,
+        key_info_style: str = KEY_INFO_X509,
+        security_header_layout: str = "append",
     ):
         _check_crypto_import()
 
         if isinstance(password, str):
             password = password.encode("utf-8")
 
-        self.private_key = _load_pem_private_key(key_data, password)
-        self.certificate = _load_pem_certificate(cert_data)
+        private_key = _load_pem_private_key(key_data, password)
+        certificate = _load_pem_certificate(cert_data)
+        self._configure(
+            private_key,
+            certificate,
+            signature_method=signature_method,
+            digest_method=digest_method,
+            sign_timestamp=sign_timestamp,
+            sign_username_token=sign_username_token,
+            sign_binary_security_token=sign_binary_security_token,
+            inclusive_ns_prefixes=inclusive_ns_prefixes,
+            c14n_inclusive_prefixes=c14n_inclusive_prefixes,
+            key_info_style=key_info_style,
+            security_header_layout=security_header_layout,
+        )
+
+    def _configure(
+        self,
+        private_key,
+        certificate,
+        signature_method: str = SIG_RSA_SHA1,
+        digest_method: str = DIGEST_SHA1,
+        sign_timestamp: bool = True,
+        sign_username_token: bool = False,
+        sign_binary_security_token: bool = False,
+        inclusive_ns_prefixes: Optional[Dict[str, List[str]]] = None,
+        c14n_inclusive_prefixes: Optional[List[str]] = None,
+        key_info_style: str = KEY_INFO_X509,
+        security_header_layout: str = "append",
+    ):
+        """Assign all signing-related attributes."""
+        self.private_key = private_key
+        self.certificate = certificate
         self.signature_method = signature_method
         self.digest_method = digest_method
         self.sign_timestamp = sign_timestamp
@@ -554,6 +733,8 @@ class CryptoMemorySignature:
         self.sign_binary_security_token = sign_binary_security_token
         self.inclusive_ns_prefixes = inclusive_ns_prefixes
         self.c14n_inclusive_prefixes = c14n_inclusive_prefixes
+        self.key_info_style = key_info_style
+        self.security_header_layout = security_header_layout
 
     def _sign(self, envelope):
         """Sign the envelope and add KeyInfo with X509Data."""
@@ -569,15 +750,38 @@ class CryptoMemorySignature:
             inclusive_ns_prefixes=self.inclusive_ns_prefixes,
             c14n_inclusive_prefixes=self.c14n_inclusive_prefixes,
         )
-        _add_key_info_x509(sig_el, self.certificate)
+        if self.key_info_style == KEY_INFO_X509:
+            _add_key_info_x509(sig_el, self.certificate)
+        elif self.key_info_style in (KEY_IDENTIFIER_SKI, KEY_IDENTIFIER_THUMBPRINT):
+            _add_key_info_key_identifier(sig_el, self.certificate, self.key_info_style)
+        else:
+            raise ValueError(f"Unsupported key_info_style: {self.key_info_style}")
+
+        security = get_security_header(envelope)
+        _reorder_security_children(security, self.security_header_layout)
         return sig_el
 
     def apply(self, envelope, headers):
         self._sign(envelope)
         return envelope, headers
 
-    def verify(self, envelope):
+    def verify(
+        self,
+        envelope,
+        validate_timestamp: bool = False,
+        clock_skew_seconds: int = 0,
+        validate_certificate_time: bool = False,
+        now: Optional[datetime] = None,
+    ):
         _verify_envelope(envelope, self.certificate)
+        if validate_timestamp:
+            _validate_timestamp_policy(
+                envelope,
+                now=now,
+                clock_skew_seconds=clock_skew_seconds,
+            )
+        if validate_certificate_time:
+            _validate_certificate_time(self.certificate, now=now)
         return envelope
 
 
@@ -647,6 +851,7 @@ class CryptoBinaryMemorySignature(CryptoMemorySignature):
             c14n_inclusive_prefixes=self.c14n_inclusive_prefixes,
         )
         _add_key_info_binary_ref(sig_el, bintok_id)
+        _reorder_security_children(security, self.security_header_layout)
         return sig_el
 
 
@@ -713,15 +918,13 @@ class CryptoBinarySignature(CryptoBinaryMemorySignature):
         private_key, certificate, _ = _load_pkcs12(p12_data, password)
 
         instance = cls.__new__(cls)
-        instance.private_key = private_key
-        instance.certificate = certificate
-        instance.signature_method = signature_method
-        instance.digest_method = digest_method
-        instance.sign_timestamp = kwargs.get("sign_timestamp", True)
-        instance.sign_username_token = kwargs.get("sign_username_token", False)
-        instance.sign_binary_security_token = kwargs.get("sign_binary_security_token", False)
-        instance.inclusive_ns_prefixes = kwargs.get("inclusive_ns_prefixes")
-        instance.c14n_inclusive_prefixes = kwargs.get("c14n_inclusive_prefixes")
+        instance._configure(
+            private_key,
+            certificate,
+            signature_method=signature_method,
+            digest_method=digest_method,
+            **kwargs,
+        )
         return instance
 
 
@@ -752,12 +955,10 @@ class PKCS12Signature(CryptoMemorySignature):
         p12_data = _read_file(p12_file)
         private_key, certificate, _ = _load_pkcs12(p12_data, password)
 
-        self.private_key = private_key
-        self.certificate = certificate
-        self.signature_method = signature_method
-        self.digest_method = digest_method
-        self.sign_timestamp = kwargs.get("sign_timestamp", True)
-        self.sign_username_token = kwargs.get("sign_username_token", False)
-        self.sign_binary_security_token = kwargs.get("sign_binary_security_token", False)
-        self.inclusive_ns_prefixes = kwargs.get("inclusive_ns_prefixes")
-        self.c14n_inclusive_prefixes = kwargs.get("c14n_inclusive_prefixes")
+        self._configure(
+            private_key,
+            certificate,
+            signature_method=signature_method,
+            digest_method=digest_method,
+            **kwargs,
+        )
