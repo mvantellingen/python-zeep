@@ -7,7 +7,7 @@
 A Python SOAP client
 
 ## Highlights:
-- Compatible with Python 3.9, 3.10, 3.11, 3.12, 3.13 and PyPy3
+- Compatible with Python 3.10, 3.11, 3.12, 3.13, 3.14 and PyPy3
 - Built on top of lxml, requests, and httpx
 - Support for Soap 1.1, Soap 1.2, and HTTP bindings
 - Support for WS-Addressing headers
