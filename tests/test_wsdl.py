@@ -1268,6 +1268,78 @@ def test_import_cyclic():
     )
 
 
+def test_import_schema_without_namespace_and_header():
+    """An xsd:import with schemaLocation but no namespace attribute that
+    points to a schema without targetNamespace should not inherit the
+    parent schema's targetNamespace.  When the imported element is used
+    in a soap:header binding, the unqualified QName must still resolve.
+    """
+    xsd_content = (
+        b'<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+        b'<xs:element name="Header" type="xs:string"/>'
+        b"</xs:schema>"
+    )
+
+    wsdl_main = StringIO(
+        """\
+    <wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:tns="http://tests.python-zeep.org/tns"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://tests.python-zeep.org/tns" name="TestService">
+      <wsdl:types>
+        <xsd:schema targetNamespace="http://tests.python-zeep.org/tns">
+          <xsd:import schemaLocation="http://tests.python-zeep.org/header.xsd"/>
+          <xsd:element name="Request" type="xsd:string"/>
+        </xsd:schema>
+      </wsdl:types>
+      <wsdl:message name="InputMsg">
+        <wsdl:part name="body" element="tns:Request"/>
+      </wsdl:message>
+      <wsdl:message name="HeaderMsg">
+        <wsdl:part name="h" element="Header"/>
+      </wsdl:message>
+      <wsdl:portType name="TestPort">
+        <wsdl:operation name="Op">
+          <wsdl:input message="tns:InputMsg"/>
+          <wsdl:output message="tns:InputMsg"/>
+        </wsdl:operation>
+      </wsdl:portType>
+      <wsdl:binding name="TestBinding" type="tns:TestPort">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="Op">
+          <soap:operation soapAction="Op"/>
+          <wsdl:input>
+            <soap:body use="literal"/>
+            <soap:header message="tns:HeaderMsg" part="h" use="literal"/>
+          </wsdl:input>
+          <wsdl:output>
+            <soap:body use="literal"/>
+          </wsdl:output>
+        </wsdl:operation>
+      </wsdl:binding>
+      <wsdl:service name="TestService">
+        <wsdl:port name="TestPort" binding="tns:TestBinding">
+          <soap:address location="http://tests.python-zeep.org/endpoint"/>
+        </wsdl:port>
+      </wsdl:service>
+    </wsdl:definitions>
+    """
+    )
+
+    transport = DummyTransport()
+    transport.bind("http://tests.python-zeep.org/header.xsd", xsd_content)
+
+    document = wsdl.Document(
+        wsdl_main, transport, "http://tests.python-zeep.org/test.wsdl"
+    )
+
+    service = document.services.get("TestService")
+    assert service is not None
+    port = service.ports.get("TestPort")
+    assert port is not None
+
+
 def test_import_no_location():
     node_a = etree.fromstring(
         """
