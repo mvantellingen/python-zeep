@@ -14,10 +14,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: 3.12
+        python-version: "3.13"
 
     - name: Install dependencies
       run: pip install tox
@@ -32,10 +32,10 @@ jobs:
       max-parallel: 4
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         # # TODO: Remove Windows exclusion when binary wheel available for lxml
         # exclude:
-        #   - { platform: windows-latest, python-version: "3.11" }
+        #   - { platform: windows-latest, python-version: "3.14" }
 
 
     steps:
@@ -89,10 +89,10 @@ jobs:
         merge-multiple: true
         path: .
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: 3.12
+        python-version: "3.13"
 
     - name: Install dependencies
       run: |
