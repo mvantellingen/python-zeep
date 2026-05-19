@@ -492,7 +492,48 @@ def _reorder_security_children(security: etree._Element, layout: str):
 # ---------------------------------------------------------------------------
 
 
-def _verify_envelope(envelope, certificate):
+def _binary_security_token_id(bintok: etree._Element) -> Optional[str]:
+    return bintok.get(QName(ns.WSU, "Id")) or bintok.get("Id")
+
+
+def _resolve_binary_security_token(envelope, sig_el: etree._Element) -> etree._Element:
+    """Resolve the BinarySecurityToken referenced by the signature KeyInfo."""
+    key_info = sig_el.find(QName(ns.DS, "KeyInfo"))
+    if key_info is None:
+        raise SignatureVerificationFailed("No ds:KeyInfo found in Signature")
+
+    references = key_info.xpath(".//wsse:Reference", namespaces={"wsse": ns.WSSE})
+    for reference in references:
+        uri = reference.get("URI", "")
+        if not uri.startswith("#"):
+            continue
+
+        token_id = uri[1:]
+        for bintok in envelope.xpath(
+            "//wsse:BinarySecurityToken",
+            namespaces={"wsse": ns.WSSE},
+        ):
+            if _binary_security_token_id(bintok) == token_id:
+                return bintok
+
+    raise SignatureVerificationFailed("Referenced wsse:BinarySecurityToken not found")
+
+
+def _load_certificate_from_binary_security_token(envelope, sig_el: etree._Element):
+    """Load the DER X.509 certificate embedded in the signature's BinarySecurityToken."""
+    bintok = _resolve_binary_security_token(envelope, sig_el)
+    if not bintok.text:
+        raise SignatureVerificationFailed("wsse:BinarySecurityToken is empty")
+
+    try:
+        token_text = "".join(bintok.text.split())
+        cert_der = base64.b64decode(token_text, validate=True)
+        return load_der_x509_certificate(cert_der)
+    except Exception:
+        raise SignatureVerificationFailed("Invalid wsse:BinarySecurityToken certificate")
+
+
+def _verify_envelope(envelope, certificate, use_binary_security_token: bool = False):
     """Verify a signed SOAP envelope using the given certificate."""
     soap_env = detect_soap_env(envelope)
     header = envelope.find(QName(soap_env, "Header"))
@@ -511,6 +552,9 @@ def _verify_envelope(envelope, certificate):
     sig_value_el = sig_el.find(QName(ns.DS, "SignatureValue"))
     if signed_info is None or sig_value_el is None:
         raise SignatureVerificationFailed("Malformed Signature element")
+
+    if use_binary_security_token:
+        certificate = _load_certificate_from_binary_security_token(envelope, sig_el)
 
     # Determine signature algorithm
     sig_method_el = signed_info.find(QName(ns.DS, "SignatureMethod"))
@@ -573,6 +617,8 @@ def _verify_envelope(envelope, certificate):
 
         if computed_digest != expected_digest:
             raise SignatureVerificationFailed(f"Digest mismatch for element {ref_id}")
+
+    return certificate
 
 
 def _parse_xs_datetime(value: str) -> datetime:
@@ -667,6 +713,8 @@ class CryptoMemorySignature:
         Sign the ``wsse:UsernameToken`` element if present (default False).
     sign_binary_security_token : bool
         Sign the ``wsse:BinarySecurityToken`` if present (default False).
+    timestamp_token : lxml Element, optional
+        ``wsu:Timestamp`` element to append to ``wsse:Security`` before signing.
     inclusive_ns_prefixes : dict, optional
         Element-name → prefix-list mapping for exclusive C14N.
     c14n_inclusive_prefixes : list, optional
@@ -687,6 +735,7 @@ class CryptoMemorySignature:
         c14n_inclusive_prefixes: Optional[List[str]] = None,
         key_info_style: str = KEY_INFO_X509,
         security_header_layout: str = "append",
+        timestamp_token: Optional[etree._Element] = None,
     ):
         _check_crypto_import()
 
@@ -707,6 +756,7 @@ class CryptoMemorySignature:
             c14n_inclusive_prefixes=c14n_inclusive_prefixes,
             key_info_style=key_info_style,
             security_header_layout=security_header_layout,
+            timestamp_token=timestamp_token,
         )
 
     def _configure(
@@ -722,6 +772,7 @@ class CryptoMemorySignature:
         c14n_inclusive_prefixes: Optional[List[str]] = None,
         key_info_style: str = KEY_INFO_X509,
         security_header_layout: str = "append",
+        timestamp_token: Optional[etree._Element] = None,
     ):
         """Assign all signing-related attributes."""
         self.private_key = private_key
@@ -735,9 +786,17 @@ class CryptoMemorySignature:
         self.c14n_inclusive_prefixes = c14n_inclusive_prefixes
         self.key_info_style = key_info_style
         self.security_header_layout = security_header_layout
+        self.timestamp_token = timestamp_token
+
+    def _append_timestamp_token(self, envelope):
+        if self.timestamp_token is None:
+            return
+        security = get_security_header(envelope)
+        security.append(self.timestamp_token)
 
     def _sign(self, envelope):
         """Sign the envelope and add KeyInfo with X509Data."""
+        self._append_timestamp_token(envelope)
         sig_el = _sign_envelope(
             envelope,
             self.private_key,
@@ -771,9 +830,14 @@ class CryptoMemorySignature:
         validate_timestamp: bool = False,
         clock_skew_seconds: int = 0,
         validate_certificate_time: bool = False,
+        use_binary_security_token: bool = False,
         now: Optional[datetime] = None,
     ):
-        _verify_envelope(envelope, self.certificate)
+        certificate = _verify_envelope(
+            envelope,
+            self.certificate,
+            use_binary_security_token=use_binary_security_token,
+        )
         if validate_timestamp:
             _validate_timestamp_policy(
                 envelope,
@@ -781,7 +845,7 @@ class CryptoMemorySignature:
                 clock_skew_seconds=clock_skew_seconds,
             )
         if validate_certificate_time:
-            _validate_certificate_time(self.certificate, now=now)
+            _validate_certificate_time(certificate, now=now)
         return envelope
 
 
@@ -835,6 +899,7 @@ class CryptoBinaryMemorySignature(CryptoMemorySignature):
 
     def _sign(self, envelope):
         security = get_security_header(envelope)
+        self._append_timestamp_token(envelope)
         bintok = _add_binary_security_token(security, self.certificate)
         bintok_id = bintok.get(QName(ns.WSU, "Id"))
 

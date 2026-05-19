@@ -105,6 +105,15 @@ def _make_envelope_with_username_token():
     )
 
 
+def _make_timestamp_token():
+    timestamp = etree.Element(QName(ns.WSU, "Timestamp"), nsmap={"wsu": ns.WSU})
+    created = etree.SubElement(timestamp, QName(ns.WSU, "Created"))
+    created.text = "2025-01-01T00:00:00Z"
+    expires = etree.SubElement(timestamp, QName(ns.WSU, "Expires"))
+    expires.text = "2025-01-01T01:00:00Z"
+    return timestamp
+
+
 # -----------------------------------------------------------------------
 # Basic signing & verification
 # -----------------------------------------------------------------------
@@ -233,6 +242,58 @@ class TestCryptoBinarySignature:
 
         with pytest.raises(SignatureVerificationFailed):
             plugin.verify(envelope)
+
+    def test_verify_with_binary_security_token_opt_in(self):
+        envelope = _make_envelope()
+        signer = crypto.CryptoBinarySignature(KEY_FILE, CERT_FILE)
+        envelope, headers = signer.apply(envelope, {})
+
+        verifier = crypto.CryptoSignature(COMBINED_PEM, COMBINED_PEM)
+        with pytest.raises(SignatureVerificationFailed):
+            verifier.verify(envelope)
+
+        verifier.verify(envelope, use_binary_security_token=True)
+
+    def test_verify_with_binary_security_token_fails_on_tampered_body(self):
+        envelope = _make_envelope()
+        signer = crypto.CryptoBinarySignature(KEY_FILE, CERT_FILE)
+        envelope, headers = signer.apply(envelope, {})
+
+        nsmap = {"tns": "http://tests.python-zeep.org/"}
+        for elm in envelope.xpath("//tns:Argument", namespaces=nsmap):
+            elm.text = "TAMPERED"
+
+        verifier = crypto.CryptoSignature(COMBINED_PEM, COMBINED_PEM)
+        with pytest.raises(SignatureVerificationFailed):
+            verifier.verify(envelope, use_binary_security_token=True)
+
+    def test_verify_with_binary_security_token_missing_token_raises(self):
+        envelope = _make_envelope()
+        signer = crypto.CryptoBinarySignature(KEY_FILE, CERT_FILE)
+        envelope, headers = signer.apply(envelope, {})
+
+        bintok = envelope.xpath(
+            "//wsse:BinarySecurityToken",
+            namespaces={"wsse": ns.WSSE},
+        )[0]
+        bintok.getparent().remove(bintok)
+
+        with pytest.raises(SignatureVerificationFailed):
+            signer.verify(envelope, use_binary_security_token=True)
+
+    def test_verify_with_binary_security_token_malformed_token_raises(self):
+        envelope = _make_envelope()
+        signer = crypto.CryptoBinarySignature(KEY_FILE, CERT_FILE)
+        envelope, headers = signer.apply(envelope, {})
+
+        bintok = envelope.xpath(
+            "//wsse:BinarySecurityToken",
+            namespaces={"wsse": ns.WSSE},
+        )[0]
+        bintok.text = "not-base64"
+
+        with pytest.raises(SignatureVerificationFailed):
+            signer.verify(envelope, use_binary_security_token=True)
 
 
 # -----------------------------------------------------------------------
@@ -634,6 +695,25 @@ def test_sign_timestamp_disabled():
 
     refs = envelope.xpath("//ds:Reference", namespaces={"ds": ns.DS})
     assert len(refs) == 1  # Body only
+
+
+@skip_if_no_crypto
+def test_timestamp_token_is_appended_and_signed():
+    """A provided Timestamp token is appended before signing."""
+    envelope = _make_envelope()
+    plugin = crypto.CryptoSignature(
+        KEY_FILE,
+        CERT_FILE,
+        timestamp_token=_make_timestamp_token(),
+    )
+    envelope, headers = plugin.apply(envelope, {})
+    plugin.verify(envelope)
+
+    timestamps = envelope.xpath("//wsu:Timestamp", namespaces={"wsu": ns.WSU})
+    assert len(timestamps) == 1
+
+    refs = envelope.xpath("//ds:Reference", namespaces={"ds": ns.DS})
+    assert len(refs) == 2  # Body + appended Timestamp
 
 
 @skip_if_no_crypto
