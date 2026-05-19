@@ -6,11 +6,11 @@ from datetime import datetime, timezone
 import pytest
 from lxml import etree
 from lxml.etree import QName
-from zeep import ns
-from zeep.exceptions import SignatureVerificationFailed
-from zeep.wsse import crypto
 
 from tests.utils import load_xml
+from zeep import ns
+from zeep.exceptions import SignatureVerificationFailed
+from zeep.wsse import Compose, crypto
 
 TESTS_DIR = os.path.dirname(os.path.realpath(__file__))
 KEY_FILE = os.path.join(TESTS_DIR, "test_key.pem")
@@ -253,6 +253,14 @@ class TestCryptoBinarySignature:
             verifier.verify(envelope)
 
         verifier.verify(envelope, use_binary_security_token=True)
+
+        configured_verifier = crypto.CryptoSignature(
+            COMBINED_PEM,
+            COMBINED_PEM,
+            use_binary_security_token=True,
+        )
+        configured_verifier.verify(envelope)
+        Compose([configured_verifier]).verify(envelope)
 
     def test_verify_with_binary_security_token_fails_on_tampered_body(self):
         envelope = _make_envelope()

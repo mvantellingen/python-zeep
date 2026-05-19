@@ -57,8 +57,8 @@ try:
     from cryptography.hazmat.primitives.serialization.pkcs12 import (
         load_key_and_certificates,
     )
-    from cryptography.x509.oid import ExtensionOID
     from cryptography.x509 import load_der_x509_certificate, load_pem_x509_certificate
+    from cryptography.x509.oid import ExtensionOID
 except ImportError:
     hashes = None  # type: ignore[assignment]
 
@@ -715,6 +715,9 @@ class CryptoMemorySignature:
         Sign the ``wsse:BinarySecurityToken`` if present (default False).
     timestamp_token : lxml Element, optional
         ``wsu:Timestamp`` element to append to ``wsse:Security`` before signing.
+    use_binary_security_token : bool
+        Use the response ``wsse:BinarySecurityToken`` certificate when verifying
+        signatures (default False).
     inclusive_ns_prefixes : dict, optional
         Element-name → prefix-list mapping for exclusive C14N.
     c14n_inclusive_prefixes : list, optional
@@ -736,6 +739,7 @@ class CryptoMemorySignature:
         key_info_style: str = KEY_INFO_X509,
         security_header_layout: str = "append",
         timestamp_token: Optional[etree._Element] = None,
+        use_binary_security_token: bool = False,
     ):
         _check_crypto_import()
 
@@ -757,6 +761,7 @@ class CryptoMemorySignature:
             key_info_style=key_info_style,
             security_header_layout=security_header_layout,
             timestamp_token=timestamp_token,
+            use_binary_security_token=use_binary_security_token,
         )
 
     def _configure(
@@ -773,6 +778,7 @@ class CryptoMemorySignature:
         key_info_style: str = KEY_INFO_X509,
         security_header_layout: str = "append",
         timestamp_token: Optional[etree._Element] = None,
+        use_binary_security_token: bool = False,
     ):
         """Assign all signing-related attributes."""
         self.private_key = private_key
@@ -787,6 +793,7 @@ class CryptoMemorySignature:
         self.key_info_style = key_info_style
         self.security_header_layout = security_header_layout
         self.timestamp_token = timestamp_token
+        self.use_binary_security_token = use_binary_security_token
 
     def _append_timestamp_token(self, envelope):
         if self.timestamp_token is None:
@@ -830,9 +837,12 @@ class CryptoMemorySignature:
         validate_timestamp: bool = False,
         clock_skew_seconds: int = 0,
         validate_certificate_time: bool = False,
-        use_binary_security_token: bool = False,
+        use_binary_security_token: Optional[bool] = None,
         now: Optional[datetime] = None,
     ):
+        if use_binary_security_token is None:
+            use_binary_security_token = self.use_binary_security_token
+
         certificate = _verify_envelope(
             envelope,
             self.certificate,
