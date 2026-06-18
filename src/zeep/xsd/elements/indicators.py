@@ -358,7 +358,6 @@ class Choice(OrderIndicator):
             # Choose out of multiple
             options = []
             for element_name, element in self.elements_nested:
-
                 local_xmlelements = copy.copy(xmlelements)
 
                 try:

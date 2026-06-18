@@ -5,9 +5,8 @@ install:
 	pip install bumpversion twine wheel
 
 lint:
-	flake8 src/
-	flake8 --ignore=E501 tests/
-	isort --recursive --check-only --diff src tests
+	ruff check src tests
+	ruff format --check src tests
 
 clean:
 	find . -name '*.pyc' -delete
@@ -23,8 +22,8 @@ coverage:
 	pytest --cov=zeep --cov-report=term-missing --cov-report=html
 
 format:
-	isort src tests setup.py
-	black src/ tests/ setup.py
+	ruff check --fix src tests
+	ruff format src tests
 
 docs:
 	$(MAKE) -C docs html
