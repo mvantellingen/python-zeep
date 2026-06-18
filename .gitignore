@@ -2,13 +2,13 @@ env/
 *.egg-info
 *.pyc
 __pycache__
-.tox
 .coverage
 .coverage.*
 .eggs
 .cache
 .python-version
 .venv
+.venv-py*
 .idea/
 /build/
 /dist/

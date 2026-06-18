@@ -36,7 +36,14 @@ Changelog = "https://github.com/mvantellingen/python-zeep/blob/main/CHANGES"
 
 [project.optional-dependencies]
 docs = ["sphinx>=1.4.0"]
-test = [
+async = [
+    "httpx>=0.15.0",
+    "packaging",
+]
+xmlsec = ["xmlsec>=0.6.1"]
+
+[dependency-groups]
+dev = [
     "coverage[toml]==7.14.1",
     "freezegun==1.5.1",
     "pretend==1.0.9",
@@ -47,11 +54,6 @@ test = [
     "requests_mock==1.12.1",
     "ruff==0.15.17",
 ]
-async = [
-    "httpx>=0.15.0",
-    "packaging",
-]
-xmlsec = ["xmlsec>=0.6.1"]
 
 [build-system]
 requires = ["setuptools>=40.6.0", "wheel"]
