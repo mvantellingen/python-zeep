@@ -558,15 +558,15 @@ def test_xsd_choice_with_references():
               <xsd:element name="el2" type="xsd:string"/>
 
               <xsd:element name="container">
-        		<xsd:complexType>
-        			<xsd:sequence>
-        				<xsd:choice>
-        					<xsd:element ref="zeep:el1"/>
-        					<xsd:element ref="zeep:el2"/>
-        					<xsd:element name="el3" type="xsd:string"/>
-        				</xsd:choice>
-        			</xsd:sequence>
-        		</xsd:complexType>
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:choice>
+                            <xsd:element ref="zeep:el1"/>
+                            <xsd:element ref="zeep:el2"/>
+                            <xsd:element name="el3" type="xsd:string"/>
+                        </xsd:choice>
+                    </xsd:sequence>
+                </xsd:complexType>
               </xsd:element>
 
              </xsd:schema>

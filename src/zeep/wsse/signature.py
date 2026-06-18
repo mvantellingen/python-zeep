@@ -244,7 +244,7 @@ def _signature_prepare(envelope, key, signature_method, digest_method):
     ctx.key = key
     _sign_node(ctx, signature, envelope.find(QName(soap_env, "Body")), digest_method)
     timestamp = security.find(QName(ns.WSU, "Timestamp"))
-    if timestamp != None:
+    if timestamp is not None:
         _sign_node(ctx, signature, timestamp, digest_method)
     ctx.sign(signature)
 

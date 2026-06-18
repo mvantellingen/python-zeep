@@ -52,7 +52,7 @@ class ComplexType(AnyType):
         qname=None,
         is_global: bool = False,
     ):
-        if element and type(element) == list:
+        if element and type(element) is list:
             element = Sequence(element)
 
         self.name = self.__class__.__name__ if qname else None

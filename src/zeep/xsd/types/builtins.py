@@ -1,6 +1,5 @@
 import base64
 import datetime
-import math
 import re
 from decimal import Decimal as _Decimal
 
