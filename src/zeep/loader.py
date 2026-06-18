@@ -5,18 +5,26 @@ from urllib.parse import urljoin, urlparse, urlunparse
 from lxml import etree
 from lxml.etree import Resolver, XMLParser, XMLSyntaxError, fromstring
 
-from zeep.exceptions import DTDForbidden, EntitiesForbidden, XMLSyntaxError
+from zeep.exceptions import (
+    DTDForbidden,
+    EntitiesForbidden,
+    ExternalReferenceForbidden,
+    XMLSyntaxError,
+)
 from zeep.settings import Settings
 
 
 class ImportResolver(Resolver):
     """Custom lxml resolve to use the transport object"""
 
-    def __init__(self, transport):
+    def __init__(self, transport, settings=None):
         self.transport = transport
+        self.settings = settings or Settings()
 
     def resolve(self, url, pubid, context):
         if urlparse(url).scheme in ("http", "https"):
+            if self.settings.forbid_external:
+                raise ExternalReferenceForbidden(url)
             content = self.transport.load(url)
             return self.resolve_string(content, context)
 
@@ -45,7 +53,7 @@ def parse_xml(content: str, transport, base_url=None, settings=None):
         recover=recover,
         huge_tree=settings.xml_huge_tree,
     )
-    parser.resolvers.add(ImportResolver(transport))
+    parser.resolvers.add(ImportResolver(transport, settings))
     try:
         elementtree = fromstring(content, parser=parser, base_url=base_url)
         docinfo = elementtree.getroottree().docinfo
@@ -69,7 +77,12 @@ def parse_xml(content: str, transport, base_url=None, settings=None):
 
 
 def load_external(
-    url: typing.Union[typing.IO, str], transport, base_url=None, settings=None
+    url: typing.Union[typing.IO, str],
+    transport,
+    base_url=None,
+    settings=None,
+    *,
+    _initial: bool = False,
 ):
     """Load an external XML document.
 
@@ -78,6 +91,9 @@ def load_external(
     :param base_url:
     :param settings: A zeep.settings.Settings object containing parse settings.
     :type settings: zeep.settings.Settings
+    :param _initial: Internal flag set by zeep when loading the user-supplied
+      entry-point document; transitive imports leave it False so that
+      ``settings.forbid_external`` can block them.
 
     """
     settings = settings or Settings()
@@ -86,11 +102,21 @@ def load_external(
     else:
         if base_url:
             url = absolute_location(url, base_url)
+        if not _initial and settings.forbid_external:
+            if urlparse(str(url)).scheme in ("http", "https"):
+                raise ExternalReferenceForbidden(url)
         content = transport.load(url)
     return parse_xml(content, transport, base_url, settings=settings)
 
 
-async def load_external_async(url: typing.IO, transport, base_url=None, settings=None):
+async def load_external_async(
+    url: typing.IO,
+    transport,
+    base_url=None,
+    settings=None,
+    *,
+    _initial: bool = False,
+):
     """Load an external XML document.
 
     :param url:
@@ -98,6 +124,9 @@ async def load_external_async(url: typing.IO, transport, base_url=None, settings
     :param base_url:
     :param settings: A zeep.settings.Settings object containing parse settings.
     :type settings: zeep.settings.Settings
+    :param _initial: Internal flag set by zeep when loading the user-supplied
+      entry-point document; transitive imports leave it False so that
+      ``settings.forbid_external`` can block them.
 
     """
     settings = settings or Settings()
@@ -106,6 +135,9 @@ async def load_external_async(url: typing.IO, transport, base_url=None, settings
     else:
         if base_url:
             url = absolute_location(url, base_url)
+        if not _initial and settings.forbid_external:
+            if urlparse(str(url)).scheme in ("http", "https"):
+                raise ExternalReferenceForbidden(url)
         content = await transport.load(url)
     return parse_xml(content, transport, base_url, settings=settings)
 

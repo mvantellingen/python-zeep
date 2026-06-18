@@ -19,9 +19,15 @@ class Settings:
     :type forbid_dtd: bool
     :param forbid_entities: disallow XML with <!ENTITY> declarations inside the DTD
     :type forbid_entities: bool
-    :param forbid_external: disallow any access to remote or local resources
-      in external entities or DTD and raising an ExternalReferenceForbidden
-      exception when a DTD or entity references an external resource.
+    :param forbid_external: disallow transitive fetches of external resources
+      (``http``/``https`` URLs reached via ``xsd:import``, ``xsd:include``,
+      ``wsdl:import`` or lxml entity/DTD resolution) while parsing the
+      user-supplied entry-point document. The entry-point WSDL or schema
+      itself is always loaded. Defaults to ``False`` for backwards
+      compatibility; enable when loading WSDLs from untrusted sources to
+      mitigate SSRF via attacker-controlled import targets.
+      An :class:`zeep.exceptions.ExternalReferenceForbidden` is raised when a
+      blocked fetch is attempted.
     :type forbid_external: bool
     :param xml_huge_tree: disable lxml/libxml2 security restrictions and
                           support very deep trees and very long text content
@@ -51,7 +57,7 @@ class Settings:
     xml_huge_tree = attr.ib(default=False)
     forbid_dtd = attr.ib(default=False)
     forbid_entities = attr.ib(default=True)
-    forbid_external = attr.ib(default=True)
+    forbid_external = attr.ib(default=False)
 
     # xsd workarounds
     xsd_ignore_sequence_order = attr.ib(default=False)

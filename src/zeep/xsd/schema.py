@@ -117,7 +117,9 @@ class Schema:
         self._prefix_map_auto = self._create_prefix_map()
 
     def add_document_by_url(self, url: str) -> None:
-        schema_node = load_external(url, self._transport, settings=self.settings)
+        schema_node = load_external(
+            url, self._transport, settings=self.settings, _initial=True
+        )
         document = self.create_new_document(schema_node, url=url)
         document.resolve()
 

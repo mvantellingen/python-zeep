@@ -114,3 +114,12 @@ class EntitiesForbidden(Error):
     def __str__(self):
         tpl = "EntitiesForbidden(name='{}', content={!r})"
         return tpl.format(self.name, self.content)
+
+
+class ExternalReferenceForbidden(Error):
+    def __init__(self, url):
+        super().__init__("External reference to %r is forbidden" % (url,))
+        self.url = url
+
+    def __str__(self):
+        return "ExternalReferenceForbidden(url=%r)" % (self.url,)

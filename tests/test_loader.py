@@ -1,8 +1,8 @@
 import pytest
 
 from tests.utils import DummyTransport
-from zeep.exceptions import DTDForbidden, EntitiesForbidden
-from zeep.loader import parse_xml
+from zeep.exceptions import DTDForbidden, EntitiesForbidden, ExternalReferenceForbidden
+from zeep.loader import load_external, parse_xml
 from zeep.settings import Settings
 
 
@@ -46,3 +46,36 @@ def test_allow_entities_and_dtd():
     tree = parse_xml(xml, DummyTransport(), settings=Settings(forbid_entities=False))
 
     assert tree[0][0].tag == "Author"
+
+
+def test_forbid_external_blocks_transitive_http_load():
+    transport = DummyTransport()
+    transport.bind("http://example.com/a.xsd", b"<root/>")
+
+    with pytest.raises(ExternalReferenceForbidden):
+        load_external(
+            "http://example.com/a.xsd",
+            transport,
+            settings=Settings(forbid_external=True),
+        )
+
+
+def test_forbid_external_allows_initial_load():
+    transport = DummyTransport()
+    transport.bind("http://example.com/a.xsd", b"<root/>")
+
+    tree = load_external(
+        "http://example.com/a.xsd",
+        transport,
+        settings=Settings(forbid_external=True),
+        _initial=True,
+    )
+    assert tree.tag == "root"
+
+
+def test_forbid_external_default_allows_load():
+    transport = DummyTransport()
+    transport.bind("http://example.com/a.xsd", b"<root/>")
+
+    tree = load_external("http://example.com/a.xsd", transport)
+    assert tree.tag == "root"

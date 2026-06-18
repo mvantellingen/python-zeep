@@ -229,6 +229,39 @@ def test_multiple_extension():
     type_a(wat="x")
 
 
+def test_forbid_external_blocks_transitive_xsd_import():
+    from zeep.exceptions import ExternalReferenceForbidden
+    from zeep.settings import Settings
+
+    node_a = etree.fromstring(
+        """
+        <?xml version="1.0"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/a"
+            targetNamespace="http://tests.python-zeep.org/a"
+            xmlns:b="http://tests.python-zeep.org/b"
+            elementFormDefault="qualified">
+
+            <xs:import
+                schemaLocation="http://127.0.0.1:9/internal.xsd"
+                namespace="http://tests.python-zeep.org/b"/>
+
+            <xs:element name="root" type="xs:string"/>
+        </xs:schema>
+    """.strip()
+    )
+
+    transport = DummyTransport()
+
+    with pytest.raises(ExternalReferenceForbidden):
+        xsd.Schema(
+            node_a,
+            transport=transport,
+            settings=Settings(forbid_external=True),
+        )
+
+
 def test_global_element_and_type():
     node_a = etree.fromstring(
         """
