@@ -3,7 +3,7 @@ import typing
 from urllib.parse import urljoin, urlparse, urlunparse
 
 from lxml import etree
-from lxml.etree import Resolver, XMLParser, XMLSyntaxError, fromstring
+from lxml.etree import Resolver, XMLParser, fromstring
 
 from zeep.exceptions import (
     DTDForbidden,

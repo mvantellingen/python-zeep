@@ -20,7 +20,7 @@ class OperationProxy:
         # Merge the default _soapheaders with the passed _soapheaders
         if default_headers and operation_soap_headers:
             merged = copy.deepcopy(default_headers)
-            if type(merged) != type(operation_soap_headers):
+            if type(merged) is not type(operation_soap_headers):
                 raise ValueError("Incompatible soapheaders definition")
 
             if isinstance(operation_soap_headers, list):

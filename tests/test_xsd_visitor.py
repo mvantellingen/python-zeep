@@ -655,15 +655,15 @@ def test_referenced_elements_in_choice():
           <xsd:element name="el2" type="xsd:string"/>
 
           <xsd:element name="container">
-    		<xsd:complexType>
-    			<xsd:sequence>
-    				<xsd:choice>
-    					<xsd:element ref="zeep:el1"/>
-    					<xsd:element ref="zeep:el2"/>
-    					<xsd:element name="el3" type="xsd:string"/>
-    				</xsd:choice>
-    			</xsd:sequence>
-    		</xsd:complexType>
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:choice>
+                        <xsd:element ref="zeep:el1"/>
+                        <xsd:element ref="zeep:el2"/>
+                        <xsd:element name="el3" type="xsd:string"/>
+                    </xsd:choice>
+                </xsd:sequence>
+            </xsd:complexType>
           </xsd:element>
 
          </xsd:schema>
@@ -674,4 +674,4 @@ def test_referenced_elements_in_choice():
     for el_name, sub_element in container_element.type.elements:
         assert el_name in ("el1", "el2", "el3")
         assert sub_element.min_occurs == 0
-        assert sub_element.is_optional == True
+        assert sub_element.is_optional

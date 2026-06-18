@@ -1263,9 +1263,7 @@ def test_import_cyclic():
     transport.bind("https://tests.python-zeep.org/a.xsd", node_a)
     transport.bind("https://tests.python-zeep.org/b.xsd", node_b)
 
-    document = wsdl.Document(
-        wsdl_content, transport, "https://tests.python-zeep.org/content.wsdl"
-    )
+    wsdl.Document(wsdl_content, transport, "https://tests.python-zeep.org/content.wsdl")
 
 
 def test_import_no_location():
@@ -1309,6 +1307,4 @@ def test_import_no_location():
     transport = DummyTransport()
     transport.bind("https://tests.python-zeep.org/a.xsd", node_a)
 
-    document = wsdl.Document(
-        wsdl_content, transport, "https://tests.python-zeep.org/content.wsdl"
-    )
+    wsdl.Document(wsdl_content, transport, "https://tests.python-zeep.org/content.wsdl")

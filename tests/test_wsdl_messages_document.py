@@ -1329,9 +1329,9 @@ def test_deserialize_with_headers():
 def test_deserialize_part_no_element():
     wsdl_content = StringIO(
         """
-    <wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
-        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
-        xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    <wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         targetNamespace="http://tests.python-zeep.org/tns"
         xmlns:tns="http://tests.python-zeep.org/tns">
         <wsdl:types>
