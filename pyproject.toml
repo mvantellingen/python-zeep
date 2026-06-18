@@ -62,9 +62,13 @@ build-backend = "setuptools.build_meta"
 [tool.coverage.run]
 branch = true
 source = ["zeep"]
+# Store paths relative to the repo root so coverage data collected on
+# different OSes (uv installs the project editable -> src/zeep/...) can be
+# combined without absolute-path mismatches.
+relative_files = true
 
 [tool.coverage.paths]
-source = ["src", "*/site-packages/"]
+source = ["src", "*/src", "*/site-packages"]
 
 [tool.coverage.report]
 show_missing = true
