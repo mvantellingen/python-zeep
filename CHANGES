@@ -1,5 +1,5 @@
-Unreleased
-----------
+4.3.3 (2026-06-18)
+------------------
  - Wire up the ``forbid_external`` setting (previously defined but unused
    since the move off ``defusedxml`` in 4.0). When enabled it refuses to
    transitively fetch ``http``/``https`` resources via ``xsd:import``,
@@ -9,6 +9,8 @@ Unreleased
    ``False`` to preserve existing behaviour; enable when loading WSDLs from
    untrusted sources to mitigate SSRF via attacker-controlled import
    targets.
+ - Internal tooling only: migrate dependency/build management to uv and
+   replace isort/flake8/black with ruff. No runtime changes.
 
 4.3.2 (2025-09-15)
 -----------------
