@@ -45,12 +45,7 @@ test = [
     "pytest-asyncio",
     "pytest==9.1.0",
     "requests_mock==1.12.1",
-    # Linting
-    "isort==5.13.2",
-    "flake8==7.1.1",
-    "flake8-blind-except==0.2.1",
-    "flake8-debugger==4.1.2",
-    "flake8-imports==0.1.1",
+    "ruff==0.15.17",
 ]
 async = [
     "httpx>=0.15.0",
@@ -72,14 +67,17 @@ source = ["src", "*/site-packages/"]
 [tool.coverage.report]
 show_missing = true
 
-[tool.isort]
-line_length = 88
-multi_line_output = 3
-include_trailing_comma = true
-balanced_wrapping = true
-default_section = "THIRDPARTY"
-known_first_party = ["zeep", "tests"]
-use_parentheses = true
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+# E/W: pycodestyle, F: pyflakes, I: isort,
+# BLE: flake8-blind-except, T10: flake8-debugger
+select = ["E", "W", "F", "I", "BLE", "T10"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["zeep", "tests"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -91,6 +89,3 @@ markers = [
     "requests",
     "network: test case requires network connection",
 ]
-
-[tool.flake8]
-max-line-length = 99

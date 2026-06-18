@@ -56,9 +56,9 @@ class VersionedCacheBase(Base):
         """Expose the version prefix to be used in content serialization.
         :rtype: bytes
         """
-        assert (
-            getattr(self, "_version", None) is not None
-        ), "A version must be provided in order to use the VersionedCacheBase backend."
+        assert getattr(self, "_version", None) is not None, (
+            "A version must be provided in order to use the VersionedCacheBase backend."
+        )
         prefix = "$ZEEP:%s$" % self._version
         return bytes(prefix.encode("ascii"))
 

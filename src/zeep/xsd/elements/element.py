@@ -181,8 +181,9 @@ class Element(Base):
                 and schema.settings.xsd_ignore_sequence_order
                 and list(
                     filter(
-                        lambda elem: etree.QName(elem.tag).localname
-                        == self.qname.localname,
+                        lambda elem: (
+                            etree.QName(elem.tag).localname == self.qname.localname
+                        ),
                         xmlelements,
                     )
                 )
@@ -190,8 +191,9 @@ class Element(Base):
                 # Search for the field in remaining elements, not only the leftmost
                 xmlelement = list(
                     filter(
-                        lambda elem: etree.QName(elem.tag).localname
-                        == self.qname.localname,
+                        lambda elem: (
+                            etree.QName(elem.tag).localname == self.qname.localname
+                        ),
                         xmlelements,
                     )
                 )[0]
@@ -258,7 +260,6 @@ class Element(Base):
     def validate(self, value, render_path=None):
         """Validate that the value is valid"""
         if self.accepts_multiple and isinstance(value, list):
-
             # Validate bounds
             if len(value) < self.min_occurs:
                 raise exceptions.ValidationError(
