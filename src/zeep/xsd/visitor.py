@@ -199,14 +199,11 @@ class SchemaVisitor:
                 sourceline=node.sourceline,
             )
 
-        # We found an empty <import/> statement, this needs to trigger 4.1.2
-        # from https://www.w3.org/TR/2012/REC-xmlschema11-1-20120405/#src-resolve
-        # for QName resolving.
-        # In essence this means we will resolve QNames without a namespace to no
-        # namespace instead of the target namespace.
-        # The following code snippet works because imports have to occur before we
-        # visit elements.
-        if not namespace and not location:
+        # Per W3C XSD 4.1.2 (https://www.w3.org/TR/2012/REC-xmlschema11-1-20120405/#src-resolve):
+        # an import without a namespace attribute provides access to the no-namespace
+        # components. In that case unqualified QNames should resolve to no namespace
+        # instead of the target namespace.
+        if not namespace:
             self.document._has_empty_import = True
 
         # Check if the schema is already imported before based on the
@@ -251,12 +248,6 @@ class SchemaVisitor:
                 filename=self.document._location,
                 sourceline=node.sourceline,
             )
-
-        # If the imported schema doesn't define a target namespace and the
-        # node doesn't specify it either then inherit the existing target
-        # namespace.
-        elif not schema_tns and not namespace:
-            namespace = self.document._target_namespace
 
         schema = self.schema.create_new_document(
             schema_node, location, target_namespace=namespace
