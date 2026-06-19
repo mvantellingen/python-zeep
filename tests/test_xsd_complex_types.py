@@ -422,3 +422,107 @@ def test_ignore_sequence_order():
 
     response = elm.parse(node[0], schema)
     assert response.Baz.id == 3
+
+
+def test_extension_with_attributes_preserves_values():
+    schema = xsd.Schema(
+        load_xml(
+            """
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="unqualified"
+                attributeFormDefault="unqualified">
+          <complexType name="BaseType">
+            <attribute name="attr1" type="integer" use="required"/>
+            <attribute name="attr2" type="string" use="required"/>
+          </complexType>
+          <complexType name="ExtendedType">
+            <complexContent>
+              <extension base="tns:BaseType"/>
+            </complexContent>
+          </complexType>
+          <element name="item" type="tns:ExtendedType"/>
+        </schema>
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
+
+    item_elm = schema.get_element("tns:item")
+    obj = item_elm(attr1=10, attr2="test")
+
+    assert obj.attr1 == 10
+    assert obj.attr2 == "test"
+
+    result = render_node(item_elm, obj)
+    expected = """
+      <document>
+        <ns0:item xmlns:ns0="http://tests.python-zeep.org/" attr1="10" attr2="test"/>
+      </document>
+    """
+    assert_nodes_equal(result, expected)
+
+    parsed = item_elm.parse(result[0], schema)
+    assert parsed.attr1 == 10
+    assert parsed.attr2 == "test"
+
+
+def test_extension_with_attributes_and_elements():
+    schema = xsd.Schema(
+        load_xml(
+            """
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="unqualified"
+                attributeFormDefault="unqualified">
+          <complexType name="BaseType">
+            <attribute name="attr1" type="integer" use="required"/>
+            <attribute name="attr2" type="string" use="required"/>
+          </complexType>
+          <complexType name="ContainerBaseType" abstract="true">
+            <sequence>
+              <element name="item" type="tns:ExtendedType"/>
+            </sequence>
+          </complexType>
+          <complexType name="ExtendedType">
+            <complexContent>
+              <extension base="tns:BaseType"/>
+            </complexContent>
+          </complexType>
+          <complexType name="ContainerType">
+            <complexContent>
+              <extension base="tns:ContainerBaseType"/>
+            </complexContent>
+          </complexType>
+          <element name="container" type="tns:ContainerType"/>
+        </schema>
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
+
+    container_elm = schema.get_element("tns:container")
+    extended_type = schema.get_type("tns:ExtendedType")
+
+    obj = container_elm(item=extended_type(attr1=10, attr2="test"))
+
+    assert obj.item.attr1 == 10
+    assert obj.item.attr2 == "test"
+
+    result = render_node(container_elm, obj)
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">
+          <item attr1="10" attr2="test"/>
+        </ns0:container>
+      </document>
+    """
+    assert_nodes_equal(result, expected)
+
+    parsed = container_elm.parse(result[0], schema)
+    assert parsed.item.attr1 == 10
+    assert parsed.item.attr2 == "test"
