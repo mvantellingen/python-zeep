@@ -447,6 +447,8 @@ class ComplexType(AnyType):
 
         elif self._element or base_element:
             element = self._element or base_element
+        elif isinstance(base, ComplexType):
+            element = None
         else:
             element = Element("_value_1", base)
 
