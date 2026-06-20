@@ -2,11 +2,11 @@ import logging
 import typing
 
 from lxml import etree
-from requests_toolbelt.multipart.decoder import MultipartDecoder
 
 from zeep import ns, plugins, wsa
 from zeep.exceptions import Fault, TransportError, XMLSyntaxError
 from zeep.loader import parse_xml
+from zeep.multipart_decoder import MultipartDecoder
 from zeep.utils import as_qname, get_media_type, qname_attr
 from zeep.wsdl.attachments import MessagePack
 from zeep.wsdl.definitions import Binding, Operation
