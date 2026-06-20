@@ -67,7 +67,7 @@ class Transport:
         )
         return response
 
-    def post(self, address, message, headers):
+    def post(self, address, message, headers, params={}):
         """Proxy to requests.posts()
 
         :param address: The URL for the request
@@ -82,7 +82,7 @@ class Transport:
             self.logger.debug("HTTP Post to %s:\n%s", address, log_message)
 
         response = self.session.post(
-            address, data=message, headers=headers, timeout=self.operation_timeout
+            address, data=message, headers=headers, timeout=self.operation_timeout, params=params
         )
 
         if self.logger.isEnabledFor(logging.DEBUG):
@@ -106,7 +106,7 @@ class Transport:
 
         return response
 
-    def post_xml(self, address, envelope, headers):
+    def post_xml(self, address, envelope, headers, params={}):
         """Post the envelope xml element to the given address with the headers.
 
         This method is intended to be overriden if you want to customize the
@@ -115,7 +115,7 @@ class Transport:
 
         """
         message = etree_to_string(envelope)
-        return self.post(address, message, headers)
+        return self.post(address, message, headers, params)
 
     def load(self, url):
         """Load the content from the given URL"""

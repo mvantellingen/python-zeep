@@ -7,6 +7,7 @@ from pretend import stub
 
 from zeep import cache, transports
 
+from lxml import etree as ET
 
 @pytest.mark.requests
 def test_no_cache():
@@ -73,3 +74,18 @@ def test_settings_set_context_timeout():
             assert transport.operation_timeout == 90
         assert transport.operation_timeout == 120
     assert transport.operation_timeout is None
+
+def test_post_with_params():
+    transport = transports.Transport()
+    with requests_mock.mock() as m:
+        m.post("http://tests.python-zeep.org/test.xml?param_x=value_x", text="responseBody")
+        result = transport.post("http://tests.python-zeep.org/test.xml", message="requestBody", headers={}, params={"param_x": "value_x"})
+        assert result.text == "responseBody"
+
+def test_post_xml_with_params():
+    transport = transports.Transport()
+    with requests_mock.mock() as m:
+        m.post("http://tests.python-zeep.org/test.xml?param_x=value_x", text="responseBody")
+        envelope = ET.Element("a")
+        result = transport.post_xml("http://tests.python-zeep.org/test.xml", envelope=envelope, headers={}, params={"param_x": "value_x"})
+        assert result.text == "responseBody"
