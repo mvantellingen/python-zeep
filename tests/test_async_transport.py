@@ -47,7 +47,7 @@ async def test_post(httpx_mock: HTTPXMock):
 
     httpx_mock.add_response(url="http://tests.python-zeep.org/test.xml", content="x")
     result = await transport.post_xml(
-        "http://tests.python-zeep.org/test.xml", envelope=envelope, headers={}
+        "http://tests.python-zeep.org/test.xml", "operation", envelope=envelope, headers={}
     )
 
     assert result.content == b"x"

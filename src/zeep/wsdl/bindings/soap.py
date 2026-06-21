@@ -124,7 +124,7 @@ class SoapBinding(Binding):
             operation, args, kwargs, client=client, options=options
         )
 
-        response = client.transport.post_xml(options["address"], envelope, http_headers)
+        response = client.transport.post_xml(options["address"], operation, envelope, http_headers)
 
         operation_obj = self.get(operation)
 
@@ -154,7 +154,7 @@ class SoapBinding(Binding):
         )
 
         response = await client.transport.post_xml(
-            options["address"], envelope, http_headers
+            options["address"], operation, envelope, http_headers
         )
 
         if client.settings.raw_response:

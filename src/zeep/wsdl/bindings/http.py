@@ -67,7 +67,7 @@ class HttpPostBinding(HttpBinding):
 
         url = options["address"] + serialized.path
         response = client.transport.post(
-            url, serialized.content, headers=serialized.headers
+            url, operation, serialized.content, headers=serialized.headers
         )
         return self.process_reply(client, operation_obj, response)
 
@@ -95,7 +95,7 @@ class HttpGetBinding(HttpBinding):
 
         url = options["address"] + serialized.path
         response = client.transport.get(
-            url, serialized.content, headers=serialized.headers
+            url, operation, serialized.content, headers=serialized.headers
         )
         return self.process_reply(client, operation_obj, response)
 

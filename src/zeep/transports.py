@@ -54,7 +54,7 @@ class Transport:
             get_version()
         )
 
-    def get(self, address, params, headers):
+    def get(self, address, operation, params, headers):
         """Proxy to requests.get()
 
         :param address: The URL for the request
@@ -67,7 +67,7 @@ class Transport:
         )
         return response
 
-    def post(self, address, message, headers):
+    def post(self, address, operation, message, headers):
         """Proxy to requests.posts()
 
         :param address: The URL for the request
@@ -106,7 +106,7 @@ class Transport:
 
         return response
 
-    def post_xml(self, address, envelope, headers):
+    def post_xml(self, address, operation, envelope, headers):
         """Post the envelope xml element to the given address with the headers.
 
         This method is intended to be overriden if you want to customize the
@@ -115,7 +115,7 @@ class Transport:
 
         """
         message = etree_to_string(envelope)
-        return self.post(address, message, headers)
+        return self.post(address, operation, message, headers)
 
     def load(self, url):
         """Load the content from the given URL"""
@@ -229,7 +229,7 @@ class AsyncTransport(Transport):
             raise TransportError(status_code=response.status_code)
         return result
 
-    async def post(self, address, message, headers):
+    async def post(self, address, operation, message, headers):
         self.logger.debug("HTTP Post to %s:\n%s", address, message)
         response = await self.client.post(
             address,
@@ -244,12 +244,12 @@ class AsyncTransport(Transport):
         )
         return response
 
-    async def post_xml(self, address, envelope, headers):
+    async def post_xml(self, address, operation, envelope, headers):
         message = etree_to_string(envelope)
-        response = await self.post(address, message, headers)
+        response = await self.post(address, operation, message, headers)
         return self.new_response(response)
 
-    async def get(self, address, params, headers):
+    async def get(self, address, operation, params, headers):
         response = await self.client.get(
             address,
             params=params,
