@@ -153,6 +153,11 @@ class TestDuration:
         value = "\r  \nP0Y1347M0D\t "
         assert instance.pythonvalue(value) == expected
 
+    def test_pythonvalue_negative(self):
+        instance = builtins.Duration()
+        assert instance.pythonvalue("PT-30S") == datetime.timedelta(seconds=-30)
+        assert instance.pythonvalue("PT-1M") == datetime.timedelta(minutes=-1)
+
 
 class TestDateTime:
     def test_xmlvalue(self):

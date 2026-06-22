@@ -135,7 +135,7 @@ class Duration(BuiltinType):
         if value.startswith("PT-"):
             value = value.replace("PT-", "PT")
             result = isodate.parse_duration(value)
-            return datetime.timedelta(0 - result.total_seconds())
+            return datetime.timedelta(seconds=0 - result.total_seconds())
         else:
             return isodate.parse_duration(value)
 
