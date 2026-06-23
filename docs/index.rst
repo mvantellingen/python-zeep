@@ -82,9 +82,25 @@ platforms::
 
 
 When you want to use wsse.Signature() you will need to install the python
-xmlsec module. This can be done by installing the ``xmlsec`` extras::
+xmlsec module. This can be done by installing the ``xmlsec`` extras and ``libxmlsec1`` dev distro packages.
 
+For Debian and Ubuntu::
+
+    sudo apt-get install libxmlsec1-dev pkg-config
     pip install zeep[xmlsec]
+
+For RHEL::
+
+    sudo yum install xmlsec1-devel pkg-config
+    pip install zeep[xmlsec]
+
+
+For MacOS::
+
+    brew install Libxmlsec1
+    brew install pkg-config
+    pip install zeep[xmlsec]
+
 
 For the asyncio support in Python 3.6+ the httpx module is required, this
 can be installed with the ``async`` extras::
