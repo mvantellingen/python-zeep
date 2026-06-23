@@ -59,7 +59,7 @@ class SoapBinding(Binding):
         envelope, http_headers = self._create(operation, args, kwargs)
         return envelope
 
-    def _create(self, operation, args, kwargs, client=None, options=None):
+    def _create(self, operation, args, kwargs, client=None, options=None, service=None):
         """Create the XML document to send to the server.
 
         Note that this generates the soap envelope without the wsse applied.
@@ -79,7 +79,9 @@ class SoapBinding(Binding):
         # Apply ws-addressing
         if client:
             if not options:
-                options = client.service._binding_options
+                if service is None:
+                    service = client.service
+                options = service._binding_options
 
             if operation_obj.abstract.wsa_action:
                 envelope, http_headers = wsa.WsAddressingPlugin().egress(
