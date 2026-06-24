@@ -4,7 +4,7 @@ from contextlib import closing, contextmanager
 from urllib.parse import urlparse
 
 import requests
-from requests import Response
+from requests import Response as Response
 from requests_file import FileAdapter
 
 from zeep.exceptions import TransportError
