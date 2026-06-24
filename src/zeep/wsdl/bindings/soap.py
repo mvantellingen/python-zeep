@@ -216,7 +216,10 @@ class SoapBinding(Binding):
                 message_pack = None
 
         if client.wsse:
-            client.wsse.verify(doc)
+            try:
+                client.wsse.verify(doc)
+            except AttributeError:
+                logger.warn('response xml does not contain <security> node')
 
         doc, http_headers = plugins.apply_ingress(
             client, doc, response.headers, operation
