@@ -1,3 +1,4 @@
+import pytest
 from lxml import etree
 
 from tests.utils import load_xml
@@ -289,3 +290,14 @@ def test_schema_recursive_ref():
 
     elm = schema.get_element("ns0:Container")
     elm.signature(schema)
+
+
+@pytest.mark.parametrize('default_type', xsd.default_types.values())
+@pytest.mark.parametrize('standalone', [True, False])
+def test_signature_builtin_type(default_type, standalone):
+    builtin_type = xsd.Element(
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
+        default_type
+    )
+    signature = builtin_type.signature(standalone=standalone)
+    assert isinstance(signature, str)
