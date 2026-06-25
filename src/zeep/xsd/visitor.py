@@ -10,6 +10,7 @@ from zeep.utils import as_qname, qname_attr
 from zeep.xsd import elements as xsd_elements
 from zeep.xsd import types as xsd_types
 from zeep.xsd.const import AUTO_IMPORT_NAMESPACES, xsd_ns
+from zeep.xsd.types.facets import Facets
 from zeep.xsd.types.unresolved import UnresolvedCustomType, UnresolvedType
 
 logger = logging.getLogger(__name__)
@@ -541,8 +542,8 @@ class SchemaVisitor:
         annotation, items = self._pop_annotation(list(node))
         child = items[0]
         if child.tag == tags.restriction:
-            base_type = self.visit_restriction_simple_type(child, node)
-            xsd_type = UnresolvedCustomType(qname, base_type, self.schema)
+            base_type, facets = self.visit_restriction_simple_type(child, node)
+            xsd_type = UnresolvedCustomType(qname, base_type, self.schema, facets)
 
         elif child.tag == tags.list:
             xsd_type = self.visit_list(child, node)
@@ -716,13 +717,15 @@ class SchemaVisitor:
         :type parent: lxml.etree._Element
 
         """
+        annotation, children = self._pop_annotation(list(node))
+        facets = Facets.parse_xml(children)
+
         base_name = qname_attr(node, "base")
         if base_name:
-            return self._get_type(base_name)
+            return self._get_type(base_name), facets
 
-        annotation, children = self._pop_annotation(list(node))
         if children[0].tag == tags.simpleType:
-            return self.visit_simple_type(children[0], node)
+            return self.visit_simple_type(children[0], node), facets
 
     def visit_restriction_simple_content(self, node, parent):
         """
