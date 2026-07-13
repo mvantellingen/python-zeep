@@ -149,6 +149,12 @@ class DateTime(BuiltinType):
         if isinstance(value, str):
             return value
 
+        if not isinstance(value, datetime.datetime):
+            # The value passed in could be either a datetime or a date
+            # if it's a date merge in datetime.time.min - `datetime.time(0, 0)`
+            # to make it a datetime
+            value = datetime.datetime.combine(value, datetime.time.min)
+
         return value.isoformat().replace("+00:00", "Z")
 
     @treat_whitespace("collapse")
@@ -188,6 +194,7 @@ class Date(BuiltinType):
     def xmlvalue(self, value):
         if isinstance(value, str):
             return value
+
         return value.strftime("%Y-%m-%d")
 
     @treat_whitespace("collapse")

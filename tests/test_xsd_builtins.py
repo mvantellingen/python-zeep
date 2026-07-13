@@ -157,6 +157,10 @@ class TestDuration:
 class TestDateTime:
     def test_xmlvalue(self):
         instance = builtins.DateTime()
+        value = datetime.date(2016, 3, 4)
+        assert instance.xmlvalue(value) == "2016-03-04T00:00:00"
+
+        instance = builtins.DateTime()
         value = datetime.datetime(2016, 3, 4, 21, 14, 42)
         assert instance.xmlvalue(value) == "2016-03-04T21:14:42"
 
