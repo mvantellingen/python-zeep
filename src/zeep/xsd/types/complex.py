@@ -442,6 +442,11 @@ class ComplexType(AnyType):
 
             elif isinstance(self._element, Group):
                 raise NotImplementedError("TODO")
+            elif isinstance(base_element, Group):
+                i = 0
+                for item in base_element:
+                    element.insert(i, item)
+                    i += 1
             else:
                 pass  # Element (ignore for now)
 
