@@ -133,6 +133,45 @@ def test_nested_complex_types():
     assert result["item"]["item_1"] == "foo"
 
 
+def test_nested_complex_types_with_etree_input():
+    custom_type = xsd.Element(
+        etree.QName("http://tests.python-zeep.org/", "authentication"),
+        xsd.ComplexType(xsd.Sequence([
+            xsd.Element(
+                etree.QName("http://tests.python-zeep.org/", "data"),
+                xsd.ComplexType(xsd.Sequence([xsd.Any()])),
+            )
+        ])),
+    )
+
+    root = etree.Element("values")
+    etree.SubElement(root, "item_1").text = "foo"
+    etree.SubElement(root, "item_2").text = "bar"
+
+    obj = custom_type(root)
+
+    expected = load_xml(
+        """
+        <document>
+          <ns0:authentication xmlns:ns0="http://tests.python-zeep.org/">
+            <ns0:data>
+              <values>
+                <item_1>foo</item_1>
+                <item_2>bar</item_2>
+              </values>
+            </ns0:data>
+          </ns0:authentication>
+        </document>
+    """
+    )
+    result = render_node(custom_type, obj)
+    assert_nodes_equal(result, expected)
+
+    obj = custom_type.parse(result[0], schema=xsd.Schema())
+    result = serialize_object(obj)
+    assert result == {"data": {"_value_1": root}}
+
+
 def test_serialize_any_array():
     custom_type = xsd.Element(
         etree.QName("http://tests.python-zeep.org/", "authentication"),
