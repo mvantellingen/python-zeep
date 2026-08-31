@@ -358,11 +358,43 @@ def test_xml_simple_content_nil():
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" />
       </document>
     """
-    result = render_node(container_elm, obj)
     assert_nodes_equal(result, expected)
 
     obj = container_elm.parse(result[0], schema)
     assert obj._value_1 is None
+
+
+def test_xml_simple_content_extension_render():
+    schema = xsd.Schema(
+        load_xml(
+            """
+    <?xml version="1.0"?>
+    <schema xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            targetNamespace="http://tests.python-zeep.org/"
+            elementFormDefault="qualified">
+      <element name="container">
+        <complexType>
+          <simpleContent>
+            <extension base="string" />
+          </simpleContent>
+        </complexType>
+      </element>
+    </schema>
+    """
+        )
+    )
+    schema.set_ns_prefix("tns", "http://tests.python-zeep.org/")
+    container_elm = schema.get_element("tns:container")
+
+    result = render_node(container_elm, "my-test-value")
+
+    expected = """
+      <document>
+        <ns0:container xmlns:ns0="http://tests.python-zeep.org/">my-test-value</ns0:container>
+      </document>
+    """
+    assert_nodes_equal(result, expected)
 
 
 def test_ignore_sequence_order():

@@ -279,6 +279,7 @@ class ComplexType(AnyType):
             and not isinstance(value, (list, dict, CompoundValue))
         ):
             element = self.elements_nested[0][1]
+            child_path = render_path + [element.name]
             element.type.render(node, value, None, child_path)
             return
 
