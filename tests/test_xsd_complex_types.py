@@ -358,7 +358,6 @@ def test_xml_simple_content_nil():
         <ns0:container xmlns:ns0="http://tests.python-zeep.org/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" />
       </document>
     """
-    result = render_node(container_elm, obj)
     assert_nodes_equal(result, expected)
 
     obj = container_elm.parse(result[0], schema)
