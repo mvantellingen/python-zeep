@@ -1,3 +1,4 @@
+import importlib.resources
 import os.path
 import typing
 from urllib.parse import urljoin, urlparse, urlunparse
@@ -12,6 +13,36 @@ from zeep.exceptions import (
     XMLSyntaxError,
 )
 from zeep.settings import Settings
+
+# Well known schemas which are shipped with zeep, so loading them doesn't
+# depend on the availability of the remote server (see #1417). The SOAP
+# encoding schema is also auto imported by zeep when a WSDL references it
+# without importing it, see ``zeep.xsd.const.AUTO_IMPORT_NAMESPACES``.
+BUNDLED_SCHEMAS = {
+    "http://schemas.xmlsoap.org/soap/encoding/": "soap-encoding.xsd",
+    "https://schemas.xmlsoap.org/soap/encoding/": "soap-encoding.xsd",
+}
+
+
+def load_bundled_schema(url) -> typing.Optional[bytes]:
+    """Return the content of the schema shipped with zeep for the given url,
+    or None if zeep doesn't ship one or the file is missing.
+
+    """
+    filename = BUNDLED_SCHEMAS.get(str(url))
+    if filename is None:
+        return None
+    try:
+        return (
+            importlib.resources.files("zeep")
+            .joinpath("schemas")
+            .joinpath(filename)
+            .read_bytes()
+        )
+    except OSError:
+        # The file is missing when zeep is packaged without its package data
+        # (for example by PyInstaller), load it through the transport instead.
+        return None
 
 
 class ImportResolver(Resolver):
@@ -102,6 +133,9 @@ def load_external(
     else:
         if base_url:
             url = absolute_location(url, base_url)
+        bundled = load_bundled_schema(url)
+        if bundled is not None:
+            return parse_xml(bundled, transport, base_url, settings=settings)
         if not _initial and settings.forbid_external:
             if urlparse(str(url)).scheme in ("http", "https"):
                 raise ExternalReferenceForbidden(url)
@@ -135,6 +169,9 @@ async def load_external_async(
     else:
         if base_url:
             url = absolute_location(url, base_url)
+        bundled = load_bundled_schema(url)
+        if bundled is not None:
+            return parse_xml(bundled, transport, base_url, settings=settings)
         if not _initial and settings.forbid_external:
             if urlparse(str(url)).scheme in ("http", "https"):
                 raise ExternalReferenceForbidden(url)

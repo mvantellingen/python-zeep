@@ -608,3 +608,34 @@ def test_xml_soap_enc_string(transport):
 
     obj = shoe_type.parse(node[0], schema)
     assert obj[0]["_value_1"] == "foo"
+
+
+def test_soap_array_without_remote_soap_encoding_schema():
+    # The SOAP encoding schema ships with zeep, so resolving SOAP-ENC:Array
+    # works when schemas.xmlsoap.org cannot be reached (#1417).
+    schema = xsd.Schema(
+        load_xml(
+            """
+    <xsd:schema
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+        targetNamespace="http://tests.python-zeep.org/tns">
+      <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+      <xsd:complexType name="ArrayOfString">
+        <xsd:complexContent>
+          <xsd:restriction base="SOAP-ENC:Array">
+            <xsd:attribute ref="SOAP-ENC:arrayType" wsdl:arrayType="xsd:string[]"/>
+          </xsd:restriction>
+        </xsd:complexContent>
+      </xsd:complexType>
+    </xsd:schema>
+    """
+        ),
+        transport=DummyTransport(),
+    )
+
+    ArrayOfString = schema.get_type("ns0:ArrayOfString")
+    node = render_node(ArrayOfString, ArrayOfString(["item", "and"]))
+    data = ArrayOfString.parse_xmlelement(node, schema)
+    assert data == ["item", "and"]

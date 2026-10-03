@@ -2,7 +2,7 @@ import pytest
 
 from tests.utils import DummyTransport
 from zeep.exceptions import DTDForbidden, EntitiesForbidden, ExternalReferenceForbidden
-from zeep.loader import load_external, parse_xml
+from zeep.loader import BUNDLED_SCHEMAS, load_external, parse_xml
 from zeep.settings import Settings
 
 
@@ -79,3 +79,27 @@ def test_forbid_external_default_allows_load():
 
     tree = load_external("http://example.com/a.xsd", transport)
     assert tree.tag == "root"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://schemas.xmlsoap.org/soap/encoding/",
+        "https://schemas.xmlsoap.org/soap/encoding/",
+    ],
+)
+def test_load_external_uses_bundled_soap_encoding_schema(url):
+    # Nothing is bound on the transport and remote loads are forbidden, so
+    # only the copy shipped with zeep can be used (#1417)
+    settings = Settings(forbid_external=True)
+    tree = load_external(url, DummyTransport(), settings=settings)
+    assert tree.get("targetNamespace") == "http://schemas.xmlsoap.org/soap/encoding/"
+
+
+def test_missing_bundled_schema_falls_back_to_transport(monkeypatch):
+    # Packagers like PyInstaller can leave out the package data
+    url = "http://schemas.xmlsoap.org/soap/encoding/"
+    monkeypatch.setitem(BUNDLED_SCHEMAS, url, "missing.xsd")
+    transport = DummyTransport()
+    transport.bind(url, b"<root/>")
+    assert load_external(url, transport).tag == "root"
