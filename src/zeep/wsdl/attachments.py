@@ -74,7 +74,6 @@ class Attachment:
 
         if encoding == "base64":
             return base64.b64decode(content)
-        elif encoding == "binary":
-            return content.strip(b"\r\n")
         else:
+            # MultipartDecoder has already removed the MIME boundary framing.
             return content

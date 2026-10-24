@@ -1,3 +1,8 @@
+Unreleased
+----------
+ - Preserve leading and trailing CR/LF bytes in binary SOAP attachments
+   (#1249, #1481).
+
 4.3.3 (2026-06-18)
 ------------------
  - Wire up the ``forbid_external`` setting (previously defined but unused
