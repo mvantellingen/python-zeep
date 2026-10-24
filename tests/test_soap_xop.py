@@ -1,5 +1,6 @@
 from io import StringIO
 
+import pytest
 import requests_mock
 from lxml import etree
 from pretend import stub
@@ -68,12 +69,39 @@ def test_rebuild_xml():
             <submitClaim>
             <accountNumber>5XJ45-3B2</accountNumber>
             <eventType>accident</eventType>
-            <image xop-mime:content-type="image/jpeg">Li4uYmluYXJ5IEpQRyBpbWFnZS4uLg==</image>
+            <image xop-mime:content-type="image/jpeg">Li4uYmluYXJ5IEpQRyBpbWFnZS4uLg0K</image>
             </submitClaim>
           </soap:Body>
         </soap:Envelope>
     """
     assert_nodes_equal(etree.tostring(document), expected)
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        b"binary\r\n",
+        b"\r\nbinary",
+        b"\r\nbinary\r\n",
+        b"\r\n",
+        b"\x00\xff\r\n",
+        b"binary",
+        b"",
+    ],
+)
+def test_binary_attachment_preserves_content(content):
+    data = (
+        b"--MIME_boundary\r\n"
+        b"Content-Type: application/octet-stream\r\n"
+        b"Content-Transfer-Encoding: binary\r\n"
+        b"Content-ID: <attachment@test>\r\n\r\n"
+        + content
+        + b"\r\n--MIME_boundary--\r\n"
+    )
+    decoder = MultipartDecoder(data, "multipart/related; boundary=MIME_boundary")
+    assert decoder.parts[0].content == content
+    message_pack = MessagePack(parts=decoder.parts)
+    assert message_pack.attachments[0].content == content
 
 
 def get_client_service():
@@ -249,7 +277,8 @@ def test_xop():
             headers={"Content-Type": content_type},
         )
         result = service.TestOperation2("")
-        assert result["_value_1"] == b"BINARYDATA"
+        # The extra CRLF before the MIME boundary belongs to the binary payload.
+        assert result["_value_1"] == b"BINARYDATA\r\n"
 
         m.post(
             "http://tests.python-zeep.org/test",
@@ -302,4 +331,4 @@ def test_xop_cid_encoded():
             headers={"Content-Type": content_type},
         )
         result = service.TestOperation2("")
-        assert result["_value_1"] == b"BINARYDATA"
+        assert result["_value_1"] == b"BINARYDATA\r\n"
