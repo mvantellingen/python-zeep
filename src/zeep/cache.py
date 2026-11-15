@@ -130,9 +130,10 @@ class SqliteCache(VersionedCacheBase):
         assert sqlite3
 
         with self._lock:
-            connection = sqlite3.connect(
-                self._db_path, detect_types=sqlite3.PARSE_DECLTYPES
-            )
+            # Timestamps are stored as ISO 8601 text and parsed in get(), so
+            # this doesn't rely on sqlite3's default datetime adapter and
+            # converter (deprecated since Python 3.12).
+            connection = sqlite3.connect(self._db_path)
             yield connection
             connection.close()
 
@@ -145,7 +146,11 @@ class SqliteCache(VersionedCacheBase):
             cursor.execute("DELETE FROM request WHERE url = ?", (url,))
             cursor.execute(
                 "INSERT INTO request (created, url, content) VALUES (?, ?, ?)",
-                (datetime.datetime.now(datetime.timezone.utc), url, data),
+                (
+                    datetime.datetime.now(datetime.timezone.utc).isoformat(" "),
+                    url,
+                    data,
+                ),
             )
             conn.commit()
 
@@ -157,6 +162,9 @@ class SqliteCache(VersionedCacheBase):
 
         if rows:
             created, data = rows[0]
+            if isinstance(created, bytes):
+                created = created.decode()
+            created = datetime.datetime.fromisoformat(created)
             if not _is_expired(created, self._timeout):
                 logger.debug("Cache HIT for %s", url)
                 return self._decode_data(data)
