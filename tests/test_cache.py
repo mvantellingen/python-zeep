@@ -53,6 +53,47 @@ class TestSqliteCache:
         result = c.get("http://tests.python-zeep.org/example.wsdl")
         assert result == b"content"
 
+    def test_cache_on_whole_second(self, tmpdir):
+        # isoformat() leaves out the microseconds when they're zero, which the
+        # old sqlite3 timestamp converter couldn't parse.
+        c = cache.SqliteCache(path=tmpdir.join("sqlite.cache.db").strpath)
+        frozen = datetime.datetime(2026, 11, 15, 9, 0, 0, tzinfo=datetime.timezone.utc)
+        with freezegun.freeze_time(frozen):
+            c.add("http://tests.python-zeep.org/example.wsdl", b"content")
+            result = c.get("http://tests.python-zeep.org/example.wsdl")
+        assert result == b"content"
+
+    @pytest.mark.parametrize(
+        "created",
+        [
+            "2026-11-15 09:00:00.123456+00:00",
+            "2026-11-15 09:00:00+00:00",
+            "2026-11-15 09:00:00.123456",
+        ],
+    )
+    def test_reads_existing_rows(self, tmpdir, created):
+        # Rows written by older zeep versions through the default sqlite3
+        # adapter, with and without a UTC offset.
+        path = tmpdir.join("sqlite.cache.db").strpath
+        c = cache.SqliteCache(path=path, timeout=None)
+        with c.db_connection() as conn:
+            conn.execute(
+                "INSERT INTO request (created, url, content) VALUES (?, ?, ?)",
+                (
+                    created,
+                    "http://tests.python-zeep.org/example.wsdl",
+                    c._encode_data(b"content"),
+                ),
+            )
+            conn.commit()
+        assert c.get("http://tests.python-zeep.org/example.wsdl") == b"content"
+
+    def test_no_sqlite3_datetime_deprecation(self, tmpdir, recwarn):
+        c = cache.SqliteCache(path=tmpdir.join("sqlite.cache.db").strpath)
+        c.add("http://tests.python-zeep.org/example.wsdl", b"content")
+        assert c.get("http://tests.python-zeep.org/example.wsdl") == b"content"
+        assert not [w for w in recwarn if issubclass(w.category, DeprecationWarning)]
+
 
 @pytest.mark.network
 def test_memory_cache_timeout(tmpdir):
