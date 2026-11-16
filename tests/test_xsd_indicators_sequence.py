@@ -2,7 +2,7 @@ import pytest
 from lxml import etree
 
 from tests.utils import assert_nodes_equal, load_xml, render_node
-from zeep import xsd
+from zeep import exceptions, xsd
 from zeep.settings import Settings
 
 
@@ -548,3 +548,57 @@ def test_xml_sequence_recover_from_missing_element():
     assert result.item_2 is None
     assert result.item_3 == "text-3"
     assert result.item_4 == "text-4"
+
+
+def _unbounded_optional_sequence_schema(settings=None):
+    return xsd.Schema(
+        load_xml(
+            """
+        <schema
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tests.python-zeep.org/"
+            elementFormDefault="qualified"
+            targetNamespace="http://tests.python-zeep.org/">
+          <complexType name="container">
+            <sequence maxOccurs="unbounded">
+              <element name="item_1" type="xsd:string" minOccurs="0"/>
+              <element name="item_2" type="xsd:string" minOccurs="0"/>
+            </sequence>
+          </complexType>
+        </schema>
+    """
+        ),
+        settings=settings,
+    )
+
+
+_UNKNOWN_ELEMENT_XML = """
+    <tns:container xmlns:tns="http://tests.python-zeep.org/">
+      <tns:item_1>text-1</tns:item_1>
+      <tns:item_2>text-2</tns:item_2>
+      <tns:item_1>text-3</tns:item_1>
+      <tns:unknown>foo</tns:unknown>
+    </tns:container>
+"""
+
+
+def test_xml_sequence_unbounded_unknown_element_does_not_hang():
+    # An element which isn't part of the unbounded sequence used to make the
+    # sequence loop forever since every iteration consumed nothing (#1457).
+    schema = _unbounded_optional_sequence_schema()
+    elm_type = schema.get_type("{http://tests.python-zeep.org/}container")
+
+    with pytest.raises(exceptions.XMLParseError):
+        elm_type.parse_xmlelement(load_xml(_UNKNOWN_ELEMENT_XML), schema)
+
+
+def test_xml_sequence_unbounded_unknown_element_not_strict():
+    schema = _unbounded_optional_sequence_schema(Settings(strict=False))
+    elm_type = schema.get_type("{http://tests.python-zeep.org/}container")
+
+    result = elm_type.parse_xmlelement(load_xml(_UNKNOWN_ELEMENT_XML), schema)
+    assert result._value_1 == [
+        {"item_1": "text-1", "item_2": "text-2"},
+        {"item_1": "text-3", "item_2": None},
+    ]
