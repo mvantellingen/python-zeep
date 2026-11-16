@@ -3,7 +3,7 @@ import typing
 from lxml import etree
 
 from zeep.xsd.types.base import Type
-from zeep.xsd.types.collection import UnionType  # FIXME
+from zeep.xsd.types.collection import ListType, UnionType  # FIXME
 from zeep.xsd.types.simple import AnySimpleType  # FIXME
 
 if typing.TYPE_CHECKING:
@@ -61,6 +61,10 @@ class UnresolvedCustomType(Type):
         if issubclass(base.__class__, UnionType):
             xsd_type = type(self.name, (base.__class__,), cls_attributes)
             return xsd_type(base.item_types)
+
+        elif issubclass(base.__class__, ListType):
+            xsd_type = type(self.name, (base.__class__,), cls_attributes)
+            return xsd_type(base.item_type)
 
         elif issubclass(base.__class__, AnySimpleType):
             xsd_type = type(self.name, (base.__class__,), cls_attributes)
