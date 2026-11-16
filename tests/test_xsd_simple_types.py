@@ -217,3 +217,56 @@ def test_simple_type_list_custom_type():
         </document>
     """
     assert_nodes_equal(expected, node)
+
+
+def test_simple_type_restriction_of_list():
+    schema = xsd.Schema(
+        load_xml(
+            """
+        <?xml version="1.0"?>
+        <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                xmlns:tns="http://tests.python-zeep.org/"
+                targetNamespace="http://tests.python-zeep.org/"
+                elementFormDefault="qualified">
+
+          <simpleType name="values">
+            <list itemType="integer"/>
+          </simpleType>
+          <simpleType name="shortValues">
+            <restriction base="tns:values">
+              <maxLength value="3"/>
+            </restriction>
+          </simpleType>
+          <element name="something" type="tns:shortValues"/>
+          <element name="container">
+            <complexType>
+              <sequence>
+                <element name="item" type="tns:shortValues"/>
+              </sequence>
+            </complexType>
+          </element>
+        </schema>
+    """
+        )
+    )
+
+    element_cls = schema.get_element("{http://tests.python-zeep.org/}something")
+    assert element_cls.type.signature(schema) == "xsd:integer[]"
+    obj = element_cls([1, 2, 3])
+    assert obj == [1, 2, 3]
+
+    node = etree.Element("document")
+    element_cls.render(node, obj)
+    expected = """
+        <document>
+            <ns0:something xmlns:ns0="http://tests.python-zeep.org/">1 2 3</ns0:something>
+        </document>
+    """
+    assert_nodes_equal(expected, node)
+    assert element_cls.parse(node[0], schema) == [1, 2, 3]
+
+    container = schema.get_element("{http://tests.python-zeep.org/}container")
+    obj = container(item=[4, 5])
+    node = etree.Element("document")
+    container.render(node, obj)
+    assert container.parse(node[0], schema).item == [4, 5]
