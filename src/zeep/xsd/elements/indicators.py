@@ -608,6 +608,7 @@ class Sequence(OrderIndicator):
             if not xmlelements:
                 break
 
+            num_xmlelements = len(xmlelements)
             item_result = OrderedDict()
             for elm_name, element in self.elements:
                 try:
@@ -627,8 +628,16 @@ class Sequence(OrderIndicator):
 
                 if not xmlelements:
                     break
-            if item_result:
+
+            # When this iteration didn't consume any xml elements the remaining
+            # elements don't belong to this sequence. Repeating it wouldn't
+            # consume them either, so stop instead of looping until max_occurs
+            # (which is practically forever when unbounded).
+            consumed = len(xmlelements) != num_xmlelements
+            if item_result and (consumed or not self.accepts_multiple):
                 result.append(item_result)
+            if not consumed:
+                break
 
         if not self.accepts_multiple:
             return result[0] if result else None
